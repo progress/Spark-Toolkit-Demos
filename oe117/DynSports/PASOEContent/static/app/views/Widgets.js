@@ -137,7 +137,7 @@ var WidgetsCtrl = (function(){
             dataValueField: "SalesRep",
             filter: {
                 field: "SalesRep",
-                operator: "startsWith",
+                operator: "startswith",
                 value: "d"
             },
             resourceName: "salesrep",

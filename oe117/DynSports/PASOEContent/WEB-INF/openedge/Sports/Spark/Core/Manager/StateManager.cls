@@ -5,7 +5,7 @@ using Spark.Core.Util.ApplicationError from propath.
 
 block-level on error undo, throw.
 
-&GLOBAL-DEFINE USE_BP_SESSION_MGMT TRUE
+&GLOBAL-DEFINE USE_SESSION_MGMT TRUE
 &GLOBAL-DEFINE USE_WEB_DATA_STORE  TRUE
 &GLOBAL-DEFINE WEB_SESSION_TABLE   WebSession
 &GLOBAL-DEFINE WEB_DATASTORE_TABLE WebDataStore
@@ -29,7 +29,7 @@ class Sports.Spark.Core.Manager.StateManager inherits Spark.Core.Manager.StateMa
     end constructor.
 
     method private void checkSession ( input pcSessionContextID as character ):
-    &IF {&USE_BP_SESSION_MGMT} &THEN
+    &IF {&USE_SESSION_MGMT} &THEN
         define buffer tbSession for {&WEB_SESSION_TABLE}.
 
         if pcSessionContextID begins "0." then return.
@@ -77,7 +77,7 @@ class Sports.Spark.Core.Manager.StateManager inherits Spark.Core.Manager.StateMa
         checkSession( input pcSessionContextID ).
         if pcSessionContextID begins "0." then return "".
 
-    &IF ({&USE_BP_SESSION_MGMT} and {&USE_WEB_DATA_STORE}) &THEN
+    &IF ({&USE_SESSION_MGMT} and {&USE_WEB_DATA_STORE}) &THEN
         define buffer tbSessionState for {&WEB_DATASTORE_TABLE}.
 
         /**
@@ -138,7 +138,7 @@ class Sports.Spark.Core.Manager.StateManager inherits Spark.Core.Manager.StateMa
         checkSession ( input pcSessionContextID ).
         if pcSessionContextID begins "0." then return.
 
-    &IF ({&USE_BP_SESSION_MGMT} and {&USE_WEB_DATA_STORE}) &THEN
+    &IF ({&USE_SESSION_MGMT} and {&USE_WEB_DATA_STORE}) &THEN
         define buffer tbSessionState for {&WEB_DATASTORE_TABLE}.
 
         repeat transaction:
@@ -204,7 +204,7 @@ class Sports.Spark.Core.Manager.StateManager inherits Spark.Core.Manager.StateMa
         checkSession ( input pcSessionContextID ).
         if pcSessionContextID begins "0." then return.
 
-    &IF ({&USE_BP_SESSION_MGMT} and {&USE_WEB_DATA_STORE}) &THEN
+    &IF ({&USE_SESSION_MGMT} and {&USE_WEB_DATA_STORE}) &THEN
         define buffer tbSessionState for {&WEB_DATASTORE_TABLE}.
 
         repeat transaction:
@@ -250,7 +250,7 @@ class Sports.Spark.Core.Manager.StateManager inherits Spark.Core.Manager.StateMa
                                                          input pcSessionContextID as character ):
         if pcSessionContextID begins "0." then return.
 
-    &IF ({&USE_BP_SESSION_MGMT} and {&USE_WEB_DATA_STORE}) &THEN
+    &IF ({&USE_SESSION_MGMT} and {&USE_WEB_DATA_STORE}) &THEN
         define buffer tbSessionState for {&WEB_DATASTORE_TABLE}.
 
         repeat transaction:

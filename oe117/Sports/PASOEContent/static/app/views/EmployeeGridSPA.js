@@ -29,6 +29,23 @@ var EmployeeGridSPACtrl = (function(){
             if (spark.form.validate(viewName + " form[name=searchForm]")) {
                 var params = this.toJSON().params || {};
                 var filter = []; // Add default options here.
+                var columnFilter = getDataSource().filter() || null;
+                if (columnFilter) {
+                    $.each(columnFilter.filters, function(i, criteria){
+                        if (criteria.field === searchField1) {
+                            if ((params.searchValue || "") === "") {
+                                // On-screen field is blank, so skip criteria.
+                            }
+                        } else if (criteria.field === searchField2) {
+                            if ((params.searchValue2 || "") === "") {
+                                // On-screen field is blank, so skip criteria.
+                            }
+                        } else {
+                            // Add all other column filters to the array.
+                            filter.push(criteria);
+                        }
+                    });
+                }
                 if ((params.searchValue || "") !== "") {
                     filter = [{
                         field: searchField1,
@@ -43,7 +60,7 @@ var EmployeeGridSPACtrl = (function(){
                         value: params.searchValue2
                     });
                 }
-                getDataSource().filter(filter);
+                getDataSource().filter({logic: "and", filters: filter});
             }
         }
     });

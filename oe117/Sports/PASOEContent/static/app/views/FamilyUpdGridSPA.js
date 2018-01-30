@@ -26,6 +26,19 @@ var FamilyUpdGridSPACtrl = (function(){
             if (spark.form.validate(viewName + " form[name=searchForm]")) {
                 var params = this.toJSON().params || {};
                 var filter = []; // Add default options here.
+                var columnFilter = getDataSource().filter() || null;
+                if (columnFilter) {
+                    $.each(columnFilter.filters, function(i, criteria){
+                        if (criteria.field === searchField1) {
+                            if ((params.searchValue || "") === "") {
+                                // On-screen field is blank, so skip criteria.
+                            }
+                        } else {
+                            // Add all other column filters to the array.
+                            filter.push(criteria);
+                        }
+                    });
+                }
                 if ((params.searchValue || "") !== "") {
                     filter.push({
                         field: searchField1,
@@ -33,7 +46,7 @@ var FamilyUpdGridSPACtrl = (function(){
                         value: parseInt(params.searchValue, 10)
                     });
                 }
-                getDataSource().filter(filter);
+                getDataSource().filter({logic: "and", filters: filter});
             }
         }
     });
@@ -110,7 +123,7 @@ var FamilyUpdGridSPACtrl = (function(){
  
         var grid = $(viewName + " div[name=" + gridName + "]").kendoGrid({
             autoBind: false,
-            columns: gridColumns,
+            columns: (viewState[gridName] && viewState[gridName].columns) ? viewState[gridName].columns : gridColumns,
             columnMenu: true,
             dataSource: getDataSource(),
             editable: "inline",

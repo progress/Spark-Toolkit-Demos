@@ -29,6 +29,23 @@ var OrderUpdGridSPACtrl = (function(){
             if (spark.form.validate(viewName + " form[name=searchForm]")) {
                 var params = this.toJSON().params || {};
                 var filter = []; // Add default options here.
+                var columnFilter = getDataSource().filter() || null;
+                if (columnFilter) {
+                    $.each(columnFilter.filters, function(i, criteria){
+                        if (criteria.field === searchField1) {
+                            if ((params.searchValue || "") === "") {
+                                // On-screen field is blank, so skip criteria.
+                            }
+                        } else if (criteria.field === searchField2) {
+                            if ((params.searchValue2 || "") === "") {
+                                // On-screen field is blank, so skip criteria.
+                            }
+                        } else {
+                            // Add all other column filters to the array.
+                            filter.push(criteria);
+                        }
+                    });
+                }
                 if ((params.searchValue || "") !== "") {
                     filter.push({
                         field: searchField1,
@@ -43,7 +60,7 @@ var OrderUpdGridSPACtrl = (function(){
                         value: params.searchValue2
                     });
                 }
-                getDataSource().filter(filter);
+                getDataSource().filter({logic: "and", filters: filter});
             }
         }
     });
@@ -126,7 +143,7 @@ var OrderUpdGridSPACtrl = (function(){
                 dataTextField: "RepName",
                 dataValueField: "SalesRep",
                 dataSource: salesReps,
-                filter: "startsWith"
+                filter: "startswith"
             })        }, {            field: "Carrier",
             hidden: true,            title: "Carrier",            width: 150        }, {            field: "Instructions",
             hidden: true,            title: "Instructions",            width: 150        }, {            field: "PO",
@@ -145,7 +162,7 @@ var OrderUpdGridSPACtrl = (function(){
 
         var grid = $(viewName + " div[name=" + gridName + "]").kendoGrid({
             autoBind: false,
-            columns: gridColumns,
+            columns: (viewState[gridName] && viewState[gridName].columns) ? viewState[gridName].columns : gridColumns,
             columnMenu: true,
             dataSource: getDataSource(),
             editable: "inline",

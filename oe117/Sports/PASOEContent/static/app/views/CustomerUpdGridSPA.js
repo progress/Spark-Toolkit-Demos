@@ -3,7 +3,7 @@ var CustomerUpdGridSPACtrl = (function(){
 
     var resourceName = "customer";
     var searchField1 = "CustName";
-    var searchOper1 = "startsWith";
+    var searchOper1 = "startswith";
     var datasetName = "dsCustomer";
     var tableName = "ttCustomer";
     var gridName = "MasterGrid";
@@ -26,14 +26,28 @@ var CustomerUpdGridSPACtrl = (function(){
             if (spark.form.validate(viewName + " form[name=searchForm]")) {
                 var params = this.toJSON().params || {};
                 var filter = []; // Add default options here.
+                var columnFilter = getDataSource().filter() || null;
+                if (columnFilter) {
+                    $.each(columnFilter.filters, function(i, criteria){
+                        if (criteria.field === searchField1) {
+                            if ((params.searchValue || "") === "") {
+                                // On-screen field is blank, so skip criteria.
+                            }
+                        } else {
+                            // Add all other column filters to the array.
+                            filter.push(criteria);
+                        }
+                    });
+                }
                 if ((params.searchValue || "") !== "") {
+                    // Add main search field if value is non-blank.
                     filter.push({
                         field: searchField1,
                         operator: searchOper1,
                         value: params.searchValue
                     });
                 }
-                getDataSource().filter(filter);
+                getDataSource().filter({logic: "and", filters: filter});
             }
         }
     });
@@ -183,7 +197,7 @@ var CustomerUpdGridSPACtrl = (function(){
                 dataTextField: "RepName",
                 dataValueField: "SalesRep",
                 dataSource: salesReps,
-                filter: "startsWith"
+                filter: "startswith"
             })
         }, {
             field: "CreditLimit",
