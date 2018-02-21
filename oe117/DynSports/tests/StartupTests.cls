@@ -20,7 +20,7 @@ class tests.StartupTests inherits tests.PMFOUnit:
 	------------------------------------------------------------------------------*/
 	@Before.
 	method public void before ( ):
-        this-object:StartPMFO().
+        this-object:StartPMFO("startup").
 	end method.
 
     /*------------------------------------------------------------------------------

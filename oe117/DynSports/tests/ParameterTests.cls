@@ -27,7 +27,7 @@ class tests.ParameterTests inherits tests.PMFOUnit:
 	------------------------------------------------------------------------------*/
 	@Before.
 	method public void before ( ):
-        this-object:StartPMFO().
+        this-object:StartPMFO("parameter").
 	end method.
 
     /*------------------------------------------------------------------------------

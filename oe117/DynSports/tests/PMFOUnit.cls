@@ -17,19 +17,29 @@ class tests.PMFOUnit abstract:
 
     define protected variable NumDatabases as integer no-undo.
 
-    method protected void StartPMFO ( ):
+    define protected variable UseProfiler as logical no-undo initial true.
+
+    method protected void StartPMFO ( input pcTestSuiteName as character ):
         define variable oParser    as ObjectModelParser no-undo.
         define variable oConfig    as JsonObject        no-undo.
         define variable oDatabases as JsonObject        no-undo.
+        define variable cPath      as character         no-undo.
         define variable cDB        as character extent  no-undo.
         define variable ix         as integer           no-undo.
 
         this-object:NumDatabases = 0.
         if search("tests/config.json") ne ? then do:
+            /* Parse config file when found. */
             assign oParser = new Progress.Json.ObjectModel.ObjectModelParser().
             assign oConfig = cast(oParser:ParseFile(search("tests/config.json")), JsonObject) no-error.
             delete object oParser no-error.
+
+            /* Isolate current working directory. */
+            assign cPath = replace(search("tests/config.json"), "~\", "~/").
+            assign cPath = substring(cPath, 1, length(cPath) - 11).
         end. /* config.json */
+        else
+            assign cPath = replace(session:temp-directory, "~\", "~/").
 
         if valid-object(oConfig) and oConfig:Has("Databases") and
            oConfig:GetType("Databases") eq JsonDataType:object then do:
@@ -42,7 +52,8 @@ class tests.PMFOUnit abstract:
             assign cDB = oDatabases:GetNames().
             this-object:NumDatabases = extent(cDB).
             do ix = 1 to NumDatabases:
-                connect value(cDB[ix]) value(oDatabases:GetCharacter(cDB[ix])) no-error.
+                if not connected(cDB[ix]) then
+                    connect value(cDB[ix]) value(oDatabases:GetCharacter(cDB[ix])) no-error.
             end. /* do ix */
         end. /* valid-object(oDatabases) */
 
@@ -52,6 +63,25 @@ class tests.PMFOUnit abstract:
         /* Run standard "sessionStartupProc". */
         define variable cStartup as character no-undo. /* sessionStartupProcParam */
         run Spark/startup.p (input cStartup).
+
+        if UseProfiler then do:
+            define variable cListDir as character no-undo.
+            assign cListDir = substitute("&1/listing/", right-trim(cPath, "~/")).
+            os-create-dir value(cListDir).
+
+            assign /* Note: Order matters here, do not rearrange! */
+                profiler:enabled      = true
+                profiler:profiling    = true
+                profiler:file-name    = substitute("&1/output_&2.prof", right-trim(cPath, "~/"), pcTestSuiteName)
+                profiler:description  = "PMFO ABLUnit Output"
+                profiler:listings     = true /* Note: Requires source code. */
+                profiler:directory    = cListDir
+                profiler:trace-filter = "*":u
+                profiler:tracing      = "":u
+                profiler:coverage     = true
+                profiler:statistics   = true
+                .
+        end. /* UseProfiler */
 
         catch err as Progress.Lang.Error:
     		OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
@@ -65,7 +95,18 @@ class tests.PMFOUnit abstract:
     method protected void StopPMFO ( ):
         /* Run standard "sessionShutdownProc". */
         run Spark/shutdown.p.
-        
+
+        if profiler:enabled then do:
+            /* Turn off the profiler, if enabled. */
+            assign
+                profiler:profiling = false
+                profiler:enabled   = false
+                .
+
+            /* Make sure you actually WRITE the data out. */
+            profiler:write-data().
+        end. /* profiler:enabled */
+
         catch err as Progress.Lang.Error:
             OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
         end catch.

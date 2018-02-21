@@ -295,6 +295,24 @@ class Business.UserData inherits Spark.Core.Service.SparkEntity:
 
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
+    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/roles", alias="roles", mediaType="application/json").
+    method public void getRoles ( input  clientID     as character,
+                                  output allowedRoles as JsonArray ):
+        define variable cRoles as character no-undo.
+        define variable iX     as integer   no-undo.
+
+        allowedRoles = new JsonArray(). /* Set to empty array. */
+
+        if valid-object(oClientContext) then do:
+            assign cRoles = oClientContext:clientPrincipal:roles.
+            do iX = 1 to num-entries(cRoles):
+                allowedRoles:Add(substitute("&1:&2", clientID, substring(entry(iX, cRoles), 6))).
+            end. /* iX */
+        end. /* valid-object */
+    end method. /* getRoles */
+
+
+    @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/session", alias="session", mediaType="application/json").
     method public void getSessionInfo ( output anonymous        as logical,
                                         output dateFormat       as character,

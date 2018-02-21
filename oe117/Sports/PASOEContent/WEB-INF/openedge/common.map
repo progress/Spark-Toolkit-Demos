@@ -622,6 +622,40 @@
             }
           }
         },
+        "\/user\/roles": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UserData",
+              "function": "getRoles",
+              "arg": [
+                {
+                  "ablName": "clientID",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "clientID"
+                  }
+                },
+                {
+                  "ablName": "allowedRoles",
+                  "ablType": "class Progress.Json.ObjectModel.JsonArray",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "allowedRoles"
+                  }
+                }
+              ]
+            }
+          }
+        },
         "\/user\/password": {
           "PUT": {
             "contentType": "application\/json",
