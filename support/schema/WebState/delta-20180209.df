@@ -1,0 +1,25 @@
+DROP FIELD "FirstLogin" OF "WebProfile"
+ADD FIELD "FirstLogin" OF "WebProfile" AS datetime-tz
+  DESCRIPTION "Date/time at First Login"
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  POSITION 41
+  INITIAL ?
+  LABEL "First Time Login"
+  ORDER 310
+  MAX-WIDTH 12
+
+DROP FIELD "LastLogin" OF "WebProfile"
+ADD FIELD "LastLogin" OF "WebProfile" AS datetime-tz
+  DESCRIPTION "Date/time of last successful login"
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  POSITION 44
+  INITIAL ?
+  LABEL "Last Login"
+  ORDER 320
+  MAX-WIDTH 12
+
+.
+PSC
+cpstream=UTF-8
+.
+0000000539

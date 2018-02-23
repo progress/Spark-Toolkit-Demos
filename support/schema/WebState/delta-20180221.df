@@ -1,0 +1,67 @@
+DROP TABLE "WebAgentControl"
+DROP TABLE "WebBatchJobHeader"
+DROP TABLE "WebBatchJobHistory"
+DROP TABLE "WebBatchJobParameter"
+DROP TABLE "WebBatchJobQueue"
+DROP TABLE "WebSemaphore"
+
+ADD INDEX "pukWebContext" ON "WebContext"
+  AREA "Index Area"
+  UNIQUE
+  INDEX-FIELD "IdentityName" ASCENDING
+  INDEX-FIELD "ContextType" ASCENDING
+  INDEX-FIELD "ContextViewID" ASCENDING
+  INDEX-FIELD "ContextTitle" ASCENDING
+  INDEX-FIELD "ContextSeqNo" ASCENDING
+
+UPDATE PRIMARY INDEX "pukWebContext" ON "WebContext"
+
+DROP INDEX "pkWebContext" ON "WebContext"
+
+RENAME INDEX "pkDataStore" TO "pukDataStore" ON "WebDataStore"
+
+
+RENAME INDEX "pkFileStore" TO "pukFileStore" ON "WebFileStore"
+
+
+RENAME INDEX "pkTypeCode" TO "pukTypeCode" ON "WebLookup"
+
+
+RENAME INDEX "pkMenuItem" TO "pukMenuItem" ON "WebMenu"
+
+
+RENAME INDEX "pkDomainUser" TO "pukDomainUser" ON "WebProfile"
+
+
+RENAME INDEX "pkRoleID" TO "pukRoleID" ON "WebRole"
+
+
+RENAME INDEX "pkRoleProfile" TO "pukRoleProfile" ON "WebRoleProfile"
+
+
+RENAME INDEX "pkRoleTask" TO "pukRoleTask" ON "WebRoleTask"
+
+
+RENAME INDEX "pkObjectID" TO "pukObjectID" ON "WebSearch"
+
+
+RENAME INDEX "pkWebSession" TO "pukWebSession" ON "WebSession"
+
+
+RENAME INDEX "pkSessionAttribute" TO "pukSessionAttribute" ON "WebSessionAttribute"
+
+
+RENAME INDEX "pkWebSessionStat" TO "pukWebSessionStat" ON "WebSessionStat"
+
+
+RENAME INDEX "pkSetting" TO "pukSetting" ON "WebSetting"
+
+
+RENAME INDEX "pkTextLang" TO "pukTextLang" ON "WebTranslate"
+
+
+.
+PSC
+cpstream=UTF-8
+.
+0000001522
