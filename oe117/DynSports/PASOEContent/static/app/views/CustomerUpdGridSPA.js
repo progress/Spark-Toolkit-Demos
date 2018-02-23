@@ -9,6 +9,8 @@ var CustomerUpdGridSPACtrl = (function(){
     var gridName = "MasterGrid";
     var viewName = "#CustomerUpdGridSPAView";
     var searchOnLoad = true;
+    var viewStateJSDO = null;
+    var viewStateID = null;
     var viewState = null;
 
     var primaryVM = kendo.observable({
@@ -54,15 +56,39 @@ var CustomerUpdGridSPACtrl = (function(){
 
     function fetchViewState(){
         var promise = $.Deferred();
-        var fetchViewStateJSDO = spark.createJSDO("user");
+        var query = {
+            client: "KendoUI",
+            filter: {
+                logic: "and",
+                filters: [{
+                    field: "ContextType",
+                    operator: "equals",
+                    value: "grid"
+                }, {
+                    field: "ContextViewID",
+                    operator: "equals",
+                    value: viewName
+                }, {
+                    field: "ContextTitle",
+                    operator: "equals",
+                    value: gridName
+                }, {
+                    field: "ContextSeqNo",
+                    operator: "equals",
+                    value: 1
+                }]
+            }
+        };
 
-        fetchViewStateJSDO.invoke("contextFetch", {contextName: "grid:" + viewName})
+        viewStateJSDO.fill(JSON.stringify(query))
             .then(function(jsdo, result, request){
-                var myViewState = (request.response || {}).contextValue || null;
-                myViewState = myViewState ? JSON.parse(myViewState.replace(/\\\"/g, "\"")) : {};
-                promise.resolve(myViewState);
+                var dsWebContext = (request.response || {}).dsWebContext || {};
+                var ttWebContext = (dsWebContext.ttWebContext || [])[0] || {};
+                var myViewState = ttWebContext.ContextData || ""; // Get stringified data.
+                myViewState = myViewState !== "" ? JSON.parse(myViewState.replace(/\\\"/g, "\"")) : {};
+                promise.resolve(ttWebContext._id || null, myViewState);
             }, function() {
-                promise.resolve({});
+                promise.resolve(null, {});
             });
 
         return promise;
@@ -70,13 +96,28 @@ var CustomerUpdGridSPACtrl = (function(){
 
     function saveViewState(){
         var promise = $.Deferred();
-        var storeViewStateJSDO = spark.createJSDO("user");
 
         var grid = $(viewName + " div[name=" + gridName + "]").data("kendoGrid");
-        viewState[gridName] = spark.grid.getViewState(grid);
+        viewState = spark.grid.getViewState(grid);
 
-        var params = {contextName: "grid:" + viewName, contextValue: JSON.stringify(viewState)};
-        storeViewStateJSDO.invoke("contextStore", params)
+        // Locate the context record for this view's primary grid.
+        var jsrecord = viewStateJSDO.findById(viewStateID);
+        if (jsrecord) {
+            // Modify and save the currently-available record.
+            jsrecord.ContextData = JSON.stringify(viewState);
+            viewStateJSDO.assign(jsrecord);
+        } else {
+            // Otherwise create a new context record.
+            jsrecord = {
+                ContextType: "grid",
+                ContextViewID: viewName,
+                ContextTitle: gridName,
+                ContextSeqNo: 1,
+                ContextData: JSON.stringify(viewState)
+            };
+            viewStateJSDO.add(jsrecord);
+        }
+        viewStateJSDO.saveChanges(true)
             .always(function(){
                 promise.resolve();
             });
@@ -89,9 +130,9 @@ var CustomerUpdGridSPACtrl = (function(){
         if (!_primaryDS) {
             _primaryDS = spark.createJSDODataSource(resourceName, {
                 pageSize: 20,
-                filter: (viewState[gridName] && viewState[gridName].filter) ? viewState[gridName].filter : null,
-                group: (viewState[gridName] && viewState[gridName].group) ? viewState[gridName].group : [],
-                sort: (viewState[gridName] && viewState[gridName].sort) ? viewState[gridName].sort : {field: searchField1, dir: "asc"},
+                filter: (viewState && viewState.filter) ? viewState.filter : null,
+                group: (viewState && viewState.group) ? viewState.group : [],
+                sort: (viewState && viewState.sort) ? viewState.sort : {field: searchField1, dir: "asc"},
                 tableRef: tableName,
                 onBeforeFill: function(jsdo, request){
                     // Add context to the filter parameter in the request.
@@ -249,15 +290,15 @@ var CustomerUpdGridSPACtrl = (function(){
 
         var grid = $(viewName + " div[name=" + gridName + "]").kendoGrid({
             autoBind: false,
-            columns: (viewState[gridName] && viewState[gridName].columns) ? viewState[gridName].columns : gridColumns,
+            columns: (viewState && viewState.columns) ? viewState.columns : gridColumns,
             columnMenu: true,
             dataSource: getDataSource(),
             editable: "inline",
             excel: {
                 allPages: true,
                 fileName: "Kendo UI Grid Export.xlsx",
-                proxyURL: "http://demos.telerik.com/kendo-ui/service/export",
-                filterable: true
+                filterable: true,
+                proxyURL: "http://demos.telerik.com/kendo-ui/service/export"
             },
             filterable: true,
             groupable: true,
@@ -315,8 +356,11 @@ var CustomerUpdGridSPACtrl = (function(){
 
     var salesReps = [];
     function init(){
+        // Create the JSDO for view-state management.
+        viewStateJSDO = spark.createJSDO("context");
         fetchViewState()
-            .then(function(myViewState){
+            .then(function(myStateID, myViewState){
+                viewStateID = myStateID;
                 viewState = myViewState;
 
                 // Bind the observable to the view.

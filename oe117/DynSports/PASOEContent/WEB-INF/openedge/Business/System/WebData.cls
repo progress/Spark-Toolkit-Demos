@@ -42,6 +42,7 @@ class Business.System.WebData inherits Spark.Core.Service.DynamicEntity:
         initial "ReadOnly" no-undo get.
         protected set.
 
+
     method public override void initialize ( ):
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.
@@ -52,6 +53,7 @@ class Business.System.WebData inherits Spark.Core.Service.DynamicEntity:
 
         delete object oFieldProps no-error.
     end method. /* initialize */
+
 
     constructor public WebData ( ):
         ProDataSet = dataset dsWebDataStore:handle.

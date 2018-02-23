@@ -42,6 +42,7 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity:
         initial "CRUD,Submit" no-undo get.
         protected set.
 
+
     method public override void initialize ( ):
         /* Describe any properties about invoke methods to be exposed. */
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
@@ -59,6 +60,7 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity:
         Spark.Core.Util.Annotate:describeFields(oFieldProps).
         delete object oFieldProps no-error.
     end method. /* initialize */
+
 
     constructor public WebProfileBE ( ):
         ProDataSet = dataset dsWebProfile:handle.

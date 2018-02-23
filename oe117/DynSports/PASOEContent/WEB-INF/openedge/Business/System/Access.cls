@@ -38,6 +38,7 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
         field accessRule    as character
         . /* No index, use in the given order! */
 
+
     method private character getRulesFilename ( ):
         define variable cWebApp as character no-undo.
 
@@ -45,6 +46,7 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
         assign cWebApp = substitute("&1/webapps/&2", right-trim(OSTools:catalinaBase, "/"), "{&WEBAPP_NAME}").
         return substitute("&1/WEB-INF/oeablSecurity.csv", cWebApp).
     end method. /* getRulesFilename */
+
 
     method private void readInterceptRules ( ):
         define variable cLine as character no-undo.
@@ -169,6 +171,7 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "setInterceptRules", "apply", "put").
     end method. /* initialize */
 
+
     method public void getInterceptRules ( output table for rules ):
         define variable cRule as character no-undo.
 
@@ -209,6 +212,7 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
             end case.
         end. /* for each ttLine */
     end method. /* getInterceptRules */
+
 
     method public void setInterceptRules ( input  table for rules,
                                            output success as logical ):

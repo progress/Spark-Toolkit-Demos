@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Thu Feb 01 15:01:47 EST 2018",
+  "lastModified": "Wed Feb 21 11:56:36 EST 2018",
   "services": [
     {
       "name": "common",
@@ -303,23 +303,6 @@
               ]
             },
             {
-              "name": "roles",
-              "path": "\/roles",
-              "useBeforeImage": false,
-              "type": "invoke",
-              "verb": "put",
-              "params": [
-                {
-                  "name": "clientID",
-                  "type": "REQUEST_BODY"
-                },
-                {
-                  "name": "allowedRoles",
-                  "type": "RESPONSE_BODY"
-                }
-              ]
-            },
-            {
               "name": "password",
               "path": "\/password",
               "useBeforeImage": false,
@@ -442,6 +425,167 @@
                 },
                 {
                   "name": "states",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "context",
+          "path": "\/context",
+          "autoSave": false,
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "dsWebContext": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ttWebContext": {
+                    "type": "array",
+                    "primaryKey": [
+                      "IdentityName",
+                      "ContextType",
+                      "ContextViewID",
+                      "ContextTitle",
+                      "ContextSeqNo"
+                    ],
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "_id": {
+                          "type": "string",
+                          "semanticType": "Internal"
+                        },
+                        "_errorString": {
+                          "type": "string",
+                          "semanticType": "Internal"
+                        },
+                        "id": {
+                          "type": "string",
+                          "ablType": "CHARACTER",
+                          "default": "",
+                          "title": "id",
+                          "semanticType": "Internal"
+                        },
+                        "seq": {
+                          "type": "integer",
+                          "ablType": "INTEGER",
+                          "default": null,
+                          "title": "seq",
+                          "semanticType": "Internal"
+                        },
+                        "IdentityName": {
+                          "type": "string",
+                          "ablType": "CHARACTER",
+                          "default": "",
+                          "title": "Identity Name"
+                        },
+                        "ContextType": {
+                          "type": "string",
+                          "ablType": "CHARACTER",
+                          "default": "",
+                          "title": "Type"
+                        },
+                        "ContextViewID": {
+                          "type": "string",
+                          "ablType": "CHARACTER",
+                          "default": "",
+                          "title": "View ID"
+                        },
+                        "ContextTitle": {
+                          "type": "string",
+                          "ablType": "CHARACTER",
+                          "default": "",
+                          "title": "Title"
+                        },
+                        "ContextSeqNo": {
+                          "type": "integer",
+                          "ablType": "INTEGER",
+                          "default": 0,
+                          "title": "Sequence"
+                        },
+                        "ContextData": {
+                          "type": "string",
+                          "ablType": "CHARACTER",
+                          "default": "",
+                          "title": "Data"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "operations": [
+            {
+              "name": "submit",
+              "path": "\/submit",
+              "useBeforeImage": true,
+              "type": "submit",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "dsWebContext",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "dsWebContext",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "path": "?filter={filter}",
+              "useBeforeImage": true,
+              "type": "read",
+              "verb": "get",
+              "mappingType": "AFP",
+              "capabilities": "filter,top,skip,id,sort,orderBy",
+              "params": [
+                {
+                  "name": "filter",
+                  "type": "QUERY"
+                },
+                {
+                  "name": "dsWebContext",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "count",
+              "path": "\/count?filter={filter}",
+              "useBeforeImage": false,
+              "type": "count",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "filter",
+                  "type": "QUERY"
+                },
+                {
+                  "name": "numRecs",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "roles",
+              "path": "\/roles",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "clientID",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "allowedRoles",
                   "type": "RESPONSE_BODY"
                 }
               ]

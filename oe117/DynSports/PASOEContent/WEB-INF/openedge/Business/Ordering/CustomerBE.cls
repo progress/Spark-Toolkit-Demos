@@ -66,6 +66,7 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity:
 
     define private variable iCustNum as integer no-undo.
 
+
     method public override void initialize ( ):
         /* Describe any properties about invoke methods to be exposed. */
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
@@ -82,6 +83,7 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity:
         Spark.Core.Util.Annotate:describeFields(oFieldProps).
         delete object oFieldProps no-error.
     end method. /* initialize */
+
 
     constructor public CustomerBE ( ):
         ProDataSet = dataset dsCustomer:handle.
@@ -227,6 +229,7 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity:
         end finally.
     end method. /* preCommitLogic */
 
+
     method protected override void postCommitLogic ( input pcAction as character,
                                                      input-output dataset-handle phDataset ):
         /* When explicitly a delete and primary key available, delete child records. */
@@ -242,6 +245,7 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity:
             end. /* OrderLine */
         end. /* Order */
     end method. /* postCommitLogic */
+
 
     method public void getCount ( input filter as character, output numRecs as int64 ):
         assign numRecs = filterData(filter).

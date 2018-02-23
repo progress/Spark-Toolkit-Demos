@@ -41,10 +41,12 @@ class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity:
         initial "ReadOnly" no-undo get.
         protected set.
 
+
     method public override void initialize ( ):
         /* Describe any properties about invoke methods to be exposed. */
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
     end method. /* initialize */
+
 
     constructor public WebRoleBE ( ):
         ProDataSet = dataset dsWebRole:handle.

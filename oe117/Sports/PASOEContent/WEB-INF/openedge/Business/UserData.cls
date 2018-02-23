@@ -1,6 +1,6 @@
 /*------------------------------------------------------------------------
     File        : UserData
-    Purpose     : Simple class for User context data
+    Purpose     : Simple class for direct User data
     Author(s)   : Dustin Grau (dugrau@progress.com)
     Created     : Wed May 13 15:21:07 EST 2015
     Notes       :
@@ -292,24 +292,6 @@ class Business.UserData inherits Spark.Core.Service.SparkEntity:
             delete object oParser no-error.
         end finally.
     end method. /* getMenu */
-
-
-    @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
-    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/roles", alias="roles", mediaType="application/json").
-    method public void getRoles ( input  clientID     as character,
-                                  output allowedRoles as JsonArray ):
-        define variable cRoles as character no-undo.
-        define variable iX     as integer   no-undo.
-
-        allowedRoles = new JsonArray(). /* Set to empty array. */
-
-        if valid-object(oClientContext) then do:
-            assign cRoles = oClientContext:clientPrincipal:roles.
-            do iX = 1 to num-entries(cRoles):
-                allowedRoles:Add(substitute("&1:&2", clientID, substring(entry(iX, cRoles), 6))).
-            end. /* iX */
-        end. /* valid-object */
-    end method. /* getRoles */
 
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").

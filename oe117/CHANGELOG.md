@@ -11,8 +11,9 @@
 - Supports new UnloadEntity event for DOH, will only utilize code when OE version matches.
 - Add example of menu logic to output role-sensitive options for System management.
 - Move some maintenance classes to a new System service (manage accounts, security, etc.).
-- Add a maintenance screen for adjusting InterceptURI rules via oeablSecurity.csv file (in OE11.7).	
+- Add a maintenance screen for adjusting InterceptURI rules via oeablSecurity.csv file (in OE11.7).
 - Implement a copy of DynSports as just "Sports" using only DOH web services as available in PDS.
+- Implement a UserContext class as example for storing persistent front-end options for a user.
 
 
 ### v4.1.1

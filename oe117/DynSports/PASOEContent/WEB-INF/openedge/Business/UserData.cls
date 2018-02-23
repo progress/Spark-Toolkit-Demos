@@ -1,6 +1,6 @@
 /*------------------------------------------------------------------------
     File        : UserData
-    Purpose     : Simple class for User context data
+    Purpose     : Simple class for direct User data
     Author(s)   : Dustin Grau (dugrau@progress.com)
     Created     : Wed May 13 15:21:07 EST 2015
     Notes       :
@@ -27,7 +27,6 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
     method public override void initialize ( ):
         /* Describe any properties about invoke methods to be exposed. */
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getMenu", "menu", "get").
-        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getRoles", "roles", "put").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getSessionInfo", "session", "get").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getTranslations", "translations", "put").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "changePassword", "password", "put").
@@ -300,22 +299,6 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
             delete object oParser no-error.
         end finally.
     end method. /* getMenu */
-
-
-    method public void getRoles ( input  clientID     as character,
-                                  output allowedRoles as JsonArray ):
-        define variable cRoles as character no-undo.
-        define variable iX     as integer   no-undo.
-
-        allowedRoles = new JsonArray(). /* Set to empty array. */
-
-        if valid-object(oClientContext) then do:
-            assign cRoles = oClientContext:clientPrincipal:roles.
-            do iX = 1 to num-entries(cRoles):
-                allowedRoles:Add(substitute("&1:&2", clientID, substring(entry(iX, cRoles), 6))).
-            end. /* iX */
-        end. /* valid-object */
-    end method. /* getRoles */
 
 
     method public void getSessionInfo ( output anonymous        as logical,

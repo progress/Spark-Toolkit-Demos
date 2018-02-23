@@ -43,6 +43,7 @@ class Business.Personnel.EmployeeBE inherits Spark.Core.Service.DynamicEntity:
         initial "CRUD,Submit" no-undo get.
         protected set.
 
+
     method public override void initialize ( ):
         /* Describe any properties about invoke methods to be exposed. */
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
@@ -54,6 +55,7 @@ class Business.Personnel.EmployeeBE inherits Spark.Core.Service.DynamicEntity:
         Spark.Core.Util.Annotate:describeFields(oFieldProps).
         delete object oFieldProps no-error.
     end method. /* initialize */
+
 
     constructor public EmployeeBE ( ):
         ProDataSet = dataset dsEmployee:handle.
@@ -70,6 +72,7 @@ class Business.Personnel.EmployeeBE inherits Spark.Core.Service.DynamicEntity:
         SkipListArray[1] = "".
         SkipList = SkipListArray.
     end constructor.
+
 
     method public void getCount ( input filter as character, output numRecs as int64 ):
         assign numRecs = filterData(filter).

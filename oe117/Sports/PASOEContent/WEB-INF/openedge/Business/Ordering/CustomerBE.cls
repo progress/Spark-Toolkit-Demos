@@ -163,6 +163,7 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.SparkEntity:
         end finally.
     end method. /* preCommitLogic */
 
+
     method protected override void postCommitLogic ( input pcAction as character,
                                                      input-output dataset-handle phDataset ):
         /* When explicitly a delete and primary key available, delete child records. */

@@ -622,40 +622,6 @@
             }
           }
         },
-        "\/user\/roles": {
-          "PUT": {
-            "contentType": "application\/json",
-            "options": {
-              "writeBI": false,
-              "requestEnvelope": false,
-              "responseEnvelope": false
-            },
-            "entity": {
-              "name": "Business.UserData",
-              "function": "getRoles",
-              "arg": [
-                {
-                  "ablName": "clientID",
-                  "ablType": "CHARACTER",
-                  "ioMode": "INPUT",
-                  "msgElem": {
-                    "type": "field",
-                    "name": "clientID"
-                  }
-                },
-                {
-                  "ablName": "allowedRoles",
-                  "ablType": "class Progress.Json.ObjectModel.JsonArray",
-                  "ioMode": "OUTPUT",
-                  "msgElem": {
-                    "type": "field",
-                    "name": "allowedRoles"
-                  }
-                }
-              ]
-            }
-          }
-        },
         "\/user\/password": {
           "PUT": {
             "contentType": "application\/json",
@@ -874,9 +840,199 @@
               ]
             }
           }
+        },
+        "\/context": {
+          "GET": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": true
+            },
+            "entity": {
+              "name": "Business.UserContext",
+              "function": "ReadContext",
+              "arg": [
+                {
+                  "ablName": "filter",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "QUERY",
+                    "name": "filter"
+                  }
+                },
+                {
+                  "ablName": "dsWebContext",
+                  "ablType": "DATASET",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "BODY",
+                    "name": null
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/context\/submit": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": true
+            },
+            "entity": {
+              "name": "Business.UserContext",
+              "function": "SubmitContext",
+              "arg": [
+                {
+                  "ablName": "dsWebContext",
+                  "ablType": "DATASET",
+                  "ioMode": "INPUT-OUTPUT",
+                  "msgElem": {
+                    "type": "BODY",
+                    "name": null
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/context\/count": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false
+            },
+            "entity": {
+              "name": "Business.UserContext",
+              "function": "getCount",
+              "arg": [
+                {
+                  "ablName": "filter",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "QUERY",
+                    "name": "filter"
+                  }
+                },
+                {
+                  "ablName": "numRecs",
+                  "ablType": "INTEGER",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "numRecs"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/context\/roles": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UserContext",
+              "function": "getRoles",
+              "arg": [
+                {
+                  "ablName": "clientID",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "clientID"
+                  }
+                },
+                {
+                  "ablName": "allowedRoles",
+                  "ablType": "class Progress.Json.ObjectModel.JsonArray",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "allowedRoles"
+                  }
+                }
+              ]
+            }
+          }
         }
       },
       "schemas": {
+        "dsWebContext": {
+          "ttWebContext": {
+            "trackChanges": true,
+            "indexes": {
+              "pkSeq": {
+                "primary": true,
+                "unique": true,
+                "word": false,
+                "fields": [
+                  "seq:asc"
+                ]
+              },
+              "idxpkWebContext": {
+                "primary": false,
+                "unique": false,
+                "word": false,
+                "fields": [
+                  "IdentityName:asc",
+                  "ContextType:asc",
+                  "ContextViewID:asc",
+                  "ContextTitle:asc",
+                  "ContextSeqNo:asc"
+                ]
+              }
+            },
+            "fields": [
+              {
+                "name": "id",
+                "ablType": "CHARACTER",
+                "extent": null
+              },
+              {
+                "name": "seq",
+                "ablType": "INTEGER",
+                "extent": null
+              },
+              {
+                "name": "IdentityName",
+                "ablType": "CHARACTER",
+                "extent": null
+              },
+              {
+                "name": "ContextType",
+                "ablType": "CHARACTER",
+                "extent": null
+              },
+              {
+                "name": "ContextViewID",
+                "ablType": "CHARACTER",
+                "extent": null
+              },
+              {
+                "name": "ContextTitle",
+                "ablType": "CHARACTER",
+                "extent": null
+              },
+              {
+                "name": "ContextSeqNo",
+                "ablType": "INTEGER",
+                "extent": null
+              },
+              {
+                "name": "ContextData",
+                "ablType": "CHARACTER",
+                "extent": null
+              }
+            ]
+          }
+        }
       }
     }
   }
