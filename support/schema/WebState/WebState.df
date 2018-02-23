@@ -13,111 +13,6 @@ ADD SEQUENCE "WebBatchJobHistorySeq"
   INCREMENT 5
   CYCLE-ON-LIMIT no
 
-ADD TABLE "WebAgentControl"
-  AREA "Data Area"
-  DESCRIPTION "Listing of agents running batch processes"
-  DUMP-NAME "WebAgentControl"
-
-ADD FIELD "AgentNum" OF "WebAgentControl" AS integer 
-  FORMAT "999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 10
-
-ADD FIELD "AgentStatus" OF "WebAgentControl" AS character 
-  FORMAT "x(25)"
-  INITIAL ""
-  MAX-WIDTH 50
-  ORDER 20
-
-ADD FIELD "ReqShutdown" OF "WebAgentControl" AS logical 
-  FORMAT "yes/no"
-  INITIAL "no"
-  MAX-WIDTH 1
-  ORDER 60
-
-ADD FIELD "NumJobsProcessed" OF "WebAgentControl" AS integer 
-  FORMAT "9999999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 80
-
-ADD FIELD "NapInterval" OF "WebAgentControl" AS integer 
-  FORMAT "99"
-  INITIAL "10"
-  MAX-WIDTH 4
-  ORDER 50
-
-ADD FIELD "ApplicationNum" OF "WebAgentControl" AS integer 
-  FORMAT "9999999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 70
-
-ADD FIELD "StartDate" OF "WebAgentControl" AS datetime-tz 
-  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
-  INITIAL ?
-  MAX-WIDTH 12
-  ORDER 40
-
-ADD FIELD "add_userid" OF "WebAgentControl" AS character 
-  DESCRIPTION "User ID of the person who added this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 110
-
-ADD FIELD "chg_dt" OF "WebAgentControl" AS date 
-  DESCRIPTION "Date record was changed"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 120
-
-ADD FIELD "chg_time" OF "WebAgentControl" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 130
-
-ADD FIELD "chg_userid" OF "WebAgentControl" AS character 
-  DESCRIPTION "User ID of the person who last changed this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 140
-
-ADD FIELD "add_dt" OF "WebAgentControl" AS date 
-  DESCRIPTION "Date record was added"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 90
-
-ADD FIELD "add_time" OF "WebAgentControl" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 100
-
-ADD FIELD "AgentPID" OF "WebAgentControl" AS integer 
-  FORMAT ">>>>999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 30
-
-ADD INDEX "pkAgentKey" ON "WebAgentControl" 
-  AREA "Index Area"
-  UNIQUE
-  PRIMARY
-  INDEX-FIELD "AgentNum" ASCENDING 
-
-ADD INDEX "idxPID" ON "WebAgentControl" 
-  AREA "Index Area"
-  INDEX-FIELD "AgentPID" ASCENDING 
-
 ADD TABLE "WebAuditLog"
   AREA "Data Area"
   DESCRIPTION "User activity log, providing link between session and user profile tables"
@@ -265,407 +160,6 @@ ADD INDEX "wiLogDesc" ON "WebAuditLog"
   WORD
   INDEX-FIELD "LogDesc" ASCENDING 
 
-ADD TABLE "WebBatchJobHeader"
-  AREA "Data Area"
-  DESCRIPTION "Header table for batch jobs"
-  DUMP-NAME "WebBatchJobHeader"
-
-ADD FIELD "BatchJobID" OF "WebBatchJobHeader" AS int64 
-  FORMAT "zzzzzzzz9"
-  INITIAL "0"
-  LABEL "ID"
-  MAX-WIDTH 8
-  ORDER 10
-
-ADD FIELD "Description" OF "WebBatchJobHeader" AS character 
-  FORMAT "x(35)"
-  INITIAL ""
-  MAX-WIDTH 70
-  ORDER 80
-
-ADD FIELD "Active" OF "WebBatchJobHeader" AS logical 
-  FORMAT "Active/Inactive"
-  INITIAL "Active"
-  MAX-WIDTH 1
-  ORDER 20
-
-ADD FIELD "RunOnce" OF "WebBatchJobHeader" AS logical 
-  FORMAT "yes/no"
-  INITIAL "no"
-  MAX-WIDTH 1
-  ORDER 60
-
-ADD FIELD "TaskName" OF "WebBatchJobHeader" AS character 
-  FORMAT "x(65)"
-  INITIAL ""
-  MAX-WIDTH 130
-  ORDER 70
-
-ADD FIELD "TimeOfDay" OF "WebBatchJobHeader" AS integer 
-  FORMAT ">>>>>>9"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 50
-
-ADD FIELD "DateToRun" OF "WebBatchJobHeader" AS date 
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 30
-
-ADD FIELD "DayOfWeek" OF "WebBatchJobHeader" AS character 
-  FORMAT "x(35)"
-  INITIAL ""
-  MAX-WIDTH 70
-  ORDER 40
-
-ADD FIELD "LastQueued" OF "WebBatchJobHeader" AS datetime 
-  FORMAT "99/99/9999 HH:MM:SS"
-  INITIAL ?
-  MAX-WIDTH 8
-  ORDER 90
-
-ADD FIELD "add_time" OF "WebBatchJobHeader" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 110
-
-ADD FIELD "add_userid" OF "WebBatchJobHeader" AS character 
-  DESCRIPTION "User ID of the person who added this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 120
-
-ADD FIELD "chg_dt" OF "WebBatchJobHeader" AS date 
-  DESCRIPTION "Date record was changed"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 130
-
-ADD FIELD "chg_time" OF "WebBatchJobHeader" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 140
-
-ADD FIELD "chg_userid" OF "WebBatchJobHeader" AS character 
-  DESCRIPTION "User ID of the person who last changed this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 150
-
-ADD FIELD "add_dt" OF "WebBatchJobHeader" AS date 
-  DESCRIPTION "Date record was added"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 100
-
-ADD INDEX "pkBatchJobID" ON "WebBatchJobHeader" 
-  AREA "Index Area"
-  UNIQUE
-  PRIMARY
-  INDEX-FIELD "BatchJobID" ASCENDING 
-
-ADD INDEX "idxDateToRun" ON "WebBatchJobHeader" 
-  AREA "Index Area"
-  INDEX-FIELD "Active" ASCENDING 
-  INDEX-FIELD "DateToRun" ASCENDING 
-
-ADD INDEX "idxDOW" ON "WebBatchJobHeader" 
-  AREA "Index Area"
-  WORD
-  INDEX-FIELD "DayOfWeek" ASCENDING 
-
-ADD TABLE "WebBatchJobHistory"
-  AREA "Data Area"
-  DESCRIPTION "History table for batch jobs"
-  DUMP-NAME "WebBatchJobHistory"
-
-ADD FIELD "BatchJobID" OF "WebBatchJobHistory" AS int64 
-  FORMAT "zzzzzzzz9"
-  INITIAL "0"
-  LABEL "ID"
-  MAX-WIDTH 8
-  ORDER 20
-
-ADD FIELD "BatchJobStatus" OF "WebBatchJobHistory" AS character 
-  FORMAT "x(20)"
-  INITIAL ""
-  MAX-WIDTH 40
-  ORDER 30
-
-ADD FIELD "JobErrors" OF "WebBatchJobHistory" AS character 
-  FORMAT "x(35)"
-  INITIAL ""
-  MAX-WIDTH 174
-  ORDER 60
-
-ADD FIELD "HistoryID" OF "WebBatchJobHistory" AS int64 
-  FORMAT "zzzzzzzz9"
-  INITIAL "0"
-  LABEL "ID"
-  MAX-WIDTH 8
-  ORDER 10
-
-ADD FIELD "TaskName" OF "WebBatchJobHistory" AS character 
-  FORMAT "x(65)"
-  INITIAL ""
-  MAX-WIDTH 130
-  ORDER 50
-
-ADD FIELD "add_dt" OF "WebBatchJobHistory" AS date 
-  DESCRIPTION "Date record was added"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 70
-
-ADD FIELD "add_time" OF "WebBatchJobHistory" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 80
-
-ADD FIELD "add_userid" OF "WebBatchJobHistory" AS character 
-  DESCRIPTION "User ID of the person who added this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 90
-
-ADD FIELD "chg_dt" OF "WebBatchJobHistory" AS date 
-  DESCRIPTION "Date record was changed"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 100
-
-ADD FIELD "chg_time" OF "WebBatchJobHistory" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 110
-
-ADD FIELD "chg_userid" OF "WebBatchJobHistory" AS character 
-  DESCRIPTION "User ID of the person who last changed this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 120
-
-ADD FIELD "RunDate" OF "WebBatchJobHistory" AS date 
-  FORMAT "99/99/99"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 40
-
-ADD INDEX "pkHistoryID" ON "WebBatchJobHistory" 
-  AREA "Index Area"
-  UNIQUE
-  PRIMARY
-  INDEX-FIELD "HistoryID" ASCENDING 
-
-ADD INDEX "idxBatchJobHist" ON "WebBatchJobHistory" 
-  AREA "Index Area"
-  INDEX-FIELD "BatchJobID" ASCENDING 
-  INDEX-FIELD "RunDate" ASCENDING 
-
-ADD INDEX "idxRunDate" ON "WebBatchJobHistory" 
-  AREA "Index Area"
-  INDEX-FIELD "RunDate" ASCENDING 
-
-ADD TABLE "WebBatchJobParameter"
-  AREA "Data Area"
-  DESCRIPTION "Parameters for batch jobs"
-  DUMP-NAME "WebBatchJobParameter"
-
-ADD FIELD "BatchJobID" OF "WebBatchJobParameter" AS int64 
-  FORMAT "zzzzzzzz9"
-  INITIAL "0"
-  LABEL "ID"
-  MAX-WIDTH 8
-  ORDER 10
-
-ADD FIELD "ParamSeq" OF "WebBatchJobParameter" AS integer 
-  FORMAT "zzzz9"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 20
-
-ADD FIELD "ParamDataType" OF "WebBatchJobParameter" AS character 
-  FORMAT "x(15)"
-  INITIAL ""
-  MAX-WIDTH 30
-  ORDER 30
-
-ADD FIELD "ParamValue" OF "WebBatchJobParameter" AS character 
-  FORMAT "x(35)"
-  INITIAL ""
-  MAX-WIDTH 70
-  ORDER 60
-
-ADD FIELD "ParamName" OF "WebBatchJobParameter" AS character 
-  FORMAT "x(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 50
-
-ADD FIELD "add_dt" OF "WebBatchJobParameter" AS date 
-  DESCRIPTION "Date record was added"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 70
-
-ADD FIELD "add_time" OF "WebBatchJobParameter" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 80
-
-ADD FIELD "add_userid" OF "WebBatchJobParameter" AS character 
-  DESCRIPTION "User ID of the person who added this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 90
-
-ADD FIELD "chg_dt" OF "WebBatchJobParameter" AS date 
-  DESCRIPTION "Date record was changed"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 100
-
-ADD FIELD "chg_time" OF "WebBatchJobParameter" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 110
-
-ADD FIELD "chg_userid" OF "WebBatchJobParameter" AS character 
-  DESCRIPTION "User ID of the person who last changed this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 120
-
-ADD FIELD "ParamType" OF "WebBatchJobParameter" AS character 
-  FORMAT "x(12)"
-  INITIAL ""
-  MAX-WIDTH 24
-  ORDER 40
-
-ADD INDEX "pkIDSeq" ON "WebBatchJobParameter" 
-  AREA "Index Area"
-  UNIQUE
-  PRIMARY
-  INDEX-FIELD "BatchJobID" ASCENDING 
-  INDEX-FIELD "ParamSeq" ASCENDING 
-
-ADD INDEX "idxOptionType" ON "WebBatchJobParameter" 
-  AREA "Index Area"
-  INDEX-FIELD "ParamDataType" ASCENDING 
-
-ADD TABLE "WebBatchJobQueue"
-  AREA "Data Area"
-  DESCRIPTION "Queue for batch jobs"
-  DUMP-NAME "WebBatchJobQueue"
-
-ADD FIELD "BatchJobID" OF "WebBatchJobQueue" AS int64 
-  FORMAT "zzzzzzzz9"
-  INITIAL "0"
-  LABEL "ID"
-  MAX-WIDTH 8
-  ORDER 10
-
-ADD FIELD "DateToRun" OF "WebBatchJobQueue" AS date 
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 20
-
-ADD FIELD "TimeToRun" OF "WebBatchJobQueue" AS integer 
-  FORMAT ">>>>>>9"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 30
-
-ADD FIELD "LastQueued" OF "WebBatchJobQueue" AS datetime 
-  FORMAT "99/99/9999 HH:MM:SS"
-  INITIAL ?
-  MAX-WIDTH 8
-  ORDER 40
-
-ADD FIELD "JobStatus" OF "WebBatchJobQueue" AS character 
-  FORMAT "x(12)"
-  INITIAL ""
-  MAX-WIDTH 24
-  ORDER 50
-
-ADD FIELD "add_dt" OF "WebBatchJobQueue" AS date 
-  DESCRIPTION "Date record was added"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 60
-
-ADD FIELD "add_time" OF "WebBatchJobQueue" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 70
-
-ADD FIELD "add_userid" OF "WebBatchJobQueue" AS character 
-  DESCRIPTION "User ID of the person who added this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 80
-
-ADD FIELD "chg_dt" OF "WebBatchJobQueue" AS date 
-  DESCRIPTION "Date record was changed"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  MAX-WIDTH 4
-  ORDER 90
-
-ADD FIELD "chg_time" OF "WebBatchJobQueue" AS integer 
-  DESCRIPTION "Time this record was added"
-  FORMAT "99999"
-  INITIAL "0"
-  MAX-WIDTH 4
-  ORDER 100
-
-ADD FIELD "chg_userid" OF "WebBatchJobQueue" AS character 
-  DESCRIPTION "User ID of the person who last changed this record."
-  FORMAT "X(30)"
-  INITIAL ""
-  MAX-WIDTH 60
-  ORDER 110
-
-ADD INDEX "pkDateTime" ON "WebBatchJobQueue" 
-  AREA "Index Area"
-  PRIMARY
-  INDEX-FIELD "DateToRun" ASCENDING 
-  INDEX-FIELD "TimeToRun" ASCENDING 
-
-ADD INDEX "idxJobID" ON "WebBatchJobQueue" 
-  AREA "Index Area"
-  INDEX-FIELD "BatchJobID" ASCENDING 
-
 ADD TABLE "WebContext"
   AREA "Data Area"
   DESCRIPTION "User data to be persisted across web sessions"
@@ -719,8 +213,9 @@ ADD FIELD "ContextData" OF "WebContext" AS character
   MAX-WIDTH 200
   ORDER 60
 
-ADD INDEX "pkWebContext" ON "WebContext" 
+ADD INDEX "pukWebContext" ON "WebContext" 
   AREA "Index Area"
+  UNIQUE
   PRIMARY
   INDEX-FIELD "IdentityName" ASCENDING 
   INDEX-FIELD "ContextType" ASCENDING 
@@ -801,7 +296,7 @@ ADD FIELD "chg_userid" OF "WebDataStore" AS character
   MAX-WIDTH 60
   ORDER 90
 
-ADD INDEX "pkDataStore" ON "WebDataStore" 
+ADD INDEX "pukDataStore" ON "WebDataStore" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -892,7 +387,7 @@ ADD FIELD "FileSize" OF "WebFileStore" AS integer
   MAX-WIDTH 4
   ORDER 40
 
-ADD INDEX "pkFileStore" ON "WebFileStore" 
+ADD INDEX "pukFileStore" ON "WebFileStore" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1068,7 +563,7 @@ ADD FIELD "chg_userid" OF "WebLookup" AS character
   MAX-WIDTH 60
   ORDER 90
 
-ADD INDEX "pkTypeCode" ON "WebLookup" 
+ADD INDEX "pukTypeCode" ON "WebLookup" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1227,7 +722,7 @@ ADD FIELD "MenuID" OF "WebMenu" AS character
   MAX-WIDTH 40
   ORDER 70
 
-ADD INDEX "pkMenuItem" ON "WebMenu" 
+ADD INDEX "pukMenuItem" ON "WebMenu" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1456,14 +951,6 @@ ADD FIELD "SecurityRole" OF "WebProfile" AS character
   MAX-WIDTH 24
   ORDER 280
 
-ADD FIELD "LastLogin" OF "WebProfile" AS date 
-  DESCRIPTION "Date of last successful login"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  LABEL "Last Login"
-  MAX-WIDTH 4
-  ORDER 320
-
 ADD FIELD "ForcePWChange" OF "WebProfile" AS logical 
   DESCRIPTION "Force user to change their password at time of next login"
   FORMAT "yes/no"
@@ -1479,14 +966,6 @@ ADD FIELD "Comments" OF "WebProfile" AS character
   LABEL "Comments"
   MAX-WIDTH 120
   ORDER 300
-
-ADD FIELD "FirstLogin" OF "WebProfile" AS date 
-  DESCRIPTION "Date at First Login"
-  FORMAT "99/99/9999"
-  INITIAL ?
-  LABEL "First Time Login"
-  MAX-WIDTH 4
-  ORDER 310
 
 ADD FIELD "DomainName" OF "WebProfile" AS character 
   DESCRIPTION "Domain Name for Tenancy"
@@ -1590,7 +1069,23 @@ ADD FIELD "TFASecret" OF "WebProfile" AS character
   MAX-WIDTH 40
   ORDER 130
 
-ADD INDEX "pkDomainUser" ON "WebProfile" 
+ADD FIELD "FirstLogin" OF "WebProfile" AS datetime-tz 
+  DESCRIPTION "Date/time at First Login"
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "First Time Login"
+  MAX-WIDTH 12
+  ORDER 310
+
+ADD FIELD "LastLogin" OF "WebProfile" AS datetime-tz 
+  DESCRIPTION "Date/time of last successful login"
+  FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM"
+  INITIAL ?
+  LABEL "Last Login"
+  MAX-WIDTH 12
+  ORDER 320
+
+ADD INDEX "pukDomainUser" ON "WebProfile" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1676,7 +1171,7 @@ ADD FIELD "chg_userid" OF "WebRole" AS character
   MAX-WIDTH 60
   ORDER 80
 
-ADD INDEX "pkRoleID" ON "WebRole" 
+ADD INDEX "pukRoleID" ON "WebRole" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1745,7 +1240,7 @@ ADD FIELD "chg_userid" OF "WebRoleProfile" AS character
   MAX-WIDTH 60
   ORDER 80
 
-ADD INDEX "pkRoleProfile" ON "WebRoleProfile" 
+ADD INDEX "pukRoleProfile" ON "WebRoleProfile" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1815,7 +1310,7 @@ ADD FIELD "chg_userid" OF "WebRoleTask" AS character
   MAX-WIDTH 60
   ORDER 80
 
-ADD INDEX "pkRoleTask" ON "WebRoleTask" 
+ADD INDEX "pukRoleTask" ON "WebRoleTask" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1867,7 +1362,7 @@ ADD FIELD "ObjectSummary" OF "WebSearch" AS character
   MAX-WIDTH 160
   ORDER 40
 
-ADD INDEX "pkObjectID" ON "WebSearch" 
+ADD INDEX "pukObjectID" ON "WebSearch" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1878,61 +1373,6 @@ ADD INDEX "widxWords" ON "WebSearch"
   AREA "Index Area"
   WORD
   INDEX-FIELD "WordList" ASCENDING 
-
-ADD TABLE "WebSemaphore"
-  AREA "Data Area"
-  DESCRIPTION "Table to hold semaphore locks so that processes can be protected from deadlocks"
-  DUMP-NAME "websemaphore"
-
-ADD FIELD "SemaphoreName" OF "WebSemaphore" AS character 
-  DESCRIPTION "Name of the resource being locked.  Use namespacing if desired"
-  FORMAT "x(20)"
-  INITIAL ""
-  MAX-WIDTH 40
-  ORDER 10
-
-ADD FIELD "SemaphoreExpires" OF "WebSemaphore" AS datetime 
-  DESCRIPTION "When the semaphore expires.  (Process updates this while semaphore is still needed, and semaphore is deleted explicitly upon completion, so this is used for cleanup purposes mostly)"
-  FORMAT "99/99/9999 HH:MM:SS.SSS"
-  INITIAL ?
-  MAX-WIDTH 8
-  ORDER 20
-
-ADD FIELD "Username" OF "WebSemaphore" AS character 
-  FORMAT "X(30)"
-  INITIAL ""
-  LABEL "Username"
-  MAX-WIDTH 60
-  ORDER 30
-  MANDATORY
-
-ADD FIELD "SemaphoreNote" OF "WebSemaphore" AS character 
-  DESCRIPTION "Helpful note set by calling process and available to contending process"
-  FORMAT "x(40)"
-  INITIAL ""
-  MAX-WIDTH 80
-  ORDER 40
-
-ADD FIELD "AppliesTo" OF "WebSemaphore" AS character 
-  DESCRIPTION "If the semaphore is only for a certain set of data, you can use this field as an additional key to that data."
-  FORMAT "x(40)"
-  INITIAL ""
-  MAX-WIDTH 80
-  ORDER 50
-
-ADD INDEX "pkNameAppliesTo" ON "WebSemaphore" 
-  AREA "Index Area"
-  UNIQUE
-  PRIMARY
-  DESCRIPTION "Primary Unique index on semaphoreName and appliesTo"
-  INDEX-FIELD "SemaphoreName" ASCENDING 
-  INDEX-FIELD "AppliesTo" ASCENDING 
-
-ADD INDEX "idxUserSemaphore" ON "WebSemaphore" 
-  AREA "Index Area"
-  DESCRIPTION "Index to allow us to find a given user's semaphores"
-  INDEX-FIELD "Username" ASCENDING 
-  INDEX-FIELD "SemaphoreName" ASCENDING 
 
 ADD TABLE "WebSession"
   AREA "Data Area"
@@ -2023,7 +1463,7 @@ ADD FIELD "ScreenWidth" OF "WebSession" AS integer
   HELP "Width of the user's screen (in pixels)"
   ORDER 130
 
-ADD INDEX "pkWebSession" ON "WebSession" 
+ADD INDEX "pukWebSession" ON "WebSession" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -2112,7 +1552,7 @@ ADD FIELD "WebSessionID" OF "WebSessionAttribute" AS character
   MAX-WIDTH 80
   ORDER 10
 
-ADD INDEX "pkSessionAttribute" ON "WebSessionAttribute" 
+ADD INDEX "pukSessionAttribute" ON "WebSessionAttribute" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -2261,7 +1701,7 @@ ADD FIELD "MethodName" OF "WebSessionStat" AS character
   MAX-WIDTH 120
   ORDER 50
 
-ADD INDEX "pkWebSessionStat" ON "WebSessionStat" 
+ADD INDEX "pukWebSessionStat" ON "WebSessionStat" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -2379,7 +1819,7 @@ ADD FIELD "chg_userid" OF "WebSetting" AS character
   MAX-WIDTH 60
   ORDER 150
 
-ADD INDEX "pkSetting" ON "WebSetting" 
+ADD INDEX "pukSetting" ON "WebSetting" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -2551,7 +1991,7 @@ ADD FIELD "add_dt" OF "WebTranslate" AS date
   MAX-WIDTH 4
   ORDER 40
 
-ADD INDEX "pkTextLang" ON "WebTranslate" 
+ADD INDEX "pukTextLang" ON "WebTranslate" 
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -2562,4 +2002,4 @@ ADD INDEX "pkTextLang" ON "WebTranslate"
 PSC
 cpstream=UTF-8
 .
-0000061030
+0000047716
