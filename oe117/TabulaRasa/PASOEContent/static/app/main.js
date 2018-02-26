@@ -685,6 +685,16 @@ var app = (function(){
             fullName: "",
             emailAddr: ""
         },
+        changePassword: function(e){
+            $("#ModalPassword").modal("show");
+            modalPasswordCtrl.init();
+            modalPasswordCtrl.vm.doReset();
+        },
+        editProfile: function(e){
+            $("#ModalProfile").modal("show");
+            modalProfileCtrl.init();
+            modalProfileCtrl.vm.doReset();
+        },
         showQuickMenu: function(e){
             openQuickMenu();
         }
@@ -697,6 +707,12 @@ var app = (function(){
 
         // Load current culture.
         kendo.culture(langCode);
+
+        // Load the change-password modal.
+        spark.loader.loadExtInclude("app/common/Password.html", "passwordModal");
+
+        // Load the edit-password modal.
+        spark.loader.loadExtInclude("app/common/Profile.html", "profileModal");
 
         if (sessionReady) {
             // If object is available, check for fulfillment of promise.

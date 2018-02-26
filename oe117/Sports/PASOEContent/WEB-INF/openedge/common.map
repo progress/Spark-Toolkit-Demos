@@ -896,6 +896,58 @@
             }
           }
         },
+        "\/context\/clear": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UserContext",
+              "function": "clearContext",
+              "arg": [
+                {
+                  "ablName": "contextType",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "contextType"
+                  }
+                },
+                {
+                  "ablName": "contextViewID",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "contextViewID"
+                  }
+                },
+                {
+                  "ablName": "contextTitle",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "contextTitle"
+                  }
+                },
+                {
+                  "ablName": "clearedRecords",
+                  "ablType": "INTEGER",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "clearedRecords"
+                  }
+                }
+              ]
+            }
+          }
+        },
         "\/context\/count": {
           "PUT": {
             "contentType": "application\/json",

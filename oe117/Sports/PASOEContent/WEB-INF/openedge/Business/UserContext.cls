@@ -197,6 +197,27 @@ class Business.UserContext inherits Spark.Core.Service.SparkEntity:
 
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
+    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/clear", alias="clear", mediaType="application/json").
+    method public void clearContext ( input  contextType    as character,
+                                      input  contextViewID  as character,
+                                      input  contextTitle   as character,
+                                      output clearedRecords as integer ):
+        define buffer bContext for WebContext.
+
+        for each bContext exclusive-lock
+           where bContext.IdentityName eq oClientContext:userID
+             and (contextType eq "" or bContext.ContextType eq contextType)
+             and (contextViewID eq "" or bContext.ContextViewID eq contextViewID)
+             and (contextTitle eq "" or bContext.ContextTitle eq contextTitle)
+             and (contextSeqNo eq ? or bContext.ContextSeqNo eq contextSeqNo):
+            message substitute("Deleting context for &1 &2 &3 &4", contextType, contextViewID, contextTitle, contextSeqNo).
+            delete bContext. /* Delete matching record. */
+            assign clearedRecords = clearedRecords + 1.
+        end. /* for each */
+    end method. /* clearContext */
+
+
+    @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/roles", alias="roles", mediaType="application/json").
     method public void getRoles ( input  clientID     as character,
                                   output allowedRoles as JsonArray ):

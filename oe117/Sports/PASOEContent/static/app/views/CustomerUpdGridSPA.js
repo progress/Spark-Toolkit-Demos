@@ -314,7 +314,7 @@ var CustomerUpdGridSPACtrl = (function(){
             scrollable: true,
             selectable: false,
             sortable: true,
-            toolbar: ["create", "excel"],
+            toolbar: ["create", "excel", {template: '<a class="k-button" href="javascript:void(0)" onclick="CustomerUpdGridSPACtrl.resetContext()"><i class="fa fa-unlink"></i>&nbsp;Reset Context</a>'}],
             columnMenuInit: function(ev){
                 if (ev && ev.container) {
                     var grid = this;
@@ -354,6 +354,21 @@ var CustomerUpdGridSPACtrl = (function(){
             });
     }
 
+    function resetContext(){
+        viewStateJSDO.invoke("clear", {contextType: "grid", contextViewID: viewName, contextTitle: gridName})
+            .then(function(jsdo, result, request){
+                var cleared = (request.response || {}).clearedRecords || 0;
+                if (cleared > 0) {
+                    // Destroy the current grid and re-create without any user context present.
+                    $(viewName + " div[name=" + gridName + "]").getKendoGrid().destroy();
+                    $(viewName + " div[name=" + gridName + "]").empty();
+                    $(viewName + " div[name=" + gridName + "Pager]").empty();
+                    viewState = null;
+                    showGrid();
+                }
+            });
+    }
+
     var salesReps = [];
     function init(){
         // Create the JSDO for view-state management.
@@ -388,7 +403,8 @@ var CustomerUpdGridSPACtrl = (function(){
     return {
         init: init,
         loadTemplates: loadTemplates,
-        destroy: destroy
+        destroy: destroy,
+        resetContext: resetContext
     };
 
 })();

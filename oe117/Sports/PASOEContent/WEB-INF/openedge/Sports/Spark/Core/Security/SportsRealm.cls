@@ -78,8 +78,8 @@ class Sports.Spark.Core.Security.SportsRealm inherits Spark.Core.Security.OEUser
 
         if available(bProfile) then
             assign /* Update some information about this account. */
-                bProfile.FirstLogin = today when bProfile.FirstLogin eq ?
-                bProfile.LastLogin  = today
+                bProfile.FirstLogin = now when bProfile.FirstLogin eq ?
+                bProfile.LastLogin  = now
                 bProfile.LoginCount = bProfile.LoginCount + 1
                 bProfile.TFAToken   = "" /* Clear any previous token! */
                 .

@@ -1,17 +1,13 @@
 /*------------------------------------------------------------------------
    File        : WebContext
-   Purpose     : 
-   Syntax      : 
-   Description : 
+   Purpose     :
+   Syntax      :
+   Description :
    Author(s)   : Code Wizard
    Created     : 02/21/18
-   Notes       : 
+   Notes       :
  ----------------------------------------------------------------------*/
- 
-/* ***************************  Main Block  *************************** */
- 
-/* Dynamically generated schema file */
- 
+
 @openapi.openedge.entity.primarykey(fields="IdentityName,ContextType,ContextViewID,ContextTitle,ContextSeqNo").
 
 define temp-table ttWebContext before-table bttWebContext
@@ -26,5 +22,5 @@ define temp-table ttWebContext before-table bttWebContext
     index pkSeq         is primary unique seq
     index idxpkWebContext          IdentityName ContextType ContextViewID ContextTitle ContextSeqNo
     .
- 
+
 define dataset dsWebContext for ttWebContext.

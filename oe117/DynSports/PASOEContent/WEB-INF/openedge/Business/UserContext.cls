@@ -47,6 +47,7 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity:
     method public override void initialize ( ):
         /* Describe any properties about invoke methods to be exposed. */
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
+        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "clearContext", "clear", "put").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getRoles", "roles", "put").
     end method. /* initialize */
 
@@ -214,6 +215,24 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity:
     method public void getCount ( input filter as character, output numRecs as int64 ):
         assign numRecs = filterData(filter).
     end method. /* count */
+
+
+    method public void clearContext ( input  contextType    as character,
+                                      input  contextViewID  as character,
+                                      input  contextTitle   as character,
+                                      output clearedRecords as integer ):
+        define buffer bContext for WebContext.
+
+        for each bContext exclusive-lock
+           where bContext.IdentityName eq oClientContext:userID
+             and (contextType eq "" or bContext.ContextType eq contextType)
+             and (contextViewID eq "" or bContext.ContextViewID eq contextViewID)
+             and (contextTitle eq "" or bContext.ContextTitle eq contextTitle):
+            message substitute("Deleting context for &1 &2 &3 &4", contextType, contextViewID, contextTitle, contextSeqNo).
+            delete bContext. /* Delete matching record. */
+            assign clearedRecords = clearedRecords + 1.
+        end. /* for each */
+    end method. /* clearContext */
 
 
     method public void getRoles ( input  clientID     as character,

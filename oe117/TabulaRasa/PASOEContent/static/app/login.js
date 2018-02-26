@@ -143,7 +143,7 @@ var app = (function(){
                     .then(function(){
                         if (getStrings) {
                             // Update languages after session created, catalog downloaded.
-                            getLanguageStrings();                            
+                            getLanguageStrings();
                         }
                     });
             }, function(){
@@ -170,7 +170,7 @@ var app = (function(){
                     }
                 }, function(){
                     resetAttempt(); // Reset any prompts/flags.
-    
+
                     // Clear the credentials if login failed.
                     spark.clearSessionObject("username");
                     showMessage(getText("Login Failed"), "error");
@@ -211,16 +211,44 @@ var app = (function(){
                 // This is necessary to log back in to access the JSDO catalog.
                 spark.setSessionObject("username", params.username);
 
-                // Simply do the standard login.
-                setTimeout(function(){
-                    doSessionLogin(params.username, params.password);
+                // Show an indicator that the login is proceeding.
+                kendo.ui.progress($("#loginForm"), true);
+
+                function resetAttempt(){
+                    kendo.ui.progress($("#loginForm"), false);
                     _processing = false;
-                }, 0);
+                }
+
+                // Attempt login through TFA process.
+                var tfaJSDO = spark.createJSDO("tfa");
+                tfaJSDO.invoke("login", params)
+                    .then(function(jsdo, result, request){
+                        // Proceed with processing based on TFA option for account.
+                        var useTFA = (request.response || {}).useTFA || false;
+                        if (useTFA) {
+                            // Continue with challenge dialog.
+                            $("#ModalChallenge").modal("show");
+                            modalChallengeCtrl.init();
+                            modalChallengeCtrl.vm.doReset();
+                            resetAttempt();
+                        } else {
+                            // Simply do the standard login.
+                            setTimeout(function(){
+                                doSessionLogin(params.username, params.password);
+                                _processing = false;
+                            }, 0);
+                        }
+                    }, resetAttempt);
             } else {
                 if (ev) {
                     ev.preventDefault();
                 }
             }
+        },
+        doPasswordReset: function(ev){
+            $("#ModalPassReset").modal("show");
+            modalPassResetCtrl.init();
+            modalPassResetCtrl.vm.doReset();
         }
     });
 
@@ -239,6 +267,31 @@ var app = (function(){
             }
         }
         spark.field.addKeypressEvent("#loginForm input[name=Password]", keyOptions);
+
+        // Load the TFA challenge modal.
+        spark.loader.loadExtInclude("app/common/Challenge.html", "challengeModal")
+            .then(function(){
+                // When loading of HTML is complete, prepare to receive events from modal.
+                modalChallengeCtrl.vm.bind("modalDataReady", function(ev){
+                    // When event "modalDataReady" is triggered by the modal,
+                    // complete the login process via the JSDO session.
+                    doSessionLogin(loginVM.get("params.username"), ev.data.challenge);
+                });
+            });
+
+        // Load the password reset modals.
+        spark.loader.loadExtInclude("app/common/PassReset.html", "passResetModal")
+	        .then(function(){
+	            // When loading of HTML is complete, prepare to receive events from modal.
+	        	modalPassResetCtrl.vm.bind("modalDataReady", function(ev){
+	                // When event "modalDataReady" is triggered by the modal,
+	                // open the modal for the code confirmation (with context).
+	        		$("#ModalConfirmCode").modal("show");
+	                modalConfirmCodeCtrl.init();
+	                modalConfirmCodeCtrl.vm.doReset(ev.data);
+	            });
+	        });
+        spark.loader.loadExtInclude("app/common/ConfirmCode.html", "confirmCodeModal");
 
         // Set the year in the footer.
         $("#year").html(new Date().getFullYear());

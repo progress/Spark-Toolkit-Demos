@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Wed Feb 21 11:56:36 EST 2018",
+  "lastModified": "Mon Feb 26 14:22:10 EST 2018",
   "services": [
     {
       "name": "common",
@@ -552,6 +552,31 @@
                 },
                 {
                   "name": "dsWebContext",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "clear",
+              "path": "\/clear",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "contextType",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "contextViewID",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "contextTitle",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "clearedRecords",
                   "type": "RESPONSE_BODY"
                 }
               ]

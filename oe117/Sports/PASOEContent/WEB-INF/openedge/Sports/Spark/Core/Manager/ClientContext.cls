@@ -1,11 +1,10 @@
 using Progress.Lang.* from propath.
-using Spark.Core.Manager.ClientContext from propath.
 
 block-level on error undo, throw.
 
 &GLOBAL-DEFINE WEB_PROFILE_TABLE WebProfile
 
-class Sports.Spark.Core.Manager.ClientContext inherits ClientContext:
+class Sports.Spark.Core.Manager.ClientContext inherits Spark.Core.Manager.ClientContext implements Spark.Core.Manager.IClientContext use-widget-pool:
 
     method override protected void initializeUserProperties ( ):
         for first {&WEB_PROFILE_TABLE} no-lock

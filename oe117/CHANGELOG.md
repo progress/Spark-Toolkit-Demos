@@ -3,6 +3,11 @@
 
 ## OpenEdge 11.7
 
+### v4.2.1
+
+- Adjust logic in Spark DOH class to work with a single prefix, just like the original DOH from product.
+- Add UI logic to clear saved context for a screen (currently only in the Customer Updatable Grid screen).
+
 ### v4.2.0
 
 - Synchronized enhancements from v3.3.0 release.

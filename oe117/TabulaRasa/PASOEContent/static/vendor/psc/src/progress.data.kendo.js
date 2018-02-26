@@ -205,9 +205,18 @@ limitations under the License.
             // Check if string is <year>-<month>-<day>
             array = transport._convertFields._datePattern.exec(data[targetFieldName]) || [];
             if (array.length > 0) {
-                data[targetFieldName] = new Date(parseInt(array[1], 10),
-                                            parseInt(array[2], 10) - 1,
-                                            parseInt(array[3], 10));
+//                data[targetFieldName] = new Date(parseInt(array[1], 10),
+//                                            parseInt(array[2], 10) - 1,
+//                                            parseInt(array[3], 10));
+                // Convert to absolute date as UTC time.
+                data[targetFieldName] = new Date();
+                data[targetFieldName].setUTCFullYear(parseInt(array[1], 10));
+                data[targetFieldName].setUTCMonth(parseInt(array[2], 10) - 1);
+                data[targetFieldName].setUTCDate(parseInt(array[3], 10));
+                data[targetFieldName].setUTCHours(0);
+                data[targetFieldName].setUTCMinutes(0);
+                data[targetFieldName].setUTCSeconds(0);
+                data[targetFieldName].setUTCMilliseconds(0);
             } else {
                 ablType = transport.jsdo[transport.tableRef]._fields[fieldName.toLowerCase()].ablType;
                 if (ablType === "DATETIME") {

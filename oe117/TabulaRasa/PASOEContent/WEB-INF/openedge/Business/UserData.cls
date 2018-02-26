@@ -1,6 +1,6 @@
 /*------------------------------------------------------------------------
     File        : UserData
-    Purpose     : Simple class for User context data
+    Purpose     : Simple class for direct User data
     Author(s)   : Dustin Grau (dugrau@progress.com)
     Created     : Wed May 13 15:21:07 EST 2015
     Notes       :
@@ -8,12 +8,12 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
-using Spark.Core.Service.DynamicResource from propath.
 using Spark.Core.Util.ApplicationError from propath.
+using Spark.Core.Util.Sendmail from propath.
 
 block-level on error undo, throw.
 
-class Business.UserData inherits DynamicResource:
+class Business.UserData inherits Spark.Core.Service.DynamicResource:
 
     define public override property serviceURI as character
         initial "/web/pdo/common" no-undo get.
@@ -32,6 +32,172 @@ class Business.UserData inherits DynamicResource:
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "changePassword", "password", "put").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "setLocale", "locale", "put").
     end method. /* initialize */
+
+
+    method public void sendResetCode ( input  username  as character,
+                                       input  emailAddr as character,
+                                       output opSuccess as logical,
+                                       output opMessage as character ):
+        define buffer bProfile for WebProfile.
+
+        if (username gt "") ne true and (emailAddr gt "") ne true then do:
+            assign
+                opSuccess = false
+                opMessage = "No criteria provided for account lookup (username/email)."
+                .
+            return.
+        end. /* no username/email */
+
+        /* Search for account by username or email. */
+        find first bProfile exclusive-lock
+             where bProfile.UserNum gt 1
+               and bProfile.IsActive
+               and not bProfile.IsLocked
+               and ((username gt "" and bProfile.Username eq username) or
+                    (emailAddr gt "" and bProfile.Email eq emailAddr)) no-error.
+        if available(bProfile) then do on error undo, throw:
+            define variable lSuccess  as logical  no-undo.
+            define variable oSendmail as Sendmail no-undo.
+
+            if (bProfile.Email gt "") ne true then do:
+                assign
+                    opSuccess = false
+                    opMessage = "No valid email address is available for your account. Please contact a system administrator to complete this process."
+                    .
+                return.
+            end. /* missing email */
+
+            assign /* Generate a temporary code for the reset operation. */
+                bProfile.ResetCode = Spark.Core.Security.Password:createCode(6)
+                oSendmail          = new Sendmail()
+                .
+
+            /* Notify the located account with a confirmation code. */
+            oSendmail:SendFrom = "noreply@progress.com".
+            oSendmail:SubjectLine = "Password Reset Request".
+            oSendmail:Recipient = bProfile.Email.
+            oSendmail:EmailBody = substitute("A password reset was requested for your account at the MDBA Dashboard. If you DID NOT request this, "
+                                            + "don't worry--your existing account password remains unaffected and no further action is required. "
+                                            + "If you DID request this operation, please use the following code to complete the reset process: &1", bProfile.ResetCode).
+            assign lSuccess = oSendmail:SendEmail().
+
+            if lSuccess then
+                assign
+                    opSuccess = true
+                    opMessage = "Confirmation code successfully sent."
+                    .
+            else
+                assign
+                    opSuccess = false
+                    opMessage = "An error occurred while sending your confirmation code via email. Please try again or contact a system administrator."
+                    .
+
+            finally:
+                delete object oSendmail no-error.
+            end finally.
+        end. /* available(bProfile) */
+        else
+            assign
+                opSuccess = false
+                opMessage = "Unable to locate account."
+                .
+    end method. /* sendResetCode */
+
+
+    method public void resetPassword ( input  username  as character,
+                                       input  emailAddr as character,
+                                       input  resetCode as character,
+                                       output opSuccess as logical,
+                                       output opMessage as character ):
+        define buffer bProfile for WebProfile.
+
+        if (username gt "") ne true and (emailAddr gt "") ne true then do:
+            assign
+                opSuccess = false
+                opMessage = "No criteria provided for account lookup (username/email)."
+                .
+            return.
+        end. /* no username/email */
+
+        if (resetCode gt "") ne true then do:
+            assign
+                opSuccess = false
+                opMessage = "Confirmation code was not provided."
+                .
+            return.
+        end. /* no reset code */
+
+        /* Search for account by username or email. */
+        find first bProfile exclusive-lock
+             where bProfile.UserNum gt 1
+               and bProfile.IsActive
+               and not bProfile.IsLocked
+               and ((username gt "" and bProfile.Username eq username) or
+                    (emailAddr gt "" and bProfile.Email eq emailAddr)) no-error.
+        if available(bProfile) then do on error undo, throw:
+            define variable rSalt     as raw       no-undo.
+            define variable lSuccess  as logical   no-undo.
+            define variable cNewPass  as character no-undo.
+            define variable oSendmail as Sendmail  no-undo.
+
+            /* Cannot proceed if the reset code does not match! */
+            if bProfile.ResetCode ne resetCode then do:
+                assign
+                    opSuccess = false
+                    opMessage = "Confirmation code does not match account."
+                    .
+                return.
+            end. /* code mismatch */
+
+            if (bProfile.Email gt "") ne true then do:
+                assign
+                    opSuccess = false
+                    opMessage = "No valid email address is available for your account. Please contact a system administrator to complete this process."
+                    .
+                return.
+            end. /* missing email */
+
+            assign /* Generate a new password. */
+                rSalt     = generate-random-key
+                cNewPass  = encode(string(rSalt))
+                oSendmail = new Sendmail()
+                .
+
+            assign /* Remember previous encoded password, create new encoded password. */
+                bProfile.OldPassword = bProfile.Password
+                bProfile.Password    = Spark.Core.Security.Password:encodePassword(cNewPass)
+                .
+
+            /* Notify the located account with a new password. */
+            oSendmail:SendFrom = "noreply@progress.com".
+            oSendmail:SubjectLine = "Password Reset Confirmation".
+            oSendmail:Recipient = bProfile.Email.
+            oSendmail:EmailBody = substitute("Your password for the MDBA Dashboard has been successfully reset. Please use the following password "
+                                            + "to access the website, along with your existing username. Once you have logged in, you may change your "
+                                            + "password via the profile option at the top-right of the application. Your new password is &1", cNewPass).
+            assign lSuccess = oSendmail:SendEmail().
+
+            if lSuccess then
+                assign
+                    opSuccess = true
+                    opMessage = "A new password has been generated and emailed to you. Please log into the site using your updated credentials."
+                    .
+            else
+                assign
+                    opSuccess = false
+                    opMessage = "An error occurred while sending your confirmation code via email. Please try again or contact a system administrator."
+                    .
+
+            finally:
+                delete object oSendmail no-error.
+            end finally.
+        end. /* available(bProfile) */
+        else
+            assign
+                opSuccess = false
+                opMessage = "Unable to locate account."
+                .
+    end method. /* resetPassword */
 
 
     method public void changePassword ( input  oldPassword   as character,
@@ -57,7 +223,27 @@ class Business.UserData inherits DynamicResource:
             return. /* We're done here, leave. */
         end. /* no newPassword */
 
-        /* Insert code here to perform a password change. */
+        find first bProfile exclusive-lock
+             where bProfile.Username eq oClientContext:userID no-error.
+        if available(bProfile) then do:
+            if not Spark.Core.Security.Password:checkPassword(oldPassword, bProfile.Password) then do:
+                assign changeMessage = "Old password does not match account.".
+                return. /* We're done here, leave. */
+            end. /* not checkPassword */
+
+            assign
+                bProfile.OldPassword = bProfile.Password
+                bProfile.Password    = Spark.Core.Security.Password:encodePassword(newPassword)
+                .
+
+            assign
+                changeSuccess = true
+                changeMessage = "Password has been successfully changed."
+                .
+            release bProfile no-error.
+        end.
+        else
+            assign changeMessage = "User account is not available.".
     end method. /* changePassword */
 
 
@@ -92,7 +278,8 @@ class Business.UserData inherits DynamicResource:
                                         output sessionID        as character,
                                         output timezone         as character,
                                         output fullname         as character,
-                                        output username         as character ):
+                                        output username         as character,
+                                        output emailAddr        as character ):
         if valid-object(oClientContext) then do:
             assign
                 anonymous        = can-do(oClientContext:clientPrincipal:roles, "ROLE_ANONYMOUS")
@@ -125,6 +312,9 @@ class Business.UserData inherits DynamicResource:
 
             if oClientContext:hasUserProperty("FullName") then
                 assign fullname = oClientContext:getUserProperty("FullName").
+
+            if oClientContext:hasUserProperty("EmailAddr") then
+                assign emailAddr = oClientContext:getUserProperty("EmailAddr").
         end. /* Valid Context Object */
         else
             assign
@@ -156,38 +346,121 @@ class Business.UserData inherits DynamicResource:
         case localLanguage:
             when "es-ES" then do:
                 langStrings:Add("SalesRepHelp", "Seleccione el vendedor que ayud&oacute; con este pedido.").
+                langStrings:Add("StateProvinceHelp", "Help text provided via UserData:getTranslations.").
             end.
             when "fr-FR" then do:
                 langStrings:Add("SalesRepHelp", "S&eacute;lectionnez le vendeur qui a assist&eacute; &agrave; cette commande.").
+                langStrings:Add("StateProvinceHelp", "Help text provided via UserData:getTranslations.").
             end.
             otherwise do:
                 langStrings:Add("SalesRepHelp", "Select the salesperson who assisted with this order.").
+                langStrings:Add("StateProvinceHelp", "Help text provided via UserData:getTranslations.").
             end.
         end case.
     end method. /* getTranslatations */
 
 
-    method public void setLocale ( input  language as character,
-                                   input  timezone as integer,
-                                   output changed  as JsonArray ):
-        define variable cLanguage as character no-undo.
-        define variable cTimezone as character no-undo.
-        define variable oChanged  as JsonArray no-undo.
+    method public void getProfile ( output FirstName     as character,
+                                    output LastName      as character,
+                                    output Email         as character,
+                                    output MobilePhone   as character,
+                                    output MobileCarrier as character,
+                                    output UseTFA        as logical,
+                                    output TFAMethod     as character,
+                                    output QR            as character ):
+        define buffer bProfile for WebProfile.
 
-        assign /* Parameters are specified on method, but are still optional. */
-            cLanguage = oRequest:getParamAsChar("language", true)
-            cTimezone = string(oRequest:getParamAsInt("timezone", true), "+HH:MM")
-            changed   = new JsonArray()
-            .
+        find first bProfile no-lock
+             where bProfile.Username eq oClientContext:userID
+               and bProfile.IsActive
+               and not bProfile.IsLocked no-error.
+        if available(bProfile) then do:
+            assign
+                FirstName     = bProfile.FirstName
+                LastName      = bProfile.LastName
+                Email         = bProfile.Email
+                MobilePhone   = bProfile.MobilePhone
+                MobileCarrier = bProfile.MobileCarrier
+                UseTFA        = bProfile.UseTFA
+                TFAMethod     = bProfile.TFAMethod
+                .
 
-        if (cLanguage gt "") eq true then do:
-            oClientContext:setUserProperty("ClientLanguage", cLanguage).
+            /* Create string for QR code, to be used with 2FA device (eg. Google Authenticator). */
+            define variable cIssuer as character no-undo initial "DynSports".
+            if bProfile.UseTFA and bProfile.TFAMethod eq "Device" and bProfile.TFASecret gt "" then
+                assign QR = substitute("otpauth://totp/&1:&2?secret=&3&4issuer=&1", cIssuer, bProfile.Email, bProfile.TFASecret, "&").
+        end. /* available */
+
+        release bProfile no-error.
+    end method. /* getProfile */
+
+
+    method public void setProfile ( input  FirstName     as character,
+                                    input  LastName      as character,
+                                    input  Email         as character,
+                                    input  MobilePhone   as character,
+                                    input  MobileCarrier as character,
+                                    input  UseTFA        as logical,
+                                    input  TFAMethod     as character,
+                                    output updateSuccess as logical ):
+        define buffer bProfile for WebProfile.
+
+        assign updateSuccess = false.
+
+        find first bProfile exclusive-lock
+             where bProfile.Username eq oClientContext:userID
+               and bProfile.IsActive
+               and not bProfile.IsLocked no-error.
+        if available(bProfile) then do:
+            if UseTFA eq true then do:
+                /* If not previously enabled, or secret is blank, create a new Base32-encoded value. */
+                if not bProfile.UseTFA or (bProfile.TFASecret gt "") ne true then
+                    assign bProfile.TFASecret = replace(Spark.Core.Util.Base32:EncodeData(Spark.Core.Security.Password:createCode(10)), "=", "").
+
+                assign
+                    bProfile.UseTFA    = true
+                    bProfile.TFAMethod = TFAMethod
+                    bProfile.TFAToken  = ""
+                    .
+            end.
+            else
+                assign
+                    bProfile.UseTFA    = false
+                    bProfile.TFAMethod = ""
+                    bProfile.TFASecret = ""
+                    bProfile.TFAToken  = ""
+                    .
+
+            assign
+                bProfile.FirstName     = FirstName
+                bProfile.LastName      = LastName
+                bProfile.Email         = Email
+                bProfile.MobilePhone   = MobilePhone
+                bProfile.MobileCarrier = MobileCarrier
+                .
+
+            assign updateSuccess = true.
+        end. /* available */
+
+        release bProfile no-error.
+    end method. /* setProfile */
+
+
+    method public void setLocale ( input  userLanguage as character,
+                                   input  userTimezone as character,
+                                   output changed      as JsonArray ):
+        define variable oChanged as JsonArray no-undo.
+
+        assign changed = new JsonArray().
+
+        if (userLanguage gt "") eq true then do:
+            oClientContext:setUserProperty("ClientLanguage", userLanguage).
             changed:Add("language").
         end. /* cLanguage */
 
-        if (cTimezone gt "") eq true then do:
-            if (cTimeZone begins "-" or cTimeZone begins "+") and cTimeZone matches "*:00" then do:
-                oClientContext:setUserProperty("timezoneOffset", cTimezone).
+        if (userTimezone gt "") eq true then do:
+            if (userTimezone begins "-" or userTimezone begins "+") and userTimezone matches "*:00" then do:
+                oClientContext:setUserProperty("timezoneOffset", userTimezone).
                 changed:Add("timezone").
             end.
             else

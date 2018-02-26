@@ -11,4 +11,6 @@
 <propathentry env="tty" kind="con" path="com.openedge.pdt.text.TTY_LIBRARIES" platform="All"/>
 <propathentry env="all" kind="con" path="com.openedge.pdt.text.DLC_PATHS" platform="All"/>
 <propathentry env="web" kind="con" path="com.openedge.pdt.text.WEB_LIBRARIES" platform="All"/>
+<propathentry env="gui" kind="lib" path="@{DLC}\gui\ablunit.pl" platform="All"/>
+<propathentry env="tty" kind="lib" path="@{DLC}\tty\ablunit.pl" platform="All"/>
 </propath>

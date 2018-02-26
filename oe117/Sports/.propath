@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <propath version="11.7" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="schema/propath.xsd">
-<propathentry env="all" kind="src" output="@{ROOT}\PASOEContent\WEB-INF\openedge" path="@{ROOT}\PASOEContent\WEB-INF\openedge" platform="All"/>
+<propathentry env="all" kind="src" path="@{ROOT}\PASOEContent\WEB-INF\openedge" platform="All"/>
 <propathentry env="all" kind="lib" path="@{ROOT}\AppServer\Ccs.pl" platform="All"/>
 <propathentry env="all" kind="lib" path="@{ROOT}\AppServer\PMFO.pl" platform="All"/>
 <propathentry env="all" kind="src" path="@{ROOT}\AppServer" platform="All"/>
@@ -11,4 +11,6 @@
 <propathentry env="tty" kind="con" path="com.openedge.pdt.text.TTY_LIBRARIES" platform="All"/>
 <propathentry env="all" kind="con" path="com.openedge.pdt.text.DLC_PATHS" platform="All"/>
 <propathentry env="web" kind="con" path="com.openedge.pdt.text.WEB_LIBRARIES" platform="All"/>
+<propathentry env="gui" kind="lib" path="@{DLC}\gui\ablunit.pl" platform="All"/>
+<propathentry env="tty" kind="lib" path="@{DLC}\tty\ablunit.pl" platform="All"/>
 </propath>
