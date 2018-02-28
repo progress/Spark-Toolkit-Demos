@@ -34,6 +34,7 @@ function initScreen(){
     var component = {}; // List of components on the screen.
     var wizardJSDO = new progress.data.JSDO({name: "wizard"});
     var catalogPath = ""; // Placeholder for API-returned variable.
+    var servicePrefix = ""; // Placeholder for API-returned variable.
 
     var dsResource = new kendo.data.DataSource();
     var dsTemplates = new kendo.data.DataSource();
@@ -164,7 +165,7 @@ function initScreen(){
             ipMetadata: "",
             ipDataSource: "",
             ipCatalog: catalogPath,
-            ipServiceURI: "/web/pdo/common",
+            ipServiceURI: servicePrefix + "/common",
             ipResourceMaster: "",
             ipResourceDetail: "",
             ipDatabase: "",
@@ -230,7 +231,7 @@ function initScreen(){
                 if (JSDOCatalog._service.name !== "") {
                 	this.set("params.ipServiceURI", "/" + JSDOCatalog._service.name);
                 } else {
-                	this.set("params.ipServiceURI", "/web/pdo/common");
+                	this.set("params.ipServiceURI", servicePrefix + "/common");
                 }
 
                 // Obtain new params values after modifications above.
@@ -294,7 +295,7 @@ function initScreen(){
                     ipMetadata: "",
                     ipDataSource: "",
                     ipCatalog: catalogPath,
-                    ipServiceURI: "/web/pdo/common",
+                    ipServiceURI: servicePrefix + "/common",
                     ipResourceMaster: "",
                     ipResourceDetail: "",
                     ipDatabase: "",
@@ -334,7 +335,7 @@ function initScreen(){
                 ipMetadata: "",
                 ipDataSource: "",
                 ipCatalog: catalogPath,
-                ipServiceURI: "/web/pdo/common",
+                ipServiceURI: servicePrefix + "/common",
                 ipResourceMaster: "",
                 ipResourceDetail: "",
                 ipDatabase: "",
@@ -1022,6 +1023,11 @@ function initScreen(){
                 // Grab the default catalog and update the UI.
                 catalogPath = data.DefaultCatalog;
                 viewModel.set("params.ipCatalog", catalogPath);
+            }
+            if (data && data.DefaultService) {
+                // Grab the default service and update the UI.
+                servicePrefix = data.DefaultService;
+                viewModel.set("params.ipServiceURI", servicePrefix + "/common");
             }
             dsTemplates.data(templates || []);
 

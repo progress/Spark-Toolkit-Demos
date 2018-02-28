@@ -16,7 +16,7 @@ block-level on error undo, throw.
 class Business.TwoFactor inherits Spark.Core.Service.DynamicResource:
 
     define override public property serviceURI as character no-undo
-        initial "/web/pdo/common" get. set.
+        initial "/web/api/common" get. set.
 
     define override public property resourceName as character
         initial "tfa" no-undo get. set.

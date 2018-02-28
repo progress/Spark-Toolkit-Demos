@@ -164,6 +164,15 @@
                         }
                     },
                     {
+                        "ablName": "DefaultService",
+                        "ablType": "CHARACTER",
+                        "ioMode": "OUTPUT",
+                        "msgElem": {
+                            "type": "field",
+                            "name": "DefaultService"
+                        }
+                    },
+                    {
                         "ablName": "Template",
                         "ablType": "TABLE",
                         "ioMode": "OUTPUT",

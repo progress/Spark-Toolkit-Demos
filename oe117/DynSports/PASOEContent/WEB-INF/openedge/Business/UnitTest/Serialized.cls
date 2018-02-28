@@ -15,7 +15,7 @@ block-level on error undo, throw.
 class Business.UnitTest.Serialized inherits Spark.Core.Service.DynamicResource:
 
     define public override property serviceURI as character
-        initial "/web/pdo/tests" no-undo get.
+        initial "/web/api/tests" no-undo get.
         protected set.
 
     define public override property resourceName as character

@@ -164,28 +164,31 @@
             function getSampleValue(type){
                 var sample = null;
                 var year = (new Date()).getFullYear();
-                switch(type){
-                    case "character":
-                        sample = "String";
-                        break;
-                    case "date":
-                        sample = year + "-03-14";
-                        break;
-                    case "datetime":
-                        sample = year + "-03-14T01:20:30+00:00";
-                        break;
-                    case "datetime-tz":
-                        sample = year + "-03-14T01:20:30-04:00";
-                        break;
-                    case "decimal":
-                        sample = 3.1415;
-                        break;
-                    case "integer":
-                        sample = 12345;
-                        break;
-                    case "boolean":
-                        sample = true;
-                        break;
+
+                if (type && typeof type === "string") {
+	                switch(type.toLowerCase()){
+	                    case "character":
+	                        sample = "String";
+	                        break;
+	                    case "date":
+	                        sample = year + "-03-14";
+	                        break;
+	                    case "datetime":
+	                        sample = year + "-03-14T01:20:30+00:00";
+	                        break;
+	                    case "datetime-tz":
+	                        sample = year + "-03-14T01:20:30-04:00";
+	                        break;
+	                    case "decimal":
+	                        sample = 3.1415;
+	                        break;
+	                    case "integer":
+	                        sample = 12345;
+	                        break;
+	                    case "boolean":
+	                        sample = true;
+	                        break;
+	                }
                 }
 
                 return sample;
@@ -219,7 +222,7 @@
 		                        data.sampleData[param.name] = {};
 		                        $.each(schemaObj.properties, function(tableName, tableDef){
 		                            // Parse through the tables of this dataset.
-		                            data.sampleData[param.name][tableName] = [];
+		                            var sampleRecord = {};
 		                            data.schemaInfo += "<li>&nbsp;<b>" + tableName + "</b></li>";
 		                            data.primaryKey = $.merge($.merge([], data.primaryKey), tableDef.primaryKey || []);
 		                            data.foreignKey = $.merge($.merge([], data.foreignKey), tableDef.foreignKeys || []);
@@ -227,6 +230,22 @@
 		                            $.each(properties, function(fieldName, fieldDef){
 		                                if (!fieldName.startsWith("_")) {
 		                                    data.schemaInfo += "<li>&nbsp;&nbsp;" + fieldName + " as '" + (fieldDef.title || fieldName) + "' [" + (fieldDef.ablType || fieldDef.type) + "]";
+
+                                            if (fieldDef.ablType) {
+	                                            if (fieldDef.type === "array") {
+	                                                // Extent field of given datatype.
+	                                                var sample = getSampleValue(fieldDef.ablType);
+	                                                sampleRecord[fieldName] = [];
+	                                                var i = null;
+	                                                for (i=0; i<fieldDef.maxItems; i++) {
+	                                                    sampleRecord[fieldName][i] = sample;
+	                                                }
+	                                            } else {
+	                                                // Single value of a given datatype.
+	                                                sampleRecord[fieldName] = getSampleValue(fieldDef.ablType);
+	                                            }
+                                            }
+
 		                                    $.each(fieldDef, function(propName, propValue){
 		                                        if (exclude.indexOf(propName) === -1) {
 		                                            if (propValue === null || propValue === undefined) { propValue = "null"; }
@@ -236,15 +255,32 @@
 		                                    data.schemaInfo += "</li>";
 		                                }
 		                            });
+		                            data.sampleData[param.name][tableName] = [sampleRecord];
 		                        });
 		                    } else if (dataType.toLowerCase() == "table") {
-		                        data.sampleData[param.name] = [];
+		                        var sampleRecord = {};
 		                        data.primaryKey = $.merge($.merge([], data.primaryKey), schemaObj.primaryKey || []);
 		                        data.foreignKey = $.merge($.merge([], data.foreignKey), schemaObj.foreignKeys || []);
 		                        $.each(schemaObj.items.properties, function(fieldName, fieldDef){
 		                            // Parameter schema is explicitly a temp-table.
 		                            if (!fieldName.startsWith("_")) {
 		                                data.schemaInfo += "<li>&nbsp;" + fieldName + " as '" + (fieldDef.title || fieldName) + "' [" + (fieldDef.ablType || fieldDef.type) + "]";
+
+		                                if (fieldDef.ablType) {
+			                                if (fieldDef.type === "array") {
+	                                            // Extent field of given datatype.
+	                                            var sample = getSampleValue(fieldDef.ablType);
+	                                            sampleRecord[fieldName] = [];
+	                                            var i = null;
+	                                            for (i=0; i<fieldDef.maxItems; i++) {
+	                                                sampleRecord[fieldName][i] = sample;
+	                                            }
+	                                        } else {
+	                                            // Single value of a given datatype.
+	                                            sampleRecord[fieldName] = getSampleValue(fieldDef.ablType);
+	                                        }
+                                        }
+
 		                                $.each(fieldDef, function(propName, propValue){
 		                                    if (exclude.indexOf(propName) === -1) {
 		                                        if (propValue === null || propValue === undefined) { propValue = "null"; }
@@ -254,6 +290,7 @@
 		                                data.schemaInfo += "</li>";
 		                            }
 		                        });
+		                        data.sampleData[param.name] = [sampleRecord];
 		                    }
                             data.schemaInfo += "</ul><br/>";
 		                }
@@ -268,6 +305,77 @@
                 return data;
             };
 
+            function getReadSample(resourceObj){
+                var sample = {};
+
+                // Locate a standard read operation for this resource.
+                $.each(resourceObj.operations, function(i, operationObj){
+                    if (operationObj.type === "read") {
+                        // Provide a proper sample object for the AFP plugin, based on server-side capabilities.
+                        var capabilities = (operationObj.capabilities || "").replace(/\s/g, "").split(",");
+
+		                // Obtain schema for this resource/operation.
+		                var schemaData = getSchema(resourceObj, operationObj);
+
+                        // Create a standard sample for the read operations, based on mapping type (if available).
+                        if (operationObj.mappingType && operationObj.mappingType.toUpperCase() === "AFP") {
+                            if ($.inArray("filter", capabilities) > -1) {
+                                sample.client = "KendoUI";
+                                sample.filter = "";
+                            }
+
+                            if ($.inArray("orderBy", capabilities) > -1 || $.inArray("sort", capabilities) > -1) {
+                                sample.sort = [];
+                            }
+
+                            if ($.inArray("skip", capabilities) > -1 && $.inArray("top", capabilities) > -1) {
+                                sample.skip = 0;
+                                sample.top = 20;
+                            }
+
+                            if (schemaData.primaryKey.length > 0 && schemaData.primaryKey[0] !== "") {
+                                if ($.inArray("filter", capabilities) > -1) {
+                                    // Add the first primary key as a sample for filtering/sorting.
+                                    sample.filter = {
+                                        logic: "and",
+                                        filters: [{field: schemaData.primaryKey[0], operator: "startsWith", value: ""}]
+                                    };
+                                }
+
+                                if ($.inArray("orderBy", capabilities) > -1 || $.inArray("sort", capabilities) > -1) {
+                                    sample.sort = [{field: schemaData.primaryKey[0], dir: "asc"}];
+                                }
+                            }
+                        } else if (operationObj.mappingType && operationObj.mappingType.toUpperCase() === "JFP") {
+                            if ($.inArray("ablFilter", capabilities) > -1) {
+                                sample.ablFilter = "";
+                            }
+
+                            if ($.inArray("skip", capabilities) > -1 && $.inArray("top", capabilities) > -1) {
+                                sample.skip = 0;
+                                sample.top = 20;
+                            }
+
+                            if (schemaData.primaryKey.length > 0 && schemaData.primaryKey[0] !== "") {
+                                if ($.inArray("ablFilter", capabilities) > -1) {
+                                    // Add the first primary key as a sample for filtering/sorting.
+                                    sample.ablFilter = schemaData.primaryKey[0] + " gt ''";
+                                }
+
+                                if ($.inArray("orderBy", capabilities) > -1) {
+                                    sample.ablFilter = sample.ablFilter + " by " + schemaData.primaryKey[0];
+                                }
+                            }
+                        } else {
+                            // Just provide a blank string for the query (assumes JFP).
+                            sample[param.name] = "";
+                        }
+                    }
+                });
+
+                return sample;
+            };
+
             function updateInfo(resource, operation){
                 var serviceIndex = $("#serviceSelect").getKendoDropDownList().select() || 0;
                 Catalog.setContext(serviceIndex, resource.name, operation.name);
@@ -279,11 +387,11 @@
                         if (operationObj.type == "invoke") {
                             operationInfo += " (Invoked as '" + operationObj.name + "' in JSDO)";
                         }
-                        if (operationObj.mappingType) {
-                            operationInfo += "<br/><b>Mapping Type:</b> " + operationObj.mappingType;
+                        if (operationObj.hasOwnProperty("mappingType")) {
+                            operationInfo += "<br/><b>Mapping Type:</b> " + ((operationObj.mappingType !== "") ? operationObj.mappingType : "JFP");
                         }
-                        if (operationObj.capabilities) {
-                            operationInfo += "<br/><b>Capabilities:</b> " + operationObj.capabilities;
+                        if (operationObj.hasOwnProperty("capabilities")) {
+                            operationInfo += "<br/><b>Capabilities:</b> " + ((operationObj.capabilities !== "") ? operationObj.capabilities : "None");
                         }
                         operationInfo += "<br/><a href='" + Catalog.getOperationURL() + "'>" + Catalog.getOperationURL() + "</a>";
 
@@ -300,8 +408,8 @@
                         var requestParams = "";
                         var responseParams = "";
                         var sampleRequest = {};
-                        
-                        // Obtain schema for this operation.
+
+                        // Obtain schema for this resource/operation.
                         var schemaData = getSchema(resourceObj, operationObj);
 
                         // Parse parameters for this operation and extract any needed data.
@@ -309,35 +417,22 @@
                             var dataType = param.ablType || param.xType;
                             if (param.type.indexOf("QUERY") > -1) {
                                 queryParams += "<li>" + param.name + (dataType ? " [" + dataType + "]" : "") + "</li>";
-                                var sample = {};
-                                if (operationObj.mappingType && operationObj.mappingType.toUpperCase() === "AFP") {
-                                    // Provide a proper sample object for the AFP plugin.
-                                    sample = {
-                                        client: "KendoUI",
-                                        filter: {},
-                                        skip: 0,
-                                        sort: [],
-                                        top: 20
-                                    };
+                                var sample = {}; // Holder for our sample request data, to be populated as necessary.
 
-                                    if (schemaData.primaryKey.length > 0 && schemaData.primaryKey[0] !== "") {
-                                        // Add the first primary key as a sample for filtering/sorting.
-                                        sample.filter = {
-                                            logic: "and",
-                                            filters: [{field: schemaData.primaryKey[0], operator: "startsWith", value: ""}]
-                                        };
-                                        sample.sort = [{field: schemaData.primaryKey[0], dir: "asc"}];
-                                    }
-                                } else if (operationObj.mappingType && operationObj.mappingType.toUpperCase() === "JFP") {
-                                    sample.ablFilter = schemaData.primaryKey[0] + " gt ''";
+                                // Prepare a proper sample given the type of operation being executed.
+                                if (operationObj.type === "read" || operationObj.type === "count") {
+			                        // Obtain standard read sample for resource, if available.
+			                        sample = getReadSample(resourceObj);
                                 } else {
-                                    // Just provide a blank string for the query (assumes JFP).
+                                    // Just provide a blank string for the query (assumes JFP mapping).
                                     sample[param.name] = "";
                                 }
-                                sampleRequest.filter = sample;
+
+                                // Place the sample into a request parameter by the same name.
+                                sampleRequest[param.name] = sample;
                             } else if (param.type.indexOf("BODY") > -1) {
 	                            if (param.type.indexOf("REQUEST") > -1) {
-	                                requestParams += "<li>" + param.name + (dataType ? " [" + dataType + "]" : "") + "</li>";
+                                    requestParams += "<li>" + param.name + (dataType ? " [" + dataType + "]" : "") + "</li>";
 	                                if (schemaData.sampleData[param.name]) {
 	                                    // Use generated sample from schema if present.
 	                                    sampleRequest[param.name] = schemaData.sampleData[param.name];
@@ -405,7 +500,7 @@
                             url = url.replace("{filter}", "");
                         }
                     }
-                    
+
                     var encodedData = null;
                     if (operation.verb.toLowerCase() !== "get") {
                         // No body data should be sent on a GET operation.
@@ -549,34 +644,16 @@
              *  - REST adapter dynamic catalog.
              *  - Typical static catalog.
              */
-            var dynWebURL = (protocol + "//" + origin + serviceName + "/web/pdo/wizard");
-            var dynRestURL = (protocol + "//" + origin + serviceName + "/rest/pdo/catalog");
-            var staticRestURL = (protocol + "//" + origin + serviceName + "/static" + serviceName + ".json");
-            testCatalog(dynWebURL)
+            var dohWebURL = (protocol + "//" + origin + serviceName + "/web/pdo/wizard");
+            testCatalog(dohWebURL)
                 .done(function(data){
                     $("#catalogURL").val(dynWebURL);
                     // Add data to the local catalog object.
                     Catalog.setData(data);
                 })
                 .fail(function(){
-                    testCatalog(dynRestURL)
-                        .done(function(data){
-                            $("#catalogURL").val(dynRestURL);
-                            // Add data to the local catalog object.
-                            Catalog.setData(data);
-                        })
-                        .fail(function(){
-                            testCatalog(staticRestURL)
-                                .done(function(data){
-                                    $("#catalogURL").val(staticRestURL);
-                                    // Add data to the local catalog object.
-                                    Catalog.setData(data);
-                                })
-                                .fail(function(){
-                                    alert("Failed to find a default catalog. Please specify an explicit URL to your catalog.");
-                                });
-                        });
-                });
+                    alert("Failed to find a default catalog. Please specify an explicit URL to your catalog.");
+	            }); // dohWebURL
 
             // Hide certain elements by default.
             $("#rightPane").hide();

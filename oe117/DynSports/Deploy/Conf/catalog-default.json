@@ -6,6 +6,7 @@
             "IdProperty": "id",
             "PreLoader": "Common/preload.p",
             "ReadFilter": "filter",
+            "ServicePrefix": "pdo",
             "EnableDebugs": false
         }],
         "ServiceSource": [{

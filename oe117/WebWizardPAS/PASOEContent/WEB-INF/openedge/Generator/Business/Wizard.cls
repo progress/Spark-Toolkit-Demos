@@ -66,6 +66,7 @@ class Generator.Business.Wizard inherits BusinessEntity:
     define private variable cCatalogPath as character no-undo.
     define private variable cProjectName as character no-undo.
     define private variable cProjectRoot as character no-undo.
+    define private variable cSvcPrefix   as character no-undo.
     define private variable lSkipHome    as logical   no-undo.
     define private variable lSkipLogout  as logical   no-undo.
     define private variable lUseDebugs   as logical   no-undo.
@@ -94,6 +95,7 @@ class Generator.Business.Wizard inherits BusinessEntity:
         field OmitLogout     as logical   /* Should logout menu option be omitted?             */
         field OutputBase     as character /* Base output directory (optional, autodetected).   */
         field OutputConf     as character /* Conf output directory (optional, autodetected).   */
+        field ServicePrefix  as character /* Service prefix for URL's (default: pdo).          */
         field TemplatePath   as character /* Path to template files, relative to config dir.   */
         field UseJFP         as logical   /* Should JFP support be enabled for entities.       */
         .
@@ -166,6 +168,7 @@ class Generator.Business.Wizard inherits BusinessEntity:
                     cNamespace   = GeneralParam.Namespace
                     cCommonDir   = GeneralParam.CommonDir
                     cCatalogPath = GeneralParam.DefaultCatalog
+                    cSvcPrefix   = GeneralParam.ServicePrefix
                     lSkipHome    = GeneralParam.OmitDashboard eq true
                     lSkipLogout  = GeneralParam.OmitLogout eq true
                     lUseDebugs   = GeneralParam.EnableDebugs eq true
@@ -176,6 +179,9 @@ class Generator.Business.Wizard inherits BusinessEntity:
             if (cNamespace gt "") eq true then
                 assign cNamespace = right-trim(GeneralParam.Namespace, ".") + ".".
         end. /* cWizardConfDir */
+
+        if (cSvcPrefix gt "") ne true then
+            assign cSvcPrefix = "pdo".
 
         /* Use the specified output dir for any project configs. */
         if (GeneralParam.OutputConf gt "") eq true then
@@ -523,9 +529,13 @@ class Generator.Business.Wizard inherits BusinessEntity:
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/templates", alias="templates", mediaType="application/json").
     method public void GetTemplates ( output DefaultCatalog as character,
+                                      output DefaultService as character,
                                       output table for Template ):
         /* No code needed for returning Template table, just uses the current table contents from the config file. */
-        assign DefaultCatalog = cCatalogPath. /* Assign and return the default catalog path to be used. */
+        assign
+            DefaultCatalog = cCatalogPath /* Assign and return the default catalog path to be used. */
+            DefaultService = substitute("/web/&1", cSvcPrefix) /* Return a default service path. */
+            .
     end method. /* GetTemplates */
 
     /*------------------------------------------------------------------------------
@@ -883,7 +893,7 @@ class Generator.Business.Wizard inherits BusinessEntity:
             end.
             setParam("ipRecordIdField", cIdProperty).
             setParam("ipInheritedEntity", cInheritedBE).
-            setParam("ipCatalogURI", "/web/pdo").
+            setParam("ipCatalogURI", substitute("/web/&1", cSvcPrefix)).
             setParam("ipJFPSupport", string(lUseJFP, "true/false")).
             setParam("ipGenAuthor", "Code Wizard").
             setParam("ipGenDate", string(today)).

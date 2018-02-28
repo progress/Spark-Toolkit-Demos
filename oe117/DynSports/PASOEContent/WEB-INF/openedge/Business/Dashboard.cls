@@ -31,7 +31,7 @@ class Business.Dashboard inherits Spark.Core.Service.DynamicResource:
         .
 
     define public override property serviceURI as character
-        initial "/web/pdo/common" no-undo get.
+        initial "/web/api/common" no-undo get.
         protected set.
 
     define public override property resourceName as character

@@ -5,13 +5,15 @@ file and is dependent on certain configuration options to be set according to yo
 Within the master "Config" object, should be at least 2 child objects: General and ServiceSource.
 
 General Options:
-    ApiVersion   [decimal]   Expected version to be used with all API's.
-    BusinessRoot [character] Starting location for reading all business entities.
-    EnableDebugs [logical]   Display additional info as resources are loaded.
-    IdProperty   [character] Name of property to use for record ID purposes.
-    SeqProperty  [character] Name of property to use for result sequence purposes.
-    PreLoader    [character] Special procedure to run prior to loading resources.
-    ReadFilter   [character] Name of URL parameter that will hold any filters.
+    ApiVersion    [decimal]   Expected version to be used with all API's.
+    BusinessRoot  [character] Starting location for reading all business entities.
+    EnableDebugs  [logical]   Display additional info as resources are loaded.
+    IdProperty    [character] Name of property to use for record ID purposes.
+    SeqProperty   [character] Name of property to use for result sequence purposes.
+    PreLoader     [character] Special procedure to run prior to loading resources.
+    ReadFilter    [character] Name of URL parameter that will hold any filters.
+    ServicePrefix [character] Name of URL prefix (after transport) for all services.
+    EnableDebugs  [logical]   Flag to enable debug messages related to the handler.
 
 ServiceSource Options:
     ServiceName     [character] Name of the service as exposed via the catalog.
@@ -26,6 +28,11 @@ to be the full name of your PL file (eg. something.pl). However, because a PL fi
 searched, any resources to be discovered must at least be stated by providing an extra property in each
 of the ServiceSource entries called "ServiceResource".
 
+If intending to support any out-of-the-box services using the OE.Web.DataObject.DataObjectHandler class,
+the default service prefix of /pdo will be a point of conflict. To that end the Spark framework allows you
+to override this value and use any prefix you wish. An example would be "api" which will result in the
+typical URL path becoming /web/api[/<service>[/resource[/method]]]
+
 ServiceResource Options:
     Object [character] Class package or procedure path or of this service resource.
 
@@ -39,13 +46,15 @@ to be provided within the ServiceResource property. Alternatively, see the sampl
  "Config": {
   "General": [
     {
-      "ApiVersion": 3.1,
+      "ApiVersion": 4.2,
       "BusinessRoot": "Business.pl",
       "EnableDebugs": false,
       "IdProperty": "id",
       "SeqProperty": "",
       "PreLoader": "",
-      "ReadFilter": "filter"
+      "ReadFilter": "filter",
+      "ServicePrefix": "api",
+      "EnableDebugs": false
     }
   ],
   "ServiceSource": [

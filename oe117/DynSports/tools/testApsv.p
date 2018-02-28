@@ -96,7 +96,7 @@ if hServer:connected() then do:
             run runService in hFacade ( input  "customer",
                                         input  "read",
                                         input  "get",
-                                        input  "/web/pdo/ordering",
+                                        input  "/web/api/ordering",
                                         input  "",
                                         output fElapsedTime,
                                         output iResponseCode,

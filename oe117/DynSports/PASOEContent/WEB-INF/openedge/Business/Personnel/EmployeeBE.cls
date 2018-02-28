@@ -16,7 +16,7 @@ class Business.Personnel.EmployeeBE inherits Spark.Core.Service.DynamicEntity:
     {Common/employee.i}
 
     define public override property serviceURI as character
-        initial "/web/pdo/personnel" no-undo get.
+        initial "/web/api/personnel" no-undo get.
         protected set.
 
     define public override property resourceName as character

@@ -4,7 +4,7 @@
  *
  * Assumes presence of the following global variables:
  *  var serviceURI = "/<webapp_name>/"; // Prefix to utilize for all REST requests.
- *  var catalogURI = "/[web/pdo|<catalog>.json]"; // Location of the JSDO catalog file.
+ *  var catalogURI = "/[web/pdo|/static/<catalog>.json]"; // Location of the JSDO catalog file.
  *  var authModel = progress.data.Session.AUTH_TYPE_FORM; // Authentication model for JSDO.
  */
 var app = (function(){

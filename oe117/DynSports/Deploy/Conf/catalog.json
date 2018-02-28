@@ -6,32 +6,32 @@
             "IdProperty": "id",
             "PreLoader": "Common/preload.p",
             "ReadFilter": "filter",
-            "ServicePrefix": "pdo",
+            "ServicePrefix": "api",
             "EnableDebugs": false
         }],
         "ServiceSource": [{
             "ServiceName": "Common",
-            "ServiceURI": "/web/pdo/common",
+            "ServiceURI": "/web/api/common",
             "ClassPath": "Business",
             "UseRequest": false
         }, {
             "ServiceName": "Ordering",
-            "ServiceURI": "/web/pdo/ordering",
+            "ServiceURI": "/web/api/ordering",
             "ClassPath": "Business.Ordering",
             "UseRequest": false
         }, {
             "ServiceName": "Personnel",
-            "ServiceURI": "/web/pdo/personnel",
+            "ServiceURI": "/web/api/personnel",
             "ClassPath": "Business.Personnel",
             "UseRequest": false
         }, {
             "ServiceName": "System",
-            "ServiceURI": "/web/pdo/system",
+            "ServiceURI": "/web/api/system",
             "ClassPath": "Business.System",
             "UseRequest": false
         }, {
             "ServiceName": "Tests",
-            "ServiceURI": "/web/pdo/tests",
+            "ServiceURI": "/web/api/tests",
             "ClassPath": "Business.UnitTest",
             "UseRequest": false
         }]

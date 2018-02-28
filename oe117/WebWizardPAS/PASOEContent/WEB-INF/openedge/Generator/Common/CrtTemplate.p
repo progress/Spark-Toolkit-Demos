@@ -206,7 +206,7 @@ function checkDefaults returns logical ( ):
         assign ipBEInputFolder = ipBEOutputFolder.
 
     if ipGenBE begins "BE" or (ipInvokeDSName gt "") eq true or (ipInvokeTTName gt "") eq true then do:
-        if ipServiceURI begins "/web/pdo" and
+        if ipServiceURI begins ipCatalogURI and
            num-entries(ipServiceURI, "/") ge 4 then do:
             /* Extend the existing class namespace with the newly-derived service directory. */
             assign cServiceName = entry(4, ipServiceURI, "/").

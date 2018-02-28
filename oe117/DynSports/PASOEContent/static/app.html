@@ -95,7 +95,7 @@
             // Configure essential global variables. Modify as necessary for this application.
             var firstFolder = window.location.pathname ? "/" + window.location.pathname.split("/")[1] : "/";
             var serviceURI = (firstFolder === "/static") ? "/" : firstFolder;
-            var catalogURI = [(firstFolder === "/static") ? "/web/pdo" : (firstFolder + "/web/pdo")];
+            var catalogURI = [(firstFolder === "/static") ? "/web/api" : (firstFolder + "/web/api")];
             var authModel = progress.data.Session.AUTH_TYPE_FORM;
             var redirectOnLogout = true;
             var loginScreenURI = "login.html";

@@ -143,7 +143,7 @@ class tests.ParameterTests inherits tests.PMFOUnit:
                                               input  "params",
                                               input  "primitives",
                                               input  "PUT",
-                                              input  "/web/pdo/tests",
+                                              input  "/web/api/tests",
                                               input  lcJsonRequest,
                                               output fElapsedTime,
                                               output iResponseCode,

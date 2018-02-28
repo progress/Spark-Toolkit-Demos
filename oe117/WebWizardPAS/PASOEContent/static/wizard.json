@@ -1,6 +1,6 @@
 {
     "version": "1.5",
-    "lastModified": "Mon Nov 27 10:58:01 EST 2017",
+    "lastModified": "Wed Feb 28 12:51:52 EST 2018",
     "services": [{
         "name": "wizard",
         "address": "\/web\/pdo\/wizard",
@@ -223,6 +223,10 @@
                     "params": [
                         {
                             "name": "DefaultCatalog",
+                            "type": "RESPONSE_BODY"
+                        },
+                        {
+                            "name": "DefaultService",
                             "type": "RESPONSE_BODY"
                         },
                         {

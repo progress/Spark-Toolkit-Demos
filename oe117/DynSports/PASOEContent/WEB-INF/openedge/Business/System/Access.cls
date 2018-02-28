@@ -16,7 +16,7 @@ block-level on error undo, throw.
 class Business.System.Access inherits Spark.Core.Service.DynamicResource:
 
     define override public property serviceURI as character
-        initial "/web/pdo/system" no-undo get.
+        initial "/web/api/system" no-undo get.
         set.
 
     define override public property resourceName as character
