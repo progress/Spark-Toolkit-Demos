@@ -4,16 +4,16 @@
             "ApiVersion": 4.2,
             "BusinessRoot": "Business",
             "IdProperty": "id",
-            "PreLoader": "",
+            "PreLoader": "Common/preload.p",
             "ReadFilter": "filter",
-            "ServicePrefix": "api",
+            "ServicePrefix": "pdo",
             "EnableDebugs": false
         }],
         "ServiceSource": [{
             "ServiceName": "Common",
-            "ServiceURI": "/web/api/common",
+            "ServiceURI": "/web/pdo/common",
             "ClassPath": "Business",
-            "UseRequest": false
+            "UseRequest": true
         }]
     }
 }

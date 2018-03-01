@@ -143,7 +143,7 @@ var app = (function(){
                     .then(function(){
                         if (getStrings) {
                             // Update languages after session created, catalog downloaded.
-                            getLanguageStrings();                            
+                            getLanguageStrings();
                         }
                     });
             }, function(){
@@ -170,7 +170,7 @@ var app = (function(){
                     }
                 }, function(){
                     resetAttempt(); // Reset any prompts/flags.
-    
+
                     // Clear the credentials if login failed.
                     spark.clearSessionObject("username");
                     showMessage(getText("Login Failed"), "error");

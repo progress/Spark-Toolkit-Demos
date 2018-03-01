@@ -645,7 +645,8 @@
              *  - REST adapter dynamic catalog.
              *  - Typical static catalog.
              */
-            var dynWebURL = (protocol + "//" + origin + serviceName + "/web/pdo");
+            var dynWebURL = (protocol + "//" + origin + serviceName + "/web/api");
+            var dohWebURL = (protocol + "//" + origin + serviceName + "/web/pdo");
             var customWebURL = (protocol + "//" + origin + serviceName + "/web/pdo/" + customCatalog);
             var dynRestURL = (protocol + "//" + origin + serviceName + "/rest/pdo/catalog");
             var staticRestURL = (protocol + "//" + origin + serviceName + "/static/" + firstFolder + ".json");
@@ -657,40 +658,48 @@
                     Catalog.setData(data);
                 })
                 .fail(function(){
-                    testCatalog(customWebURL)
-                        .done(function(data){
-                            $("#catalogURL").val(customWebURL);
-                            // Add data to the local catalog object.
-                            Catalog.setData(data);
-                        })
-                        .fail(function(){
-		                    testCatalog(dynRestURL)
+		            testCatalog(dohWebURL)
+		                .done(function(data){
+		                    $("#catalogURL").val(dynWebURL);
+		                    // Add data to the local catalog object.
+		                    Catalog.setData(data);
+		                })
+		                .fail(function(){
+		                    testCatalog(customWebURL)
 		                        .done(function(data){
-		                            $("#catalogURL").val(dynRestURL);
+		                            $("#catalogURL").val(customWebURL);
 		                            // Add data to the local catalog object.
 		                            Catalog.setData(data);
 		                        })
 		                        .fail(function(){
-		                            testCatalog(staticRestURL)
-		                                .done(function(data){
-		                                    $("#catalogURL").val(staticRestURL);
-		                                    // Add data to the local catalog object.
-		                                    Catalog.setData(data);
-		                                })
-		                                .fail(function(){
-		                                    testCatalog(customRestURL)
-		                                        .done(function(data){
-		                                            $("#catalogURL").val(customRestURL);
-		                                            // Add data to the local catalog object.
-		                                            Catalog.setData(data);
-		                                        })
-		                                        .fail(function(){
-		                                            alert("Failed to find a default catalog. Please specify an explicit URL to your catalog.");
-		                                        }); // defaultRestURL
-		                                }); // staticRestURL
-		                        }); // dynRestURL
-                        }); // customWebURL
-                }); // dynWebURL
+				                    testCatalog(dynRestURL)
+				                        .done(function(data){
+				                            $("#catalogURL").val(dynRestURL);
+				                            // Add data to the local catalog object.
+				                            Catalog.setData(data);
+				                        })
+				                        .fail(function(){
+				                            testCatalog(staticRestURL)
+				                                .done(function(data){
+				                                    $("#catalogURL").val(staticRestURL);
+				                                    // Add data to the local catalog object.
+				                                    Catalog.setData(data);
+				                                })
+				                                .fail(function(){
+				                                    testCatalog(customRestURL)
+				                                        .done(function(data){
+				                                            $("#catalogURL").val(customRestURL);
+				                                            // Add data to the local catalog object.
+				                                            Catalog.setData(data);
+				                                        })
+				                                        .fail(function(){
+				                                            alert("Failed to find a default catalog. Please specify an explicit URL to your catalog.");
+				                                        }); // defaultRestURL
+				                                }); // staticRestURL
+				                        }); // dynRestURL
+		                        }); // customWebURL
+		                }); // dohWebURL
+	            }); // dynWebURL
 
             // Hide certain elements by default.
             $("#rightPane").hide();

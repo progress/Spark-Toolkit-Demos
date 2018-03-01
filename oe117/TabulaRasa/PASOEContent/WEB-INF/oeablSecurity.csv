@@ -14,10 +14,10 @@
 "/soap/**","POST","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the WEB transport URIs ###############
-"/web/pdo","GET","permitAll()"
-"/web/pdo/*","GET","permitAll()"
-"/web/pdo/common/tfa/*","PUT","permitAll()"
-"/web/pdo/common/user/*","*","permitAll()"
+"/web/api","GET","permitAll()"
+"/web/api/*","GET","permitAll()"
+"/web/api/common/tfa/*","PUT","permitAll()"
+"/web/api/common/user/*","*","permitAll()"
 "/web/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the default URI space #################

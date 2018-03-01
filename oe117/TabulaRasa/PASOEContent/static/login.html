@@ -43,12 +43,17 @@
                                 </div>
                             </div>
                             <button name="login" type="button" class="btn btn-lg btn-primary btn-block" data-bind="click:doLogin"></button>
+                            <br/>
+                            <center><span name="forgotPass" class="text-u-l text-white" data-bind="click:doPasswordReset"></span></center>
                         </form>
                         <!-- End of login form -->
                     </section>
                 </div>
             </div>
         </section>
+        <div id="challengeModal"></div>
+        <div id="passResetModal"></div>
+        <div id="confirmCodeModal"></div>
         <!-- Library Extensions -->
         <script type="text/javascript" src="vendor/psc/lib/progress.all.min.js"></script>
         <script type="text/javascript" src="vendor/spark/lib/spark.min.js"></script>
@@ -57,7 +62,7 @@
             // Configure essential global variables. Modify as necessary for this application.
             var firstFolder = window.location.pathname ? "/" + window.location.pathname.split("/")[1] : "/";
             var serviceURI = (firstFolder === "/static") ? "/" : firstFolder;
-            var catalogURI = [(firstFolder === "/static") ? "/web/pdo" : (firstFolder + "/web/pdo")];
+            var catalogURI = [(firstFolder === "/static") ? "/web/api" : (firstFolder + "/web/api")];
             var authModel = progress.data.Session.AUTH_TYPE_FORM;
         </script>
         <script type="text/javascript" src="app/notify.js"></script>
