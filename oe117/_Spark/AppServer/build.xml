@@ -15,6 +15,7 @@
         <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: C:/PASOE)"/>
         <echo message="ant enable_oerealm - Enable use of OERealm by copying config files"/>
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: MyPAS1)"/>
+        <echo message="ant create_service - Create the default Spark DOH service"/>
     </target>
 
     <target name="create" depends="_init_env,_init_unix,_init_windows">
@@ -41,6 +42,13 @@
         <mkdir dir="${pas.path}/conf/spark"/>
         <copy file="${deploy}/Realm/SparkRealm.cp" toDir="${pas.path}/common/lib"/>
         <copy file="${deploy}/Realm/SparkRealm.json" toDir="${pas.path}/conf/spark"/>
+    </target>
+
+    <target name="create_service" depends="_init_env,_init_unix,_init_windows">
+		<!-- Create the project metadata to add a default Spark DOH service. -->
+		<mkdir dir="${basedir}/../.services/Expose/web/DataObjectService"/>
+		<echo file="${basedir}/../.services/Expose/web/DataObjectService/service.properties"
+		      append="false" message="handler1=Spark.Core.Handler.DataObjectHandler:/api"/>
     </target>
 
     <target name="_init_env">
