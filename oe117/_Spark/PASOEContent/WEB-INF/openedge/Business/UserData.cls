@@ -38,6 +38,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
                                        input  emailAddr as character,
                                        output opSuccess as logical,
                                        output opMessage as character ):
+    &if (num-dbs > 0) &then
         define buffer bProfile for WebProfile.
 
         if (username gt "") ne true and (emailAddr gt "") ne true then do:
@@ -101,6 +102,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
                 opSuccess = false
                 opMessage = "Unable to locate account."
                 .
+    &endif
     end method. /* sendResetCode */
 
 
@@ -109,6 +111,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
                                        input  resetCode as character,
                                        output opSuccess as logical,
                                        output opMessage as character ):
+    &if (num-dbs > 0) &then
         define buffer bProfile for WebProfile.
 
         if (username gt "") ne true and (emailAddr gt "") ne true then do:
@@ -197,6 +200,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
                 opSuccess = false
                 opMessage = "Unable to locate account."
                 .
+    &endif
     end method. /* resetPassword */
 
 
@@ -204,6 +208,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
                                         input  newPassword   as character,
                                         output changeSuccess as logical,
                                         output changeMessage as character ):
+    &if (num-dbs > 0) &then
         define buffer bProfile for WebProfile.
 
         assign changeSuccess = false.
@@ -244,6 +249,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
         end.
         else
             assign changeMessage = "User account is not available.".
+    &endif
     end method. /* changePassword */
 
 
@@ -368,6 +374,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
                                     output UseTFA        as logical,
                                     output TFAMethod     as character,
                                     output QR            as character ):
+    &if (num-dbs > 0) &then
         define buffer bProfile for WebProfile.
 
         find first bProfile no-lock
@@ -392,6 +399,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
         end. /* available */
 
         release bProfile no-error.
+    &endif
     end method. /* getProfile */
 
 
@@ -403,6 +411,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
                                     input  UseTFA        as logical,
                                     input  TFAMethod     as character,
                                     output updateSuccess as logical ):
+    &if (num-dbs > 0) &then
         define buffer bProfile for WebProfile.
 
         assign updateSuccess = false.
@@ -443,6 +452,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
         end. /* available */
 
         release bProfile no-error.
+    &endif
     end method. /* setProfile */
 
 
