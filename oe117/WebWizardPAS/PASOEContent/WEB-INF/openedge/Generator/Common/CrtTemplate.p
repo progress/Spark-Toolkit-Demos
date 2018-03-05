@@ -100,7 +100,6 @@ define variable ipDetailSDONames       as character no-undo.
 define variable oMasterFields    as JsonObject no-undo.
 define variable oDetailFields    as JsonObject no-undo.
 define variable cTTName          as character  no-undo.
-define variable cGridAPI         as character  no-undo initial "GetGridData".
 define variable cSchemaFile      as character  no-undo.
 define variable cInputUITemplate as character  no-undo.
 define variable cServiceName     as character  no-undo.
@@ -237,7 +236,7 @@ function checkDefaults returns logical ( ):
             assign ipRecordIdField = "id".
 
         if (ipInheritedEntity gt "") ne true then
-            assign ipInheritedEntity = "Common.ApplicationBE".
+            assign ipInheritedEntity = "Spark.Core.Service.SparkEntity".
 
         if (ipInvokeDSName gt "") ne true then
             assign ipInvokeDSName = substitute("ds&1", replace(ipEntityName, "-", "")).
@@ -879,7 +878,6 @@ function GenInvokeGrid returns logical ( input pcTemplatePath as character ):
         assign ttData.ttLine = replace(ttData.ttLine, "<Spark_TemplateName>", replace(ipUIOutputFilename, ".html", "")).
         assign ttData.ttLine = replace(ttData.ttLine, "<Spark_MasterTable>", ipMasterTable).
         assign ttData.ttLine = replace(ttData.ttLine, "<Spark_TempTableName>", cTTName).
-        assign ttData.ttLine = replace(ttData.ttLine, "<Spark_GridAPI>", cGridAPI).
         assign ttData.ttLine = replace(ttData.ttLine, "<Spark_GridFields>", cFieldList).
         assign ttData.ttLine = replace(ttData.ttLine, "<Spark_SearchFields>", cSearchFields).
     end.
