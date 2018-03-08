@@ -24,7 +24,7 @@
         }
 
         /**
-         * String operations for PMFO.
+         * String operations for Spark.
          * @namespace spark.strings
          * @memberof spark
          */

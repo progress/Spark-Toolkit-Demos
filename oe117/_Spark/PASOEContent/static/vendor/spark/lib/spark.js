@@ -17,7 +17,7 @@
         var _sessionName = null; // Unique name for storing JSDO session data locally.
 
         /**
-         * Primary client-side object for PMFO.
+         * Primary client-side object for Spark.
          * @namespace spark
          * @type {Object}
          */
@@ -985,7 +985,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * File loading operations for PMFO.
+         * File loading operations for Spark.
          * @namespace spark.loader
          * @memberof spark
          */
@@ -1121,7 +1121,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * Field operations for PMFO.
+         * Field operations for Spark.
          * @namespace spark.field
          * @memberof spark
          */
@@ -1661,7 +1661,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * Form operations for PMFO.
+         * Form operations for Spark.
          * @namespace spark.form
          * @memberof spark
          */
@@ -1942,7 +1942,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * Grid operations for PMFO.
+         * Grid operations for Spark.
          * @namespace spark.grid
          * @memberof spark
          */
@@ -2170,7 +2170,7 @@
     if ($ && window.spark) {
 
         /**
-         * File IO operations for PMFO.
+         * File IO operations for Spark.
          * @namespace spark.io
          * @memberof spark
          */
@@ -2275,7 +2275,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * Navigation operations for PMFO.
+         * Navigation operations for Spark.
          * @namespace spark.nav
          * @memberof spark
          */
@@ -2531,7 +2531,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * Notification operations for PMFO.
+         * Notification operations for Spark.
          * @namespace spark.notify
          * @memberof spark
          */
@@ -2666,7 +2666,7 @@
         }
 
         /**
-         * String operations for PMFO.
+         * String operations for Spark.
          * @namespace spark.strings
          * @memberof spark
          */

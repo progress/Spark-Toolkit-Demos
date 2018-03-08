@@ -5,7 +5,7 @@
     Description :
     Author(s)   : Dustin Grau
     Created     : Mon Dec 19 15:06:27 EST 2016
-    Notes       : Adds domain to database(s), and produces a PMFO config file.
+    Notes       : Adds domain to database(s), and produces a Spark config file.
   ----------------------------------------------------------------------*/
 
 /* ***************************  Definitions  ************************** */
@@ -43,7 +43,7 @@ define variable oDomains as Progress.Json.ObjectModel.JsonArray  no-undo.
 
 /* Apply changes to all connected databases. */
 do iDB = 1 to num-dbs:
-    /* Used for PMFO config file. */
+    /* Used for Spark config file. */
     assign oSession = new Progress.Json.ObjectModel.JsonObject().
     assign oConfig = new Progress.Json.ObjectModel.JsonObject().
     assign oParams = new Progress.Json.ObjectModel.JsonArray().
@@ -90,7 +90,7 @@ do iDB = 1 to num-dbs:
         delete object oService.
     end. /* valid-object(oService) */
 
-    /* Output domain data to session.json config file for PMFO. */
+    /* Output domain data to session.json config file for Spark. */
     oConfig:Add("Domains", oDomains).
     oSession:Add("Config", oConfig).
     oSession:WriteFile("session.json", true).

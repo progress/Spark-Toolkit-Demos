@@ -10,7 +10,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * Grid operations for PMFO.
+         * Grid operations for Spark.
          * @namespace spark.grid
          * @memberof spark
          */

@@ -10,7 +10,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * Navigation operations for PMFO.
+         * Navigation operations for Spark.
          * @namespace spark.nav
          * @memberof spark
          */

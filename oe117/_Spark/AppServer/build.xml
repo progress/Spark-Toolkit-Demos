@@ -2,7 +2,7 @@
 
     <target name="usage" description="Usage Instructions">
         <echo message="Usage Instructions:"/>
-        <echo message="ant create - Build a new PAS instance with PMFO"/>
+        <echo message="ant create - Build a new PAS instance with Spark"/>
         <echo message="    -Dhttp=[HTTP_PORT] = port for HTTP connections (Default: 8880)"/>
         <echo message="    -Dhttps=[HTTPS_PORT] = port for HTTPS connections (Default: 8881)"/>
         <echo message="    -Dajp=[AJP13_PORT] = port for AJP13 connections (Default: 8882)"/>
@@ -10,7 +10,7 @@
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: MyPAS1)"/>
         <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: C:/PASOE)"/>
         <echo message="    -Dablapp=[INSTANCE_NAME] = default ABL App name (Default: {alias})"/>
-        <echo message="ant upgrade - Upgrade a PAS isntance with PMFO"/>
+        <echo message="ant upgrade - Upgrade a PAS isntance with Spark"/>
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: MyPAS1)"/>
         <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: C:/PASOE)"/>
         <echo message="ant enable_oerealm - Enable use of OERealm by copying config files"/>

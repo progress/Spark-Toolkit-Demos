@@ -10,7 +10,7 @@
     if ($ && window.spark) {
 
         /**
-         * File IO operations for PMFO.
+         * File IO operations for Spark.
          * @namespace spark.io
          * @memberof spark
          */
