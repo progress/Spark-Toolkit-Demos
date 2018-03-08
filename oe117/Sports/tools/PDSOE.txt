@@ -1,5 +1,5 @@
 The following options may be useful for development within PDSOE. At the very least,
-these would maintain style consistency across your development with the PMFO codebase.
+these would maintain style consistency across your development with the Spark codebase.
 
 Window -> Preferences
     General

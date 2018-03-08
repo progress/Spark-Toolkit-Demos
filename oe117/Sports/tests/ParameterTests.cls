@@ -17,26 +17,26 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class tests.ParameterTests inherits tests.PMFOUnit:
+class tests.ParameterTests inherits tests.SparkUnit:
 
     define private variable hCPO as handle no-undo.
 
 	/*------------------------------------------------------------------------------
-	 Purpose: Start up the PMFO stack similar to a session of the MSAS agent.
+	 Purpose: Start up the Spark stack similar to a session of the MSAS agent.
 	 Notes:
 	------------------------------------------------------------------------------*/
 	@Before.
 	method public void before ( ):
-        this-object:StartPMFO("parameter").
+        this-object:StartSpark("parameter").
 	end method.
 
     /*------------------------------------------------------------------------------
-     Purpose: Shut down the PMFO stack similar to a session of the MSAS agent.
+     Purpose: Shut down the Spark stack similar to a session of the MSAS agent.
      Notes:
     ------------------------------------------------------------------------------*/
     @After.
     method public void after ( ):
-        this-object:StopPMFO().
+        this-object:StopSpark().
 
         finally:
             delete object hCPO no-error.

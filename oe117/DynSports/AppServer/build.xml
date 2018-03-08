@@ -2,7 +2,7 @@
 
     <target name="usage" description="Usage Instructions">
         <echo message="Usage Instructions:"/>
-        <echo message="ant create - Build a new PAS instance with PMFO"/>
+        <echo message="ant create - Build a new PAS instance with Spark"/>
         <echo message="    -Dhttp=[HTTP_PORT] = port for HTTP connections (Default: 8820)"/>
         <echo message="    -Dhttps=[HTTPS_PORT] = port for HTTPS connections (Default: 8821)"/>
         <echo message="    -Dajp=[AJP13_PORT] = port for AJP13 connections (Default: 8822)"/>
@@ -54,7 +54,7 @@
         <property name="pas.root" value="${path}"/>
         <property name="pas.path" value="${pas.root}/${alias}"/>
         <property name="pas.bin" value="${pas.path}/bin"/>
-        <property name="pas.conf.pmfo" value="DynSports"/>
+        <property name="pas.conf.spark" value="DynSports"/>
         <property name="ablapp" value="${alias}"/>
         <property name="deploy" value="${basedir}/../Deploy/Conf"/>
 
@@ -127,9 +127,9 @@
         </copy>
 
         <!-- Copy initial configuration files to the PAS instance. -->
-        <mkdir dir="${pas.path}/conf/${pas.conf.pmfo}"/>
-        <mkdir dir="${pas.path}/conf/${pas.conf.pmfo}/signatures"/>
-        <copy toDir="${pas.path}/conf/${pas.conf.pmfo}">
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}"/>
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/signatures"/>
+        <copy toDir="${pas.path}/conf/${pas.conf.spark}">
             <fileset dir="${deploy}">
                 <include name="*.cp"/>
                 <include name="*.json"/>

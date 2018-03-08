@@ -17,7 +17,7 @@
         var _sessionName = null; // Unique name for storing JSDO session data locally.
 
         /**
-         * Primary client-side object for PMFO.
+         * Primary client-side object for Spark.
          * @namespace spark
          * @type {Object}
          */

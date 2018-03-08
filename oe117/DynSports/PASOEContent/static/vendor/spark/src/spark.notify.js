@@ -10,7 +10,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * Notification operations for PMFO.
+         * Notification operations for Spark.
          * @namespace spark.notify
          * @memberof spark
          */

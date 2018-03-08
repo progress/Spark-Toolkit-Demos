@@ -2,7 +2,7 @@
 
     <target name="usage" description="Usage Instructions" depends="_init_env,_init_unix,_init_windows">
         <echo message="Usage Instructions:"/>
-        <echo message="ant create - Build a new PAS instance with PMFO"/>
+        <echo message="ant create - Build a new PAS instance with Spark"/>
         <echo message="    -Dhttp=[HTTP_PORT] = port for HTTP connections (Default: 8830)"/>
         <echo message="    -Dhttps=[HTTPS_PORT] = port for HTTPS connections (Default: 8831)"/>
         <echo message="    -Dajp=[AJP13_PORT] = port for AJP13 connections (Default: 8832)"/>
@@ -10,7 +10,7 @@
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: SportsDemo)"/>
         <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: ${path})"/>
         <echo message="    -Dablapp=[INSTANCE_NAME] = default ABL App name (Default: {alias})"/>
-        <echo message="ant upgrade - Upgrade a PAS isntance with PMFO"/>
+        <echo message="ant upgrade - Upgrade a PAS isntance with Spark"/>
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: SportsDemo)"/>
         <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: ${path})"/>
         <echo message="ant enable_oerealm - Enable use of OERealm by copying config files"/>
@@ -61,7 +61,7 @@
 
         <!-- Define standard variables for this environment. -->
         <property name="alias" value="SportsDemo"/>
-        <property name="pas.conf.pmfo" value="spark"/>
+        <property name="pas.conf.spark" value="spark"/>
         <property name="ablapp" value="${alias}"/>
         <property name="deploy" value="${basedir}/../Deploy/Conf"/>
 
@@ -145,9 +145,9 @@
         </copy>
 
         <!-- Copy initial configuration files to the PAS instance. -->
-        <mkdir dir="${pas.path}/conf/${pas.conf.pmfo}"/>
-        <mkdir dir="${pas.path}/conf/${pas.conf.pmfo}/signatures"/>
-        <copy toDir="${pas.path}/conf/${pas.conf.pmfo}">
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}"/>
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/signatures"/>
+        <copy toDir="${pas.path}/conf/${pas.conf.spark}">
             <fileset dir="${deploy}">
                 <include name="*.cp"/>
                 <include name="*.json"/>

@@ -10,7 +10,7 @@
     if ($ && kendo && window.spark) {
 
         /**
-         * File loading operations for PMFO.
+         * File loading operations for Spark.
          * @namespace spark.loader
          * @memberof spark
          */

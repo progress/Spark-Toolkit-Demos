@@ -1,6 +1,6 @@
 /*------------------------------------------------------------------------
-    File        : PMFOUnit
-    Purpose     : Provide basic methods to run ABLUnit against PMFO.
+    File        : SparkUnit
+    Purpose     : Provide basic methods to run ABLUnit against Spark.
     Syntax      : 
     Description : 
     Author(s)   : dugrau@progress.com
@@ -13,13 +13,13 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class tests.PMFOUnit abstract: 
+class tests.SparkUnit abstract: 
 
     define protected variable NumDatabases as integer no-undo.
 
     define protected variable UseProfiler as logical no-undo initial true.
 
-    method protected void StartPMFO ( input pcTestSuiteName as character ):
+    method protected void StartSpark ( input pcTestSuiteName as character ):
         define variable oParser    as ObjectModelParser no-undo.
         define variable oConfig    as JsonObject        no-undo.
         define variable oDatabases as JsonObject        no-undo.
@@ -73,7 +73,7 @@ class tests.PMFOUnit abstract:
                 profiler:enabled      = true
                 profiler:profiling    = true
                 profiler:file-name    = substitute("&1/output_&2.prof", right-trim(cPath, "~/"), pcTestSuiteName)
-                profiler:description  = "PMFO ABLUnit Output"
+                profiler:description  = "Spark ABLUnit Output"
                 profiler:listings     = true /* Note: Requires source code. */
                 profiler:directory    = cListDir
                 profiler:trace-filter = "*":u
@@ -90,9 +90,9 @@ class tests.PMFOUnit abstract:
             delete object oConfig no-error.
             delete object oDatabases no-error.
         end finally.
-    end method. /* StartPMFO */
+    end method. /* StartSpark */
 
-    method protected void StopPMFO ( ):
+    method protected void StopSpark ( ):
         /* Run standard "sessionShutdownProc". */
         run Spark/shutdown.p.
 
@@ -110,7 +110,7 @@ class tests.PMFOUnit abstract:
         catch err as Progress.Lang.Error:
             OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
         end catch.
-    end method. /* StopPMFO */
+    end method. /* StopSpark */
 
     method protected logical HasManagerInterface ( ):
         define variable oManager as Progress.Lang.Class no-undo.

@@ -3,7 +3,7 @@ a PAS instance. Note that CATALINA_BASE is your PAS server instance's directory.
 
 THESE SHOULD BE DEPLOYED BEFORE THE FIRST START OF YOUR PAS INSTANCE!
 
-Conf/ - Primary configuration directory for PMFO (Spark) framework options.
+Conf/ - Primary configuration directory for Spark (Spark) framework options.
         Files in this directory should be copied to CATALINA_BASE/conf/spark by default.
 Conf/Realm - Specific configuration options for use with OERealm security.
              The SparkRealm.cp should be copied to CATALINA_BASE/common/lib (per Tomcat rules)
@@ -21,13 +21,13 @@ Note: Build/ Contains management scripts for start/stop/restart actions. Used pr
 
 /*********************************************************************************************/
 
-To add the necessary components for the Progress Modernization Framework for OpenEdge (PMFO),
+To add the necessary components for the Progress Modernization Framework for OpenEdge (Spark),
 copy the files in the project /AppServer directory to your CATALINA_BASE/openedge folder. This
 is a default, shared location among all of your webapps that will be deployed to this instance.
 Files that may be included with this folder include:
     startup.pf - A simple parameter file for database options and extra configuration options.
     Ccs.pl - A procedure library that contains the Common Component Specification interfaces.
-    PMFO.pl - A procedure library that contains all default PMFO classes (default framework).
+    Spark.pl - A procedure library that contains all default Spark classes (default framework).
 
 
 As an example for quick-merging properties within a PAS environment, you can use the file

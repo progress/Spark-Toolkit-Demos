@@ -376,7 +376,7 @@
                 function getVersions(){
                     $("#versionJQ").html("v" + jQuery().jquery);
                     $("#versionKUI").html(kendo ? ("v" + kendo.version) : "UNAVAILABLE");
-                    $("#versionPMFO").html(spark ? spark.version : "< v3.0.2");
+                    $("#versionSpark").html(spark ? spark.version : "< v3.0.2");
 
                     $.get("vendor/bootstrap/dist/css/bootstrap.min.css", function(data){
                         var version = data.match(/v[.\d]+[.\d]/);
@@ -466,7 +466,7 @@
 		                                <li>Bootstrap <span id="versionBS"></span></li>
 		                                <li>FontAwesome <span id="versionFA"></span></li>
 		                                <li>JSDO <span id="versionJSDO"></span></li>
-		                                <li>Spark <span id="versionPMFO"></span></li>
+		                                <li>Spark <span id="versionSpark"></span></li>
 		                                <li>OpenEdge <span id="versionOE"></span></li>
 		                            </ul>
 		                        </div>
