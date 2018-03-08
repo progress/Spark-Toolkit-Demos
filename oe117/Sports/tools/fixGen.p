@@ -142,24 +142,40 @@ function fixData returns logical ( input-output poGenData as JsonObject ):
                  *  msgElem (msgElemValue): typically "field" or "body"
                  */
 
-                if valid-object(oMethod) and oMethod:Has("options") then do:
-                    oOptions = oMethod:GetJsonObject("options").
-                    if valid-object(oOptions) then do:
-                        if oOptions:Has("requestEnvelope") and
-                           oOptions:GetType("requestEnvelope") eq JsonDataType:boolean and
-                           oOptions:GetLogical("requestEnvelope") ne {&USE_INVOKE_ENVELOPE} then do:
-                            oOptions:Set("requestEnvelope", {&USE_INVOKE_ENVELOPE}).
-                            assign lFixed = fixCatalog(cServices[ix]).
-                        end. /* requestEnvelope */
+                if valid-object(oMethod) then do:
+                    if cMethods[iz] eq "GET" and not oMethod:Has("name") and
+                       oMethod:Has("statusCode") and oMethod:Has("file") then do:
+                        /**
+                         * When a catalog file is present in the .gen file,
+                         * add a name property with "dataservice.catalog" to
+                         * trigger the inclusion of the service's catalog in
+                         * the output of the OE.W.DO.DOH:ListServices method.
+                         * This can be triggered through a ROOT.map file that
+                         * runs this particular method on GET of the "/" URI.
+                         */
+                        oMethod:Add("name", "dataservice.catalog").
+                        assign lFixed = true. /* Trigger .map output */
+                    end. /* GET w/ statusCode and file */
 
-                        if oOptions:Has("responseEnvelope") and
-                           oOptions:GetType("requestEnvelope") eq JsonDataType:boolean and
-                           oOptions:GetLogical("responseEnvelope") ne {&USE_INVOKE_ENVELOPE} then do:
-                            oOptions:Set("responseEnvelope", {&USE_INVOKE_ENVELOPE}).
-                            assign lFixed = fixCatalog(cServices[ix]).
-                        end. /* responseEnvelope */
-                    end. /* Valid Object */
-                end. /* Has Options */
+                    if oMethod:Has("options") then do:
+                        oOptions = oMethod:GetJsonObject("options").
+                        if valid-object(oOptions) then do:
+                            if oOptions:Has("requestEnvelope") and
+                               oOptions:GetType("requestEnvelope") eq JsonDataType:boolean and
+                               oOptions:GetLogical("requestEnvelope") ne {&USE_INVOKE_ENVELOPE} then do:
+                                oOptions:Set("requestEnvelope", {&USE_INVOKE_ENVELOPE}).
+                                assign lFixed = fixCatalog(cServices[ix]).
+                            end. /* requestEnvelope */
+
+                            if oOptions:Has("responseEnvelope") and
+                               oOptions:GetType("requestEnvelope") eq JsonDataType:boolean and
+                               oOptions:GetLogical("responseEnvelope") ne {&USE_INVOKE_ENVELOPE} then do:
+                                oOptions:Set("responseEnvelope", {&USE_INVOKE_ENVELOPE}).
+                                assign lFixed = fixCatalog(cServices[ix]).
+                            end. /* responseEnvelope */
+                        end. /* Valid Object */
+                    end. /* Has Options */
+                end. /* Valid Method */
 
                 if valid-object(oMethod) and oMethod:Has("entity") then do:
                     oEntity = oMethod:GetJsonObject("entity").

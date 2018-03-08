@@ -774,7 +774,7 @@ class OpenEdge.Web.DataObject.DataObjectHandler implements IWebHandler, ISupport
                 if not regdOps[opsCnt]:ServiceURI eq ServiceRegistry:ROOT_SERVICE_URI then
                     operationURL:AddPathSegment(regdOps[opsCnt]:ServiceURI).
                       
-                oCatalog:Add('url':u, operationURL:ToString()).
+                oCatalog:Add('url':u, URI:decode(operationURL:ToString())).
                 
                 svcOps:Add(oCatalog). 
             end.
@@ -1089,7 +1089,7 @@ class OpenEdge.Web.DataObject.DataObjectHandler implements IWebHandler, ISupport
         
         /* no body or nothing in it */
         if not valid-object(oBody) then
-            return new Memptr(0).
+            return new memptr(0).
         
         if type-of(oBody, Memptr) and 
            cast(oBody, Memptr):Size eq 0 then

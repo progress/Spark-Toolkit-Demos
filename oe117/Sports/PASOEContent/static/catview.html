@@ -139,6 +139,16 @@
                 return $.get(url, null, null, "json");
             };
 
+            function setCatalog(){
+                $.each(catalogTest, function(i, catalogURI){
+                    // Using the found catalog data, take the most preferred (in order).
+	                if (catalogData[catalogURI] && $("#catalogURL").val() == "") {
+	                    $("#catalogURL").val(catalogURI);
+	                    Catalog.setData(catalogData[catalogURI]);
+	                }
+	            });
+            };
+
             function loadCatalog(url){
                 var success = function(data, textStatus, jqXHR){
                     if (textStatus !== "success") {
@@ -641,56 +651,47 @@
 
             /**
              * Test for location of a catalog based on 3 typical locations:
-             *  - WebSpeed transport dynamic catalog.
-             *  - REST adapter dynamic catalog.
+             *  - DOH annotated/generated catalog.
+             *  - WEB transport dynamic catalog.
              *  - Typical static catalog.
              */
-            var dynWebURL = (protocol + "//" + origin + serviceName + "/web/pdo");
-            var customWebURL = (protocol + "//" + origin + serviceName + "/web/pdo/" + customCatalog);
-            var dynRestURL = (protocol + "//" + origin + serviceName + "/rest/pdo/catalog");
-            var staticRestURL = (protocol + "//" + origin + serviceName + "/static/" + firstFolder + ".json");
-            var customRestURL = (protocol + "//" + origin + serviceName + "/static/" + customCatalog + ".json");
-            testCatalog(dynWebURL)
-                .done(function(data){
-                    $("#catalogURL").val(dynWebURL);
-                    // Add data to the local catalog object.
-                    Catalog.setData(data);
-                })
-                .fail(function(){
-                    testCatalog(customWebURL)
-                        .done(function(data){
-                            $("#catalogURL").val(customWebURL);
-                            // Add data to the local catalog object.
-                            Catalog.setData(data);
-                        })
-                        .fail(function(){
-		                    testCatalog(dynRestURL)
-		                        .done(function(data){
-		                            $("#catalogURL").val(dynRestURL);
-		                            // Add data to the local catalog object.
-		                            Catalog.setData(data);
-		                        })
-		                        .fail(function(){
-		                            testCatalog(staticRestURL)
-		                                .done(function(data){
-		                                    $("#catalogURL").val(staticRestURL);
-		                                    // Add data to the local catalog object.
-		                                    Catalog.setData(data);
-		                                })
-		                                .fail(function(){
-		                                    testCatalog(customRestURL)
-		                                        .done(function(data){
-		                                            $("#catalogURL").val(customRestURL);
-		                                            // Add data to the local catalog object.
-		                                            Catalog.setData(data);
-		                                        })
-		                                        .fail(function(){
-		                                            alert("Failed to find a default catalog. Please specify an explicit URL to your catalog.");
-		                                        }); // defaultRestURL
-		                                }); // staticRestURL
-		                        }); // dynRestURL
-                        }); // customWebURL
-                }); // dynWebURL
+            var catalogTest = [];
+            // Attempt to load a custom catalog for the PDO/DOH pattern.
+            if (customCatalog !== "") {
+                catalogTest.push(protocol + "//" + origin + serviceName + "/web/pdo/" + customCatalog);
+            }
+            // Access the root URI for the PDO/DOH pattern.
+            catalogTest.push(protocol + "//" + origin + serviceName + "/web/pdo");
+            // Typical catalog location for fully-dynamic Spark approach for services.
+            catalogTest.push(protocol + "//" + origin + serviceName + "/web/api");
+            // Attempt to load a static catalog by the same name as the webapp.
+            catalogTest.push(protocol + "//" + origin + serviceName + "/static/" + firstFolder + ".json");
+            // Attempt to load a custom, static catalog.
+            if (customCatalog !== "") {
+                catalogTest.push(protocol + "//" + origin + serviceName + "/static/" + customCatalog + ".json");
+            }
+
+            var catalogData = {}; // Track found catalogs and their response data.
+            var responses = 0; // Track number of responses for requested catalogs.
+            $.each(catalogTest, function(i, catalogURI){
+                // Test all possible catalog locations to find suitable matches.
+                testCatalog(catalogURI)
+	                .done(function(data){
+                        catalogData[catalogURI] = data;
+	                    console.log("Catalog found at", catalogURI);
+	                    responses++; // Track this as a response given.
+	                    if (catalogTest.length === responses) {
+	                       setCatalog();
+	                    }
+	                })
+	                .fail(function(){
+                        console.log("Catalog not found at", catalogURI);
+                        responses++; // Track this as a response given.
+                        if (catalogTest.length === responses) {
+                           setCatalog();
+                        }
+	                });
+            });
 
             // Hide certain elements by default.
             $("#rightPane").hide();
