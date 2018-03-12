@@ -7,6 +7,7 @@
 
 - Adjust logic in Spark DOH class to work with a single prefix, just like the original DOH from product.
 - Add UI logic to clear saved context for a screen (currently only in the Customer Updatable Grid screen).
+- Rename the template project to QuickStart and moved all other technical demo projects to a new repo.
 
 ### v4.2.0
 

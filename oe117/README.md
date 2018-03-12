@@ -10,4 +10,4 @@
 
 ## Other Projects
 
-**_Spark** - Not a project, per-se, but more like an overlay of project properties and extra files to get you started quickly with a new PAS-compatible ABL Web App project. This will provide the necessary PL files for use with Spark, set the PROPATH accordingly, and add the metadata for a defined service called DataObjectService that utilizes a specific WebHandler class for generic class/procedure endpoints.
+**QuickStart** - Not a project, per-se, but more like an overlay of project properties and extra files to get you started quickly with a new PAS-compatible ABL Web App project. This will provide the necessary PL files for use with Spark, set the PROPATH accordingly, and add the metadata for a defined service called DataObjectService that utilizes a specific WebHandler class for generic class/procedure endpoints.
