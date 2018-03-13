@@ -2,8 +2,12 @@
 
     <target name="usage" description="Usage Instructions" depends="_init_env,_init_unix,_init_windows">
         <echo message="Usage Instructions:"/>
-        <echo message="ant create - Create new Sports2000 and WebState DB's"/>
+        <echo message="ant create - Create new, default Sports2000 and WebState DB's"/>
         <echo message="    -Dpath=[PATH] = location for databases (Default: ${path})"/>
+		<echo message="                    Note: This will also run the add_domain task"/>
+        <echo message="ant add_domain - Add default 'spark' domain to available DB's"/>
+        <echo message="    -Dpath=[PATH] = location for databases (Default: ${path})"/>
+		<echo message="                    Note: Run again to update existing domain(s)"/>
     </target>
 
     <target name="_init_env">
@@ -62,7 +66,7 @@
         </copy>
 
 		<PCTCreateBase dbName="Sports2000" destDir="${path}/Sports2000" dlcHome="${dlcHome}"
-		               blockSize="4" cpInternal="utf=8" largeFiles="true"
+		               blockSize="4" cpInternal="utf-8" largeFiles="false"
 					   structFile="${basedir}/Sports2000/Sports2000.st" schemaFile="${basedir}/Sports2000/Sports2000.df">
 		</PCTCreateBase>
 		<PCTLoadData srcDir="${basedir}/Sports2000/Data" dlcHome="${dlcHome}">
@@ -70,12 +74,25 @@
 		</PCTLoadData>
 
 		<PCTCreateBase dbName="WebState" destDir="${path}/WebState" dlcHome="${dlcHome}"
-					   blockSize="4" cpInternal="utf=8" largeFiles="true"
+					   blockSize="4" cpInternal="utf-8" largeFiles="false"
 					   structFile="${basedir}/WebState/WebState.st" schemaFile="${basedir}/WebState/WebState.df">
 		</PCTCreateBase>
-		<PCTLoadData srcDir="${basedir}/WebState/Data" dlcHome="${dlcHome}">
+		<PCTLoadData srcDir="${basedir}/WebState/Data" dlcHome="${dlcHome}"
+		             tables="weblookup,webmenu,webprofile,webrole,webroleprofile,webroletask,websetting,webtask">
 		    <DBConnection dbName="WebState" dbDir="${path}/WebState" singleUser="true"/>
 		</PCTLoadData>
+
+		<antcall target="add_domain"/>
+	</target>
+
+    <target name="add_domain" depends="_init_env,_init_unix,_init_windows">
+		<taskdef resource="PCT.properties" classpath="${basedir}/PCT.jar"/>
+        <PCTVersion/>
+
+		<PCTRun dlcHome="${dlcHome}" procedure="createDomain.p" cpInternal="utf-8" cpStream="utf-8">
+		    <DBConnection dbName="Sports2000" dbDir="${path}/Sports2000" singleUser="true"/>
+		    <DBConnection dbName="WebState" dbDir="${path}/WebState" singleUser="true"/>
+		</PCTRun>
 	</target>
 
 </project>

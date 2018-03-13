@@ -1,5 +1,3 @@
-"BrokerEnv" "*" "*" 04/13/10 29342 "dev" 04/13/10 30843 "dev"
-"IDType" "All" "All" 02/24/10 32243 "dev" 02/24/10 32243 "dev"
 "MenuType" "Entry" "Entry" 02/24/10 32243 "dev" 02/24/10 32243 "dev"
 "MenuType" "Hidden" "Hidden" 02/24/10 32243 "dev" 02/24/10 32243 "dev"
 "MenuType" "Primary" "Primary" 02/24/10 32243 "dev" 02/24/10 32243 "dev"
@@ -19,11 +17,10 @@
 "TaskAction" "Enforced" "Enforced" 02/24/10 32243 "dev" 02/24/10 32243 "dev"
 "TaskAction" "Optional" "Optional" 02/24/10 32243 "dev" 02/24/10 32243 "dev"
 "TaskGroup" "*" "*" 02/24/10 32243 "dev" 02/24/10 32243 "dev"
-"WebSite" "Default" "Default" 02/24/10 32243 "dev" 02/24/10 32243 "dev"
 .
 PSC
 filename=WebLookup
-records=0000000000022
+records=0000000000019
 ldbname=WebState
 timestamp=2014/12/02-14:19:30
 numformat=44,46
