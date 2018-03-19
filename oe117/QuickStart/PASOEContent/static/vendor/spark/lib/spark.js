@@ -24,7 +24,7 @@
         window.spark = {
 
             /* Current version, tagged with a build date. */
-            version: "v4.2.0 (2017.12.12.044529)",
+            version: "v4.2.1 (2018.03.19.032016)",
 
             /** Reserved Properties **/
 
