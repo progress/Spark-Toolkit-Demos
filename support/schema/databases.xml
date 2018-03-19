@@ -22,7 +22,7 @@
 <connectAtStartup>false</connectAtStartup>
 <driverIdentifier>-27</driverIdentifier>
 <SQLAliasIdentifier>-d9ade0c:15e2a0698d4:-7fe5</SQLAliasIdentifier>
-<SQLAliasName>WebState</SQLAliasName>
+<SQLAliasName>webstate</SQLAliasName>
 <SQLAliasPassword/>
 <url>jdbc:datadirect:openedge://localhost:8500;databaseName=webstate</url>
 <useDriverProperties>false</useDriverProperties>
@@ -51,7 +51,7 @@
 <connectAtStartup>false</connectAtStartup>
 <driverIdentifier>-27</driverIdentifier>
 <SQLAliasIdentifier>-d9ade0c:15e2a0698d4:-7fe4</SQLAliasIdentifier>
-<SQLAliasName>Sports2000</SQLAliasName>
+<SQLAliasName>sports2000</SQLAliasName>
 <SQLAliasPassword/>
 <url>jdbc:datadirect:openedge://localhost:8600;databaseName=sports2000</url>
 <useDriverProperties>false</useDriverProperties>
