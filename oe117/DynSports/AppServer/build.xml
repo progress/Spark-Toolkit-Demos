@@ -54,7 +54,7 @@
         <property name="pas.root" value="${path}"/>
         <property name="pas.path" value="${pas.root}/${alias}"/>
         <property name="pas.bin" value="${pas.path}/bin"/>
-        <property name="pas.conf.spark" value="DynSports"/>
+        <property name="pas.conf.spark" value="sports"/>
         <property name="ablapp" value="${alias}"/>
         <property name="deploy" value="${basedir}/../Deploy/Conf"/>
 
