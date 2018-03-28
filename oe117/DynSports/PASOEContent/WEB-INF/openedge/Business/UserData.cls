@@ -316,14 +316,14 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource:
                                         output emailAddr        as character ):
         if valid-object(oClientContext) then do:
             assign
-                anonymous        = can-do(oClientContext:clientPrincipal:roles, "ROLE_ANONYMOUS")
-                                       or oClientContext:clientPrincipal:roles eq ""
-                                       or oClientContext:userID begins "anonymous"
-                serverTime       = now
-                expires          = oClientContext:loginExpiration
-                domainName       = oClientContext:userDomain
-                sessionID        = oClientContext:contextID
-                username         = oClientContext:userID
+                anonymous  = can-do(oClientContext:clientPrincipal:roles, "ROLE_ANONYMOUS")
+                                 or oClientContext:clientPrincipal:roles eq ""
+                                 or oClientContext:userID begins "anonymous"
+                serverTime = now
+                expires    = oClientContext:loginExpiration
+                domainName = oClientContext:userDomain
+                sessionID  = oClientContext:contextID
+                username   = oClientContext:userID
                 no-error.
             if error-status:error then
                 message substitute("Notice[1]: &1", error-status:get-message(1)).

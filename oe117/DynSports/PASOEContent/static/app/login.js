@@ -281,16 +281,16 @@ var app = (function(){
 
         // Load the password reset modals.
         spark.loader.loadExtInclude("app/common/PassReset.html", "passResetModal")
-	        .then(function(){
-	            // When loading of HTML is complete, prepare to receive events from modal.
-	        	modalPassResetCtrl.vm.bind("modalDataReady", function(ev){
-	                // When event "modalDataReady" is triggered by the modal,
-	                // open the modal for the code confirmation (with context).
-	        		$("#ModalConfirmCode").modal("show");
-	                modalConfirmCodeCtrl.init();
-	                modalConfirmCodeCtrl.vm.doReset(ev.data);
-	            });
-	        });
+            .then(function(){
+                // When loading of HTML is complete, prepare to receive events from modal.
+                modalPassResetCtrl.vm.bind("modalDataReady", function(ev){
+                    // When event "modalDataReady" is triggered by the modal,
+                    // open the modal for the code confirmation (with context).
+                    $("#ModalConfirmCode").modal("show");
+                    modalConfirmCodeCtrl.init();
+                    modalConfirmCodeCtrl.vm.doReset(ev.data);
+                });
+            });
         spark.loader.loadExtInclude("app/common/ConfirmCode.html", "confirmCodeModal");
 
         // Set the year in the footer.
