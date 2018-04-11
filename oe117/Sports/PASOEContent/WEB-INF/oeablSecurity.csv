@@ -28,6 +28,7 @@
 "/static/app.html","*","hasAnyRole('ROLE_PSCUser')"
 "/static/app2.html","*","hasAnyRole('ROLE_PSCUser')"
 "/static/app/views/**","*","hasAnyRole('ROLE_PSCUser')"
+"/static/login.html","GET","permitAll()"
 "/static/**","GET","permitAll()"
 "/*","GET","permitAll()"
 
