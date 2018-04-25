@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Mon Dec 11 14:34:01 EST 2017",
+  "lastModified": "Wed Apr 25 14:48:49 EDT 2018",
   "services": [
     {
       "name": "system",
@@ -538,6 +538,20 @@
                   "type": "RESPONSE_BODY"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "metrics",
+          "path": "\/metrics",
+          "autoSave": true,
+          "operations": [
+            {
+              "name": "objects",
+              "path": "\/objects",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put"
             }
           ]
         }

@@ -82,6 +82,7 @@ function fixCatalog returns logical ( input pcServiceName as character ):
 
     file-info:file-name = substitute("&1/../../static/&2.json", right-trim(cPath, "/"), pcServiceName).
     if file-info:full-pathname ne ? then do:
+        message substitute("Fixing Catalog: &1.json", pcServiceName).
         assign oCatalog = loadData(file-info:full-pathname).
         assign oServices = oCatalog:GetJsonArray("services").
         do ix = 1 to oServices:Length:
@@ -97,7 +98,10 @@ function fixCatalog returns logical ( input pcServiceName as character ):
                 oCatalog:WriteFile(file-info:full-pathname, true).
             end. /* Has useRequest */
         end. /* ix */
+        return true.
     end. /* catalog exists */
+
+    return false.
 end function. /* fixCatalog */
 
 function fixData returns logical ( input-output poGenData as JsonObject ):
@@ -126,13 +130,16 @@ function fixData returns logical ( input-output poGenData as JsonObject ):
         /* Currently this should be 1 service per file,
          * but just in case we should make it dynamic.
          */
+        message substitute("Examining Service #&1: &2", ix, cServices[ix]).
         oService = oServices:GetJsonObject(cServices[ix]).
         oOperations = oService:GetJsonObject("operations").
         assign cOperations = oOperations:GetNames().
         do iy = 1 to extent(cOperations):
+            message substitute("Examining Operation #&1: &2", iy, cOperations[iy]).
             oMethods = oOperations:GetJsonObject(cOperations[iy]).
             assign cMethods = oMethods:GetNames().
             do iz = 1 to extent(cMethods):
+                message substitute("Examining Method #&1: &2", iz, cMethods[iz]).
                 oMethod = oMethods:GetJsonObject(cMethods[iz]).
 
                 /**
@@ -143,7 +150,7 @@ function fixData returns logical ( input-output poGenData as JsonObject ):
                  */
 
                 if valid-object(oMethod) then do:
-                    if cMethods[iz] eq "GET" and not oMethod:Has("name") and
+                    if cMethods[iz] eq "GET" and (not oMethod:Has("name")) and
                        oMethod:Has("statusCode") and oMethod:Has("file") then do:
                         /**
                          * When a catalog file is present in the .gen file,
@@ -164,14 +171,16 @@ function fixData returns logical ( input-output poGenData as JsonObject ):
                                oOptions:GetType("requestEnvelope") eq JsonDataType:boolean and
                                oOptions:GetLogical("requestEnvelope") ne {&USE_INVOKE_ENVELOPE} then do:
                                 oOptions:Set("requestEnvelope", {&USE_INVOKE_ENVELOPE}).
-                                assign lFixed = fixCatalog(cServices[ix]).
+                                fixCatalog(cServices[ix]).
+                                assign lFixed = true.
                             end. /* requestEnvelope */
 
                             if oOptions:Has("responseEnvelope") and
                                oOptions:GetType("requestEnvelope") eq JsonDataType:boolean and
                                oOptions:GetLogical("responseEnvelope") ne {&USE_INVOKE_ENVELOPE} then do:
                                 oOptions:Set("responseEnvelope", {&USE_INVOKE_ENVELOPE}).
-                                assign lFixed = fixCatalog(cServices[ix]).
+                                fixCatalog(cServices[ix]).
+                                assign lFixed = true.
                             end. /* responseEnvelope */
                         end. /* Valid Object */
                     end. /* Has Options */
@@ -247,8 +256,9 @@ do while oIter:HasNext():
     oFile = cast(oIter:Next(), IMapEntry).
 
     /* Load data from the file and fix values. */
-    assign oData = loadData(string(oFile:value)).
     assign cPath = substring(string(oFile:value), 1, length(string(oFile:value)) - length(string(oFile:key))).
+    message substitute("Loading Mapping: &1", string(oFile:key)).
+    assign oData = loadData(string(oFile:value)).    
     assign lFixed = fixData(input-output oData).
 
     /* Output to a new .map file. */

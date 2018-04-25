@@ -7,8 +7,8 @@
           "GET": {
             "contentType": "application\/json",
             "statusCode": 200,
-            "name": "dataservice.catalog",
-            "file": "$CATALINA_BASE\/webapps\/$oepas-webapp\/static\/system.json"
+            "file": "$CATALINA_BASE\/webapps\/$oepas-webapp\/static\/system.json",
+            "name": "dataservice.catalog"
           }
         },
         "\/access": {
@@ -251,6 +251,24 @@
                     "name": "numRecs"
                   }
                 }
+              ]
+            }
+          }
+        },
+        "\/metrics": {
+        },
+        "\/metrics\/objects": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.System.Metrics",
+              "function": "getObjects",
+              "arg": [
               ]
             }
           }
