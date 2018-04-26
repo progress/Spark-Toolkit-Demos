@@ -1,9 +1,8 @@
 /*------------------------------------------------------------------------
     File        : Metrics
     Purpose     : 
-    Syntax      : 
     Description : 
-    Author(s)   : Dustin Grau
+    Author(s)   : Dustin Grau (dugrau@progress.com)
     Created     : Wed Apr 25 14:37:55 EDT 2018
     Notes       : 
   ----------------------------------------------------------------------*/

@@ -9,7 +9,6 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
-using OpenEdge.Logging.* from propath.
 using OpenEdge.Core.Assert from propath.
 using OpenEdge.Core.JsonDataTypeEnum from propath.
 using OpenEdge.Core.String from propath.
@@ -19,11 +18,10 @@ using OpenEdge.Net.HTTP.IHttpRequest from propath.
 using OpenEdge.Net.HTTP.IHttpResponse from propath.
 using OpenEdge.Net.HTTP.RequestBuilder from propath.
 using OpenEdge.Net.HTTP.IAuthenticatedRequest from propath.
-using Spark.Core.Util.ABLObjectsReport from propath.
 
 block-level on error undo, throw.
 
-class Spark.Core.Util.ABLObjectsReport use-widget-pool:
+class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widget-pool:
 
     define protected property ManagerRealm as character no-undo initial "PASOE Manager Application"
         get. private set.
@@ -44,6 +42,9 @@ class Spark.Core.Util.ABLObjectsReport use-widget-pool:
         get. private set.
 
     define protected property GetAgentURI as character no-undo initial "/applications/&1/agents/&2"
+        get. private set.
+
+    define protected property GetAgentSessionURI as character no-undo initial "/applications/&1/agents/&2/sessions"
         get. private set.
 
     define protected property TrackObjectsOn as character no-undo initial "/trackABLObjects/true"
@@ -78,14 +79,6 @@ class Spark.Core.Util.ABLObjectsReport use-widget-pool:
         end get.
         private set.
 
-    define protected property oLogger as ILogWriter
-        get():
-            if not valid-object(this-object:oLogger) then
-                assign this-object:oLogger = LoggerBuilder:GetLogger(get-class(ABLObjectsReport)).
-            return this-object:oLogger.
-        end get.
-        private set.
-
 
     /***** Protected Methods *****/
 
@@ -99,7 +92,9 @@ class Spark.Core.Util.ABLObjectsReport use-widget-pool:
         oLogger:Info(substitute("Requesting URL: &1", pcRequestURI)).
 
         /* Set credentials for HTTP basic using the specific realm. */
-        assign oCredentials = new Credentials(this-object:ManagerRealm, this-object:ManagerUsername, this-object:ManagerPassword).
+        assign oCredentials = new Credentials(this-object:ManagerRealm,
+                                              this-object:ManagerUsername,
+                                              this-object:ManagerPassword).
 
         /* Request the necessary information via GET. */
         oHttpReq = RequestBuilder:Get(pcRequestURI)
@@ -139,8 +134,11 @@ class Spark.Core.Util.ABLObjectsReport use-widget-pool:
         Assert:NotNullOrEmpty(this-object:InstanceURI).
 
         /* Request a list of agents from the OEManager webapp. */
-        assign cRequestURI = substitute("&1&2&3", this-object:InstanceURI, this-object:ManagerURI, this-object:GetAllAgentsURI).
+        assign cRequestURI = substitute("&1&2&3",
+                                        this-object:InstanceURI, this-object:ManagerURI, this-object:GetAllAgentsURI).
         assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName). /* Set request with PAS instance name. */
+
+        /* Make the request to the endpoint. */
         assign oRequest = cast(this-object:InvokeAPI(cRequestURI), JsonObject).
 
         if oRequest:Has("result") then do:
@@ -168,19 +166,28 @@ class Spark.Core.Util.ABLObjectsReport use-widget-pool:
         define variable oRequest    as JsonObject no-undo.
         define variable iCount      as integer    no-undo.
 
-        assign cRequestURI = substitute("&1&2&3", this-object:InstanceURI, this-object:ManagerURI, this-object:GetAgentURI).
+        assign cRequestURI = substitute("&1&2&3",
+                                        this-object:InstanceURI, this-object:ManagerURI, this-object:GetAgentURI).
 
         do iCount = 1 to this-object:AgentList:Length:
             /* Set request with PAS instance name and specific Agent ID. */
             assign oAgent = this-object:AgentList:GetJsonObject(iCount).
             if oAgent:Has("agentId") then do:
-                assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName, oAgent:GetCharacter("agentId")).
+                /* Build the initial URL, to prepare to set the tracking flag. */
+                assign cRequestURI = substitute(cRequestURI,
+                                                this-object:ApplicationName, oAgent:GetCharacter("agentId")).
                 if plEnable then
-                    assign cRequestURI = substitute("&1&2", cRequestURI, this-object:TrackObjectsOn).
+                    /* Turn tracking on. */
+                    assign cRequestURI = substitute("&1&2",
+                                                    cRequestURI, this-object:TrackObjectsOn).
                 else
-                    assign cRequestURI = substitute("&1&2", cRequestURI, this-object:TrackObjectsOff).
+                    /* Turn tracking off. */
+                    assign cRequestURI = substitute("&1&2",
+                                                    cRequestURI, this-object:TrackObjectsOff).
 
+                /* Make the request to the endpoint. */
                 assign oRequest = cast(this-object:InvokeAPI(cRequestURI), JsonObject).
+
                 if oRequest:Has("result") then do:
                     message "Tracking:" this-object:trackingABLObjects(oAgent:GetCharacter("agentId")).
                     this-object:ParseABLObjectReport(oAgent:GetCharacter("agentId")).
@@ -205,8 +212,16 @@ class Spark.Core.Util.ABLObjectsReport use-widget-pool:
 
         Assert:NotNullOrEmpty(pcAgentID).
 
-        assign cRequestURI = substitute("&1&2&3&4", this-object:InstanceURI, this-object:ManagerURI, this-object:GetAgentURI, this-object:TrackingObjects).
-        assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName, pcAgentID). /* Replace PAS instance name and specific Agent ID. */
+        /* Build the initial URL, to obtain the tracking flag. */
+        assign cRequestURI = substitute("&1&2&3&4",
+                                        this-object:InstanceURI, this-object:ManagerURI,
+                                        this-object:GetAgentURI, this-object:TrackingObjects).
+
+        /* Replace PAS instance name and specific Agent ID. */
+        assign cRequestURI = substitute(cRequestURI,
+                                        this-object:ApplicationName, pcAgentID).
+
+        /* Make the request to the endpoint. */
         assign oRequest = cast(this-object:InvokeAPI(cRequestURI), JsonObject).
 
         if oRequest:Has("result") then do:
@@ -231,53 +246,65 @@ message "Tracking:" string(oRequest:GetJsonObject("result"):GetJsonText()).
         define variable cRequestURI as character  no-undo.
         define variable oRequest    as JsonObject no-undo.
         define variable oEntry      as JsonObject no-undo.
+        define variable oABLOutput  as JsonObject no-undo.
         define variable oABLObjects as JsonArray  no-undo.
-        define variable oErrorArray as JsonArray  no-undo.
+        define variable oABLObject  as JsonObject no-undo.
+        define variable oParsed     as JsonArray  no-undo.
         define variable ix          as integer    no-undo.
         define variable iy          as integer    no-undo.
 
         Assert:NotNullOrEmpty(pcAgentID).
 
-        assign cRequestURI = substitute("&1&2&3&4", this-object:InstanceURI, this-object:ManagerURI, this-object:GetAgentURI, this-object:GetObjectsReport).
-        assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName, pcAgentID). /* Replace PAS instance name and specific Agent ID. */
+        /* Build the initial URL, to obtain ABLObjects report. */
+        assign cRequestURI = substitute("&1&2&3&4",
+                                        this-object:InstanceURI, this-object:ManagerURI,
+                                        this-object:GetAgentURI, this-object:GetObjectsReport).
+
+        /* Replace PAS instance name and specific Agent ID. */
+        assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName, pcAgentID).
+
+        /* Make the request to the endpoint. */
         assign oRequest = cast(this-object:InvokeAPI(cRequestURI), JsonObject).
 
         oLogger:Trace("Parsed JsonObject is as below").
         oLogger:Trace(string(oRequest:GetJsonText())).
 
-        assign oErrorArray = new JsonArray().
+        assign oParsed = new JsonArray().
 
         if oRequest:Has("result") then do:
-            assign oABLObjects = oRequest:GetJsonObject("result"):GetJsonObject("ABLOutput"):GetJsonArray("ABLObjects").
-            do while ix le oRequest:GetJsonObject("result"):GetJsonObject("ABLOutput"):GetJsonArray("ABLObjects"):Length:
+            assign oABLOutput = oRequest:GetJsonObject("result"):GetJsonObject("ABLOutput").
+            assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
 
-                if oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):Length gt 0 then do:
+            do while ix le oABLObjects:Length:
 
-                    do while iy le oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):Length:
+                assign oABLObject = oABLObjects:GetJsonObject(ix).
+                if oABLObject:GetJsonArray("Objects"):Length gt 0 then do:
+
+                    do while iy le oABLObject:GetJsonArray("Objects"):Length:
                         oEntry = new JsonObject().
 
-                        if oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):GetJsonObject(iy):Has("ObjType") then
-                            oEntry:Add("ObjType",oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):GetJsonObject(iy):GetCharacter("ObjType")).
+                        if oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):Has("ObjType") then
+                            oEntry:Add("ObjType",oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):GetCharacter("ObjType")).
                         else do:
                             oLogger:Error("ObjType not available in the payload").
-                            oLogger:Error(string(oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):GetJsonObject(iy):GetJsonText())).
+                            oLogger:Error(string(oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):GetJsonText())).
                         end.
-    
-                        if oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):GetJsonObject(iy):Has("Source") then
-                            oEntry:Add("Source",oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):GetJsonObject(iy):GetCharacter("Source")).
+
+                        if oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):Has("Source") then
+                            oEntry:Add("Source",oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):GetCharacter("Source")).
                         else do:
                             oLogger:Error("ObjType not available in the payload").
-                            oLogger:Error(string(oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):GetJsonObject(iy):GetJsonText())).
+                            oLogger:Error(string(oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):GetJsonText())).
                         end.
-    
-                        if oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):GetJsonObject(iy):Has("Line") then
-                            oEntry:Add("Line", oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):GetJsonObject(iy):GetInteger("Line")).
+
+                        if oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):Has("Line") then
+                            oEntry:Add("Line", oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):GetInteger("Line")).
                         else do:
                             oLogger:Error("Line not available in the payload").
-                            oLogger:Error(string(oABLObjects:GetJsonObject(ix):GetJsonArray("Objects"):GetJsonObject(iy):GetJsonText())).
+                            oLogger:Error(string(oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):GetJsonText())).
                         end.
-    
-                        oErrorArray:Add(oEntry).
+
+                        oParsed:Add(oEntry).
                         assign iy = iy + 1.
                     end. /* do while iy */
 
@@ -285,11 +312,11 @@ message "Tracking:" string(oRequest:GetJsonObject("result"):GetJsonText()).
 
                 assign ix = ix + 1.
             end. /* do while ix */
-        end. /* Has Response */
+        end. /* has response */
 
-        oLogger:Info(substitute("Total leaked objects found: &1", oErrorArray:Length)).
+        oLogger:Info(substitute("Total objects found: &1", oParsed:Length)).
         oLogger:Info("Parsed output from ABLObjects report:").
-        oLogger:Info(string(oErrorArray:GetJsonText())).
+        oLogger:Info(string(oParsed:GetJsonText())).
 
         catch err as Progress.Lang.Error:
             oLogger:Error("Failed in ParseABLObjectsReport").
@@ -299,6 +326,6 @@ message "Tracking:" string(oRequest:GetJsonObject("result"):GetJsonText()).
         finally:
             delete object oRequest.
         end finally.
-    end method.
+    end method. /* ParseABLObjectReport */
 
 end class.

@@ -25,7 +25,8 @@ class Spark.Core.Util.OEMetrics use-widget-pool:
 
     method public void getABLObjectsReport ( ):
         oABLObjectsReport:trackABLObjects(true).
-/*        oABLObjectsReport:trackABLObjects(false).*/
+        oABLObjectsReport:ParseABLObjectReport("").
+        oABLObjectsReport:trackABLObjects(false).
     end method. /* getABLObjectsReport */
 
 end class.
