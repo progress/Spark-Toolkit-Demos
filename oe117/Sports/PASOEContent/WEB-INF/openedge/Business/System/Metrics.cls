@@ -20,10 +20,11 @@ class Business.System.Metrics:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/objects", alias="objects", mediaType="application/json").
-    method public void getObjects ( ):
+    method public void GetObjects ( output success as logical ):
         define variable oMetrics as OEMetrics no-undo.
+
         assign oMetrics = new OEMetrics().
-        oMetrics:getABLObjectsReport().
-    end method. /* getObjects */
+        assign success = oMetrics:GetABLObjectsReport("oemanager").
+    end method. /* GetObjects */
 
 end class.

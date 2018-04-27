@@ -141,6 +141,7 @@
             <fileset dir="${basedir}">
                 <include name="*.pl"/>
                 <include name="*.pf"/>
+            	<include name="*.config"/>
             </fileset>
         </copy>
 

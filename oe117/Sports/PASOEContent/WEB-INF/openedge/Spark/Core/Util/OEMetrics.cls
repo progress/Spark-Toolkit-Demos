@@ -20,13 +20,20 @@ class Spark.Core.Util.OEMetrics use-widget-pool:
     constructor OEMetrics ( ):
         /* Prime the pump by getting a list of agents for this PAS instance. */
         oABLObjectsReport = new ABLObjectsReport().
-        oABLObjectsReport:GetAgents().
+        oABLObjectsReport:getAgents().
     end constructor.
 
-    method public void getABLObjectsReport ( ):
-        oABLObjectsReport:trackABLObjects(true).
-        oABLObjectsReport:ParseABLObjectReport("").
-        oABLObjectsReport:trackABLObjects(false).
-    end method. /* getABLObjectsReport */
+    method public logical GetABLObjectsReport ( input pcMonitoringMethod as character ):
+        /* @TODO: Need to address running this via OEManager or JMX. */
+        oABLObjectsReport:TrackABLObjects(true).
+        oABLObjectsReport:ParseABLObjectReport().
+        oABLObjectsReport:TrackABLObjects(false).
+
+        return true.
+
+        catch err as Progress.Lang.Error:
+            return false.
+        end catch.
+    end method. /* GetABLObjectsReport */
 
 end class.
