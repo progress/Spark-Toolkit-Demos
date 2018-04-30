@@ -243,6 +243,7 @@
         <b:property name="jwtUsernameField" value="${jwtToken.usernameField}" />
         <b:property name="mapScopeToAuthority" value="${jwtToken.mapScopeToRole}" />
         <b:property name="scopePrefix" value="${jwtToken.scopeToRolePrefix}" />
+        <b:property name="jwtScopeNameField" value="${jwtToken.scopeNameField}"/>
     </b:bean>
 
     <b:bean id="defaultAccessTokenConverter"

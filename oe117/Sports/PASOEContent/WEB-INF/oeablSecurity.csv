@@ -34,3 +34,4 @@
 
 # Best practice - deny anything not explicitly granted
 "/**","*","denyAll()"
+

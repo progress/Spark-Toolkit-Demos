@@ -1,8 +1,8 @@
-<%@ page language="java" 
-         contentType="text/html;charset=UTF-8" 
-         pageEncoding="UTF-8" 
+<%@ page language="java"
+         contentType="text/html;charset=UTF-8"
+         pageEncoding="UTF-8"
          session="false"
-         isErrorPage="true" 
+         isErrorPage="true"
          trimDirectiveWhitespaces="true"
          import="java.io.*"
          import="java.util.*"
@@ -10,7 +10,7 @@
 <%@ taglib prefix="sec" uri="/WEB-INF/security.tld" %>
 <%
     String acceptHeader = request.getHeader("accept");
-    if ( acceptHeader != null && acceptHeader.matches("^(.*,|)application/(|[\\w\\.]+\\+)json($|,.*)") ) {
+    if ( acceptHeader != null && acceptHeader.matches("^(.*,|)application/(|[\\w\\.]+\\+)json($|,.*|;.*)") ) {
         request.setAttribute("psc.as.attr.errorFormat", "json");
         response.setContentType("application/json;charset=UTF-8");
 %>

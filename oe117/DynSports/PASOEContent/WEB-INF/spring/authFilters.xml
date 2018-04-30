@@ -305,6 +305,7 @@
              <b:property name="expires" value="${OEClientPrincipalFilter.expires}" />
              <b:property name="accntinfo" value="${OEClientPrincipalFilter.accntinfo}" />
              <b:property name="domainRoleFilter" value="${OEClientPrincipalFilter.domainRoleFilter}" />
+             <b:property name="loadAccntAttrList" value="${OEClientPrincipalFilter.loadAccntAttrList:}" />
              <b:property name="properties" >
                 <b:map>
                      <b:entry key="${OEClientPrincipalFilter.properties.1.key}"

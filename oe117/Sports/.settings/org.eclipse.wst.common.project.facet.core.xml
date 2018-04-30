@@ -5,6 +5,6 @@
   <installed facet="openedge.project" version="11"/>
   <installed facet="pasoe.appserver" version="11.6"/>
   <installed facet="openedge.ablservice" version="11.6"/>
-  <installed facet="openedge.ablservice.webspeed" version="11.6"/>
   <installed facet="openedge.ablservice.dataobject.web" version="11.6"/>
+  <installed facet="openedge.ablunit" version="11"/>
 </faceted-project>
