@@ -137,16 +137,16 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
         if oHttpResp:StatusCode ne 200 then do:
             oLogger:Error(substitute("Response Code was not HTTP/200: &1", string(oHttpResp:StatusCode))).
-            return new JsonObject(). /* Return an empty object. */
+            return ?.
         end. /* Response not HTTP/200 */
 
         /* @TODO: Add more logic to ensure entity is a JSON body prior to casting blindly. */
         return cast(oHttpResp:Entity, JsonObject).
 
         catch err as Progress.Lang.Error:
-            oLogger:Error(substitute("Failed while invoking ", pcRequestURI)).
-            oLogger:Error(substitute("Failed in InvokeAPI ", err:GetMessage(1))).
-            return new JsonObject(). /* Fail with an empty object. */
+            oLogger:Error(substitute("Failed while invoking &1", pcRequestURI)).
+            oLogger:Error(substitute("Failed in InvokeAPI: &1", err:GetMessage(1))).
+            return ?.
         end catch.
         finally:
             delete object oCredentials no-error.
@@ -350,8 +350,9 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                             if oABLOutput:Has("ABLObjects") then
                                 assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
                             else
-                                assign oABLObjects = new JsonArray().
+                                assign oABLObjects = ?.
 
+                            if valid-object(oABLObjects) then
                             do ix = 1 to oABLObjects:Length:
                                 /* Parse the report payload into a simpler form. */
                                 assign oABLObject = oABLObjects:GetJsonObject(ix).

@@ -163,13 +163,12 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         oABLObjectsReport:getAgents().
 
         /* Set up tracking of the ABL Objects, gather a report, and turn off tracking. */
+        define variable oReport as JsonObject no-undo.
         if oABLObjectsReport:TrackABLObjects(true) then do:
-            define variable oReport as JsonObject no-undo.
-
             assign oReport = oABLObjectsReport:ParseABLObjectReport().
-            oReport:WriteFile(substitute("&1/ABLObjectsReport-&2.json",
+            oReport:WriteFile(substitute("&1/ABLObjectsReport-&2-&3.json",
                                          right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
-                                         replace(iso-date(now), ":", "")), true).
+                                         iso-date(today), mtime), true).
 
             return true.
         end. /* tracking enabled */
@@ -187,6 +186,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
             /* Always attempt to disable tracking for this particular test. */
             oABLObjectsReport:TrackABLObjects(false).
             delete object oABLObjectsReport no-error.
+            delete object oReport no-error.
         end finally.
     end method. /* GetABLObjectsReport */
 
