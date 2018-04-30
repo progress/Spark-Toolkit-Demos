@@ -141,6 +141,9 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
             message err:GetMessage(1).
             return false.
         end catch.
+        finally:
+            delete object oProfLogger no-error.
+        end finally.
     end method. /* WriteProfiler */
 
 
@@ -160,17 +163,31 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         oABLObjectsReport:getAgents().
 
         /* Set up tracking of the ABL Objects, gather a report, and turn off tracking. */
-        oABLObjectsReport:TrackABLObjects(true).
-        oABLObjectsReport:ParseABLObjectReport().
-        oABLObjectsReport:TrackABLObjects(false).
+        if oABLObjectsReport:TrackABLObjects(true) then do:
+            define variable oReport as JsonObject no-undo.
 
-        return true.
+            assign oReport = oABLObjectsReport:ParseABLObjectReport().
+            oReport:WriteFile(substitute("&1/ABLObjectsReport-&2.json",
+                                         right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
+                                         replace(iso-date(now), ":", "")), true).
+
+            return true.
+        end. /* tracking enabled */
+        else
+            undo, throw new AppError("Unable to enable ABLObjects tracking.", 0).
+
+        return false.
 
         catch err as Progress.Lang.Error:
             /* Should fail silently, while delivering errors to the standard local. */
             message err:GetMessage(1).
             return false.
         end catch.
+        finally:
+            /* Always attempt to disable tracking for this particular test. */
+            oABLObjectsReport:TrackABLObjects(false).
+            delete object oABLObjectsReport no-error.
+        end finally.
     end method. /* GetABLObjectsReport */
 
 end class.

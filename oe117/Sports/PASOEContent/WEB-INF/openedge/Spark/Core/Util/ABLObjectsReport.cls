@@ -106,6 +106,11 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     end constructor.
 
 
+    destructor public ABLObjectsReport ( ):
+        delete object oLogger no-error.
+    end destructor.
+
+
     /***** Protected Methods *****/
 
 
@@ -190,7 +195,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     end method. /* GetAgents */
 
 
-    method public void TrackABLObjects ( input plEnable as logical ):
+    method public logical TrackABLObjects ( input plEnable as logical ):
         define variable cRequestURI as character  no-undo.
         define variable cAgentID    as character  no-undo.
         define variable oAgent      as JsonObject no-undo.
@@ -225,12 +230,24 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                     /* Make the request to the endpoint and parse results. */
                     assign oRequest = this-object:InvokeAPI(cRequestURI).
                     if valid-object(oRequest) and oRequest:Has("result") then do:
-                        if not oRequest:IsNull("result") then /* Confirm tracking is enabled/disabled. */
-                            oLogger:Info(substitute("Tracking State: &1", this-object:trackingABLObjects(cAgentID))).
+                        if not oRequest:IsNull("result") then do:
+                            /* Report the result of the previous request. */
+                            oLogger:Info(substitute("trackABLObjects: &1 = &2",
+                                                    trim(string(plEnable, "enabled/disabled")),
+                                                    oRequest:GetLogical("result"))).
+
+                            /* Confirm tracking was enabled/disabled. */
+                            oLogger:Info(substitute("Tracking State: &1", string(this-object:trackingABLObjects(cAgentID)), "tracking/disabled")).
+
+                            /* Return the value from the original tracking request. */
+                            return (oRequest:GetLogical("result") eq true).
+                        end. /* result not null */
                     end. /* Has Result */
                 end. /* has agentId */
             end. /* do iCount */
         end. /* oemanager */
+
+        return false.
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in trackABLObjects: &1", err:GetMessage(1))).
@@ -277,7 +294,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     end method. /* TrackABLObjects */
 
 
-    method public void ParseABLObjectReport ( ):
+    method public JsonObject ParseABLObjectReport ( ):
         define variable cRequestURI as character  no-undo.
         define variable cAgentID    as character  no-undo.
         define variable oAgent      as JsonObject no-undo.
@@ -285,9 +302,11 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         define variable oEntry      as JsonObject no-undo.
         define variable oABLOutput  as JsonObject no-undo.
         define variable oABLObjects as JsonArray  no-undo.
-        define variable oParsed     as JsonArray  no-undo.
+        define variable oObjects    as JsonArray  no-undo.
         define variable oABLObject  as JsonObject no-undo.
+        define variable oParsed     as JsonArray  no-undo.
         define variable oAgentObj   as JsonObject no-undo.
+        define variable iTotalObj   as integer    no-undo.
         define variable iCount      as integer    no-undo.
         define variable ix          as integer    no-undo.
         define variable iy          as integer    no-undo.
@@ -303,6 +322,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                 /* Set request with PAS instance name and specific Agent ID. */
                 assign oAgent = AgentList:GetJsonObject(iCount).
                 if oAgent:Has("agentId") then do:
+                    /* Extract the current agent for examination. */
                     assign cAgentID = oAgent:GetCharacter("agentId").
 
                     /* Create array of parsed entries for this agent. */
@@ -318,73 +338,51 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
                     /* Make the request to the endpoint and parse results. */
                     assign oRequest = this-object:InvokeAPI(cRequestURI).
-                    if valid-object(oRequest) and oRequest:Has("result") then do:
+                    if valid-object(oRequest) and oRequest:Has("result") then
+                    do on error undo, throw:
                         /* Cannot proceed if there is no result. */
-                        if oRequest:IsNull("result") then return.
-
-                        /* Dump the full response for debugging of the debugging. */
-                        oLogger:Trace("Parsed JsonObject is as below").
-                        oLogger:Trace(string(oRequest:GetJsonText())).
+                        if oRequest:IsNull("result") then return oAgentObj.
 
                         /* Obtain the necessary payload from the result. */
-                        assign oABLOutput = oRequest:GetJsonObject("result"):GetJsonObject("ABLOutput").
-                        assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
+                        if oRequest:GetJsonObject("result"):Has("ABLOutput") then
+                        do on error undo, throw:
+                            assign oABLOutput = oRequest:GetJsonObject("result"):GetJsonObject("ABLOutput").
+                            if oABLOutput:Has("ABLObjects") then
+                                assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
+                            else
+                                assign oABLObjects = new JsonArray().
 
-                        do while ix le oABLObjects:Length:
-                            /* Parse the report payload into a simpler form. */
-                            assign oABLObject = oABLObjects:GetJsonObject(ix).
-                            if oABLObject:GetJsonArray("Objects"):Length gt 0 then do:
+                            do ix = 1 to oABLObjects:Length:
+                                /* Parse the report payload into a simpler form. */
+                                assign oABLObject = oABLObjects:GetJsonObject(ix).
+                                assign oObjects = oABLObject:GetJsonArray("Objects").
 
-                                do while iy le oABLObject:GetJsonArray("Objects"):Length:
-                                    /* Iterate over the available objects, if any. */
-                                    oEntry = new JsonObject().
+                                if valid-object(oObjects) and oObjects:Length gt 0 then
+                                do iy = 1 to oObjects:Length:
+                                    /* Grab the object to add to our full array. */
+                                    oParsed:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                                end. /* do iy (Objects) */
+                            end. /* do ix (ABLObjects) */
 
-                                    if oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):Has("ObjType") then
-                                        oEntry:Add("ObjType", oABLObject:GetJsonArray("Objects")
-                                                                        :GetJsonObject(iy):GetCharacter("ObjType")).
-                                    else do:
-                                        oLogger:Error("ObjType not available in the payload").
-                                        oLogger:Error(string(oABLObject:GetJsonArray("Objects")
-                                                                       :GetJsonObject(iy):GetJsonText())).
-                                    end.
+                            assign iTotalObj = iTotalObj + oParsed:length.
 
-                                    if oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):Has("Source") then
-                                        oEntry:Add("Source", oABLObject:GetJsonArray("Objects")
-                                                                       :GetJsonObject(iy):GetCharacter("Source")).
-                                    else do:
-                                        oLogger:Error("ObjType not available in the payload").
-                                        oLogger:Error(string(oABLObject:GetJsonArray("Objects")
-                                                                       :GetJsonObject(iy):GetJsonText())).
-                                    end.
-
-                                    if oABLObject:GetJsonArray("Objects"):GetJsonObject(iy):Has("Line") then
-                                        oEntry:Add("Line", oABLObject:GetJsonArray("Objects")
-                                                                     :GetJsonObject(iy):GetInteger("Line")).
-                                    else do:
-                                        oLogger:Error("Line not available in the payload").
-                                        oLogger:Error(string(oABLObject:GetJsonArray("Objects")
-                                                                       :GetJsonObject(iy):GetJsonText())).
-                                    end.
-
-                                    oParsed:Add(oEntry).
-                                    assign iy = iy + 1.
-                                end. /* do while iy */
-
-                            end. /* length gt 0 */
-
-                            assign ix = ix + 1.
-                        end. /* do while ix */
-                    end. /* has response */
+                            finally:
+                                delete object oABLOutput no-error.
+                                delete object oABLObject no-error.
+                                delete object oObjects no-error.
+                            end finally.
+                        end. /* has ABLOutput */
+                    end. /* has result */
 
                     /* Add list of objects, by agent ID, to a final object. */
                     oAgentObj:Add(cAgentID, oParsed).
                 end. /* has agentId */
             end. /* do iCount */
 
-            oLogger:Info(substitute("Total objects found: &1", oParsed:Length)).
-            oLogger:Info("Parsed output from ABLObjects report:").
-            oLogger:Info(string(oAgentObj:GetJsonText())).
+            oLogger:Info(substitute("Total ABLObjects for &1 Agent(s): &2", AgentList:Length, iTotalObj)).
         end. /* oemanager */
+
+        return oAgentObj.
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in ParseABLObjectReport: &1", err:GetMessage(1))).
