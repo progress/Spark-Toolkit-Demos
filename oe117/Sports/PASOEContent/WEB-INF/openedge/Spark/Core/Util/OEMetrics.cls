@@ -19,7 +19,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     define public static property RequestCount as integer no-undo initial 0
         get. private set.
 
-    define public static property RequestStart as datetime-tz no-undo
+    define public static property RequestStart as datetime-tz no-undo initial ?
         get. private set.
 
     define private variable oABLObjectsReport as ABLObjectsReport no-undo.
@@ -29,11 +29,20 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
 
     method public static logical StartProfiler ( input pcFilter as character ):
+        /**
+         * Method is created as static to allow starting of a profiler session
+         * without need for a class instance. This makes it useful for starting
+         * within a session activate procedure, while the writing of the report
+         * can be done within a deactivate procedure. Therefore, this method can
+         * have no other dependencies or requirements of a class-instance method.
+         */
+
         define variable oRequestInfo as OERequestInfo no-undo.
         define variable lFilterMatch as logical       no-undo initial false.
         define variable cOutPath     as character     no-undo.
         define variable ix           as integer       no-undo.
 
+        /* Obtain the request information and set/increment special values. */
         assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
         assign RequestCount = RequestCount + 1.
         assign RequestStart = now.
@@ -49,8 +58,9 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
         if lFilterMatch then do:
             /* Determine correct output location for this profiler log. */
+            assign cOutPath = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
             assign cOutPath = substitute("&1/Profiler_&2_&3_&4.prof",
-                                         right-trim(session:temp-directory, "~/"), RequestCount,
+                                         cOutPath, RequestCount,
                                          oRequestInfo:AgentId, oRequestInfo:SessionId).
 
             assign /* Note: Order matters here, do not rearrange! */
@@ -78,18 +88,30 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
 
     method public static logical WriteProfiler ( input piMinExecTime as integer ):
+        /**
+         * Method is created as static to allow profiler output to be generated at
+         * any time in the request lifecycle without dependency on a class instance.
+         * Output beyond the profiler data itself should be performed via the new
+         * LogWriter feature to place information/errors into a dedicated log file.
+         * This allows for additional context about a request to be logged without
+         * generating a standalone file, whether the profiler output has been made
+         * available or not (eg. excution time may always be reported).
+         */
+
         define variable oRequestInfo as OERequestInfo no-undo.
         define variable oProfLogger  as ILogWriter    no-undo.
-        define variable iExecTime    as integer       no-undo.
+        define variable iExecTime    as integer       no-undo initial 0.
 
+        /* Configure the logger and obtain the request information. */
         assign oProfLogger = LoggerBuilder:GetLogger("Spark.Core.Util.OEMetrics").
         assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
-        assign iExecTime = interval(now, RequestStart, "milliseconds" ).
 
-        oProfLogger:Info(substitute("&1: &2ms", oRequestInfo:ProcedureName, iExecTime)).
+        /* Determine the time elapsed for this request. */
+        if RequestStart ne ? and RequestStart lt now then
+            assign iExecTime = interval(now, RequestStart, "milliseconds" ).
 
         if profiler:enabled then do:
-            /* Turn off the profiler, if enabled. */
+            /* Turn off the profiler, if previously enabled. */
             assign
                 profiler:profiling = false
                 profiler:enabled   = false
@@ -97,11 +119,20 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
             /* Only write the data out if execution time exceeds threshold. */
             if piMinExecTime eq ? or piMinExecTime lt 0 then assign piMinExecTime = 0.
-            if iExecTime gt piMinExecTime then
+            if iExecTime gt piMinExecTime then do:
+                oProfLogger:Info(substitute("&1 | &2ms | &3",
+                                            oRequestInfo:ProcedureName, iExecTime, profiler:file-name)).
                 profiler:write-data().
+            end. /* iExecTime gt piMinExecTime */
+            else
+                oProfLogger:Info(substitute("&1 | &2ms | -No Profiler Output-",
+                                            oRequestInfo:ProcedureName, iExecTime)).
 
             return true.
         end. /* profiler:enabled */
+        else
+            oProfLogger:Info(substitute("&1 | &2ms | -Profiler Disabled-",
+                                        oRequestInfo:ProcedureName, iExecTime)).
 
         return false. /* Profiler not enabled. */
 
@@ -117,6 +148,13 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
 
     method public logical GetABLObjectsReport ( input pcSource as character ):
+        /**
+         * Trigger an all-in-one test case of the ABLObjectsReport by enabling
+         * tracking of objects, report gathered data, and stop tracking. For
+         * real-world use these actions should be performed at distinct times
+         * within the application and only when necessary.
+         */
+
         /* Prime the pump by getting a list of agents for this PAS instance. */
         oABLObjectsReport = new ABLObjectsReport(pcSource).
         oABLObjectsReport:getAgents().

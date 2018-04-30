@@ -198,6 +198,8 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         define variable iCount      as integer    no-undo.
 
         if this-object:MetricSource eq "oemanager" then do:
+            Assert:NotNullOrEmpty(InstanceURI).
+
             /* Make request to all agents of this ABLApp. */
             do iCount = 1 to AgentList:Length:
                 /* Set request with PAS instance name and specific Agent ID. */
@@ -294,6 +296,8 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         assign oAgentObj = new JsonObject().
 
         if this-object:MetricSource eq "oemanager" then do:
+            Assert:NotNullOrEmpty(InstanceURI).
+
             /* Make request to all agents of this ABLApp. */
             do iCount = 1 to AgentList:Length:
                 /* Set request with PAS instance name and specific Agent ID. */

@@ -18,6 +18,8 @@ block-level on error undo, throw.
 
 class Business.System.Metrics: 
 
+    /* @TODO: Implement a config file and options to drive operation of these features. */
+
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/objects", alias="objects", mediaType="application/json").
     method public void GetObjects ( output success as logical ):
