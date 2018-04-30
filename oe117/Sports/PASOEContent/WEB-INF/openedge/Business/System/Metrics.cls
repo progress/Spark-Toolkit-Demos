@@ -23,8 +23,15 @@ class Business.System.Metrics:
     method public void GetObjects ( output success as logical ):
         define variable oMetrics as OEMetrics no-undo.
 
-        assign oMetrics = new OEMetrics().
+        /* Begin the code profiler, filtered by specific programs. */
+        OEMetrics:StartProfiler("*").
+
+        /* When creating the object, must specify source as OEManager or JMX. */
+        assign oMetrics = new OEMetrics(). /* Create class instance. */
         assign success = oMetrics:GetABLObjectsReport("oemanager").
+
+        /* End profiling and flush data if execution time exceeds given time (in ms). */
+        OEMetrics:WriteProfiler(1000). /* Example: Output requests taking 1s or more. */
     end method. /* GetObjects */
 
 end class.
