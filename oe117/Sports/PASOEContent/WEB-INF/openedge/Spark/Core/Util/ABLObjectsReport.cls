@@ -383,6 +383,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         define variable cAgentID as character  no-undo.
         define variable oAgent   as JsonObject no-undo.
         define variable iCount   as integer    no-undo.
+        define variable lSuccess as logical    no-undo.
 
         if this-object:MetricSource eq "oejmx" then do:
             define variable cQueryName as character         no-undo.
@@ -398,7 +399,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                 do on error undo, throw:
                     assign cAgentID = oAgent:GetCharacter("agentId").
 
-                    /* Create the query for obtaining agents, and invoke the JMX command. */
+                    /* Create the query for tracking objects, and invoke the JMX command. */
                     assign cQueryName = if plEnable then "trackon" else "trackoff".
                     assign cOutPath = this-object:InvokeJMX(this-object:CreateTempQuery(cQueryName, cAgentID)).
 
@@ -407,21 +408,20 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                     if file-info:full-pathname ne ? then do:
                         assign oParser = new ObjectModelParser().
                         assign oResults = cast(oParser:ParseFile(cOutPath), JsonObject).
-        
+
                         if valid-object(oResults) and oResults:Has("trackABLObjects") then do:
+                            assign lSuccess = (oResults:GetLogical("trackABLObjects") eq true).
+
                             /* Report the result of the previous request. */
-                            oLogger:Info(substitute("trackABLObjects: &1 = &2",
-                                                    trim(string(plEnable, "enabled/disabled")),
-                                                    oResults:GetLogical("trackABLObjects"))).
+                            oLogger:Info(substitute("trackABLObjects (&1): &2 = &3",
+                                                    cAgentID, trim(string(plEnable, "enabled/disabled")), lSuccess)).
 
                             /* Confirm tracking was enabled/disabled. */
-                            oLogger:Info(substitute("Tracking State: &1", string(this-object:trackingABLObjects(cAgentID)), "tracking/disabled")).
-
-                            /* Return the value from the original tracking request. */
-                            return (oResults:GetLogical("trackABLObjects") eq true).
+                            oLogger:Info(substitute("Tracking ABLObjects: &1",
+                                         string(this-object:trackingABLObjects(cAgentID)), "tracking/disabled")).
                         end. /* Has Result */
                     end. /* File Exists */
-                    
+
                     finally:
                         delete object oParser no-error.
                         delete object oResults no-error.
@@ -462,23 +462,22 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                     assign oRequest = this-object:InvokeAPI(cRequestURI).
                     if valid-object(oRequest) and oRequest:Has("result") then do:
                         if not oRequest:IsNull("result") then do:
+                            assign lSuccess = (oRequest:GetLogical("result") eq true).
+
                             /* Report the result of the previous request. */
-                            oLogger:Info(substitute("trackABLObjects: &1 = &2",
-                                                    trim(string(plEnable, "enabled/disabled")),
-                                                    oRequest:GetLogical("result"))).
+                            oLogger:Info(substitute("trackABLObjects (&1): &2 = &3",
+                                                    cAgentID, trim(string(plEnable, "enabled/disabled")), lSuccess)).
 
                             /* Confirm tracking was enabled/disabled. */
-                            oLogger:Info(substitute("Tracking State: &1", string(this-object:trackingABLObjects(cAgentID)), "tracking/disabled")).
-
-                            /* Return the value from the original tracking request. */
-                            return (oRequest:GetLogical("result") eq true).
-                        end. /* result not null */
+                            oLogger:Info(substitute("Tracking ABLObjects: &1",
+                                         string(this-object:trackingABLObjects(cAgentID)), "tracking/disabled")).
+                        end. /* not null */
                     end. /* Has Result */
                 end. /* has agentId */
             end. /* do iCount */
         end. /* oemanager */
 
-        return false.
+        return lSuccess. /* Return the value from the original tracking request. */
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in trackABLObjects: &1", err:GetMessage(1))).
@@ -491,15 +490,39 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
 
     method public logical TrackingABLObjects ( input pcAgentID as character ):
-        define variable cRequestURI as character  no-undo.
-        define variable oRequest    as JsonObject no-undo.
-
         Assert:NotNullOrEmpty(pcAgentID).
 
-        if this-object:MetricSource eq "oejmx" then do:
-        end. /* jmx */
+        if this-object:MetricSource eq "oejmx" then
+        do on error undo, throw:
+            define variable cOutPath as character         no-undo.
+            define variable oParser  as ObjectModelParser no-undo.
+            define variable oResults as JsonObject        no-undo.
 
-        if this-object:MetricSource eq "oemanager" then do:
+            /* Create the query for tracking objects, and invoke the JMX command. */
+            assign cOutPath = this-object:InvokeJMX(this-object:CreateTempQuery("tracking", pcAgentID)).
+
+            /* Confirm output file exists, and parse the JSON payload. */
+            file-info:file-name = cOutPath.
+            if file-info:full-pathname ne ? then do:
+                assign oParser = new ObjectModelParser().
+                assign oResults = cast(oParser:ParseFile(cOutPath), JsonObject).
+
+                if valid-object(oResults) and oResults:Has("trackingABLObjects") then do:
+                    /* Return only a true/false value based on value available. */
+                    return (oResults:GetLogical("trackingABLObjects") eq true).
+                end. /* Has Result */
+            end. /* File Exists */
+
+            finally:
+                delete object oParser no-error.
+                delete object oResults no-error.
+                os-delete value(cOutPath).
+            end finally.
+        end. /* jmx */
+        else if this-object:MetricSource eq "oemanager" then do:
+            define variable cRequestURI as character  no-undo.
+            define variable oRequest    as JsonObject no-undo.
+
             /* Build the initial URL, to obtain the tracking flag. */
             assign cRequestURI = substitute("&1&2&3&4",
                                             InstanceURI, this-object:ManagerURI,
@@ -529,10 +552,8 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
 
     method public JsonObject ParseABLObjectReport ( ):
-        define variable cRequestURI as character  no-undo.
         define variable cAgentID    as character  no-undo.
         define variable oAgent      as JsonObject no-undo.
-        define variable oRequest    as JsonObject no-undo.
         define variable oEntry      as JsonObject no-undo.
         define variable oABLOutput  as JsonObject no-undo.
         define variable oABLObjects as JsonArray  no-undo.
@@ -549,10 +570,85 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         assign oAgentObj = new JsonObject().
 
         if this-object:MetricSource eq "oejmx" then do:
-        end. /* jmx */
+            define variable cOutPath as character         no-undo.
+            define variable oParser  as ObjectModelParser no-undo.
+            define variable oResults as JsonObject        no-undo.
 
-        if this-object:MetricSource eq "oemanager" then do:
+            /* Make request to all agents of this ABLApp. */
+            do iCount = 1 to AgentList:Length:
+                /* Set request with PAS instance name and specific Agent ID. */
+                assign oAgent = AgentList:GetJsonObject(iCount).
+                if oAgent:Has("agentId") then
+                do on error undo, throw:
+                    /* Extract the current agent for examination. */
+                    assign cAgentID = oAgent:GetCharacter("agentId").
+
+                    /* Create array of parsed entries for this agent. */
+                    assign oParsed = new JsonArray().
+
+                    /* Create the query for tracking objects, and invoke the JMX command. */
+                    assign cOutPath = this-object:InvokeJMX(this-object:CreateTempQuery("ablobjects", cAgentID)).
+
+                    /* Confirm output file exists, and parse the JSON payload. */
+                    file-info:file-name = cOutPath.
+                    if file-info:full-pathname ne ? then do:
+                        assign oParser = new ObjectModelParser().
+                        assign oResults = cast(oParser:ParseFile(cOutPath), JsonObject).
+
+                        if valid-object(oResults) and oResults:Has("getABLObjectsReport") then
+                        do on error undo, throw:
+                            /* Cannot proceed if there is no result. */
+                            if oResults:GetType("getABLObjectsReport") ne JsonDataType:Object then return oAgentObj.
+    
+                            /* Obtain the necessary payload from the result. */
+                            if oResults:GetJsonObject("getABLObjectsReport"):Has("ABLOutput") then
+                            do on error undo, throw:
+                                assign oABLOutput = oResults:GetJsonObject("getABLObjectsReport"):GetJsonObject("ABLOutput").
+                                if oABLOutput:Has("ABLObjects") then
+                                    assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
+                                else
+                                    assign oABLObjects = ?.
+    
+                                if valid-object(oABLObjects) then
+                                do ix = 1 to oABLObjects:Length:
+                                    /* Parse the report payload into a simpler form. */
+                                    assign oABLObject = oABLObjects:GetJsonObject(ix).
+                                    assign oObjects = oABLObject:GetJsonArray("Objects").
+    
+                                    if valid-object(oObjects) and oObjects:Length gt 0 then
+                                    do iy = 1 to oObjects:Length:
+                                        /* Grab the object to add to our full array. */
+                                        oParsed:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                                    end. /* do iy (Objects) */
+                                end. /* do ix (ABLObjects) */
+    
+                                assign iTotalObj = iTotalObj + oParsed:length.
+    
+                                finally:
+                                    delete object oABLOutput no-error.
+                                    delete object oABLObject no-error.
+                                    delete object oObjects no-error.
+                                end finally.
+                            end. /* has ABLOutput */
+                        end. /* has result */
+    
+                        /* Add list of objects, by agent ID, to a final object. */
+                        oAgentObj:Add(cAgentID, oParsed).
+                    end. /* File Exists */
+
+                    finally:
+                        delete object oParser no-error.
+                        delete object oResults no-error.
+                        os-delete value(cOutPath).
+                    end finally.
+                end. /* has agentId */
+            end. /* do iCount */
+        end. /* jmx */
+        else if this-object:MetricSource eq "oemanager" then do:
             Assert:NotNullOrEmpty(InstanceURI).
+
+            define variable cRequestURI as character  no-undo.
+            define variable oRequest    as JsonObject no-undo.
 
             /* Make request to all agents of this ABLApp. */
             do iCount = 1 to AgentList:Length:
