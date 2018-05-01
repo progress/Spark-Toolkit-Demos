@@ -60,8 +60,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
             /* Determine correct output location for this profiler log. */
             assign cOutPath = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
             assign cOutPath = substitute("&1/Profiler_&2_&3_&4.prof",
-                                         cOutPath, RequestCount,
-                                         oRequestInfo:AgentId, oRequestInfo:SessionId).
+                                         cOutPath, RequestCount, oRequestInfo:AgentId, oRequestInfo:SessionId).
 
             assign /* Note: Order matters here, do not rearrange! */
                 profiler:enabled      = true

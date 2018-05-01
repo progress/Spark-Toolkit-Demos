@@ -66,6 +66,26 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     define protected property JMXQueriesDir as character no-undo initial "jmxqueries"
         get. private set.
 
+    define protected property AgentsQuery as character no-undo
+        initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgents","&1"]~}'
+        get. private set.
+
+    define protected property TrackOnQuery as character no-undo
+        initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["trackABLObjects","&1",true]~}'
+        get. private set.
+
+    define protected property TrackOffQuery as character no-undo
+        initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["trackABLObjects","&1",false]~}'
+        get. private set.
+
+    define protected property TrackingQuery as character no-undo
+        initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["trackingABLObjects","&1"]~}'
+        get. private set.
+
+    define protected property ABLObjectsQuery as character no-undo
+        initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getABLObjectsReport","&1"]~}'
+        get. private set.
+
     define public static property OEJMXBinary as character no-undo initial ""
         get():
             if OEJMXBinary eq "" then
@@ -206,7 +226,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     end method. /* InvokeAPI */
 
 
-    method protected JsonObject InvokeJMX ( input pcQueryName as character ):
+    method protected character InvokeJMX ( input pcQueryPath as character ):
         /**
          * Make a query again the running Java process via JMX to obtain any
          * information or set flags to control monitoring/debugging options.
@@ -216,40 +236,118 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
          * Example:
          *   oejmx.[bat|sh] -R -Q jmxqueries/<name>.qry -O ../temp/<output>.json
          */
+
         define variable cBinaryPath as character no-undo.
         define variable cOutputPath as character no-undo.
         define variable cCommand    as character no-undo.
         define variable iTime       as integer   no-undo.
 
-        /* Cannot proceed if the requested query is not on the list of expected items. */
-        if not can-do("agents,trackon,tracking,ablobjects,trackoff", pcQueryName) then return ?.
+        Assert:NotNullOrEmpty(pcQueryPath). /* Must have a query! */
 
         assign iTime = mtime. /* Each request should be timestamped. */
-        assign cBinaryPath = substitute("&1/bin/&2", CatalinaBase, OEJMXBinary).
-        assign cOutputPath = substitute("&1/temp/jmx_&2_&3.json", CatalinaBase, pcQueryName, iTime).
-        assign cCommand = substitute("&1 -R -Q jmxqueries/&2.qry -O &3",
-                                     cBinaryPath, pcQueryName, cOutputPath).
+        assign cBinaryPath = substitute("&1/bin/&2", CatalinaBase, OEJMXBinary). /* oejmx.[bat|sh] */
+        assign cOutputPath = substitute("&1.&2.json", entry(1, pcQueryPath, "."), iTime).
 
+        /* Construct the final command string to be executed. */
+        assign cCommand = substitute("&1 -R -Q &2 -O &3", cBinaryPath, pcQueryPath, cOutputPath).
+
+        /* Run command and report information to log file. */
         oLogger:Info(substitute("Running Command: &1", cCommand)).
-        os-command silent no-console value(cCommand).
+        os-command no-console value(cCommand).
         oLogger:Info("Command Finished").
 
+        return cOutputPath. /* Return the expected location of the query output. */
+
+        finally:
+            os-delete value(pcQueryPath).
+        end finally.
     end method. /* InvokeJMX */
+
+
+    method protected character CreateTempQuery ( input pcQueryName as character ):
+        return this-object:CreateTempQuery(pcQueryName, "").
+    end method. /* CreateTempQuery */
+
+
+    method protected character CreateTempQuery ( input pcQueryName as character,
+                                                 input pcAgentID   as character ):
+        /**
+         * Create a temporary file with the proper JMX query to be executed.
+         * For some queries there is a replacement necessary, which may need
+         * either the application name or an agent ID value.
+         */
+        define variable cQueryPath   as character         no-undo initial "".
+        define variable cQueryString as character         no-undo.
+        define variable oParser      as ObjectModelParser no-undo.
+        define variable oQuery       as JsonObject        no-undo.
+
+        assign cQueryPath = substitute("&1/temp/&2.qry", CatalinaBase, pcQueryName).
+        assign oParser = new ObjectModelParser().
+
+        case pcQueryName:
+            when "agents" then
+                assign cQueryString = substitute(this-object:AgentsQuery, ApplicationName).
+            when "trackon" then
+                assign cQueryString = substitute(this-object:TrackOnQuery, pcAgentID).
+            when "trackoff" then
+                assign cQueryString = substitute(this-object:TrackOffQuery, pcAgentID).
+            when "tracking" then
+                assign cQueryString = substitute(this-object:TrackingQuery, pcAgentID).
+            when "ablobjects" then
+                assign cQueryString = substitute(this-object:ABLObjectsQuery, pcAgentID).
+        end case. /* pcQueryName */
+
+        /* Output the modified string to the temporary query file. */
+        assign oQuery = cast(oParser:Parse(cQueryString), JsonObject).
+        oLogger:Info(substitute("Writing Query: &1", cQueryPath)).
+        oQuery:WriteFile(cQueryPath).
+
+        return cQueryPath.
+
+        finally:
+            delete object oParser no-error.
+            delete object oQuery no-error.
+        end finally.
+    end method. /* CreateTempQuery */
 
 
     /***** Public Methods *****/
 
 
     method public void GetAgents ( ):
-        define variable cRequestURI as character  no-undo.
-        define variable oRequest    as JsonObject no-undo.
+        if this-object:MetricSource eq "oejmx" then
+        do on error undo, throw:
+            define variable cOutPath as character         no-undo.
+            define variable oParser  as ObjectModelParser no-undo.
+            define variable oResults as JsonObject        no-undo.
 
-        if this-object:MetricSource eq "oejmx" then do:
-            this-object:InvokeJMX("agents").
+            /* Create the query for obtaining agents, and invoke the JMX command. */
+            assign cOutPath = this-object:InvokeJMX(this-object:CreateTempQuery("agents")).
+
+            /* Confirm output file exists, and parse the JSON payload. */
+            file-info:file-name = cOutPath.
+            if file-info:full-pathname ne ? then do:
+                assign oParser = new ObjectModelParser().
+                assign oResults = cast(oParser:ParseFile(cOutPath), JsonObject).
+
+                if valid-object(oResults) and oResults:Has("getAgents") then do:
+                    if oResults:GetJsonObject("getAgents"):Has("agents") then
+                        AgentList = oResults:GetJsonObject("getAgents"):GetJsonArray("agents").
+                end. /* Has Result */
+            end. /* File Exists */
+
+            finally:
+                delete object oParser no-error.
+                delete object oResults no-error.
+                os-delete value(cOutPath).
+            end finally.
         end. /* jmx */
-
-        if this-object:MetricSource eq "oemanager" then do:
+        else if this-object:MetricSource eq "oemanager" then
+        do on error undo, throw:
             Assert:NotNullOrEmpty(InstanceURI).
+
+            define variable cRequestURI as character  no-undo.
+            define variable oRequest    as JsonObject no-undo.
 
             /* Request a list of agents from the OEManager webapp. */
             assign cRequestURI = substitute("&1&2&3",
@@ -266,32 +364,77 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                     AgentList = oRequest:GetJsonObject("result"):GetJsonArray("agents").
             end. /* Has Result */
 
-            /* Log output results of request. */
-            oLogger:Info(substitute("Agents: &1", AgentList:GetJsonText())).
+            finally:
+                delete object oRequest no-error.
+            end finally.
         end. /* oemanager */
+
+        /* Log output results of request. */
+        oLogger:Info(substitute("Agents: &1", AgentList:GetJsonText())).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in GetAgents: &1", err:GetMessage(1))).
             undo, throw err.
         end catch.
-        finally:
-            delete object oRequest no-error.
-        end finally.
     end method. /* GetAgents */
 
 
     method public logical TrackABLObjects ( input plEnable as logical ):
-        define variable cRequestURI as character  no-undo.
-        define variable cAgentID    as character  no-undo.
-        define variable oAgent      as JsonObject no-undo.
-        define variable oRequest    as JsonObject no-undo.
-        define variable iCount      as integer    no-undo.
+        define variable cAgentID as character  no-undo.
+        define variable oAgent   as JsonObject no-undo.
+        define variable iCount   as integer    no-undo.
 
         if this-object:MetricSource eq "oejmx" then do:
-        end. /* jmx */
+            define variable cQueryName as character         no-undo.
+            define variable cOutPath   as character         no-undo.
+            define variable oParser    as ObjectModelParser no-undo.
+            define variable oResults   as JsonObject        no-undo.
 
-        if this-object:MetricSource eq "oemanager" then do:
+            /* Make request to all agents of this ABLApp. */
+            do iCount = 1 to AgentList:Length:
+                /* Set request with PAS instance name and specific Agent ID. */
+                assign oAgent = AgentList:GetJsonObject(iCount).
+                if oAgent:Has("agentId") then
+                do on error undo, throw:
+                    assign cAgentID = oAgent:GetCharacter("agentId").
+
+                    /* Create the query for obtaining agents, and invoke the JMX command. */
+                    assign cQueryName = if plEnable then "trackon" else "trackoff".
+                    assign cOutPath = this-object:InvokeJMX(this-object:CreateTempQuery(cQueryName, cAgentID)).
+
+                    /* Confirm output file exists, and parse the JSON payload. */
+                    file-info:file-name = cOutPath.
+                    if file-info:full-pathname ne ? then do:
+                        assign oParser = new ObjectModelParser().
+                        assign oResults = cast(oParser:ParseFile(cOutPath), JsonObject).
+        
+                        if valid-object(oResults) and oResults:Has("trackABLObjects") then do:
+                            /* Report the result of the previous request. */
+                            oLogger:Info(substitute("trackABLObjects: &1 = &2",
+                                                    trim(string(plEnable, "enabled/disabled")),
+                                                    oResults:GetLogical("trackABLObjects"))).
+
+                            /* Confirm tracking was enabled/disabled. */
+                            oLogger:Info(substitute("Tracking State: &1", string(this-object:trackingABLObjects(cAgentID)), "tracking/disabled")).
+
+                            /* Return the value from the original tracking request. */
+                            return (oResults:GetLogical("trackABLObjects") eq true).
+                        end. /* Has Result */
+                    end. /* File Exists */
+                    
+                    finally:
+                        delete object oParser no-error.
+                        delete object oResults no-error.
+                        os-delete value(cOutPath).
+                    end finally.
+                end. /* has agentId */
+            end. /* do iCount */
+        end. /* jmx */
+        else if this-object:MetricSource eq "oemanager" then do:
             Assert:NotNullOrEmpty(InstanceURI).
+
+            define variable cRequestURI as character  no-undo.
+            define variable oRequest    as JsonObject no-undo.
 
             /* Make request to all agents of this ABLApp. */
             do iCount = 1 to AgentList:Length:
