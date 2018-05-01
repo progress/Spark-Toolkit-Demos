@@ -63,6 +63,27 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     define protected property GetObjectsReport as character no-undo initial "/getABLObjectsReport"
         get. private set.
 
+    define protected property JMXQueriesDir as character no-undo initial "jmxqueries"
+        get. private set.
+
+    define public static property OEJMXBinary as character no-undo initial ""
+        get():
+            if OEJMXBinary eq "" then
+                assign OEJMXBinary = if opsys eq "WIN32" then "oejmx.bat" else "oejmx.sh".
+            return OEJMXBinary.
+        end get.
+        private set.
+
+    define public static property CatalinaBase as character no-undo initial ""
+        get():
+            if CatalinaBase eq "" then do:
+                file-info:filename = trim(os-getenv("CATALINA_BASE")).
+                assign CatalinaBase = right-trim(replace(file-info:full-pathname, "~\", "~/"), "~/").
+            end.
+            return CatalinaBase.
+        end get.
+        private set.
+
     define public static property ApplicationName as character no-undo initial ""
         get():
             if ApplicationName eq "" then
@@ -90,19 +111,26 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
     constructor ABLObjectsReport ( ):
         super().
+
+        /* Make sure a default source has been set. */
         assign this-object:MetricSource = "oemanager".
+        this-object:CheckTempPath().
     end constructor.
 
 
     constructor ABLObjectsReport ( input pcSource as character ):
         super().
+
+        /* Set the means of obtaining metrics. */
         case pcSource:
             when "java" or
+            when "oejmx" or
             when "jmx" then
-                assign this-object:MetricSource = "jmx".
+                assign this-object:MetricSource = "oejmx".
             otherwise
                 assign this-object:MetricSource = "oemanager".
         end case.
+        this-object:CheckTempPath().
     end constructor.
 
 
@@ -111,10 +139,29 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     end destructor.
 
 
+    /***** Private Methods *****/
+
+
+    method private void CheckTempPath ( ):
+        define variable cTempPath as character no-undo.
+
+        /* Make sure we have a consistent path for temporary files. */
+        assign cTempPath = substitute("&1/temp", CatalinaBase).
+        os-create-dir value(cTempPath).
+    end method. /* CheckTempPath */
+
+
     /***** Protected Methods *****/
 
 
     method protected JsonObject InvokeAPI ( input pcRequestURI as character ):
+        /**
+         * Use the OEManager webapp to run the necessary queries on the PAS
+         * instance. This requires use of the OEHttpClient library to make
+         * an API call via REST. For environments where OEManager is not
+         * available or desired, use the JMX approach.
+         */
+
         define variable oHttpReq     as IHttpRequest  no-undo.
         define variable oHttpResp    as IHttpResponse no-undo.
         define variable oCredentials as Credentials   no-undo.
@@ -140,8 +187,11 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
             return ?.
         end. /* Response not HTTP/200 */
 
-        /* @TODO: Add more logic to ensure entity is a JSON body prior to casting blindly. */
-        return cast(oHttpResp:Entity, JsonObject).
+        /* Make sure that entity is a true JSON object prior to casting and returning. */
+        if valid-object(oHttpResp:Entity) and type-of(oHttpResp:Entity, JsonObject) then
+            return cast(oHttpResp:Entity, JsonObject).
+
+        return ?.
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Failed while invoking &1", pcRequestURI)).
@@ -156,12 +206,47 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     end method. /* InvokeAPI */
 
 
+    method protected JsonObject InvokeJMX ( input pcQueryName as character ):
+        /**
+         * Make a query again the running Java process via JMX to obtain any
+         * information or set flags to control monitoring/debugging options.
+         *   The -R flag removes the header, leaving only the JSON body.
+         *   The -Q flag specifies the name of the query to be executed.
+         *   The -O flag sets a specific location for the query output.
+         * Example:
+         *   oejmx.[bat|sh] -R -Q jmxqueries/<name>.qry -O ../temp/<output>.json
+         */
+        define variable cBinaryPath as character no-undo.
+        define variable cOutputPath as character no-undo.
+        define variable cCommand    as character no-undo.
+        define variable iTime       as integer   no-undo.
+
+        /* Cannot proceed if the requested query is not on the list of expected items. */
+        if not can-do("agents,trackon,tracking,ablobjects,trackoff", pcQueryName) then return ?.
+
+        assign iTime = mtime. /* Each request should be timestamped. */
+        assign cBinaryPath = substitute("&1/bin/&2", CatalinaBase, OEJMXBinary).
+        assign cOutputPath = substitute("&1/temp/jmx_&2_&3.json", CatalinaBase, pcQueryName, iTime).
+        assign cCommand = substitute("&1 -R -Q jmxqueries/&2.qry -O &3",
+                                     cBinaryPath, pcQueryName, cOutputPath).
+
+        oLogger:Info(substitute("Running Command: &1", cCommand)).
+        os-command silent no-console value(cCommand).
+        oLogger:Info("Command Finished").
+
+    end method. /* InvokeJMX */
+
+
     /***** Public Methods *****/
 
 
     method public void GetAgents ( ):
         define variable cRequestURI as character  no-undo.
         define variable oRequest    as JsonObject no-undo.
+
+        if this-object:MetricSource eq "oejmx" then do:
+            this-object:InvokeJMX("agents").
+        end. /* jmx */
 
         if this-object:MetricSource eq "oemanager" then do:
             Assert:NotNullOrEmpty(InstanceURI).
@@ -201,6 +286,9 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         define variable oAgent      as JsonObject no-undo.
         define variable oRequest    as JsonObject no-undo.
         define variable iCount      as integer    no-undo.
+
+        if this-object:MetricSource eq "oejmx" then do:
+        end. /* jmx */
 
         if this-object:MetricSource eq "oemanager" then do:
             Assert:NotNullOrEmpty(InstanceURI).
@@ -265,6 +353,9 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
         Assert:NotNullOrEmpty(pcAgentID).
 
+        if this-object:MetricSource eq "oejmx" then do:
+        end. /* jmx */
+
         if this-object:MetricSource eq "oemanager" then do:
             /* Build the initial URL, to obtain the tracking flag. */
             assign cRequestURI = substitute("&1&2&3&4",
@@ -313,6 +404,9 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
         /* Create object for all parsed agents. */
         assign oAgentObj = new JsonObject().
+
+        if this-object:MetricSource eq "oejmx" then do:
+        end. /* jmx */
 
         if this-object:MetricSource eq "oemanager" then do:
             Assert:NotNullOrEmpty(InstanceURI).
