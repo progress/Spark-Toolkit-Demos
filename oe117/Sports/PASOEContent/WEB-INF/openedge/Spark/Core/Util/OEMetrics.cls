@@ -16,7 +16,13 @@ block-level on error undo, throw.
 
 class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool: 
 
-    define public static property Instance as Spark.Core.Util.OEMetrics no-undo get. private set.
+    define public static property Instance as Spark.Core.Util.OEMetrics no-undo
+        get():
+            if not valid-object(Instance) then
+                assign Instance = new Spark.Core.Util.OEMetrics().
+            return Instance.
+        end get.
+        private set.
 
     /*** Common Properties ***/
 

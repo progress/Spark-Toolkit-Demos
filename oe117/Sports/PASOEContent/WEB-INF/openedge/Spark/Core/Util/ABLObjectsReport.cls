@@ -637,7 +637,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                     if oResults:GetJsonObject("getABLObjectsReport"):Has("ABLOutput") then
                     do on error undo, throw:
                         assign oABLOutput = oResults:GetJsonObject("getABLObjectsReport"):GetJsonObject("ABLOutput").
-                        if oABLOutput:Has("ABLObjects") then
+                        if oABLOutput:Has("ABLObjects") and oABLOutput:GetType("ABLObjects") eq JsonDataType:Array then
                             assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
                         else
                             assign oABLObjects = ?.
@@ -697,7 +697,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                 if oRequest:GetJsonObject("result"):Has("ABLOutput") then
                 do on error undo, throw:
                     assign oABLOutput = oRequest:GetJsonObject("result"):GetJsonObject("ABLOutput").
-                    if oABLOutput:Has("ABLObjects") then
+                    if oABLOutput:Has("ABLObjects") and oABLOutput:GetType("ABLObjects") eq JsonDataType:Array then
                         assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
                     else
                         assign oABLObjects = ?.
