@@ -16,9 +16,11 @@ block-level on error undo, throw.
 
 class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool: 
 
+    define public static property Instance as Spark.Core.Util.OEMetrics no-undo get. private set.
+
     /*** Common Properties ***/
 
-    define public static property CatalinaBase as character no-undo initial ""
+    define protected property CatalinaBase as character no-undo initial ""
         get():
             if CatalinaBase eq "" then do:
                 file-info:filename = trim(os-getenv("CATALINA_BASE")).
@@ -28,30 +30,33 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         end get.
         private set.
 
-    define public static property MetricsConfig as character no-undo initial ""
+    define protected property MetricsConfig as character no-undo initial ""
         get():
             if MetricsConfig eq "" then do:
                 define variable cConfigName as character no-undo.
                 assign cConfigName = trim(os-getenv("METRICS_CONFIG")).
 
                 /* First check the CATALINA_BASE/conf/ location. */
-                assign MetricsConfig = substitute("&1/conf/&2", CatalinaBase, cConfigName).
-                file-info:filename = MetricsConfig.
+                file-info:filename = substitute("&1/conf/&2", CatalinaBase, cConfigName).
                 if file-info:full-pathname eq ? then do:
                     /* Next check the CATALINA_BASE/temp/ location. */
-                    assign MetricsConfig = substitute("&1/temp/&2", CatalinaBase, cConfigName).
+                    file-info:filename = substitute("&1/temp/&2", CatalinaBase, cConfigName).
                     if file-info:full-pathname eq ? then
                         assign MetricsConfig = "".
                 end.
+
+                /* If one of the above paths is still present, use that. */
+                if file-info:full-pathname ne ? then
+                    assign MetricsConfig = file-info:full-pathname.
             end.
             return MetricsConfig.
         end get.
         private set.
 
-    define public static property RequestCount as integer no-undo initial 0
+    define protected static property RequestCount as integer no-undo initial 0
         get. private set.
 
-    define public static property RequestStart as datetime-tz no-undo initial ?
+    define protected static property RequestStart as datetime-tz no-undo initial ?
         get. private set.
 
     define protected variable oABLObjectsReport as ABLObjectsReport no-undo.
@@ -60,11 +65,24 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     /***** Constructor/Destructor *****/
 
 
-    constructor OEMetrics ( ):
+    constructor public OEMetrics ( ):
         super().
 
-        message "MetricsConfig:" MetricsConfig.
+        this-object:ParseConfig(). /* Obtain configuration options. */
     end constructor.
+
+
+    destructor public OEMetrics ( ):
+        delete object Instance no-error.
+    end destructor.
+
+
+    /***** Private Methods *****/
+
+
+    method private void ParseConfig ( ):
+        message "MetricsConfig:" MetricsConfig.
+    end method. /* ParseConfig */
 
 
     /***** Static Methods *****/

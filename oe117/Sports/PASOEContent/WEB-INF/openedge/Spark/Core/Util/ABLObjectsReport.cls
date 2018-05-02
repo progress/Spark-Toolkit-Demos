@@ -24,9 +24,20 @@ block-level on error undo, throw.
 
 class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widget-pool:
 
+    /*** Static Properties ***/
+
+    define protected static property AgentList as JsonArray no-undo
+        get():
+            /* Using a static property to allow persistence of the last list of agents obtained. */
+            if not valid-object(AgentList) then
+                AgentList = new JsonArray().
+            return AgentList.
+        end get.
+        protected set.
+
     /*** Common Properties ***/
 
-    define public static property CatalinaBase as character no-undo initial ""
+    define protected property CatalinaBase as character no-undo initial ""
         get():
             if CatalinaBase eq "" then do:
                 file-info:filename = trim(os-getenv("CATALINA_BASE")).
@@ -36,7 +47,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         end get.
         private set.
 
-    define public static property ApplicationName as character no-undo initial ""
+    define protected property ApplicationName as character no-undo initial ""
         get():
             if ApplicationName eq "" then
                 assign ApplicationName = trim(os-getenv("ABLAPP_NAME")).
@@ -44,18 +55,18 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         end get.
         private set.
 
-    define public static property AgentList as JsonArray no-undo
-        get():
-            if not valid-object(AgentList) then
-                AgentList = new JsonArray().
-            return AgentList.
-        end get.
-        protected set.
-
-    define public property MetricSource as character no-undo initial "oejmx"
+    define protected property MetricSource as character no-undo initial "oejmx"
         get. private set.
 
     /*** OEManager Properties ***/
+
+    define protected property InstanceURI as character no-undo initial ""
+        get():
+            if InstanceURI eq "" then
+                assign InstanceURI = trim(os-getenv("INSTANCE_URI")).
+            return InstanceURI.
+        end get.
+        private set.
 
     define public property ManagerRealm as character no-undo initial "PASOE Manager Application"
         get. set.
@@ -65,14 +76,6 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
     define public property ManagerPassword as character no-undo initial "tomcat"
         get. set.
-
-    define public static property InstanceURI as character no-undo initial ""
-        get():
-            if InstanceURI eq "" then
-                assign InstanceURI = trim(os-getenv("INSTANCE_URI")).
-            return InstanceURI.
-        end get.
-        private set.
 
     define protected property ManagerURI as character no-undo initial "/oemanager"
         get. private set.
@@ -104,7 +107,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     /*** OEJMX Properties ***/
 
 
-    define protected static property OEJMXBinary as character no-undo initial ""
+    define protected property OEJMXBinary as character no-undo initial ""
         get():
             if OEJMXBinary eq "" then
                 assign OEJMXBinary = if opsys eq "WIN32" then "oejmx.bat" else "oejmx.sh".
@@ -136,7 +139,10 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         get. private set.
 
 
-    constructor ABLObjectsReport ( ):
+    /***** Constructor/Destructor *****/
+
+
+    constructor public ABLObjectsReport ( ):
         super().
 
         /* Make sure a default source has been set. */
@@ -145,10 +151,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     end constructor.
 
 
-    /***** Constructor/Destructor *****/
-
-
-    constructor ABLObjectsReport ( input pcSource as character ):
+    constructor public ABLObjectsReport ( input pcSource as character ):
         super().
 
         /* Set the means of obtaining metrics. */
@@ -176,7 +179,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         define variable cTempPath as character no-undo.
 
         /* Make sure we have a consistent path for temporary files. */
-        assign cTempPath = substitute("&1/temp", CatalinaBase).
+        assign cTempPath = substitute("&1/temp", this-object:CatalinaBase).
         os-create-dir value(cTempPath).
     end method. /* CheckTempPath */
 
@@ -255,7 +258,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         Assert:NotNullOrEmpty(pcQueryPath). /* Must have a query! */
 
         assign iTime = mtime. /* Each request should be timestamped. */
-        assign cBinaryPath = substitute("&1/bin/&2", CatalinaBase, OEJMXBinary). /* oejmx.[bat|sh] */
+        assign cBinaryPath = substitute("&1/bin/&2", this-object:CatalinaBase, OEJMXBinary). /* oejmx.[bat|sh] */
         assign cOutputPath = substitute("&1.&2.json", entry(1, pcQueryPath, "."), iTime).
 
         /* Construct the final command string to be executed. */
@@ -291,12 +294,12 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         define variable oParser      as ObjectModelParser no-undo.
         define variable oQuery       as JsonObject        no-undo.
 
-        assign cQueryPath = substitute("&1/temp/&2.qry", CatalinaBase, pcQueryName).
+        assign cQueryPath = substitute("&1/temp/&2.qry", this-object:CatalinaBase, pcQueryName).
         assign oParser = new ObjectModelParser().
 
         case pcQueryName:
             when "agents" then
-                assign cQueryString = substitute(this-object:AgentsQuery, ApplicationName).
+                assign cQueryString = substitute(this-object:AgentsQuery, this-object:ApplicationName).
             when "trackon" then
                 assign cQueryString = substitute(this-object:TrackOnQuery, pcAgentID).
             when "trackoff" then
@@ -354,18 +357,18 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         end. /* oejmx */
         else if this-object:MetricSource eq "oemanager" then
         do on error undo, throw:
-            Assert:NotNullOrEmpty(InstanceURI).
+            Assert:NotNullOrEmpty(this-object:InstanceURI).
 
             define variable cRequestURI as character  no-undo.
             define variable oRequest    as JsonObject no-undo.
 
             /* Request a list of agents from the OEManager webapp. */
             assign cRequestURI = substitute("&1&2&3",
-                                            InstanceURI, this-object:ManagerURI,
+                                            this-object:InstanceURI, this-object:ManagerURI,
                                             this-object:GetAllAgentsURI).
 
             /* Set request with PAS instance name. */
-            assign cRequestURI = substitute(cRequestURI, ApplicationName).
+            assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName).
 
             /* Make the request to the endpoint and parse results. */
             assign oRequest = this-object:InvokeAPI(cRequestURI).
@@ -449,15 +452,15 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
             define variable cRequestURI as character  no-undo.
             define variable oRequest    as JsonObject no-undo.
 
-            Assert:NotNullOrEmpty(InstanceURI).
+            Assert:NotNullOrEmpty(this-object:InstanceURI).
 
             /* Set the base URL to get information for a specific agent. */
             assign cRequestURI = substitute("&1&2&3",
-                                            InstanceURI, this-object:ManagerURI,
+                                            this-object:InstanceURI, this-object:ManagerURI,
                                             this-object:GetAgentURI).
 
             /* Build the initial URL, to prepare to set the tracking flag. */
-            assign cRequestURI = substitute(cRequestURI, ApplicationName, pcAgentID).
+            assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName, pcAgentID).
             if plEnable then
                 /* Turn tracking on. */
                 assign cRequestURI = substitute("&1&2", cRequestURI, this-object:TrackObjectsOn).
@@ -526,15 +529,15 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
             define variable cRequestURI as character  no-undo.
             define variable oRequest    as JsonObject no-undo.
 
-            Assert:NotNullOrEmpty(InstanceURI).
+            Assert:NotNullOrEmpty(this-object:InstanceURI).
 
             /* Build the initial URL, to obtain the tracking flag. */
             assign cRequestURI = substitute("&1&2&3&4",
-                                            InstanceURI, this-object:ManagerURI,
+                                            this-object:InstanceURI, this-object:ManagerURI,
                                             this-object:GetAgentURI, this-object:TrackingObjects).
 
             /* Replace PAS instance name and specific Agent ID. */
-            assign cRequestURI = substitute(cRequestURI, ApplicationName, pcAgentID).
+            assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName, pcAgentID).
 
             /* Make the request to the endpoint and parse results. */
             assign oRequest = this-object:InvokeAPI(cRequestURI).
@@ -673,15 +676,15 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
             define variable cRequestURI as character  no-undo.
             define variable oRequest    as JsonObject no-undo.
 
-            Assert:NotNullOrEmpty(InstanceURI).
+            Assert:NotNullOrEmpty(this-object:InstanceURI).
 
             /* Build the initial URL, to obtain ABLObjects report. */
             assign cRequestURI = substitute("&1&2&3&4",
-                                            InstanceURI, this-object:ManagerURI,
+                                            this-object:InstanceURI, this-object:ManagerURI,
                                             this-object:GetAgentURI, this-object:GetObjectsReport).
 
             /* Replace PAS instance name and specific Agent ID. */
-            assign cRequestURI = substitute(cRequestURI, ApplicationName, pcAgentID).
+            assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName, pcAgentID).
 
             /* Make the request to the endpoint and parse results. */
             assign oRequest = this-object:InvokeAPI(cRequestURI).
