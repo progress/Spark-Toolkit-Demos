@@ -16,13 +16,55 @@ block-level on error undo, throw.
 
 class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool: 
 
+    /*** Common Properties ***/
+
+    define public static property CatalinaBase as character no-undo initial ""
+        get():
+            if CatalinaBase eq "" then do:
+                file-info:filename = trim(os-getenv("CATALINA_BASE")).
+                assign CatalinaBase = right-trim(replace(file-info:full-pathname, "~\", "~/"), "~/").
+            end.
+            return CatalinaBase.
+        end get.
+        private set.
+
+    define public static property MetricsConfig as character no-undo initial ""
+        get():
+            if MetricsConfig eq "" then do:
+                define variable cConfigName as character no-undo.
+                assign cConfigName = trim(os-getenv("METRICS_CONFIG")).
+
+                /* First check the CATALINA_BASE/conf/ location. */
+                assign MetricsConfig = substitute("&1/conf/&2", CatalinaBase, cConfigName).
+                file-info:filename = MetricsConfig.
+                if file-info:full-pathname eq ? then do:
+                    /* Next check the CATALINA_BASE/temp/ location. */
+                    assign MetricsConfig = substitute("&1/temp/&2", CatalinaBase, cConfigName).
+                    if file-info:full-pathname eq ? then
+                        assign MetricsConfig = "".
+                end.
+            end.
+            return MetricsConfig.
+        end get.
+        private set.
+
     define public static property RequestCount as integer no-undo initial 0
         get. private set.
 
     define public static property RequestStart as datetime-tz no-undo initial ?
         get. private set.
 
-    define private variable oABLObjectsReport as ABLObjectsReport no-undo.
+    define protected variable oABLObjectsReport as ABLObjectsReport no-undo.
+
+
+    /***** Constructor/Destructor *****/
+
+
+    constructor OEMetrics ( ):
+        super().
+
+        message "MetricsConfig:" MetricsConfig.
+    end constructor.
 
 
     /***** Static Methods *****/

@@ -7,3 +7,7 @@ export ABLAPP_NAME
 # Set the URL of the server where we can reach the OEManager webapp.
 INSTANCE_URI=http://localhost:8830
 export INSTANCE_URI
+
+# Set the name of the config file to use at runtime.
+METRICS_CONFIG=metrics.json
+export METRICS_CONFIG
