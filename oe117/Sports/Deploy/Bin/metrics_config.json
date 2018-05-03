@@ -1,7 +1,8 @@
 {
 	"enabled": true,
 	"objects": {
-		"source": "oejmx"
+		"source": "oejmx",
+		"outputInterval": 3600000
 	},
 	"profiler": {
 		"filter": "*",

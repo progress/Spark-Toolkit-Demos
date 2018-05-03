@@ -40,6 +40,14 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         end get.
         private set.
 
+    define protected property TemporaryDir as character no-undo initial ""
+        get():
+            if TemporaryDir eq "" then /* Should match session:temp-directory */
+                assign TemporaryDir = substitute("&1/temp", this-object:CatalinaBase).
+            return TemporaryDir.
+        end get.
+        private set.
+
     define protected property MetricsConfig as character no-undo initial ""
         get():
             if MetricsConfig eq "" then do:
@@ -90,6 +98,12 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     define protected property ObjectsSource as character no-undo initial "oejmx"
         get. private set.
 
+    define protected property ObjectsOutputInterval as integer no-undo initial 0
+        get. private set.
+
+    define protected property ObjectsOutputTime as datetime-tz no-undo initial ?
+        get. private set.
+
     define protected property oABLObjectsReport as ABLObjectsReport no-undo
         get():
             if oABLObjectsReport eq ? or not valid-object(oABLObjectsReport) then
@@ -98,7 +112,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         end get.
         private set.
 
-    define protected variable oTrackingMap as StringKeyedMap  no-undo.
+    define protected variable oAgentTrackingMap as StringKeyedMap no-undo.
 
 
     /***** Constructor/Destructor *****/
@@ -107,7 +121,9 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     constructor public OEMetrics ( ):
         super().
 
-        assign oTrackingMap = new StringKeyedMap().
+        this-object:CheckTempPath(). /* Check for temporary directories. */
+
+        assign oAgentTrackingMap = new StringKeyedMap(). /* Agent tracking. */
         this-object:ParseConfig(). /* Obtain configuration options. */
     end constructor.
 
@@ -115,9 +131,25 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     destructor public OEMetrics ( ):
         delete object Instance no-error.
         delete object oLogger no-error.
-        delete object oTrackingMap no-error.
+        delete object oAgentTrackingMap no-error.
         delete object oABLObjectsReport no-error.
     end destructor.
+
+
+    /***** Private Methods *****/
+
+
+    method private void CheckTempPath ( ):
+        define variable cTempPath as character no-undo.
+
+        /* Make sure we have a consistent path for temporary files. */
+        os-create-dir value(substitute("&1", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/debug", this-object:TemporaryDir)).
+
+        /* Make sure any necessary directories are created. */
+        os-create-dir value(substitute("&1/debug/ABLObjectsReport", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/debug/ProfilerData", this-object:TemporaryDir)).
+    end method. /* CheckTempPath */
 
 
     /***** Protected Methods *****/
@@ -155,6 +187,9 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
                             if oSubObj:Has("source") and oSubObj:GetType("source") eq JsonDataType:String then
                                 assign this-object:ObjectsSource = oSubObj:GetCharacter("source").
+
+                            if oSubObj:Has("outputInterval") and oSubObj:GetType("outputInterval") eq JsonDataType:Number then
+                                assign this-object:ObjectsOutputInterval = oSubObj:GetInteger("outputInterval").
 
                             delete object oSubObj no-error.
                         end. /* has sub-object */
@@ -251,6 +286,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
         define variable oRequestInfo as OERequestInfo no-undo.
         define variable lFilterMatch as logical       no-undo initial false.
+        define variable cBasePath    as character     no-undo.
         define variable cOutPath     as character     no-undo.
         define variable ix           as integer       no-undo.
 
@@ -269,10 +305,14 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         end. /* do ix */
 
         if lFilterMatch then do:
+            /* Create base path for output and create any needed directories. */
+            assign cBasePath = substitute("&1/debug/ProfilerData/&2", this-object:TemporaryDir, oRequestInfo:AgentId).
+            os-create-dir value(cBasePath) no-error.
+
             /* Determine correct output location for this profiler log. */
-            assign cOutPath = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
-            assign cOutPath = substitute("&1/Profiler_&2_&3_&4.prof",
-                                         cOutPath, this-object:RequestCount, oRequestInfo:AgentId, oRequestInfo:SessionId).
+            assign cOutPath = substitute("&1/&2.&3_R&4_A&5_S&6.prof",
+                                         cBasePath, replace(iso-date(today), "-", ""), mtime, this-object:RequestCount,
+                                         oRequestInfo:AgentId, oRequestInfo:SessionId).
 
             assign /* Note: Order matters here, do not rearrange! */
                 profiler:enabled      = true
@@ -379,9 +419,8 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
-message iAgentID ":" oTrackingMap:ContainsKey(string(iAgentID)).
-        if oTrackingMap:ContainsKey(string(iAgentID)) then
-            assign lIsTracking = cast(oTrackingMap:Get(string(iAgentID)), OpenEdge.Core.LogicalValue):Value.
+        if oAgentTrackingMap:ContainsKey(string(iAgentID)) then
+            assign lIsTracking = cast(oAgentTrackingMap:Get(string(iAgentID)), OpenEdge.Core.LogicalValue):Value.
         else
             assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
 
@@ -389,19 +428,34 @@ message iAgentID ":" oTrackingMap:ContainsKey(string(iAgentID)).
             assign lIsTracking = oABLObjectsReport:TrackABLObjects(string(iAgentID), true).
 
         /* Remember whether objects are being tracked for this agent. */
-        if lIsTracking and not oTrackingMap:ContainsKey(string(iAgentID)) then
-            oTrackingMap:Put(string(iAgentID), new OpenEdge.Core.LogicalValue(lIsTracking)).
+        if lIsTracking and not oAgentTrackingMap:ContainsKey(string(iAgentID)) then
+            oAgentTrackingMap:Put(string(iAgentID), new OpenEdge.Core.LogicalValue(lIsTracking)).
 
         return lIsTracking.
     end method. /* StartTrackingObjects */
 
 
+    method public logical StopTrackingObjects ( ):
+        define variable iAgentID as integer no-undo.
+
+        assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
+
+        /* Just immediately disable the object tracking for this agent. */
+        return oABLObjectsReport:TrackABLObjects(string(iAgentID), false).
+    end method. /* StopTrackingObjects */
+    
+
     method public logical GetABLObjectsReport ( ):
         define variable iAgentID    as integer   no-undo.
+        define variable cBasePath   as character no-undo.
         define variable lIsTracking as logical   no-undo initial false.
         define variable oObjReport  as JsonArray no-undo.
 
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
+
+        /* Create base path for output and create any needed directories. */
+        assign cBasePath = substitute("&1/debug/ABLObjectsReport/&2", this-object:TemporaryDir, iAgentID).
+        os-create-dir value(cBasePath) no-error.
 
         /* If tracking is enabled, obtain the latest ABLObjects report from the agent. */
         assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
@@ -410,9 +464,8 @@ message iAgentID ":" oTrackingMap:ContainsKey(string(iAgentID)).
 
         /* Output the report to a known location on disk for review/archival. */
         if valid-object(oObjReport) then
-            return oObjReport:WriteFile(substitute("&1/ABLObjectsReport-&2-&3-&4.json",
-                                                   right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
-                                                   iso-date(today), mtime, iAgentID), true).
+            return oObjReport:WriteFile(substitute("&1/&2.&3_A&4.json",
+                                                   cBasePath, replace(iso-date(today), "-", ""), mtime, iAgentID), true).
 
         return false. /* Result for fall-through. */
 
@@ -443,9 +496,9 @@ message iAgentID ":" oTrackingMap:ContainsKey(string(iAgentID)).
         if oABLObjectsReport:TrackABLObjects(true) then do:
             assign oReport = oABLObjectsReport:ParseABLObjectReport().
             if valid-object(oReport) then
-                oReport:WriteFile(substitute("&1/ABLObjectsReport-&2-&3.json",
+                oReport:WriteFile(substitute("&1/debug/ABLObjectsReport/All-&2.&3.json",
                                              right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
-                                             iso-date(today), mtime), true).
+                                             replace(iso-date(today), "-", ""), mtime), true).
             return valid-object(oReport).
         end. /* tracking enabled */
         else

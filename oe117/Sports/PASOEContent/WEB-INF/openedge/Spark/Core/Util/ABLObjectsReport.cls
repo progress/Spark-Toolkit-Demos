@@ -47,6 +47,15 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         end get.
         private set.
 
+
+    define protected property TemporaryDir as character no-undo initial ""
+        get():
+            if TemporaryDir eq "" then /* Should match session:temp-directory */
+                assign TemporaryDir = substitute("&1/temp", this-object:CatalinaBase).
+            return TemporaryDir.
+        end get.
+        private set.
+
     define protected property ApplicationName as character no-undo initial ""
         get():
             if ApplicationName eq "" then do:
@@ -173,11 +182,9 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
 
     method private void CheckTempPath ( ):
-        define variable cTempPath as character no-undo.
-
         /* Make sure we have a consistent path for temporary files. */
-        assign cTempPath = substitute("&1/temp", this-object:CatalinaBase).
-        os-create-dir value(cTempPath).
+        os-create-dir value(substitute("&1", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/debug", this-object:TemporaryDir)).
     end method. /* CheckTempPath */
 
 
