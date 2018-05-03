@@ -10,6 +10,7 @@
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Assert from propath.
+using OpenEdge.Core.Collections.StringKeyedMap from propath.
 using OpenEdge.Logging.* from propath.
 using Spark.Core.Util.ABLObjectsReport from propath.
 
@@ -89,7 +90,15 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     define protected property ObjectsSource as character no-undo initial "oejmx"
         get. private set.
 
-    define protected variable oABLObjectsReport as ABLObjectsReport no-undo.
+    define protected property oABLObjectsReport as ABLObjectsReport no-undo
+        get():
+            if oABLObjectsReport eq ? or not valid-object(oABLObjectsReport) then
+                assign oABLObjectsReport = new ABLObjectsReport(this-object:ObjectsSource).
+            return oABLObjectsReport.
+        end get.
+        private set.
+
+    define protected variable oTrackingMap as StringKeyedMap  no-undo.
 
 
     /***** Constructor/Destructor *****/
@@ -98,6 +107,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     constructor public OEMetrics ( ):
         super().
 
+        assign oTrackingMap = new StringKeyedMap().
         this-object:ParseConfig(). /* Obtain configuration options. */
     end constructor.
 
@@ -105,13 +115,15 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     destructor public OEMetrics ( ):
         delete object Instance no-error.
         delete object oLogger no-error.
+        delete object oTrackingMap no-error.
+        delete object oABLObjectsReport no-error.
     end destructor.
 
 
-    /***** Private Methods *****/
+    /***** Protected Methods *****/
 
 
-    method private void ParseConfig ( ):
+    method protected void ParseConfig ( ):
         /* Attempt to use any located config file. */
         if (this-object:MetricsConfig gt "") ne true then return.
 
@@ -174,6 +186,41 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
             delete object oConfig no-error.
         end finally.
     end method. /* ParseConfig */
+
+
+    method protected OERequestInfo GetRequestInfo ( ):
+        return cast(session:current-request-info, OERequestInfo).
+    end method. /* GetRequestInfo */
+
+
+    method protected integer GetAgentID ( ):
+        define variable oRequestInfo as OERequestInfo no-undo.
+
+        assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
+        if valid-object(oRequestInfo) then
+            return oRequestInfo:AgentId.
+
+        return ?.
+
+        finally:
+            delete object oRequestInfo no-error.
+        end finally.
+    end method. /* GetAgentID */
+
+
+    method protected integer GetSessionID ( ):
+        define variable oRequestInfo as OERequestInfo no-undo.
+
+        assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
+        if valid-object(oRequestInfo) then
+            return oRequestInfo:SessionId.
+
+        return ?.
+
+        finally:
+            delete object oRequestInfo no-error.
+        end finally.
+    end method. /* GetSessionID */
 
 
     /***** Public Methods *****/
@@ -325,6 +372,47 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     end method. /* WriteProfiler */
 
 
+    method public logical StartTrackingObjects ( ):
+        define variable iAgentID    as integer no-undo.
+        define variable lIsTracking as logical no-undo.
+
+        assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
+
+        /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
+        if oTrackingMap:ContainsKey(string(iAgentID)) then
+            assign lIsTracking = cast(oTrackingMap:Get(string(iAgentID)), OpenEdge.Core.LogicalValue):Value.
+        else
+            assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
+
+        if not lIsTracking then /* Turn on tracking if not already, and get latest result. */
+            assign lIsTracking = oABLObjectsReport:TrackABLObjects(string(iAgentID), true).
+
+        if lIsTracking then /* Remember that objects are being tracked for this agent. */
+            oTrackingMap:Put(string(iAgentID), new OpenEdge.Core.LogicalValue(true)).
+
+        return lIsTracking.
+    end method. /* StartTrackingObjects */
+
+
+    method public logical GetABLObjectsReport ( ):
+        define variable iAgentID    as integer   no-undo.
+        define variable lIsTracking as logical   no-undo.
+        define variable oObjReport  as JsonArray no-undo.
+
+        assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
+        assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
+        if lIsTracking then
+            assign oObjReport = oABLObjectsReport:ParseABLObjectReport(string(iAgentID)).
+
+        if valid-object(oObjReport) then
+            return oObjReport:WriteFile(substitute("&1/ABLObjectsReport-&2-&3-&4.json",
+                                                   right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
+                                                   iso-date(today), mtime, iAgentID), true).
+
+        return false.
+    end method. /* GetABLObjectsReport */
+
+
     method public logical TestABLObjectsReport ( ):
         /**
          * Trigger an all-in-one test case of the ABLObjectsReport by enabling
@@ -339,18 +427,17 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         end. /* not enabled */
 
         /* Prime the pump by getting a list of agents for this PAS instance. */
-        assign oABLObjectsReport = new ABLObjectsReport(this-object:ObjectsSource).
         oABLObjectsReport:getAgents().
 
         /* Set up tracking of the ABL Objects, gather a report, and turn off tracking. */
         define variable oReport as JsonObject no-undo.
         if oABLObjectsReport:TrackABLObjects(true) then do:
             assign oReport = oABLObjectsReport:ParseABLObjectReport().
-            oReport:WriteFile(substitute("&1/ABLObjectsReport-&2-&3.json",
-                                         right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
-                                         iso-date(today), mtime), true).
-
-            return true.
+            if valid-object(oReport) then
+                oReport:WriteFile(substitute("&1/ABLObjectsReport-&2-&3.json",
+                                             right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
+                                             iso-date(today), mtime), true).
+            return valid-object(oReport).
         end. /* tracking enabled */
         else
             undo, throw new AppError("Unable to enable ABLObjects tracking.", 0).
@@ -366,7 +453,6 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
             /* Always attempt to disable tracking for this particular test. */
             if valid-object(oABLObjectsReport) then
                 oABLObjectsReport:TrackABLObjects(false).
-            delete object oABLObjectsReport no-error.
             delete object oReport no-error.
         end finally.
     end method. /* GetABLObjectsReport */

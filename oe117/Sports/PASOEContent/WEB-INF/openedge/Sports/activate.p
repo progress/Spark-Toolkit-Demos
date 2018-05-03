@@ -1,0 +1,22 @@
+/*------------------------------------------------------------------------
+    File        : activate.p
+    Purpose     : Runs logic on activate event of a request
+    Description :
+    Author(s)   : Dustin Grau
+    Created     : Thu May 03 11:14:04 EDT 2018
+    Notes       : PAS: Assign as sessionActivateProc in openedge.properties
+  ----------------------------------------------------------------------*/
+
+/* ***************************  Definitions  ************************** */
+
+using Progress.Lang.* from propath.
+
+block-level on error undo, throw.
+
+/* ***************************  Main Block  *************************** */
+
+/* Begin tracking ABLObjects for the current agent. */
+Spark.Core.Util.OEMetrics:Instance:StartTrackingObjects().
+
+/* Start the profiler for this request. */
+Spark.Core.Util.OEMetrics:Instance:StartProfiler().

@@ -264,7 +264,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         /* Run command and report information to log file. */
         oLogger:Info(substitute("Running Command: &1", cCommand)).
         os-command no-console value(cCommand).
-        oLogger:Info("Command Finished").
+        oLogger:Info(substitute("Command Finished: &1", pcQueryPath)).
 
         return cOutputPath. /* Return the expected location of the query output. */
 
@@ -544,6 +544,9 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
             end. /* Has Result */
         end. /* oemanager */
 
+        /* Report whether tracking is enabled or disabled for this agent ID. */
+        oLogger:Info(substitute("Tracking ABLObjects for Agent '&1': &2", pcAgentID, string(lSuccess, "enabled/disabled"))).
+
         return lSuccess.
 
         catch err as Progress.Lang.Error:
@@ -604,8 +607,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         assign oParsed = new JsonArray().
 
         /* Confirm if tracking was enabled for this agent. */
-        assign lTracking = this-object:trackingABLObjects(pcAgentID).
-        oLogger:Info(substitute("Tracking ABLObjects for Agent '&1': &2", pcAgentID, string(lTracking, "enabled/disabled"))).
+        assign lTracking = this-object:TrackingABLObjects(pcAgentID).
 
         /* Return empty array if not tracking. */
         if not lTracking then return oParsed.
