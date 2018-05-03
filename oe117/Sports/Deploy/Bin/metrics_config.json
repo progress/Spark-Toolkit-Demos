@@ -1,0 +1,10 @@
+{
+	"enabled": true,
+	"objects": {
+		"source": "oejmx"
+	},
+	"profiler": {
+		"filter": "*",
+		"threshold": 0
+	}
+}

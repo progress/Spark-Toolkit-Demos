@@ -49,8 +49,10 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
     define protected property ApplicationName as character no-undo initial ""
         get():
-            if ApplicationName eq "" then
+            if ApplicationName eq "" then do:
                 assign ApplicationName = trim(os-getenv("ABLAPP_NAME")).
+                oLogger:Info(substitute("Using ABLApp Name: &1", ApplicationName)).
+            end.
             return ApplicationName.
         end get.
         private set.
@@ -62,8 +64,10 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
     define protected property InstanceURI as character no-undo initial ""
         get():
-            if InstanceURI eq "" then
+            if InstanceURI eq "" then do:
                 assign InstanceURI = trim(os-getenv("INSTANCE_URI")).
+                oLogger:Info(substitute("Using Instance URI: &1", InstanceURI)).
+            end.
             return InstanceURI.
         end get.
         private set.
@@ -78,9 +82,6 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         get. set.
 
     define protected property ManagerURI as character no-undo initial "/oemanager"
-        get. private set.
-
-    define protected property GetApplicationsURI as character no-undo initial "/applications"
         get. private set.
 
     define protected property GetAllAgentsURI as character no-undo initial "/applications/&1/agents"
@@ -106,7 +107,6 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
     /*** OEJMX Properties ***/
 
-
     define protected property OEJMXBinary as character no-undo initial ""
         get():
             if OEJMXBinary eq "" then
@@ -114,9 +114,6 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
             return OEJMXBinary.
         end get.
         private set.
-
-    define protected property JMXQueriesDir as character no-undo initial "jmxqueries"
-        get. private set.
 
     define protected property AgentsQuery as character no-undo
         initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgents","&1"]~}'

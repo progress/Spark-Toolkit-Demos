@@ -9,12 +9,15 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
+using OpenEdge.Core.Assert from propath.
 using OpenEdge.Logging.* from propath.
 using Spark.Core.Util.ABLObjectsReport from propath.
 
 block-level on error undo, throw.
 
 class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool: 
+
+    /*** Static Instance ***/
 
     define public static property Instance as Spark.Core.Util.OEMetrics no-undo
         get():
@@ -41,28 +44,49 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
             if MetricsConfig eq "" then do:
                 define variable cConfigName as character no-undo.
                 assign cConfigName = trim(os-getenv("METRICS_CONFIG")).
+                oLogger:Info(substitute("Metrics Config Name: &1", cConfigName)).
 
-                /* First check the CATALINA_BASE/conf/ location. */
+                /* First, check the CATALINA_BASE/conf/ location. */
                 file-info:filename = substitute("&1/conf/&2", CatalinaBase, cConfigName).
                 if file-info:full-pathname eq ? then do:
-                    /* Next check the CATALINA_BASE/temp/ location. */
+                    /* Next, check the CATALINA_BASE/temp/ location. */
                     file-info:filename = substitute("&1/temp/&2", CatalinaBase, cConfigName).
-                    if file-info:full-pathname eq ? then
-                        assign MetricsConfig = "".
-                end.
+                    if file-info:full-pathname eq ? then do:
+                        /* Next, check the CATALINA_BASE/bin/ location. */
+                        file-info:filename = substitute("&1/bin/&2", CatalinaBase, cConfigName).
+                    end. /* not found in /temp/ */                        
+                end. /* not found in /conf/ */
 
                 /* If one of the above paths is still present, use that. */
                 if file-info:full-pathname ne ? then
                     assign MetricsConfig = file-info:full-pathname.
-            end.
+                else
+                    assign MetricsConfig = "". /* Keep blank if not found. */
+
+                /* Provide context as to where we are getting our config options. */
+                oLogger:Info(substitute("Metrics Config Path: &1", MetricsConfig)).
+            end. /* MetricsConfig eq "" */
+
             return MetricsConfig.
         end get.
         private set.
 
-    define protected static property RequestCount as integer no-undo initial 0
+    define protected property RequestCount as integer no-undo initial 0
         get. private set.
 
-    define protected static property RequestStart as datetime-tz no-undo initial ?
+    define protected property RequestStart as datetime-tz no-undo initial ?
+        get. private set.
+
+    define protected property MetricsEnabled as logical no-undo initial false
+        get. private set.
+
+    define protected property ProfilerFilter as character no-undo initial ""
+        get. private set.
+
+    define protected property ProfilerThreshold as integer no-undo initial 0
+        get. private set.
+
+    define protected property ObjectsSource as character no-undo initial "oejmx"
         get. private set.
 
     define protected variable oABLObjectsReport as ABLObjectsReport no-undo.
@@ -80,6 +104,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
     destructor public OEMetrics ( ):
         delete object Instance no-error.
+        delete object oLogger no-error.
     end destructor.
 
 
@@ -87,14 +112,83 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
 
     method private void ParseConfig ( ):
-        message "MetricsConfig:" MetricsConfig.
+        /* Attempt to use any located config file. */
+        if (this-object:MetricsConfig gt "") ne true then return.
+
+        define variable oParser as ObjectModelParser no-undo.
+        define variable oConfig as JsonObject        no-undo.
+        define variable oSubObj as JsonObject        no-undo.
+        define variable cNames  as character extent  no-undo.
+        define variable ix      as integer           no-undo.
+
+        /* Parse the config file as a JSON object. */
+        assign oParser = new ObjectModelParser().
+        assign oConfig = cast(oParser:ParseFile(MetricsConfig), JsonObject).
+
+        /* Parse the contents of the JSON object. */
+        if valid-object(oConfig) then do:
+            assign cNames = oConfig:GetNames().
+
+            /* Set properties based on config options. */
+            do ix = 1 to extent(cNames):
+                case cNames[ix]:
+                    when "enabled" then do:
+                        if oConfig:Has("enabled") and oConfig:GetType("enabled") eq JsonDataType:Boolean then
+                            assign this-object:MetricsEnabled = oConfig:GetLogical("enabled").
+                    end. /* enabled */
+
+                    when "objects" then do:
+                        if oConfig:Has("objects") and oConfig:GetType("objects") eq JsonDataType:Object then do:
+                            assign oSubObj = oConfig:GetJsonObject("objects").
+
+                            if oSubObj:Has("source") and oSubObj:GetType("source") eq JsonDataType:String then
+                                assign this-object:ObjectsSource = oSubObj:GetCharacter("source").
+
+                            delete object oSubObj no-error.
+                        end. /* has sub-object */
+                    end. /* objects */
+
+                    when "profiler" then do:
+                        if oConfig:Has("profiler") and oConfig:GetType("profiler") eq JsonDataType:Object then do:
+                            assign oSubObj = oConfig:GetJsonObject("profiler").
+
+                            if oSubObj:Has("filter") and oSubObj:GetType("filter") eq JsonDataType:String then
+                                assign this-object:ProfilerFilter = oSubObj:GetCharacter("filter").
+
+                            if oSubObj:Has("threshold") and oSubObj:GetType("threshold") eq JsonDataType:Number then
+                                assign this-object:ProfilerThreshold = oSubObj:GetInteger("threshold").
+
+                            delete object oSubObj no-error.
+                        end. /* has sub-object */
+                    end. /* profiler */
+                end case. /* cNames */
+            end. /* do ix */
+        end. /* valid object */
+
+        catch err as Progress.Lang.Error:
+            oLogger:Error(substitute("Error parsing config file: &1", err:GetMessage(1))).
+            undo, throw err.                
+        end catch.
+        finally:
+            delete object oParser no-error.
+            delete object oConfig no-error.
+        end finally.
     end method. /* ParseConfig */
 
 
-    /***** Static Methods *****/
+    /***** Public Methods *****/
 
 
-    method public static logical StartProfiler ( input pcFilter as character ):
+    method public logical StartProfiler ( ):
+        /* Start the profiler with any config-set filtering. */
+        if (this-object:ProfilerFilter gt "") eq true then
+            return this-object:StartProfiler(this-object:ProfilerFilter).
+        else
+            return this-object:StartProfiler("*"). /* No filter. */
+    end method. /* StartProfiler */
+
+
+    method public logical StartProfiler ( input pcFilter as character ):
         /**
          * Method is created as static to allow starting of a profiler session
          * without need for a class instance. This makes it useful for starting
@@ -103,6 +197,11 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
          * have no other dependencies or requirements of a class-instance method.
          */
 
+        if not this-object:MetricsEnabled then do:
+            oLogger:Info("Metrics disabled, leaving StartProfiler").
+            return false.
+        end. /* not enabled */
+
         define variable oRequestInfo as OERequestInfo no-undo.
         define variable lFilterMatch as logical       no-undo initial false.
         define variable cOutPath     as character     no-undo.
@@ -110,8 +209,8 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
         /* Obtain the request information and set/increment special values. */
         assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
-        assign RequestCount = RequestCount + 1.
-        assign RequestStart = now.
+        assign this-object:RequestCount = this-object:RequestCount + 1.
+        assign this-object:RequestStart = now.
         
         /* Filter should not be blank, so fill with wildcard at least. */
         if (pcFilter gt "") ne true then assign pcFilter = "*".
@@ -126,7 +225,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
             /* Determine correct output location for this profiler log. */
             assign cOutPath = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
             assign cOutPath = substitute("&1/Profiler_&2_&3_&4.prof",
-                                         cOutPath, RequestCount, oRequestInfo:AgentId, oRequestInfo:SessionId).
+                                         cOutPath, this-object:RequestCount, oRequestInfo:AgentId, oRequestInfo:SessionId).
 
             assign /* Note: Order matters here, do not rearrange! */
                 profiler:enabled      = true
@@ -146,13 +245,22 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
         catch err as Progress.Lang.Error:
             /* Should fail silently, while delivering errors to the standard local. */
-            message err:GetMessage(1).
+            oLogger:Error(substitute("Error starting profiler: &1", err:GetMessage(1))).
             return false.
         end catch.
     end method. /* StartProfiler */
 
 
-    method public static logical WriteProfiler ( input piMinExecTime as integer ):
+    method public logical WriteProfiler ( ):
+        /* Start the profiler with any config-set filtering. */
+        if this-object:ProfilerThreshold gt 0 then
+            return this-object:WriteProfiler(this-object:ProfilerThreshold).
+        else
+            return this-object:WriteProfiler(0). /* No threshold. */
+    end method. /* StartProfiler */
+
+
+    method public logical WriteProfiler ( input piMinExecTime as integer ):
         /**
          * Method is created as static to allow profiler output to be generated at
          * any time in the request lifecycle without dependency on a class instance.
@@ -163,6 +271,11 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
          * available or not (eg. excution time may always be reported).
          */
 
+        if not this-object:MetricsEnabled then do:
+            oLogger:Info("Metrics disabled, leaving WriteProfiler").
+            return false.
+        end. /* not enabled */
+
         define variable oRequestInfo as OERequestInfo no-undo.
         define variable oProfLogger  as ILogWriter    no-undo.
         define variable iExecTime    as integer       no-undo initial 0.
@@ -172,8 +285,8 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
 
         /* Determine the time elapsed for this request. */
-        if RequestStart ne ? and RequestStart lt now then
-            assign iExecTime = interval(now, RequestStart, "milliseconds" ).
+        if this-object:RequestStart ne ? and this-object:RequestStart lt now then
+            assign iExecTime = interval(now, this-object:RequestStart, "milliseconds" ).
 
         if profiler:enabled then do:
             /* Turn off the profiler, if previously enabled. */
@@ -203,7 +316,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
         catch err as Progress.Lang.Error:
             /* Should fail silently, while delivering errors to the standard local. */
-            message err:GetMessage(1).
+            oLogger:Error(substitute("Error writing profiler: &1", err:GetMessage(1))).
             return false.
         end catch.
         finally:
@@ -212,10 +325,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     end method. /* WriteProfiler */
 
 
-    /***** Public Methods *****/
-
-
-    method public logical GetABLObjectsReport ( input pcSource as character ):
+    method public logical TestABLObjectsReport ( ):
         /**
          * Trigger an all-in-one test case of the ABLObjectsReport by enabling
          * tracking of objects, report gathered data, and stop tracking. For
@@ -223,8 +333,13 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
          * within the application and only when necessary.
          */
 
+        if not this-object:MetricsEnabled then do:
+            oLogger:Info("Metrics disabled, leaving TestABLObjectsReport").
+            return false.
+        end. /* not enabled */
+
         /* Prime the pump by getting a list of agents for this PAS instance. */
-        oABLObjectsReport = new ABLObjectsReport(pcSource).
+        assign oABLObjectsReport = new ABLObjectsReport(this-object:ObjectsSource).
         oABLObjectsReport:getAgents().
 
         /* Set up tracking of the ABL Objects, gather a report, and turn off tracking. */
@@ -244,12 +359,13 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
         catch err as Progress.Lang.Error:
             /* Should fail silently, while delivering errors to the standard local. */
-            message err:GetMessage(1).
+            oLogger:Error(substitute("Error testing ABLObjects: &1", err:GetMessage(1))).
             return false.
         end catch.
         finally:
             /* Always attempt to disable tracking for this particular test. */
-            oABLObjectsReport:TrackABLObjects(false).
+            if valid-object(oABLObjectsReport) then
+                oABLObjectsReport:TrackABLObjects(false).
             delete object oABLObjectsReport no-error.
             delete object oReport no-error.
         end finally.

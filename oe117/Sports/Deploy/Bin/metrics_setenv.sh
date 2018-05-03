@@ -9,5 +9,5 @@ INSTANCE_URI=http://localhost:8830
 export INSTANCE_URI
 
 # Set the name of the config file to use at runtime.
-METRICS_CONFIG=metrics.json
+METRICS_CONFIG=metrics_config.json
 export METRICS_CONFIG

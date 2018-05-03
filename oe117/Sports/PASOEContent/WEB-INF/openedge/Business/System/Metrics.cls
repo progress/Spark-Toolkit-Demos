@@ -16,21 +16,20 @@ using Spark.Core.Util.OEMetrics from propath.
 
 block-level on error undo, throw.
 
-class Business.System.Metrics: 
-
-    /* @TODO: Implement a config file and options to drive operation of these features. */
+class Business.System.Metrics:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/objects", alias="objects", mediaType="application/json").
     method public void GetObjects ( output success as logical ):
-        /* Begin the code profiler, filtered by specific programs. */
-        OEMetrics:StartProfiler("*").
+        /* Begin the code profiler; optionally filtered by specific programs (via can-do list). */
+        define variable lUseProfiler as logical no-undo.
+        assign lUseProfiler = OEMetrics:Instance:StartProfiler().
 
-        /* When creating the object, must specify source as OEManager or JMX. */
-        assign success = OEMetrics:Instance:GetABLObjectsReport("oejmx").
+        /* Run the full series of enable/track/report/disable actions for ABL objects. */
+        assign success = OEMetrics:Instance:TestABLObjectsReport().
 
-        /* End profiling and flush data if execution time exceeds given time (in ms). */
-        OEMetrics:WriteProfiler(1000). /* Example: Output requests taking 1s or more. */
+        /* End profiling and flush data; optionally if execution time exceeds threshold (in ms). */
+        if lUseProfiler then OEMetrics:Instance:WriteProfiler().
     end method. /* GetObjects */
 
 end class.
