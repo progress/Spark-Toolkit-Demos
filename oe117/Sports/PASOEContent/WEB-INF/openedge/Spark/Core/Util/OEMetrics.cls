@@ -374,11 +374,12 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
     method public logical StartTrackingObjects ( ):
         define variable iAgentID    as integer no-undo.
-        define variable lIsTracking as logical no-undo.
+        define variable lIsTracking as logical no-undo initial false.
 
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
+message iAgentID ":" oTrackingMap:ContainsKey(string(iAgentID)).
         if oTrackingMap:ContainsKey(string(iAgentID)) then
             assign lIsTracking = cast(oTrackingMap:Get(string(iAgentID)), OpenEdge.Core.LogicalValue):Value.
         else
@@ -387,8 +388,9 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         if not lIsTracking then /* Turn on tracking if not already, and get latest result. */
             assign lIsTracking = oABLObjectsReport:TrackABLObjects(string(iAgentID), true).
 
-        if lIsTracking then /* Remember that objects are being tracked for this agent. */
-            oTrackingMap:Put(string(iAgentID), new OpenEdge.Core.LogicalValue(true)).
+        /* Remember whether objects are being tracked for this agent. */
+        if lIsTracking and not oTrackingMap:ContainsKey(string(iAgentID)) then
+            oTrackingMap:Put(string(iAgentID), new OpenEdge.Core.LogicalValue(lIsTracking)).
 
         return lIsTracking.
     end method. /* StartTrackingObjects */
@@ -396,20 +398,27 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
     method public logical GetABLObjectsReport ( ):
         define variable iAgentID    as integer   no-undo.
-        define variable lIsTracking as logical   no-undo.
+        define variable lIsTracking as logical   no-undo initial false.
         define variable oObjReport  as JsonArray no-undo.
 
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
+
+        /* If tracking is enabled, obtain the latest ABLObjects report from the agent. */
         assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
         if lIsTracking then
             assign oObjReport = oABLObjectsReport:ParseABLObjectReport(string(iAgentID)).
 
+        /* Output the report to a known location on disk for review/archival. */
         if valid-object(oObjReport) then
             return oObjReport:WriteFile(substitute("&1/ABLObjectsReport-&2-&3-&4.json",
                                                    right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
                                                    iso-date(today), mtime, iAgentID), true).
 
-        return false.
+        return false. /* Result for fall-through. */
+
+        finally:
+            delete object oObjReport no-error.
+        end finally.
     end method. /* GetABLObjectsReport */
 
 
