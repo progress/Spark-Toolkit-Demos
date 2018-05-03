@@ -53,7 +53,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
             if MetricsConfig eq "" then do:
                 define variable cConfigName as character no-undo.
                 assign cConfigName = trim(os-getenv("METRICS_CONFIG")).
-                oLogger:Info(substitute("Metrics Config Name: &1", cConfigName)).
+                oLogger:Trace(substitute("Metrics Config Name: &1", cConfigName)).
 
                 /* First, check the CATALINA_BASE/conf/ location. */
                 file-info:filename = substitute("&1/conf/&2", CatalinaBase, cConfigName).
@@ -101,9 +101,6 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     define protected property ObjectsOutputInterval as integer no-undo initial 0
         get. private set.
 
-    define protected property ObjectsOutputTime as datetime-tz no-undo initial ?
-        get. private set.
-
     define protected property oABLObjectsReport as ABLObjectsReport no-undo
         get():
             if oABLObjectsReport eq ? or not valid-object(oABLObjectsReport) then
@@ -112,7 +109,11 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         end get.
         private set.
 
-    define protected variable oAgentTrackingMap as StringKeyedMap no-undo.
+    define protected temp-table ttAgentObjects no-undo
+        field AgentID    as integer
+        field IsTracking as logical
+        field LastOutput as datetime-tz
+        index pkAgent as primary unique AgentID.
 
 
     /***** Constructor/Destructor *****/
@@ -122,8 +123,6 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         super().
 
         this-object:CheckTempPath(). /* Check for temporary directories. */
-
-        assign oAgentTrackingMap = new StringKeyedMap(). /* Agent tracking. */
         this-object:ParseConfig(). /* Obtain configuration options. */
     end constructor.
 
@@ -131,7 +130,6 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     destructor public OEMetrics ( ):
         delete object Instance no-error.
         delete object oLogger no-error.
-        delete object oAgentTrackingMap no-error.
         delete object oABLObjectsReport no-error.
     end destructor.
 
@@ -419,8 +417,9 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
-        if oAgentTrackingMap:ContainsKey(string(iAgentID)) then
-            assign lIsTracking = cast(oAgentTrackingMap:Get(string(iAgentID)), OpenEdge.Core.LogicalValue):Value.
+        if can-find(first ttAgentObjects no-lock
+                    where ttAgentObjects.AgentID eq iAgentID and ttAgentObjects.IsTracking) then
+            assign lIsTracking = true.
         else
             assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
 
@@ -428,8 +427,21 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
             assign lIsTracking = oABLObjectsReport:TrackABLObjects(string(iAgentID), true).
 
         /* Remember whether objects are being tracked for this agent. */
-        if lIsTracking and not oAgentTrackingMap:ContainsKey(string(iAgentID)) then
-            oAgentTrackingMap:Put(string(iAgentID), new OpenEdge.Core.LogicalValue(lIsTracking)).
+        if lIsTracking then do:
+            /* Attempt to find an existing record for this agent. */
+            find first ttAgentObjects exclusive-lock
+                 where ttAgentObjects.AgentID eq iAgentID no-error.
+
+            /* No record, no problem. Create one. */
+            if not available(ttAgentObjects) then
+                create ttAgentObjects.
+
+            assign /* Update with new tracking state. */
+                ttAgentObjects.AgentID    = iAgentID
+                ttAgentObjects.IsTracking = true
+                ttAgentObjects.LastOutput = ?
+                .
+        end. /* Tracking */
 
         return lIsTracking.
     end method. /* StartTrackingObjects */

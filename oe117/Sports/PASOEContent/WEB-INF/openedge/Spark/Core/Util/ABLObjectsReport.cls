@@ -610,14 +610,14 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
         Assert:NotNullOrEmpty(pcAgentID).
 
-        /* Create array of parsed entries for this agent. */
-        assign oParsed = new JsonArray().
-
         /* Confirm if tracking was enabled for this agent. */
         assign lTracking = this-object:TrackingABLObjects(pcAgentID).
 
         /* Return empty array if not tracking. */
-        if not lTracking then return oParsed.
+        if not lTracking then return ?.
+
+        /* Create array of parsed entries for this agent. */
+        assign oParsed = new JsonArray().
 
         if this-object:MetricSource eq "oejmx" then
         do on error undo, throw:
