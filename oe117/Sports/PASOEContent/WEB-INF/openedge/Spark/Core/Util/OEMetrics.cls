@@ -462,19 +462,20 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
 
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
-        /* Create base path for output and create any needed directories. */
+        /* Assemble base path for output and create any needed directories. */
         assign cBasePath = substitute("&1/metrics/ABLObjectsReport/&2", this-object:TemporaryDir, iAgentID).
         os-create-dir value(cBasePath) no-error.
 
         /* If tracking is enabled, obtain the latest ABLObjects report from the agent. */
         assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
-        if lIsTracking then
-            assign oObjReport = oABLObjectsReport:ParseABLObjectReport(string(iAgentID)).
-
-        /* Output the report to a known location on disk for review/archival. */
-        if valid-object(oObjReport) then
-            return oObjReport:WriteFile(substitute("&1/&2.&3_A&4.json",
-                                                   cBasePath, replace(iso-date(today), "-", ""), mtime, iAgentID), true).
+        if lIsTracking then do:
+            if oABLObjectsReport:ParseABLObjectReport(input iAgentID, output oObjReport) then
+                /* Output the report to a known location on disk for review/archival. */
+                return oObjReport:WriteFile(substitute("&1/&2.&3_A&4.json",
+                                                       cBasePath,
+                                                       replace(iso-date(today), "-", ""),
+                                                       mtime, iAgentID), true).
+        end. /* lIsTracking */
 
         return false. /* Result for fall-through. */
 

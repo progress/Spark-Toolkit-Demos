@@ -568,7 +568,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
     method public JsonObject ParseABLObjectReport ( ):
         define variable oAgentObj as JsonObject no-undo.
-        define variable oParsed   as JsonArray  no-undo.
+        define variable oReport   as JsonArray  no-undo.
         define variable oAgent    as JsonObject no-undo.
         define variable cAgentID  as character  no-undo.
         define variable iCount    as integer    no-undo.
@@ -586,10 +586,8 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                 assign cAgentID = oAgent:GetCharacter("agentId").
 
                 /* Request the ABL objects for this specific agent. */
-                assign oParsed = this-object:ParseABLObjectReport(cAgentID).
-
-                /* Add list of objects, by agent ID, to a final object. */
-                oAgentObj:Add(cAgentID, oParsed).
+                if this-object:ParseABLObjectReport(input cAgentID, output oReport) then
+                    oAgentObj:Add(cAgentID, oReport). /* Add list to final object. */
             end. /* has agentId */
         end. /* do iCount */
 
@@ -597,14 +595,19 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     end method. /* ParseABLObjectReport */
 
 
-    method public JsonArray ParseABLObjectReport ( input pcAgentID as character ):
+    method public logical ParseABLObjectReport ( input  piAgentID as integer,
+                                                 output poReport  as JsonArray ):
+        return this-object:ParseABLObjectReport(string(piAgentID), poReport).
+    end method. /* ParseABLObjectReport */
+
+
+    method public logical ParseABLObjectReport ( input  pcAgentID as character,
+                                                 output poReport  as JsonArray ):
         define variable oABLOutput  as JsonObject no-undo.
         define variable oABLObjects as JsonArray  no-undo.
         define variable oObjects    as JsonArray  no-undo.
         define variable oABLObject  as JsonObject no-undo.
-        define variable oParsed     as JsonArray  no-undo.
         define variable lTracking   as logical    no-undo.
-        define variable iTotalObj   as integer    no-undo.
         define variable ix          as integer    no-undo.
         define variable iy          as integer    no-undo.
 
@@ -616,8 +619,8 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         /* Return empty array if not tracking. */
         if not lTracking then return ?.
 
-        /* Create array of parsed entries for this agent. */
-        assign oParsed = new JsonArray().
+        /* Create the return array. */
+        assign poReport = new JsonArray().
 
         if this-object:MetricSource eq "oejmx" then
         do on error undo, throw:
@@ -637,13 +640,14 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                 if valid-object(oResults) and oResults:Has("getABLObjectsReport") then
                 do on error undo, throw:
                     /* Cannot proceed if there is no result. */
-                    if oResults:GetType("getABLObjectsReport") ne JsonDataType:Object then return oParsed.
+                    if oResults:GetType("getABLObjectsReport") ne JsonDataType:Object then return ?.
 
                     /* Obtain the necessary payload from the result. */
                     if oResults:GetJsonObject("getABLObjectsReport"):Has("ABLOutput") then
                     do on error undo, throw:
                         assign oABLOutput = oResults:GetJsonObject("getABLObjectsReport"):GetJsonObject("ABLOutput").
-                        if oABLOutput:Has("ABLObjects") and oABLOutput:GetType("ABLObjects") eq JsonDataType:Array then
+                        if valid-object(oABLOutput) and oABLOutput:Has("ABLObjects") and
+                           oABLOutput:GetType("ABLObjects") eq JsonDataType:Array then
                             assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
                         else
                             assign oABLObjects = ?.
@@ -652,16 +656,18 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                         do ix = 1 to oABLObjects:Length:
                             /* Parse the report payload into a simpler form. */
                             assign oABLObject = oABLObjects:GetJsonObject(ix).
-                            assign oObjects = oABLObject:GetJsonArray("Objects").
+                            if valid-object(oABLObject) and oABLObject:Has("Objects") and
+                               oABLObject:GetType("Objects") eq JsonDataType:Array then
+                                assign oObjects = oABLObject:GetJsonArray("Objects").
+                            else
+                                assign oObjects = ?.
 
                             if valid-object(oObjects) and oObjects:Length gt 0 then
                             do iy = 1 to oObjects:Length:
                                 /* Grab the object to add to our full array. */
-                                oParsed:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                                poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
                             end. /* do iy (Objects) */
                         end. /* do ix (ABLObjects) */
-
-                        assign iTotalObj = iTotalObj + oParsed:length.
 
                         finally:
                             delete object oABLOutput no-error.
@@ -675,7 +681,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
             finally:
                 delete object oParser no-error.
                 delete object oResults no-error.
-/*                os-delete value(cOutPath).*/
+                os-delete value(cOutPath).
             end finally.
         end. /* oejmx */
         else if this-object:MetricSource eq "oemanager" then do:
@@ -697,13 +703,14 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
             if valid-object(oRequest) and oRequest:Has("result") then
             do on error undo, throw:
                 /* Cannot proceed if there is no result. */
-                if oRequest:IsNull("result") then return oParsed.
+                if oRequest:IsNull("result") then return ?.
 
                 /* Obtain the necessary payload from the result. */
                 if oRequest:GetJsonObject("result"):Has("ABLOutput") then
                 do on error undo, throw:
                     assign oABLOutput = oRequest:GetJsonObject("result"):GetJsonObject("ABLOutput").
-                    if oABLOutput:Has("ABLObjects") and oABLOutput:GetType("ABLObjects") eq JsonDataType:Array then
+                    if valid-object(oABLOutput) and oABLOutput:Has("ABLObjects") and
+                       oABLOutput:GetType("ABLObjects") eq JsonDataType:Array then
                         assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
                     else
                         assign oABLObjects = ?.
@@ -712,16 +719,18 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                     do ix = 1 to oABLObjects:Length:
                         /* Parse the report payload into a simpler form. */
                         assign oABLObject = oABLObjects:GetJsonObject(ix).
-                        assign oObjects = oABLObject:GetJsonArray("Objects").
+                        if valid-object(oABLObject) and oABLObject:Has("Objects") and
+                           oABLObject:GetType("Objects") eq JsonDataType:Array then
+                            assign oObjects = oABLObject:GetJsonArray("Objects").
+                        else
+                            assign oObjects = ?.
 
                         if valid-object(oObjects) and oObjects:Length gt 0 then
                         do iy = 1 to oObjects:Length:
                             /* Grab the object to add to our full array. */
-                            oParsed:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                            poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
                         end. /* do iy (Objects) */
                     end. /* do ix (ABLObjects) */
-
-                    assign iTotalObj = iTotalObj + oParsed:length.
 
                     finally:
                         delete object oABLOutput no-error.
@@ -737,9 +746,9 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         end. /* oemanager */
 
         /* Report how many objects were found within this agent. */
-        oLogger:Info(substitute("Total ABLObjects for Agent '&1': &2", pcAgentID, iTotalObj)).
+        oLogger:Info(substitute("Total ABLObjects for Agent '&1': &2", pcAgentID, poReport:length)).
 
-        return oParsed.
+        return (poReport:length gt 0).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in ParseABLObjectReport: &1", err:GetMessage(1))).
