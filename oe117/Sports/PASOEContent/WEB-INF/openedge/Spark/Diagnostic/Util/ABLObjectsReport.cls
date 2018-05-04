@@ -668,8 +668,20 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
                                     poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
                                 end.
                                 else if not oObjects:GetJsonObject(iy):Has("Name") then do:
-                                    /* Retain objects without a name (can't filter these properly). */
-                                    poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                                    /* Extract some values for comparison when filtering the results. */
+                                    assign
+                                        cObjSource = oObjects:GetJsonObject(iy):GetCharacter("Source")
+                                        lMatches   = false
+                                        .
+
+                                    do iz = 1 to num-entries(pcExclude):
+                                        if cObjSource matches entry(iz, pcExclude) then
+                                        assign lMatches = true. /* Remember if match found. */
+                                    end. /* do iz */
+
+                                    /* Retain only objects which DO NOT match the exclusion list. */
+                                    if not lMatches then
+                                        poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
                                 end.
                                 else do:
                                     /* Extract some values for comparison when filtering the results. */
@@ -682,7 +694,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
                                     do iz = 1 to num-entries(pcExclude):
                                         if cObjName matches entry(iz, pcExclude) or
                                            cObjSource matches entry(iz, pcExclude) then
-                                            assign lMatches = true. /* Remember if match found. */
+                                        assign lMatches = true. /* Remember if match found. */
                                     end. /* do iz */
 
                                     /* Retain only objects which DO NOT match the exclusion list. */
@@ -755,8 +767,20 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
                                 poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
                             end.
                             else if not oObjects:GetJsonObject(iy):Has("Name") then do:
-                                /* Retain objects without a name (can't filter these properly). */
-                                poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                                /* Extract some values for comparison when filtering the results. */
+                                assign
+                                    cObjSource = oObjects:GetJsonObject(iy):GetCharacter("Source")
+                                    lMatches   = false
+                                    .
+
+                                do iz = 1 to num-entries(pcExclude):
+                                    if cObjSource matches entry(iz, pcExclude) then
+                                    assign lMatches = true. /* Remember if match found. */
+                                end. /* do iz */
+
+                                /* Retain only objects which DO NOT match the exclusion list. */
+                                if not lMatches then
+                                    poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
                             end.
                             else do:
                                 /* Extract some values for comparison when filtering the results. */
@@ -769,7 +793,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
                                 do iz = 1 to num-entries(pcExclude):
                                     if cObjName matches entry(iz, pcExclude) or
                                        cObjSource matches entry(iz, pcExclude) then
-                                        assign lMatches = true. /* Remember if match found. */
+                                    assign lMatches = true. /* Remember if match found. */
                                 end. /* do iz */
 
                                 /* Retain only objects which DO NOT match the exclusion list. */

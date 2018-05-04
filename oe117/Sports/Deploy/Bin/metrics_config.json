@@ -1,7 +1,7 @@
 {
 	"objects": {
 		"enabled": true,
-		"exclude": "",
+		"exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.Diagnostic.*",
 		"source": "oejmx",
 		"interval": 3600000
 	},
