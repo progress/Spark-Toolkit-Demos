@@ -17,10 +17,8 @@ class Spark.Diagnostic.Util.Logger abstract:
     define protected property oLogger as ILogWriter no-undo
         get():
             /* Create single logger instance for this class. */
-            if not valid-object(oLogger) then do:
-                message substitute("Creating Logger for &1", this-object:getClass():TypeName).
+            if not valid-object(oLogger) then
                 assign oLogger = LoggerBuilder:GetLogger(this-object:getClass()).
-            end.
             return oLogger.
         end get.
         private set.

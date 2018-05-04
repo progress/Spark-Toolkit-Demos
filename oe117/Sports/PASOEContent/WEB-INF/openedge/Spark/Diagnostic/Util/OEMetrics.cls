@@ -16,14 +16,14 @@ using Spark.Diagnostic.Util.OEMetrics from propath.
 
 block-level on error undo, throw.
 
-class Spark.Diagnostic.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool final: 
+class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-widget-pool final: 
 
     /*** Static Instance ***/
 
-    define public static property Instance as Spark.Core.Util.OEMetrics no-undo
+    define public static property Instance as Spark.Diagnostic.Util.OEMetrics no-undo
         get():
             if not valid-object(Instance) then
-                assign Instance = new Spark.Core.Util.OEMetrics().
+                assign Instance = new Spark.Diagnostic.Util.OEMetrics().
             return Instance.
         end get.
         private set.
@@ -241,7 +241,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget
     method private integer GetAgentID ( ):
         define variable oRequestInfo as OERequestInfo no-undo.
 
-        assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
+        assign oRequestInfo = this-object:GetRequestInfo().
         if valid-object(oRequestInfo) then
             return oRequestInfo:AgentId.
 
@@ -256,7 +256,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget
     method private integer GetSessionID ( ):
         define variable oRequestInfo as OERequestInfo no-undo.
 
-        assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
+        assign oRequestInfo = this-object:GetRequestInfo().
         if valid-object(oRequestInfo) then
             return oRequestInfo:SessionId.
 
@@ -301,7 +301,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget
         define variable ix           as integer       no-undo.
 
         /* Obtain the request information and set/increment special values. */
-        assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
+        assign oRequestInfo = this-object:GetRequestInfo().
         assign this-object:RequestCount = this-object:RequestCount + 1.
         assign this-object:RequestStart = now.
         
@@ -345,6 +345,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget
             oLogger:Error(substitute("Error starting profiler: &1", err:GetMessage(1))).
             return false.
         end catch.
+        finally:
+            delete object oRequestInfo no-error.
+        end finally.
     end method. /* StartProfiler */
 
 
@@ -374,12 +377,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget
         end. /* not enabled */
 
         define variable oRequestInfo as OERequestInfo no-undo.
-        define variable oProfLogger  as ILogWriter    no-undo.
         define variable iExecTime    as integer       no-undo initial 0.
 
         /* Configure the logger and obtain the request information. */
-        assign oProfLogger = LoggerBuilder:GetLogger("Spark.Core.Util.OEMetrics").
-        assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
+        assign oRequestInfo = this-object:GetRequestInfo().
 
         /* Determine the time elapsed for this request. */
         if this-object:RequestStart ne ? and this-object:RequestStart lt now then
@@ -395,19 +396,19 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget
             /* Only write the data out if execution time exceeds threshold. */
             if piMinExecTime eq ? or piMinExecTime lt 0 then assign piMinExecTime = 0.
             if iExecTime gt piMinExecTime then do:
-                oProfLogger:Info(substitute("&1 | &2ms | &3",
-                                            oRequestInfo:ProcedureName, iExecTime, profiler:file-name)).
+                oLogger:Info(substitute("&1 | &2ms | &3",
+                                        oRequestInfo:ProcedureName, iExecTime, profiler:file-name)).
                 profiler:write-data().
             end. /* iExecTime gt piMinExecTime */
             else
-                oProfLogger:Info(substitute("&1 | &2ms | -No Profiler Output-",
-                                            oRequestInfo:ProcedureName, iExecTime)).
+                oLogger:Info(substitute("&1 | &2ms | -No Profiler Output-",
+                                        oRequestInfo:ProcedureName, iExecTime)).
 
             return true.
         end. /* profiler:enabled */
         else
-            oProfLogger:Info(substitute("&1 | &2ms | -Profiler Disabled-",
-                                        oRequestInfo:ProcedureName, iExecTime)).
+            oLogger:Info(substitute("&1 | &2ms | -Profiler Disabled-",
+                                    oRequestInfo:ProcedureName, iExecTime)).
 
         return false. /* Profiler not enabled. */
 
@@ -417,7 +418,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget
             return false.
         end catch.
         finally:
-            delete object oProfLogger no-error.
+            delete object oRequestInfo no-error.
         end finally.
     end method. /* WriteProfiler */
 

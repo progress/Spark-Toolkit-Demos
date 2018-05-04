@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-    File        : metrics_activate.p
+    File        : activate.p
     Purpose     : Runs logic on activate event of a request
     Description :
     Author(s)   : Dustin Grau
@@ -13,8 +13,5 @@ block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
 
-/* Begin tracking ABLObjects for the current agent. */
-Spark.Diagnostic.Util.OEMetrics:Instance:StartTrackingObjects().
-
-/* Start the profiler for this request. */
-Spark.Diagnostic.Util.OEMetrics:Instance:StartProfiler().
+/* Startup the metrics from the diagnostic tools. */
+run Spark/Diagnostic/metrics_activate.

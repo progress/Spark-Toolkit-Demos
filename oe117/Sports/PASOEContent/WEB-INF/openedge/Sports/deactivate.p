@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-    File        : metrics_deactivate.p
+    File        : deactivate.p
     Purpose     : Runs logic on deactivate event of a request
     Description :
     Author(s)   : Dustin Grau
@@ -13,8 +13,5 @@ block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
 
-/* Stop the profiler for this request. */
-Spark.Diagnostic.Util.OEMetrics:Instance:WriteProfiler().
-
-/* Generate an ABLObjects report. */
-Spark.Diagnostic.Util.OEMetrics:Instance:GetABLObjectsReport().
+/* Stop the metrics from the diagnostic tools. */
+run Spark/Diagnostic/metrics_deactivate.

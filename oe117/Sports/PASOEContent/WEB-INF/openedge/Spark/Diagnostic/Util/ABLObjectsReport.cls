@@ -11,8 +11,6 @@
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Assert from propath.
-using OpenEdge.Core.JsonDataTypeEnum from propath.
-using OpenEdge.Core.String from propath.
 using OpenEdge.Net.HTTP.Credentials from propath.
 using OpenEdge.Net.HTTP.HttpClient from propath.
 using OpenEdge.Net.HTTP.IHttpRequest from propath.
@@ -22,7 +20,7 @@ using OpenEdge.Net.HTTP.IAuthenticatedRequest from propath.
 
 block-level on error undo, throw.
 
-class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widget-pool final:
+class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logger use-widget-pool final:
 
     /*** Static Properties ***/
 
