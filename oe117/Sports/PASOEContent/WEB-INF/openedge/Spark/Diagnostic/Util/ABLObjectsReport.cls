@@ -584,7 +584,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
                 assign cAgentID = oAgent:GetCharacter("agentId").
 
                 /* Request the ABL objects for this specific agent. */
-                if this-object:ParseABLObjectReport(input cAgentID, output oReport) then
+                if this-object:ParseABLObjectReport(input cAgentID, input "", output oReport) then
                     oAgentObj:Add(cAgentID, oReport). /* Add list to final object. */
             end. /* has agentId */
         end. /* do iCount */
@@ -595,11 +595,19 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
     method public logical ParseABLObjectReport ( input  piAgentID as integer,
                                                  output poReport  as JsonArray ):
-        return this-object:ParseABLObjectReport(string(piAgentID), poReport).
+        return this-object:ParseABLObjectReport(string(piAgentID), "", poReport).
+    end method. /* ParseABLObjectReport */
+
+
+    method public logical ParseABLObjectReport ( input  piAgentID as integer,
+                                                 input  pcExclude as character,
+                                                 output poReport  as JsonArray ):
+        return this-object:ParseABLObjectReport(string(piAgentID), pcExclude, poReport).
     end method. /* ParseABLObjectReport */
 
 
     method public logical ParseABLObjectReport ( input  pcAgentID as character,
+                                                 input  pcExclude as character,
                                                  output poReport  as JsonArray ):
         define variable oABLOutput  as JsonObject no-undo.
         define variable oABLObjects as JsonArray  no-undo.
@@ -608,14 +616,9 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         define variable lTracking   as logical    no-undo.
         define variable ix          as integer    no-undo.
         define variable iy          as integer    no-undo.
+        define variable iz          as integer    no-undo.
 
         Assert:NotNullOrEmpty(pcAgentID).
-
-        /* Confirm if tracking was enabled for this agent. */
-        assign lTracking = this-object:TrackingABLObjects(pcAgentID).
-
-        /* Return empty array if not tracking. */
-        if not lTracking then return ?.
 
         /* Create the return array. */
         assign poReport = new JsonArray().
@@ -662,8 +665,16 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
                             if valid-object(oObjects) and oObjects:Length gt 0 then
                             do iy = 1 to oObjects:Length:
-                                /* Grab the object to add to our full array. */
-                                poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                                if pcExclude eq "" then do:
+                                    /* If not excluding specific names, clone the object to the array. */
+                                    poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                                end.
+                                else do iz = 1 to num-entries(pcExclude):
+                                    /* Otherwise retain only the objects that should not be excluded. */
+                                    if oObjects:GetJsonObject(iy):Has("Name") and
+                                       not oObjects:GetJsonObject(iy):GetCharacter("Name") matches entry(iz, pcExclude) then
+                                        poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                                end. /* do ix */
                             end. /* do iy (Objects) */
                         end. /* do ix (ABLObjects) */
 
@@ -725,8 +736,16 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
                         if valid-object(oObjects) and oObjects:Length gt 0 then
                         do iy = 1 to oObjects:Length:
-                            /* Grab the object to add to our full array. */
-                            poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                            if pcExclude eq "" then do:
+                                /* If not excluding specific names, clone the object to the array. */
+                                poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                            end.
+                            else do iz = 1 to num-entries(pcExclude):
+                                /* Otherwise retain only the objects that should not be excluded. */
+                                if oObjects:GetJsonObject(iy):Has("Name") and
+                                   not oObjects:GetJsonObject(iy):GetCharacter("Name") matches entry(iz, pcExclude) then
+                                    poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                            end. /* do ix */
                         end. /* do iy (Objects) */
                     end. /* do ix (ABLObjects) */
 

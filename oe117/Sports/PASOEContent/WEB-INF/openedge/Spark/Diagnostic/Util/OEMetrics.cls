@@ -98,7 +98,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     define private property ObjectsEnabled as logical no-undo initial false
         get. private set.
 
-    define private property ObjectsExclude as character no-undo initial ""
+    define private property ObjectsExcluded as character no-undo initial ""
         get. private set.
 
     define private property ObjectsSource as character no-undo initial "oejmx"
@@ -191,6 +191,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
                             if oSubObj:Has("enabled") and oSubObj:GetType("enabled") eq JsonDataType:Boolean then
                                 assign this-object:ObjectsEnabled = oSubObj:GetLogical("enabled").
+
+                            if oSubObj:Has("exclude") and oSubObj:GetType("exclude") eq JsonDataType:String then
+                                assign this-object:ObjectsExcluded = oSubObj:GetCharacter("exclude").
 
                             if oSubObj:Has("source") and oSubObj:GetType("source") eq JsonDataType:String then
                                 assign this-object:ObjectsSource = oSubObj:GetCharacter("source").
@@ -500,7 +503,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* If tracking is enabled, obtain the latest ABLObjects report from the agent. */
         assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
         if lIsTracking then do:
-            if oABLObjectsReport:ParseABLObjectReport(input iAgentID, output oObjReport) then
+            if oABLObjectsReport:ParseABLObjectReport(input  iAgentID,
+                                                      input  this-object:ObjectsExcluded,
+                                                      output oObjReport) then
                 /* Output the report to a known location on disk for review/archival. */
                 return oObjReport:WriteFile(substitute("&1/&2.&3_A&4.json",
                                                        cBasePath,
