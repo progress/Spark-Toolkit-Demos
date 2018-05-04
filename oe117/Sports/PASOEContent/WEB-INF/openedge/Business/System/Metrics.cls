@@ -12,24 +12,31 @@
 @progress.service.resource FILE(name="metrics", URI="/metrics", schemaName="", schemaFile="").
 
 using Progress.Lang.* from propath.
-using Spark.Core.Util.OEMetrics from propath.
+using Spark.Diagnostic.Util.OEMetrics from propath.
 
 block-level on error undo, throw.
 
 class Business.System.Metrics:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
-    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/objects", alias="objects", mediaType="application/json").
+    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/getObjects", alias="getObjects", mediaType="application/json").
     method public void GetObjects ( output success as logical ):
-        /* Begin the code profiler; optionally filtered by specific programs (via can-do list). */
-        define variable lUseProfiler as logical no-undo.
-        assign lUseProfiler = OEMetrics:Instance:StartProfiler().
-
-        /* Run the full series of enable/track/report/disable actions for ABL objects. */
-        assign success = OEMetrics:Instance:TestABLObjectsReport().
-
-        /* End profiling and flush data; optionally if execution time exceeds threshold (in ms). */
-        if lUseProfiler then OEMetrics:Instance:WriteProfiler().
+        /* Obtain the current list of Objects in memory for all agents. */
+        assign success = OEMetrics:Instance:GetAllABLObjectsReport().
     end method. /* GetObjects */
+
+    @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
+    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/startTracking", alias="startTracking", mediaType="application/json").
+    method public void StartTracking ( output success as logical ):
+        /* Start tracking the ABLObjects for all agents. */
+        assign success = OEMetrics:Instance:TrackAllObjects(true).
+    end method. /* StartTracking */
+
+    @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
+    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/stopTracking", alias="stopTracking", mediaType="application/json").
+    method public void StopTracking ( output success as logical ):
+        /* Stop tracking the ABLObjects for all agents. */
+        assign success = OEMetrics:Instance:TrackAllObjects(false).
+    end method. /* StopTracking */
 
 end class.

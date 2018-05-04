@@ -257,7 +257,32 @@
         },
         "\/metrics": {
         },
-        "\/metrics\/objects": {
+        "\/metrics\/startTracking": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.System.Metrics",
+              "function": "StartTracking",
+              "arg": [
+                {
+                  "ablName": "success",
+                  "ablType": "LOGICAL",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "success"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/metrics\/getObjects": {
           "PUT": {
             "contentType": "application\/json",
             "options": {
@@ -268,6 +293,31 @@
             "entity": {
               "name": "Business.System.Metrics",
               "function": "GetObjects",
+              "arg": [
+                {
+                  "ablName": "success",
+                  "ablType": "LOGICAL",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "success"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/metrics\/stopTracking": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.System.Metrics",
+              "function": "StopTracking",
               "arg": [
                 {
                   "ablName": "success",

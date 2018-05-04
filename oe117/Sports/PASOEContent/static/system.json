@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Fri Apr 27 14:00:06 EDT 2018",
+  "lastModified": "Fri May 04 14:01:20 EDT 2018",
   "services": [
     {
       "name": "system",
@@ -547,8 +547,34 @@
           "autoSave": true,
           "operations": [
             {
-              "name": "objects",
-              "path": "\/objects",
+              "name": "startTracking",
+              "path": "\/startTracking",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "success",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "getObjects",
+              "path": "\/getObjects",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "success",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "stopTracking",
+              "path": "\/stopTracking",
               "useBeforeImage": false,
               "type": "invoke",
               "verb": "put",

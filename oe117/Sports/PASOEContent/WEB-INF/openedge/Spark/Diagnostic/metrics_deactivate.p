@@ -17,4 +17,5 @@ block-level on error undo, throw.
 Spark.Diagnostic.Util.OEMetrics:Instance:WriteProfiler().
 
 /* Generate an ABLObjects report. */
-Spark.Diagnostic.Util.OEMetrics:Instance:GetABLObjectsReport().
+/* WARNING: This can cause a delay in the request, use with caution. */
+/*Spark.Diagnostic.Util.OEMetrics:Instance:GetABLObjectsReport().*/

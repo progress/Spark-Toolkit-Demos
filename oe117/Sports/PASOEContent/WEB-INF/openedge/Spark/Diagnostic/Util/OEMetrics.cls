@@ -99,8 +99,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     define private property ObjectsSource as character no-undo initial "oejmx" get. set.
 
-    define private property ObjectsOutputInterval as integer no-undo initial 0 get. set.
-
     define private property oABLObjectsReport as ABLObjectsReport no-undo
         get():
             if oABLObjectsReport eq ? or not valid-object(oABLObjectsReport) then
@@ -216,9 +214,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
                             if oSubObj:Has("source") and oSubObj:GetType("source") eq JsonDataType:String then
                                 assign this-object:ObjectsSource = oSubObj:GetCharacter("source").
-
-                            if oSubObj:Has("outputInterval") and oSubObj:GetType("outputInterval") eq JsonDataType:Number then
-                                assign this-object:ObjectsOutputInterval = oSubObj:GetInteger("outputInterval").
 
                             delete object oSubObj no-error.
                         end. /* has sub-object */
@@ -554,48 +549,81 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* GetABLObjectsReport */
 
 
-    method public logical TestABLObjectsReport ( ):
-        /**
-         * Trigger an all-in-one test case of the ABLObjectsReport by enabling
-         * tracking of objects, report gathered data, and stop tracking. For
-         * real-world use these actions should be performed at distinct times
-         * within the application and only when necessary.
-         */
+    method public logical TrackAllObjects ( input plEnable as logical ):
+        define variable oAgent   as JsonObject no-undo.
+        define variable cAgentID as character  no-undo.
+        define variable iCount   as integer    no-undo.
+        define variable lSuccess as logical    no-undo initial false.
+
+        /* Get the agents if object is not present. */
+        if not valid-object(ABLObjectsReport:AgentList) then oABLObjectsReport:GetAgents().
+
+        /* Make request to all agents of this ABLApp. */
+        do iCount = 1 to ABLObjectsReport:AgentList:Length:
+            /* Set request with PAS instance name and specific Agent ID. */
+            assign oAgent = ABLObjectsReport:AgentList:GetJsonObject(iCount).
+            if valid-object(oAgent) and oAgent:Has("pid") then do:
+                /* Set the tracking option for this agent. */
+                assign cAgentID = oAgent:GetCharacter("pid").
+                if oABLObjectsReport:TrackABLObjects(cAgentID, plEnable) then
+                    assign lSuccess = true.
+            end. /* has agentId */
+        end. /* do iCount */
+
+        return lSuccess.
+    end method. /* TrackABLObjects */
+
+
+    method public logical GetAllABLObjectsReport ( ):
+        define variable oReport   as JsonArray  no-undo.
+        define variable oAgent    as JsonObject no-undo.
+        define variable cAgentID  as character  no-undo.
+        define variable cBasePath as character no-undo.
+        define variable iCount    as integer    no-undo.
+        define variable lReturn   as logical    no-undo initial false.
+
+        this-object:CheckConfig(). /* Update configuration options. */
 
         if not this-object:ObjectsEnabled then do:
-            oLogger:Debug("Objects disabled, leaving TestABLObjectsReport").
+            oLogger:Debug("Objects disabled, leaving GetAllABLObjectsReport").
             return false.
         end. /* not enabled */
 
-        /* Prime the pump by getting a list of agents for this PAS instance. */
-        oABLObjectsReport:getAgents().
+        /* Get the agents if object is not present. */
+        if not valid-object(ABLObjectsReport:AgentList) then oABLObjectsReport:GetAgents().
 
-        /* Set up tracking of the ABL Objects, gather a report, and turn off tracking. */
-        define variable oReport as JsonObject no-undo.
-        if oABLObjectsReport:TrackABLObjects(true) then do:
-            assign oReport = oABLObjectsReport:ParseABLObjectReport().
-            if valid-object(oReport) then
-                oReport:WriteFile(substitute("&1/metrics/ABLObjectsReport/All-&2.&3.json",
-                                             right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
-                                             replace(iso-date(today), "-", ""), mtime), true).
-            return valid-object(oReport).
-        end. /* tracking enabled */
-        else
-            undo, throw new AppError("Unable to enable ABLObjects tracking.", 0).
+        /* Make request to all agents of this ABLApp. */
+        do iCount = 1 to ABLObjectsReport:AgentList:Length:
+            /* Set request with PAS instance name and specific Agent ID. */
+            assign oAgent = ABLObjectsReport:AgentList:GetJsonObject(iCount).
+            if oAgent:Has("pid") then
+            do on error undo, throw:
+                /* Extract the current agent for examination. */
+                assign cAgentID = oAgent:GetCharacter("pid").
 
-        return false.
+                /* Assemble base path for output and create any needed directories. */
+                assign cBasePath = substitute("&1/metrics/ABLObjectsReport/&2", this-object:TemporaryDir, cAgentID).
+                os-create-dir value(cBasePath) no-error.
 
-        catch err as Progress.Lang.Error:
-            /* Should fail silently, while delivering errors to the standard local. */
-            oLogger:Error(substitute("Error testing ABLObjects: &1", err:GetMessage(1))).
-            return false.
-        end catch.
+                /* Request the ABL objects for this specific agent. */
+                if oABLObjectsReport:ParseABLObjectReport(input  cAgentID,
+                                                          input  this-object:ObjectsExcluded,
+                                                          output oReport) then
+                    /* Output the report to a known location on disk for review/archival. */
+                    oReport:WriteFile(substitute("&1/&2.&3_A&4.json",
+                                                 cBasePath,
+                                                 replace(iso-date(today), "-", ""),
+                                                 mtime, cAgentID), true).
+            
+                assign lReturn = true.
+            end. /* has agentId */
+        end. /* do iCount */
+
+        return lReturn.
+
         finally:
-            /* Always attempt to disable tracking for this particular test. */
-            if valid-object(oABLObjectsReport) then
-                oABLObjectsReport:TrackABLObjects(false).
             delete object oReport no-error.
         end finally.
-    end method. /* GetABLObjectsReport */
+    end method. /* GetAllABLObjectsReport */
 
 end class.

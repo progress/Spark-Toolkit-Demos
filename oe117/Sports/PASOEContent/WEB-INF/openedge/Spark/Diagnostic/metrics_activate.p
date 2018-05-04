@@ -14,7 +14,8 @@ block-level on error undo, throw.
 /* ***************************  Main Block  *************************** */
 
 /* Begin tracking ABLObjects for the current agent. */
-Spark.Diagnostic.Util.OEMetrics:Instance:StartTrackingObjects().
+/* WARNING: This can cause a delay in the request, use with caution. */
+/*Spark.Diagnostic.Util.OEMetrics:Instance:StartTrackingObjects().*/
 
 /* Start the profiler for this request. */
 Spark.Diagnostic.Util.OEMetrics:Instance:StartProfiler().

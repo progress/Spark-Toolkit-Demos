@@ -24,14 +24,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
     /*** Static Properties ***/
 
-    define public static property AgentList as JsonArray no-undo
-        get():
-            /* Using a static property to allow persistence of the last list of agents obtained. */
-            if not valid-object(AgentList) then
-                AgentList = new JsonArray().
-            return AgentList.
-        end get.
-        private set.
+    define public static property AgentList as JsonArray no-undo get. private set.
 
     /*** Common Properties ***/
 
@@ -139,15 +132,6 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
 
     /***** Constructor/Destructor *****/
-
-
-    constructor public ABLObjectsReport ( ):
-        super().
-
-        /* Make sure a default source has been set. */
-        assign this-object:MetricSource = "oejmx".
-        this-object:CheckTempPath().
-    end constructor.
 
 
     constructor public ABLObjectsReport ( input pcSource as character ):
@@ -377,35 +361,14 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         end. /* oemanager */
 
         /* Log output results of request. */
-        oLogger:Debug(substitute("Available Agents: &1", AgentList:GetJsonText())).
+        if valid-object(AgentList) then
+            oLogger:Debug(substitute("Available Agents: &1", AgentList:GetJsonText())).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in GetAgents: &1", err:GetMessage(1))).
             undo, throw err.
         end catch.
     end method. /* GetAgents */
-
-
-    method public logical TrackABLObjects ( input plEnable as logical ):
-        define variable oAgent   as JsonObject no-undo.
-        define variable cAgentID as character  no-undo.
-        define variable iCount   as integer    no-undo.
-        define variable lSuccess as logical    no-undo initial false.
-
-        /* Make request to all agents of this ABLApp. */
-        do iCount = 1 to AgentList:Length:
-            /* Set request with PAS instance name and specific Agent ID. */
-            assign oAgent = AgentList:GetJsonObject(iCount).
-            if valid-object(oAgent) and oAgent:Has("agentId") then do:
-                /* Set the tracking option for this agent. */
-                assign cAgentID = oAgent:GetCharacter("agentId").
-                if this-object:TrackABLObjects(cAgentID, plEnable) then
-                    assign lSuccess = true.
-            end. /* has agentId */
-        end. /* do iCount */
-
-        return lSuccess.
-    end method. /* TrackABLObjects */
 
 
     method public logical TrackABLObjects ( input pcAgentID as character,
@@ -556,44 +519,10 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
     end method. /* TrackABLObjects */
 
 
-    method public JsonObject ParseABLObjectReport ( ):
-        define variable oAgentObj as JsonObject no-undo.
-        define variable oReport   as JsonArray  no-undo.
-        define variable oAgent    as JsonObject no-undo.
-        define variable cAgentID  as character  no-undo.
-        define variable iCount    as integer    no-undo.
-
-        /* Create object for all parsed agents. */
-        assign oAgentObj = new JsonObject().
-
-        /* Make request to all agents of this ABLApp. */
-        do iCount = 1 to AgentList:Length:
-            /* Set request with PAS instance name and specific Agent ID. */
-            assign oAgent = AgentList:GetJsonObject(iCount).
-            if oAgent:Has("agentId") then
-            do on error undo, throw:
-                /* Extract the current agent for examination. */
-                assign cAgentID = oAgent:GetCharacter("agentId").
-
-                /* Request the ABL objects for this specific agent. */
-                if this-object:ParseABLObjectReport(input cAgentID, input "", output oReport) then
-                    oAgentObj:Add(cAgentID, oReport). /* Add list to final object. */
-            end. /* has agentId */
-        end. /* do iCount */
-
-        return oAgentObj.
-    end method. /* ParseABLObjectReport */
-
-
-    method public logical ParseABLObjectReport ( input  piAgentID as integer,
-                                                 output poReport  as JsonArray ):
-        return this-object:ParseABLObjectReport(string(piAgentID), "", poReport).
-    end method. /* ParseABLObjectReport */
-
-
     method public logical ParseABLObjectReport ( input  piAgentID as integer,
                                                  input  pcExclude as character,
                                                  output poReport  as JsonArray ):
+        /* Allows passing of AgentID as an integer. */
         return this-object:ParseABLObjectReport(string(piAgentID), pcExclude, poReport).
     end method. /* ParseABLObjectReport */
 
