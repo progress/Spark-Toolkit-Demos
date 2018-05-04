@@ -24,18 +24,18 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
     /*** Static Properties ***/
 
-    define protected static property AgentList as JsonArray no-undo
+    define public static property AgentList as JsonArray no-undo
         get():
             /* Using a static property to allow persistence of the last list of agents obtained. */
             if not valid-object(AgentList) then
                 AgentList = new JsonArray().
             return AgentList.
         end get.
-        protected set.
+        private set.
 
     /*** Common Properties ***/
 
-    define protected property CatalinaBase as character no-undo initial ""
+    define private property CatalinaBase as character no-undo initial ""
         get():
             if CatalinaBase eq "" then do:
                 file-info:filename = trim(os-getenv("CATALINA_BASE")).
@@ -43,18 +43,18 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
             end.
             return CatalinaBase.
         end get.
-        private set.
+        set.
 
 
-    define protected property TemporaryDir as character no-undo initial ""
+    define private property TemporaryDir as character no-undo initial ""
         get():
             if TemporaryDir eq "" then
                 assign TemporaryDir = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
             return TemporaryDir.
         end get.
-        private set.
+        set.
 
-    define protected property ApplicationName as character no-undo initial ""
+    define private property ApplicationName as character no-undo initial ""
         get():
             if ApplicationName eq "" then do:
                 assign ApplicationName = trim(os-getenv("ABLAPP_NAME")).
@@ -62,14 +62,13 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
             end.
             return ApplicationName.
         end get.
-        private set.
+        set.
 
-    define protected property MetricSource as character no-undo initial "oejmx"
-        get. private set.
+    define private property MetricSource as character no-undo initial "oejmx" get. set.
 
     /*** OEManager Properties ***/
 
-    define protected property InstanceURI as character no-undo initial ""
+    define private property InstanceURI as character no-undo initial ""
         get():
             if InstanceURI eq "" then do:
                 assign InstanceURI = trim(os-getenv("INSTANCE_URI")).
@@ -77,70 +76,66 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
             end.
             return InstanceURI.
         end get.
-        private set.
+        set.
 
-    define public property ManagerRealm as character no-undo initial "PASOE Manager Application"
-        get. set.
+    define public property ManagerRealm as character no-undo initial "PASOE Manager Application" get. set.
 
-    define public property ManagerUsername as character no-undo initial "tomcat"
-        get. set.
+    define public property ManagerUsername as character no-undo initial "tomcat" get. set.
 
-    define public property ManagerPassword as character no-undo initial "tomcat"
-        get. set.
+    define public property ManagerPassword as character no-undo initial "tomcat" get. set.
 
-    define protected property ManagerURI as character no-undo initial "/oemanager"
-        get. private set.
+    define private property ManagerURI as character no-undo initial "/oemanager" get. set.
 
-    define protected property GetAllAgentsURI as character no-undo initial "/applications/&1/agents"
-        get. private set.
+    define private property GetAllAgentsURI as character no-undo
+        initial "/applications/&1/agents" get. set.
 
-    define protected property GetAgentURI as character no-undo initial "/applications/&1/agents/&2"
-        get. private set.
+    define private property GetAgentURI as character no-undo
+        initial "/applications/&1/agents/&2" get. set.
 
-    define protected property GetAgentSessionURI as character no-undo initial "/applications/&1/agents/&2/sessions"
-        get. private set.
+    define private property GetAgentSessionURI as character no-undo
+        initial "/applications/&1/agents/&2/sessions" get. set.
 
-    define protected property TrackObjectsOn as character no-undo initial "/trackABLObjects/true"
-        get. private set.
+    define private property TrackObjectsOn as character no-undo
+        initial "/trackABLObjects/true" get. set.
 
-    define protected property TrackObjectsOff as character no-undo initial "/trackABLObjects/false"
-        get. private set.
+    define private property TrackObjectsOff as character no-undo
+        initial "/trackABLObjects/false" get. set.
 
-    define protected property TrackingObjects as character no-undo initial "/trackingABLObjects"
-        get. private set.
+    define private property TrackingObjects as character no-undo
+        initial "/trackingABLObjects" get. set.
 
-    define protected property GetObjectsReport as character no-undo initial "/getABLObjectsReport"
-        get. private set.
+    define private property GetObjectsReport as character no-undo
+        initial "/getABLObjectsReport" get. set.
 
     /*** OEJMX Properties ***/
 
-    define protected property OEJMXBinary as character no-undo initial ""
+    define private property OEJMXBinary as character no-undo initial ""
         get():
             if OEJMXBinary eq "" then
                 assign OEJMXBinary = if opsys eq "WIN32" then "oejmx.bat" else "oejmx.sh".
             return OEJMXBinary.
         end get.
-        private set.
+        set.
 
-    define protected property AgentsQuery as character no-undo
+    define private property AgentsQuery as character no-undo
         initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgents","&1"]~}'
-        get. private set.
+        get. set.
 
-    define protected property TrackOnQuery as character no-undo
+    define private property TrackOnQuery as character no-undo
         initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["trackABLObjects","&1",true]~}'
-        get. private set.
+        get. set.
 
-    define protected property TrackOffQuery as character no-undo
+    define private property TrackOffQuery as character no-undo
         initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["trackABLObjects","&1",false]~}'
-        get. private set.
+        get. set.
 
-    define protected property TrackingQuery as character no-undo
+    define private property TrackingQuery as character no-undo
         initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["trackingABLObjects","&1"]~}'
-        get. private set.
+        get. set.
 
-    define protected property ABLObjectsQuery as character no-undo
+    define private property ABLObjectsQuery as character no-undo
         initial '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getABLObjectsReport","&1"]~}'
-        get. private set.
+        get. set.
 
 
     /***** Constructor/Destructor *****/
@@ -186,10 +181,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
     end method. /* CheckTempPath */
 
 
-    /***** Protected Methods *****/
-
-
-    method protected JsonObject InvokeAPI ( input pcRequestURI as character ):
+    method private JsonObject InvokeAPI ( input pcRequestURI as character ):
         /**
          * Use the OEManager webapp to run the necessary queries on the PAS
          * instance. This requires use of the OEHttpClient library to make
@@ -241,7 +233,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
     end method. /* InvokeAPI */
 
 
-    method protected character InvokeJMX ( input pcQueryPath as character ):
+    method private character InvokeJMX ( input pcQueryPath as character ):
         /**
          * Make a query again the running Java process via JMX to obtain any
          * information or set flags to control monitoring/debugging options.
@@ -279,13 +271,13 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
     end method. /* InvokeJMX */
 
 
-    method protected character CreateTempQuery ( input pcQueryName as character ):
+    method private character CreateTempQuery ( input pcQueryName as character ):
         return this-object:CreateTempQuery(pcQueryName, "").
     end method. /* CreateTempQuery */
 
 
-    method protected character CreateTempQuery ( input pcQueryName as character,
-                                                 input pcAgentID   as character ):
+    method private character CreateTempQuery ( input pcQueryName as character,
+                                               input pcAgentID   as character ):
         /**
          * Create a temporary file with the proper JMX query to be executed.
          * For some queries there is a replacement necessary, which may need
@@ -613,7 +605,10 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         define variable oABLObjects as JsonArray  no-undo.
         define variable oObjects    as JsonArray  no-undo.
         define variable oABLObject  as JsonObject no-undo.
+        define variable cObjName    as character  no-undo.
+        define variable cObjSource  as character  no-undo.
         define variable lTracking   as logical    no-undo.
+        define variable lMatches    as logical    no-undo.
         define variable ix          as integer    no-undo.
         define variable iy          as integer    no-undo.
         define variable iz          as integer    no-undo.
@@ -622,6 +617,9 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
         /* Create the return array. */
         assign poReport = new JsonArray().
+
+        /* Leave a quick note about what is being built, and with any exceptions. */
+        oLogger:Debug(substitute("Reporting ABLObjects for Agent '&1', excluding: &2", pcAgentID, pcExclude)).
 
         if this-object:MetricSource eq "oejmx" then
         do on error undo, throw:
@@ -669,12 +667,28 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
                                     /* If not excluding specific names, clone the object to the array. */
                                     poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
                                 end.
-                                else do iz = 1 to num-entries(pcExclude):
-                                    /* Otherwise retain only the objects that should not be excluded. */
-                                    if oObjects:GetJsonObject(iy):Has("Name") and
-                                       not oObjects:GetJsonObject(iy):GetCharacter("Name") matches entry(iz, pcExclude) then
+                                else if not oObjects:GetJsonObject(iy):Has("Name") then do:
+                                    /* Retain objects without a name (can't filter these properly). */
+                                    poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                                end.
+                                else do:
+                                    /* Extract some values for comparison when filtering the results. */
+                                    assign
+                                        cObjName   = oObjects:GetJsonObject(iy):GetCharacter("Name")
+                                        cObjSource = oObjects:GetJsonObject(iy):GetCharacter("Source")
+                                        lMatches   = false
+                                        .
+
+                                    do iz = 1 to num-entries(pcExclude):
+                                        if cObjName matches entry(iz, pcExclude) or
+                                           cObjSource matches entry(iz, pcExclude) then
+                                            assign lMatches = true. /* Remember if match found. */
+                                    end. /* do iz */
+
+                                    /* Retain only objects which DO NOT match the exclusion list. */
+                                    if not lMatches then
                                         poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
-                                end. /* do ix */
+                                end. /* do (Has Name) */
                             end. /* do iy (Objects) */
                         end. /* do ix (ABLObjects) */
 
@@ -740,12 +754,28 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
                                 /* If not excluding specific names, clone the object to the array. */
                                 poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
                             end.
-                            else do iz = 1 to num-entries(pcExclude):
-                                /* Otherwise retain only the objects that should not be excluded. */
-                                if oObjects:GetJsonObject(iy):Has("Name") and
-                                   not oObjects:GetJsonObject(iy):GetCharacter("Name") matches entry(iz, pcExclude) then
+                            else if not oObjects:GetJsonObject(iy):Has("Name") then do:
+                                /* Retain objects without a name (can't filter these properly). */
+                                poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+                            end.
+                            else do:
+                                /* Extract some values for comparison when filtering the results. */
+                                assign
+                                    cObjName   = oObjects:GetJsonObject(iy):GetCharacter("Name")
+                                    cObjSource = oObjects:GetJsonObject(iy):GetCharacter("Source")
+                                    lMatches   = false
+                                    .
+
+                                do iz = 1 to num-entries(pcExclude):
+                                    if cObjName matches entry(iz, pcExclude) or
+                                       cObjSource matches entry(iz, pcExclude) then
+                                        assign lMatches = true. /* Remember if match found. */
+                                end. /* do iz */
+
+                                /* Retain only objects which DO NOT match the exclusion list. */
+                                if not lMatches then
                                     poReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
-                            end. /* do ix */
+                            end. /* do (Has Name) */
                         end. /* do iy (Objects) */
                     end. /* do ix (ABLObjects) */
 

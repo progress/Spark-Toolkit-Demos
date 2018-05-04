@@ -38,7 +38,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             end.
             return CatalinaBase.
         end get.
-        private set.
+        set.
 
     define private property TemporaryDir as character no-undo initial ""
         get():
@@ -46,11 +46,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 assign TemporaryDir = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
             return TemporaryDir.
         end get.
-        private set.
+        set.
 
-    define private property MetricsConfig as character no-undo initial ""
+    define private property MetricsConfigLoaded as datetime no-undo initial ? get. set.
+
+    define private property MetricsConfigPath as character no-undo initial ""
         get():
-            if MetricsConfig eq "" then do:
+            if MetricsConfigPath eq "" then do:
+                /* Determine the location of the config file for this feature. */
                 define variable cConfigName as character no-undo.
                 assign cConfigName = trim(os-getenv("METRICS_CONFIG")).
                 oLogger:Trace(substitute("Metrics Config Name: &1", cConfigName)).
@@ -68,44 +71,35 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
                 /* If one of the above paths is still present, use that. */
                 if file-info:full-pathname ne ? then
-                    assign MetricsConfig = file-info:full-pathname.
+                    assign MetricsConfigPath = file-info:full-pathname.
                 else
-                    assign MetricsConfig = "". /* Keep blank if not found. */
+                    assign MetricsConfigPath = "". /* Keep blank if not found. */
 
                 /* Provide context as to where we are getting our config options. */
-                oLogger:Info(substitute("Metrics Config Path: &1", MetricsConfig)).
-            end. /* MetricsConfig eq "" */
+                oLogger:Info(substitute("Metrics Config Path: &1", MetricsConfigPath)).
+            end. /* MetricsConfigPath eq "" */
 
-            return MetricsConfig.
+            return MetricsConfigPath.
         end get.
-        private set.
+        set.
 
-    define private property RequestCount as integer no-undo initial 0
-        get. private set.
+    define private property RequestCount as integer no-undo initial 0 get. set.
 
-    define private property RequestStart as datetime-tz no-undo initial ?
-        get. private set.
+    define private property RequestStart as datetime-tz no-undo initial ? get. set.
 
-    define private property ProfilerEnabled as logical no-undo initial false
-        get. private set.
+    define private property ProfilerEnabled as logical no-undo initial false get. set.
 
-    define private property ProfilerFilter as character no-undo initial ""
-        get. private set.
+    define private property ProfilerFilter as character no-undo initial "" get. set.
 
-    define private property ProfilerThreshold as integer no-undo initial 0
-        get. private set.
+    define private property ProfilerThreshold as integer no-undo initial 0 get. set.
 
-    define private property ObjectsEnabled as logical no-undo initial false
-        get. private set.
+    define private property ObjectsEnabled as logical no-undo initial false get. set.
 
-    define private property ObjectsExcluded as character no-undo initial ""
-        get. private set.
+    define private property ObjectsExcluded as character no-undo initial "" get. set.
 
-    define private property ObjectsSource as character no-undo initial "oejmx"
-        get. private set.
+    define private property ObjectsSource as character no-undo initial "oejmx" get. set.
 
-    define private property ObjectsOutputInterval as integer no-undo initial 0
-        get. private set.
+    define private property ObjectsOutputInterval as integer no-undo initial 0 get. set.
 
     define private property oABLObjectsReport as ABLObjectsReport no-undo
         get():
@@ -113,7 +107,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 assign oABLObjectsReport = new ABLObjectsReport(this-object:ObjectsSource).
             return oABLObjectsReport.
         end get.
-        private set.
+        set.
 
     define private property AgentDataPath as character no-undo initial ""
         get():
@@ -121,7 +115,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 assign AgentDataPath = substitute("&1/agents.json", this-object:TemporaryDir).
             return AgentDataPath.
         end get.
-        private set.
+        set.
 
     define private temp-table ttAgentObjects no-undo
         field AgentID    as integer
@@ -137,7 +131,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         super().
 
         this-object:CheckTempPath(). /* Check for temporary directories. */
-        this-object:ParseConfig(). /* Obtain configuration options. */
+        this-object:CheckConfig(). /* Obtain configuration options. */
     end constructor.
 
 
@@ -164,9 +158,34 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* CheckTempPath */
 
 
+    method private void CheckConfig ( ):
+        /* Cannot proceed if the configuration file is not present. */
+        if (this-object:MetricsConfigPath gt "") ne true then return.
+
+        /* Load the config file path as previously discovered. */
+        file-info:file-name = this-object:MetricsConfigPath.
+        if file-info:full-pathname ne ? then do:
+            define variable dLastDate as datetime no-undo.
+
+            /* Get the current date/time . */
+            assign dLastDate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
+
+            if dLastDate ne this-object:MetricsConfigLoaded then do:
+                oLogger:Debug("Updating configuration options from file.").
+
+                /* Mark down the current modified date/time for this file. */
+                assign MetricsConfigLoaded = dLastDate.
+
+                /* Load and parse the current config file. */
+                this-object:ParseConfig().
+            end. /* File Changed */
+        end. /* File Exists */
+    end method. /* CheckConfig */
+
+
     method private void ParseConfig ( ):
-        /* Attempt to use any located config file. */
-        if (this-object:MetricsConfig gt "") ne true then return.
+        /* Cannot proceed if the configuration file is not present. */
+        if (this-object:MetricsConfigPath gt "") ne true then return.
 
         define variable oParser as ObjectModelParser no-undo.
         define variable oConfig as JsonObject        no-undo.
@@ -176,7 +195,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         /* Parse the config file as a JSON object. */
         assign oParser = new ObjectModelParser().
-        assign oConfig = cast(oParser:ParseFile(MetricsConfig), JsonObject).
+        assign oConfig = cast(oParser:ParseFile(MetricsConfigPath), JsonObject).
 
         /* Parse the contents of the JSON object. */
         if valid-object(oConfig) then do:
@@ -292,6 +311,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * have no other dependencies or requirements of a class-instance method.
          */
 
+        this-object:CheckConfig(). /* Update configuration options. */
+
         if not this-object:ProfilerEnabled then do:
             oLogger:Debug("Profiler disabled, leaving StartProfiler").
             return false.
@@ -376,6 +397,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         if not this-object:ProfilerEnabled then do:
             oLogger:Debug("Profiler disabled, leaving WriteProfiler").
+
+            /* Even if profiling has been disabled, make sure we turn it off. */
+            if profiler:enabled then            
+                assign
+                    profiler:profiling = false
+                    profiler:enabled   = false
+                    .
+
             return false.
         end. /* not enabled */
 
@@ -429,6 +458,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     method public logical StartTrackingObjects ( ):
         define variable iAgentID    as integer no-undo.
         define variable lIsTracking as logical no-undo initial false.
+
+        this-object:CheckConfig(). /* Update configuration options. */
 
         if not this-object:ObjectsEnabled then do:
             oLogger:Debug("Objects disabled, leaving StartTrackingObjects").
@@ -488,6 +519,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable cBasePath   as character no-undo.
         define variable lIsTracking as logical   no-undo initial false.
         define variable oObjReport  as JsonArray no-undo.
+
+        this-object:CheckConfig(). /* Update configuration options. */
 
         if not this-object:ObjectsEnabled then do:
             oLogger:Debug("Objects disabled, leaving GetABLObjectsReport").
