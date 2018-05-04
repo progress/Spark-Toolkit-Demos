@@ -22,7 +22,7 @@ using OpenEdge.Net.HTTP.IAuthenticatedRequest from propath.
 
 block-level on error undo, throw.
 
-class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widget-pool:
+class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widget-pool final:
 
     /*** Static Properties ***/
 
@@ -50,8 +50,8 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
     define protected property TemporaryDir as character no-undo initial ""
         get():
-            if TemporaryDir eq "" then /* Should match session:temp-directory */
-                assign TemporaryDir = substitute("&1/temp", this-object:CatalinaBase).
+            if TemporaryDir eq "" then
+                assign TemporaryDir = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
             return TemporaryDir.
         end get.
         private set.
@@ -184,7 +184,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
     method private void CheckTempPath ( ):
         /* Make sure we have a consistent path for temporary files. */
         os-create-dir value(substitute("&1", this-object:TemporaryDir)).
-        os-create-dir value(substitute("&1/debug", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
     end method. /* CheckTempPath */
 
 
@@ -251,7 +251,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
          *   The -Q flag specifies the name of the query to be executed.
          *   The -O flag sets a specific location for the query output.
          * Example:
-         *   oejmx.[bat|sh] -R -Q jmxqueries/<name>.qry -O ../temp/<output>.json
+         *   oejmx.[bat|sh] -R -Q <catalina_base>/temp/<name>.qry -O <catalina_base>/temp/<output>.json
          */
 
         define variable cBinaryPath as character no-undo.
@@ -298,7 +298,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         define variable oParser      as ObjectModelParser no-undo.
         define variable oQuery       as JsonObject        no-undo.
 
-        assign cQueryPath = substitute("&1/temp/&2.qry", this-object:CatalinaBase, pcQueryName).
+        assign cQueryPath = substitute("&1/&2.qry", this-object:TemporaryDir, pcQueryName).
         assign oParser = new ObjectModelParser().
 
         case pcQueryName:

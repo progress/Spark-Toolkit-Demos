@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-    File        : deactivate.p
+    File        : metrics_deactivate.p
     Purpose     : Runs logic on deactivate event of a request
     Description :
     Author(s)   : Dustin Grau

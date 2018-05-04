@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
-    File        : activate.p
+    File        : metrics_activate.p
     Purpose     : Runs logic on activate event of a request
     Description :
     Author(s)   : Dustin Grau

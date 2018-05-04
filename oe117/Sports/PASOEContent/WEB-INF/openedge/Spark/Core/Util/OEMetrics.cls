@@ -10,13 +10,13 @@
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Assert from propath.
-using OpenEdge.Core.Collections.StringKeyedMap from propath.
 using OpenEdge.Logging.* from propath.
 using Spark.Core.Util.ABLObjectsReport from propath.
+using Spark.Core.Util.OEMetrics from propath.
 
 block-level on error undo, throw.
 
-class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool: 
+class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool final: 
 
     /*** Static Instance ***/
 
@@ -30,7 +30,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
     /*** Common Properties ***/
 
-    define protected property CatalinaBase as character no-undo initial ""
+    define private property CatalinaBase as character no-undo initial ""
         get():
             if CatalinaBase eq "" then do:
                 file-info:filename = trim(os-getenv("CATALINA_BASE")).
@@ -40,15 +40,15 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         end get.
         private set.
 
-    define protected property TemporaryDir as character no-undo initial ""
+    define private property TemporaryDir as character no-undo initial ""
         get():
-            if TemporaryDir eq "" then /* Should match session:temp-directory */
-                assign TemporaryDir = substitute("&1/temp", this-object:CatalinaBase).
+            if TemporaryDir eq "" then
+                assign TemporaryDir = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
             return TemporaryDir.
         end get.
         private set.
 
-    define protected property MetricsConfig as character no-undo initial ""
+    define private property MetricsConfig as character no-undo initial ""
         get():
             if MetricsConfig eq "" then do:
                 define variable cConfigName as character no-undo.
@@ -56,14 +56,14 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
                 oLogger:Trace(substitute("Metrics Config Name: &1", cConfigName)).
 
                 /* First, check the CATALINA_BASE/conf/ location. */
-                file-info:filename = substitute("&1/conf/&2", CatalinaBase, cConfigName).
+                file-info:filename = substitute("&1/conf/&2", this-object:CatalinaBase, cConfigName).
                 if file-info:full-pathname eq ? then do:
-                    /* Next, check the CATALINA_BASE/temp/ location. */
-                    file-info:filename = substitute("&1/temp/&2", CatalinaBase, cConfigName).
+                    /* Next, check the CATALINA_BASE/bin/ location. */
+                    file-info:filename = substitute("&1/bin/&2", this-object:CatalinaBase, cConfigName).
                     if file-info:full-pathname eq ? then do:
-                        /* Next, check the CATALINA_BASE/bin/ location. */
-                        file-info:filename = substitute("&1/bin/&2", CatalinaBase, cConfigName).
-                    end. /* not found in /temp/ */                        
+                        /* Last, check the SESSION-TEMP location. */
+                        file-info:filename = substitute("&1/&2", this-object:TemporaryDir, cConfigName).
+                    end. /* not found in /bin/ */                        
                 end. /* not found in /conf/ */
 
                 /* If one of the above paths is still present, use that. */
@@ -80,28 +80,28 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         end get.
         private set.
 
-    define protected property RequestCount as integer no-undo initial 0
+    define private property RequestCount as integer no-undo initial 0
         get. private set.
 
-    define protected property RequestStart as datetime-tz no-undo initial ?
+    define private property RequestStart as datetime-tz no-undo initial ?
         get. private set.
 
-    define protected property MetricsEnabled as logical no-undo initial false
+    define private property MetricsEnabled as logical no-undo initial false
         get. private set.
 
-    define protected property ProfilerFilter as character no-undo initial ""
+    define private property ProfilerFilter as character no-undo initial ""
         get. private set.
 
-    define protected property ProfilerThreshold as integer no-undo initial 0
+    define private property ProfilerThreshold as integer no-undo initial 0
         get. private set.
 
-    define protected property ObjectsSource as character no-undo initial "oejmx"
+    define private property ObjectsSource as character no-undo initial "oejmx"
         get. private set.
 
-    define protected property ObjectsOutputInterval as integer no-undo initial 0
+    define private property ObjectsOutputInterval as integer no-undo initial 0
         get. private set.
 
-    define protected property oABLObjectsReport as ABLObjectsReport no-undo
+    define private property oABLObjectsReport as ABLObjectsReport no-undo
         get():
             if oABLObjectsReport eq ? or not valid-object(oABLObjectsReport) then
                 assign oABLObjectsReport = new ABLObjectsReport(this-object:ObjectsSource).
@@ -109,7 +109,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         end get.
         private set.
 
-    define protected temp-table ttAgentObjects no-undo
+    define private temp-table ttAgentObjects no-undo
         field AgentID    as integer
         field IsTracking as logical
         field LastOutput as datetime-tz
@@ -127,14 +127,14 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     end constructor.
 
 
-    destructor public OEMetrics ( ):
+    destructor OEMetrics ( ):
         delete object Instance no-error.
         delete object oLogger no-error.
         delete object oABLObjectsReport no-error.
     end destructor.
 
 
-    /***** Private Methods *****/
+    /***** Protected Methods *****/
 
 
     method private void CheckTempPath ( ):
@@ -142,18 +142,15 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
         /* Make sure we have a consistent path for temporary files. */
         os-create-dir value(substitute("&1", this-object:TemporaryDir)).
-        os-create-dir value(substitute("&1/debug", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
 
         /* Make sure any necessary directories are created. */
-        os-create-dir value(substitute("&1/debug/ABLObjectsReport", this-object:TemporaryDir)).
-        os-create-dir value(substitute("&1/debug/ProfilerData", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics/ABLObjectsReport", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics/ProfilerData", this-object:TemporaryDir)).
     end method. /* CheckTempPath */
 
 
-    /***** Protected Methods *****/
-
-
-    method protected void ParseConfig ( ):
+    method private void ParseConfig ( ):
         /* Attempt to use any located config file. */
         if (this-object:MetricsConfig gt "") ne true then return.
 
@@ -221,12 +218,12 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     end method. /* ParseConfig */
 
 
-    method protected OERequestInfo GetRequestInfo ( ):
+    method private OERequestInfo GetRequestInfo ( ):
         return cast(session:current-request-info, OERequestInfo).
     end method. /* GetRequestInfo */
 
 
-    method protected integer GetAgentID ( ):
+    method private integer GetAgentID ( ):
         define variable oRequestInfo as OERequestInfo no-undo.
 
         assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
@@ -241,7 +238,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
     end method. /* GetAgentID */
 
 
-    method protected integer GetSessionID ( ):
+    method private integer GetSessionID ( ):
         define variable oRequestInfo as OERequestInfo no-undo.
 
         assign oRequestInfo = cast(session:current-request-info, OERequestInfo).
@@ -304,7 +301,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
 
         if lFilterMatch then do:
             /* Create base path for output and create any needed directories. */
-            assign cBasePath = substitute("&1/debug/ProfilerData/&2", this-object:TemporaryDir, oRequestInfo:AgentId).
+            assign cBasePath = substitute("&1/metrics/ProfilerData/&2", this-object:TemporaryDir, oRequestInfo:AgentId).
             os-create-dir value(cBasePath) no-error.
 
             /* Determine correct output location for this profiler log. */
@@ -466,7 +463,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Create base path for output and create any needed directories. */
-        assign cBasePath = substitute("&1/debug/ABLObjectsReport/&2", this-object:TemporaryDir, iAgentID).
+        assign cBasePath = substitute("&1/metrics/ABLObjectsReport/&2", this-object:TemporaryDir, iAgentID).
         os-create-dir value(cBasePath) no-error.
 
         /* If tracking is enabled, obtain the latest ABLObjects report from the agent. */
@@ -508,7 +505,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool:
         if oABLObjectsReport:TrackABLObjects(true) then do:
             assign oReport = oABLObjectsReport:ParseABLObjectReport().
             if valid-object(oReport) then
-                oReport:WriteFile(substitute("&1/debug/ABLObjectsReport/All-&2.&3.json",
+                oReport:WriteFile(substitute("&1/metrics/ABLObjectsReport/All-&2.&3.json",
                                              right-trim(replace(session:temp-directory, "~\", "~/"), "~/"),
                                              replace(iso-date(today), "-", ""), mtime), true).
             return valid-object(oReport).
