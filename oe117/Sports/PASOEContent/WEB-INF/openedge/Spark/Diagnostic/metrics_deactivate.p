@@ -13,9 +13,5 @@ block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
 
-/* Stop the profiler for this request. */
+/* Stop the profiler for this request, if enabled. */
 Spark.Diagnostic.Util.OEMetrics:Instance:WriteProfiler().
-
-/* Generate an ABLObjects report. */
-/* WARNING: This can cause a delay in the request, use with caution. */
-/*Spark.Diagnostic.Util.OEMetrics:Instance:GetABLObjectsReport().*/
