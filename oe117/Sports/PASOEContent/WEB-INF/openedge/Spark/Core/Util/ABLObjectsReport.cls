@@ -60,7 +60,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         get():
             if ApplicationName eq "" then do:
                 assign ApplicationName = trim(os-getenv("ABLAPP_NAME")).
-                oLogger:Info(substitute("Using ABLApp Name: &1", ApplicationName)).
+                oLogger:Debug(substitute("Using ABLApp Name: &1", ApplicationName)).
             end.
             return ApplicationName.
         end get.
@@ -75,7 +75,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         get():
             if InstanceURI eq "" then do:
                 assign InstanceURI = trim(os-getenv("INSTANCE_URI")).
-                oLogger:Info(substitute("Using Instance URI: &1", InstanceURI)).
+                oLogger:Debug(substitute("Using Instance URI: &1", InstanceURI)).
             end.
             return InstanceURI.
         end get.
@@ -205,7 +205,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
         Assert:NotNullOrEmpty(pcRequestURI). /* Must have a URL! */
 
-        oLogger:Info(substitute("Requesting URL: &1", pcRequestURI)).
+        oLogger:Debug(substitute("Requesting URL: &1", pcRequestURI)).
 
         /* Set credentials for HTTP basic using the specific realm. */
         assign oCredentials = new Credentials(this-object:ManagerRealm,
@@ -269,9 +269,9 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         assign cCommand = substitute("&1 -R -Q &2 -O &3", cBinaryPath, pcQueryPath, cOutputPath).
 
         /* Run command and report information to log file. */
-        oLogger:Info(substitute("Running Command: &1", cCommand)).
+        oLogger:Debug(substitute("Running Command: &1", cCommand)).
         os-command no-console value(cCommand).
-        oLogger:Info(substitute("Command Finished: &1", pcQueryPath)).
+        oLogger:Debug(substitute("Command Finished: &1", pcQueryPath)).
 
         return cOutputPath. /* Return the expected location of the query output. */
 
@@ -316,7 +316,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
 
         /* Output the modified string to the temporary query file. */
         assign oQuery = cast(oParser:Parse(cQueryString), JsonObject).
-        oLogger:Info(substitute("Writing Query: &1", cQueryPath)).
+        oLogger:Debug(substitute("Writing Query: &1", cQueryPath)).
         oQuery:WriteFile(cQueryPath).
 
         return cQueryPath.
@@ -387,7 +387,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         end. /* oemanager */
 
         /* Log output results of request. */
-        oLogger:Info(substitute("Agents: &1", AgentList:GetJsonText())).
+        oLogger:Debug(substitute("Available Agents: &1", AgentList:GetJsonText())).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in GetAgents: &1", err:GetMessage(1))).
@@ -485,7 +485,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
         end. /* oemanager */
 
         /* Report the result of the previous request. */
-        oLogger:Info(substitute("trackABLObjects (&1): &2 = &3",
+        oLogger:Debug(substitute("trackABLObjects (&1): &2 = &3",
                                 pcAgentID, trim(string(plEnable, "enabled/disabled")), lSuccess)).
 
         return lSuccess. /* Return the value from the tracking request. */
@@ -528,7 +528,7 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
                 delete object oResults no-error.
                 os-delete value(cOutPath).
             end finally.
-        end. /* jmx */
+        end. /* oejmx */
         else if this-object:MetricSource eq "oemanager" then do:
             define variable cRequestURI as character  no-undo.
             define variable oRequest    as JsonObject no-undo.
@@ -675,9 +675,9 @@ class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widge
             finally:
                 delete object oParser no-error.
                 delete object oResults no-error.
-                os-delete value(cOutPath).
+/*                os-delete value(cOutPath).*/
             end finally.
-        end. /* jmx */
+        end. /* oejmx */
         else if this-object:MetricSource eq "oemanager" then do:
             define variable cRequestURI as character  no-undo.
             define variable oRequest    as JsonObject no-undo.

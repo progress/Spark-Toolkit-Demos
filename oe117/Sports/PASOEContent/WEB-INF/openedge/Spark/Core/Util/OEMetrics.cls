@@ -275,7 +275,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
          */
 
         if not this-object:MetricsEnabled then do:
-            oLogger:Info("Metrics disabled, leaving StartProfiler").
+            oLogger:Debug("Metrics disabled, leaving StartProfiler").
             return false.
         end. /* not enabled */
 
@@ -354,7 +354,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
          */
 
         if not this-object:MetricsEnabled then do:
-            oLogger:Info("Metrics disabled, leaving WriteProfiler").
+            oLogger:Debug("Metrics disabled, leaving WriteProfiler").
             return false.
         end. /* not enabled */
 
@@ -493,7 +493,7 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
          */
 
         if not this-object:MetricsEnabled then do:
-            oLogger:Info("Metrics disabled, leaving TestABLObjectsReport").
+            oLogger:Debug("Metrics disabled, leaving TestABLObjectsReport").
             return false.
         end. /* not enabled */
 
