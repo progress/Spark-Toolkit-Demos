@@ -12,13 +12,16 @@ using OpenEdge.Logging.* from propath.
 
 block-level on error undo, throw.
 
-class Spark.Core.Util.Logger abstract: 
+class Spark.Diagnostic.Util.Logger abstract: 
 
-    define protected property oLogger as ILogWriter
+    define protected property oLogger as ILogWriter no-undo
         get():
-            if not valid-object(this-object:oLogger) then
-                assign this-object:oLogger = LoggerBuilder:GetLogger(this-object:getClass()).
-            return this-object:oLogger.
+            /* Create single logger instance for this class. */
+            if not valid-object(oLogger) then do:
+                message substitute("Creating Logger for &1", this-object:getClass():TypeName).
+                assign oLogger = LoggerBuilder:GetLogger(this-object:getClass()).
+            end.
+            return oLogger.
         end get.
         private set.
 

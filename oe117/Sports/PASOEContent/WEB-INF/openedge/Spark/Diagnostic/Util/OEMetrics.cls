@@ -11,12 +11,12 @@ using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Assert from propath.
 using OpenEdge.Logging.* from propath.
-using Spark.Core.Util.ABLObjectsReport from propath.
-using Spark.Core.Util.OEMetrics from propath.
+using Spark.Diagnostic.Util.ABLObjectsReport from propath.
+using Spark.Diagnostic.Util.OEMetrics from propath.
 
 block-level on error undo, throw.
 
-class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool final: 
+class Spark.Diagnostic.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool final: 
 
     /*** Static Instance ***/
 
@@ -86,13 +86,19 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
     define private property RequestStart as datetime-tz no-undo initial ?
         get. private set.
 
-    define private property MetricsEnabled as logical no-undo initial false
+    define private property ProfilerEnabled as logical no-undo initial false
         get. private set.
 
     define private property ProfilerFilter as character no-undo initial ""
         get. private set.
 
     define private property ProfilerThreshold as integer no-undo initial 0
+        get. private set.
+
+    define private property ObjectsEnabled as logical no-undo initial false
+        get. private set.
+
+    define private property ObjectsExclude as character no-undo initial ""
         get. private set.
 
     define private property ObjectsSource as character no-undo initial "oejmx"
@@ -106,6 +112,14 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
             if oABLObjectsReport eq ? or not valid-object(oABLObjectsReport) then
                 assign oABLObjectsReport = new ABLObjectsReport(this-object:ObjectsSource).
             return oABLObjectsReport.
+        end get.
+        private set.
+
+    define private property AgentDataPath as character no-undo initial ""
+        get():
+            if AgentDataPath eq "" then
+                assign AgentDataPath = substitute("&1/agents.json", this-object:TemporaryDir).
+            return AgentDataPath.
         end get.
         private set.
 
@@ -171,14 +185,12 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
             /* Set properties based on config options. */
             do ix = 1 to extent(cNames):
                 case cNames[ix]:
-                    when "enabled" then do:
-                        if oConfig:Has("enabled") and oConfig:GetType("enabled") eq JsonDataType:Boolean then
-                            assign this-object:MetricsEnabled = oConfig:GetLogical("enabled").
-                    end. /* enabled */
-
                     when "objects" then do:
                         if oConfig:Has("objects") and oConfig:GetType("objects") eq JsonDataType:Object then do:
                             assign oSubObj = oConfig:GetJsonObject("objects").
+
+                            if oSubObj:Has("enabled") and oSubObj:GetType("enabled") eq JsonDataType:Boolean then
+                                assign this-object:ObjectsEnabled = oSubObj:GetLogical("enabled").
 
                             if oSubObj:Has("source") and oSubObj:GetType("source") eq JsonDataType:String then
                                 assign this-object:ObjectsSource = oSubObj:GetCharacter("source").
@@ -193,6 +205,9 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
                     when "profiler" then do:
                         if oConfig:Has("profiler") and oConfig:GetType("profiler") eq JsonDataType:Object then do:
                             assign oSubObj = oConfig:GetJsonObject("profiler").
+
+                            if oSubObj:Has("enabled") and oSubObj:GetType("enabled") eq JsonDataType:Boolean then
+                                assign this-object:ProfilerEnabled = oSubObj:GetLogical("enabled").
 
                             if oSubObj:Has("filter") and oSubObj:GetType("filter") eq JsonDataType:String then
                                 assign this-object:ProfilerFilter = oSubObj:GetCharacter("filter").
@@ -274,8 +289,8 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
          * have no other dependencies or requirements of a class-instance method.
          */
 
-        if not this-object:MetricsEnabled then do:
-            oLogger:Debug("Metrics disabled, leaving StartProfiler").
+        if not this-object:ProfilerEnabled then do:
+            oLogger:Debug("Profiler disabled, leaving StartProfiler").
             return false.
         end. /* not enabled */
 
@@ -353,8 +368,8 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
          * available or not (eg. excution time may always be reported).
          */
 
-        if not this-object:MetricsEnabled then do:
-            oLogger:Debug("Metrics disabled, leaving WriteProfiler").
+        if not this-object:ProfilerEnabled then do:
+            oLogger:Debug("Profiler disabled, leaving WriteProfiler").
             return false.
         end. /* not enabled */
 
@@ -411,6 +426,11 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
         define variable iAgentID    as integer no-undo.
         define variable lIsTracking as logical no-undo initial false.
 
+        if not this-object:ObjectsEnabled then do:
+            oLogger:Debug("Objects disabled, leaving StartTrackingObjects").
+            return false.
+        end. /* not enabled */
+
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
@@ -447,6 +467,11 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
     method public logical StopTrackingObjects ( ):
         define variable iAgentID as integer no-undo.
 
+        if not this-object:ObjectsEnabled then do:
+            oLogger:Debug("Objects disabled, leaving StopTrackingObjects").
+            return false.
+        end. /* not enabled */
+
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Just immediately disable the object tracking for this agent. */
@@ -459,6 +484,11 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
         define variable cBasePath   as character no-undo.
         define variable lIsTracking as logical   no-undo initial false.
         define variable oObjReport  as JsonArray no-undo.
+
+        if not this-object:ObjectsEnabled then do:
+            oLogger:Debug("Objects disabled, leaving GetABLObjectsReport").
+            return false.
+        end. /* not enabled */
 
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
@@ -493,8 +523,8 @@ class Spark.Core.Util.OEMetrics inherits Spark.Core.Util.Logger use-widget-pool 
          * within the application and only when necessary.
          */
 
-        if not this-object:MetricsEnabled then do:
-            oLogger:Debug("Metrics disabled, leaving TestABLObjectsReport").
+        if not this-object:ObjectsEnabled then do:
+            oLogger:Debug("Objects disabled, leaving TestABLObjectsReport").
             return false.
         end. /* not enabled */
 

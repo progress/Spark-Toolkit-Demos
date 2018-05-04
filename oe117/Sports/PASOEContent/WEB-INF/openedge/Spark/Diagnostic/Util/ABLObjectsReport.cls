@@ -22,7 +22,7 @@ using OpenEdge.Net.HTTP.IAuthenticatedRequest from propath.
 
 block-level on error undo, throw.
 
-class Spark.Core.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widget-pool final:
+class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Core.Util.Logger use-widget-pool final:
 
     /*** Static Properties ***/
 

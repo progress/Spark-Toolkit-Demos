@@ -1,10 +1,12 @@
 {
-	"enabled": true,
 	"objects": {
+		"enabled": true,
+		"exclude": "",
 		"source": "oejmx",
-		"outputInterval": 3600000
+		"interval": 3600000
 	},
 	"profiler": {
+		"enabled": true,
 		"filter": "*",
 		"threshold": 0
 	}
