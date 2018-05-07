@@ -12,11 +12,14 @@ using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Assert from propath.
 using OpenEdge.Logging.* from propath.
 using Spark.Diagnostic.Util.ABLObjectsReport from propath.
+using Spark.Diagnostic.Util.OEMetricsConfig from propath.
 using Spark.Diagnostic.Util.OEMetrics from propath.
 
 block-level on error undo, throw.
 
 class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-widget-pool final: 
+
+    define private variable dMetricsStarted as datetime no-undo initial ?.
 
     /*** Static Instance ***/
 
@@ -30,92 +33,17 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     /*** Common Properties ***/
 
-    define private property CatalinaBase as character no-undo initial ""
-        get():
-            if CatalinaBase eq "" then do:
-                file-info:filename = trim(os-getenv("CATALINA_BASE")).
-                assign CatalinaBase = right-trim(replace(file-info:full-pathname, "~\", "~/"), "~/").
-            end.
-            return CatalinaBase.
-        end get.
-        set.
-
-    define private property TemporaryDir as character no-undo initial ""
-        get():
-            if TemporaryDir eq "" then
-                assign TemporaryDir = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
-            return TemporaryDir.
-        end get.
-        set.
-
-    define private property MetricsStarted as datetime no-undo initial ? get. set.
-
-    define private property MetricsConfigLoaded as datetime no-undo initial ? get. set.
-
-    define private property MetricsConfigPath as character no-undo initial ""
-        get():
-            if MetricsConfigPath eq "" then do:
-                /* Determine the location of the config file for this feature. */
-                define variable cConfigName as character no-undo.
-                assign cConfigName = trim(os-getenv("METRICS_CONFIG")).
-                oLogger:Trace(substitute("Metrics Config Name: &1", cConfigName)).
-
-                /* First, check the CATALINA_BASE/conf/ location. */
-                file-info:filename = substitute("&1/conf/&2", this-object:CatalinaBase, cConfigName).
-                if file-info:full-pathname eq ? then do:
-                    /* Next, check the CATALINA_BASE/bin/ location. */
-                    file-info:filename = substitute("&1/bin/&2", this-object:CatalinaBase, cConfigName).
-                    if file-info:full-pathname eq ? then do:
-                        /* Last, check the SESSION-TEMP location. */
-                        file-info:filename = substitute("&1/&2", this-object:TemporaryDir, cConfigName).
-                    end. /* not found in /bin/ */                        
-                end. /* not found in /conf/ */
-
-                /* If one of the above paths is still present, use that. */
-                if file-info:full-pathname ne ? then
-                    assign MetricsConfigPath = file-info:full-pathname.
-                else
-                    assign MetricsConfigPath = "". /* Keep blank if not found. */
-
-                /* Provide context as to where we are getting our config options. */
-                oLogger:Info(substitute("Metrics Config Path: &1", MetricsConfigPath)).
-            end. /* MetricsConfigPath eq "" */
-
-            return MetricsConfigPath.
-        end get.
-        set.
-
-    define private property MetricsIgnoreList as character no-undo initial "" get. set.
-
     define private property RequestCount as integer no-undo initial 0 get. set.
 
     define private property RequestStart as datetime-tz no-undo initial ? get. set.
 
-    define private property ProfilerEnabled as logical no-undo initial false get. set.
-
-    define private property ProfilerFilter as character no-undo initial "" get. set.
-
-    define private property ProfilerThreshold as integer no-undo initial 0 get. set.
-
-    define private property ObjectsEnabled as logical no-undo initial false get. set.
-
-    define private property ObjectsExcluded as character no-undo initial "" get. set.
-
-    define private property ObjectsSource as character no-undo initial "oejmx" get. set.
+    define private property oConfig as OEMetricsConfig no-undo get. set.
 
     define private property oABLObjectsReport as ABLObjectsReport no-undo
         get():
             if oABLObjectsReport eq ? or not valid-object(oABLObjectsReport) then
-                assign oABLObjectsReport = new ABLObjectsReport(this-object:ObjectsSource).
+                assign oABLObjectsReport = new ABLObjectsReport(oConfig:ObjectsSource).
             return oABLObjectsReport.
-        end get.
-        set.
-
-    define private property AgentDataPath as character no-undo initial ""
-        get():
-            if AgentDataPath eq "" then
-                assign AgentDataPath = substitute("&1/agents.json", this-object:TemporaryDir).
-            return AgentDataPath.
         end get.
         set.
 
@@ -126,138 +54,20 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     constructor public OEMetrics ( ):
         super().
 
-        assign this-object:MetricsStarted = now. /* Note when class was created. */
-        this-object:CheckTempPath(). /* Check for temporary directories. */
-        this-object:CheckConfig(). /* Obtain configuration options. */
+        assign dMetricsStarted = now. /* Note when class was created. */
+        assign oConfig = new OEMetricsConfig(oLogger). /* Configuration options. */
     end constructor.
 
 
     destructor OEMetrics ( ):
-        delete object Instance no-error.
+        delete object oConfig no-error.
         delete object oLogger no-error.
         delete object oABLObjectsReport no-error.
+        delete object Instance no-error.
     end destructor.
 
 
-    /***** Protected Methods *****/
-
-
-    method private void CheckTempPath ( ):
-        define variable cTempPath as character no-undo.
-
-        /* Make sure we have a consistent path for temporary files. */
-        os-create-dir value(substitute("&1", this-object:TemporaryDir)).
-        os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
-
-        /* Make sure any necessary directories are created. */
-        os-create-dir value(substitute("&1/metrics/ABLObjectsReport", this-object:TemporaryDir)).
-        os-create-dir value(substitute("&1/metrics/ProfilerData", this-object:TemporaryDir)).
-    end method. /* CheckTempPath */
-
-
-    method private void CheckConfig ( ):
-        /* Cannot proceed if the configuration file is not present. */
-        if (this-object:MetricsConfigPath gt "") ne true then return.
-
-        /* Load the config file path as previously discovered. */
-        file-info:file-name = this-object:MetricsConfigPath.
-        if file-info:full-pathname ne ? then do:
-            define variable dLastDate as datetime no-undo.
-
-            /* Get the current date/time . */
-            assign dLastDate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
-
-            if dLastDate ne this-object:MetricsConfigLoaded then do:
-                oLogger:Debug("Updating configuration options from file.").
-
-                /* Mark down the current modified date/time for this file. */
-                assign MetricsConfigLoaded = dLastDate.
-
-                /* Load and parse the current config file. */
-                this-object:ParseConfig().
-            end. /* File Changed */
-        end. /* File Exists */
-    end method. /* CheckConfig */
-
-
-    method private void ParseConfig ( ):
-        /* Cannot proceed if the configuration file is not present. */
-        if (this-object:MetricsConfigPath gt "") ne true then return.
-
-        define variable oParser as ObjectModelParser no-undo.
-        define variable oConfig as JsonObject        no-undo.
-        define variable oSubObj as JsonObject        no-undo.
-        define variable cNames  as character extent  no-undo.
-        define variable ix      as integer           no-undo.
-
-        /* Parse the config file as a JSON object. */
-        assign oParser = new ObjectModelParser().
-        assign oConfig = cast(oParser:ParseFile(MetricsConfigPath), JsonObject).
-
-        /* Parse the contents of the JSON object. */
-        if valid-object(oConfig) then do:
-            assign cNames = oConfig:GetNames().
-
-            /* Set properties based on config options. */
-            do ix = 1 to extent(cNames):
-                case cNames[ix]:
-                    when "general" then do:
-                        if oConfig:Has("general") and oConfig:GetType("general") eq JsonDataType:Object then do:
-                            assign oSubObj = oConfig:GetJsonObject("general").
-
-                            if oSubObj:Has("ignore") and oSubObj:GetType("ignore") eq JsonDataType:String then
-                                assign this-object:MetricsIgnoreList = oSubObj:GetCharacter("ignore").
-
-                            delete object oSubObj no-error.
-                        end. /* has sub-object */
-                    end. /* general */
-
-                    when "objects" then do:
-                        if oConfig:Has("objects") and oConfig:GetType("objects") eq JsonDataType:Object then do:
-                            assign oSubObj = oConfig:GetJsonObject("objects").
-
-                            if oSubObj:Has("enabled") and oSubObj:GetType("enabled") eq JsonDataType:Boolean then
-                                assign this-object:ObjectsEnabled = oSubObj:GetLogical("enabled").
-
-                            if oSubObj:Has("exclude") and oSubObj:GetType("exclude") eq JsonDataType:String then
-                                assign this-object:ObjectsExcluded = oSubObj:GetCharacter("exclude").
-
-                            if oSubObj:Has("source") and oSubObj:GetType("source") eq JsonDataType:String then
-                                assign this-object:ObjectsSource = oSubObj:GetCharacter("source").
-
-                            delete object oSubObj no-error.
-                        end. /* has sub-object */
-                    end. /* objects */
-
-                    when "profiler" then do:
-                        if oConfig:Has("profiler") and oConfig:GetType("profiler") eq JsonDataType:Object then do:
-                            assign oSubObj = oConfig:GetJsonObject("profiler").
-
-                            if oSubObj:Has("enabled") and oSubObj:GetType("enabled") eq JsonDataType:Boolean then
-                                assign this-object:ProfilerEnabled = oSubObj:GetLogical("enabled").
-
-                            if oSubObj:Has("filter") and oSubObj:GetType("filter") eq JsonDataType:String then
-                                assign this-object:ProfilerFilter = oSubObj:GetCharacter("filter").
-
-                            if oSubObj:Has("threshold") and oSubObj:GetType("threshold") eq JsonDataType:Number then
-                                assign this-object:ProfilerThreshold = oSubObj:GetInteger("threshold").
-
-                            delete object oSubObj no-error.
-                        end. /* has sub-object */
-                    end. /* profiler */
-                end case. /* cNames */
-            end. /* do ix */
-        end. /* valid object */
-
-        catch err as Progress.Lang.Error:
-            oLogger:Error(substitute("Error parsing config file: &1", err:GetMessage(1))).
-            undo, throw err.                
-        end catch.
-        finally:
-            delete object oParser no-error.
-            delete object oConfig no-error.
-        end finally.
-    end method. /* ParseConfig */
+    /***** Private Methods *****/
 
 
     method private logical InMatchList ( input pcCompare as character,
@@ -323,21 +133,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* GetSessionID */
 
 
-    method private character GetTrackingFlag ( input piAgentID as integer ):
-        os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
-        os-create-dir value(substitute("&1/metrics/TrackingAgents", this-object:TemporaryDir)).
-
-        return substitute("&1/metrics/TrackingAgents/&2", this-object:TemporaryDir, piAgentID).
-    end method. /* GetTrackingFlag */
-
-
     /***** Public Methods *****/
 
 
     method public logical StartProfiler ( ):
         /* Start the profiler with any config-set filtering. */
-        if (this-object:ProfilerFilter gt "") eq true then
-            return this-object:StartProfiler(this-object:ProfilerFilter).
+        if (oConfig:ProfilerFilter gt "") eq true then
+            return this-object:StartProfiler(oConfig:ProfilerFilter).
         else
             return this-object:StartProfiler("*"). /* No filter. */
     end method. /* StartProfiler */
@@ -352,31 +154,29 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * have no other dependencies or requirements of a class-instance method.
          */
 
-        define variable oRequestInfo as OERequestInfo no-undo.
-        define variable lFilterMatch as logical       no-undo initial false.
-        define variable cProcedure   as character     no-undo.
-        define variable cBasePath    as character     no-undo.
-        define variable cOutPath     as character     no-undo.
-        define variable ix           as integer       no-undo.
+        define variable lFilterMatch as logical   no-undo initial false.
+        define variable cBasePath    as character no-undo.
+        define variable cProcedure   as character no-undo.
+        define variable cOutPath     as character no-undo.
+        define variable ix           as integer   no-undo.
 
-        this-object:CheckConfig(). /* Update configuration options. */
+        oConfig:RefreshConfig(). /* Update configuration options. */
 
-        if not this-object:ProfilerEnabled then do:
+        if not oConfig:ProfilerEnabled then do:
             oLogger:Debug("Profiler disabled, leaving StartProfiler").
             return false.
         end. /* not enabled */
 
         assign cProcedure = this-object:GetProcedureName().
-        if this-object:MetricsIgnoreList ne "" then do:
+        if oConfig:MetricsIgnoreList ne "" then do:
             /* Do not proceed if current request procedure is on the ignore list. */
-            if this-object:InMatchList(cProcedure, this-object:MetricsIgnoreList) then do:
+            if this-object:InMatchList(cProcedure, oConfig:MetricsIgnoreList) then do:
                 oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
                 return false.
             end. /* ignored */
         end. /* has ignore list */
 
         /* Obtain the request information and set/increment special values. */
-        assign oRequestInfo = this-object:GetRequestInfo().
         assign this-object:RequestCount = this-object:RequestCount + 1.
         assign this-object:RequestStart = now.
         
@@ -384,15 +184,15 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if (pcFilter gt "") ne true then assign pcFilter = "*".
 
         /* Check if requested procedure matches in the filter whitelist. */
-        if this-object:InMatchList(oRequestInfo:ProcedureName, pcFilter) then do:
+        if this-object:InMatchList(cProcedure, pcFilter) then do:
             /* Create base path for output and create any needed directories. */
-            assign cBasePath = substitute("&1/metrics/ProfilerData/&2", this-object:TemporaryDir, oRequestInfo:AgentId).
+            assign cBasePath = substitute("&1/metrics/ProfilerData/&2", this-object:TemporaryDir, this-object:GetAgentID()).
             os-create-dir value(cBasePath) no-error.
 
             /* Determine correct output location for this profiler log. */
             assign cOutPath = substitute("&1/&2.&3_R&4_A&5_S&6.prof",
                                          cBasePath, replace(iso-date(today), "-", ""), mtime, this-object:RequestCount,
-                                         oRequestInfo:AgentId, oRequestInfo:SessionId).
+                                         this-object:GetAgentID(), this-object:GetSessionID()).
 
             assign /* Note: Order matters here, do not rearrange! */
                 profiler:enabled      = true
@@ -415,16 +215,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             oLogger:Error(substitute("Error starting profiler: &1", err:GetMessage(1))).
             return false.
         end catch.
-        finally:
-            delete object oRequestInfo no-error.
-        end finally.
     end method. /* StartProfiler */
 
 
     method public logical WriteProfiler ( ):
         /* Start the profiler with any config-set filtering. */
-        if this-object:ProfilerThreshold gt 0 then
-            return this-object:WriteProfiler(this-object:ProfilerThreshold).
+        if oConfig:ProfilerThreshold gt 0 then
+            return this-object:WriteProfiler(oConfig:ProfilerThreshold).
         else
             return this-object:WriteProfiler(0). /* No threshold. */
     end method. /* StartProfiler */
@@ -441,7 +238,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * available or not (eg. excution time may always be reported).
          */
 
-        if not this-object:ProfilerEnabled then do:
+        if not oConfig:ProfilerEnabled then do:
             oLogger:Debug("Profiler disabled, leaving WriteProfiler").
 
             /* Even if profiling has been disabled, make sure we turn it off. */
@@ -454,13 +251,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             return false.
         end. /* not enabled */
 
-        define variable oRequestInfo as OERequestInfo no-undo.
-        define variable iExecTime    as integer       no-undo initial 0.
-
-        /* Configure the logger and obtain the request information. */
-        assign oRequestInfo = this-object:GetRequestInfo().
-
         /* Determine the time elapsed for this request. */
+        define variable iExecTime as integer no-undo initial 0.
         if this-object:RequestStart ne ? and this-object:RequestStart lt now then
             assign iExecTime = interval(now, this-object:RequestStart, "milliseconds" ).
 
@@ -475,18 +267,18 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             if piMinExecTime eq ? or piMinExecTime lt 0 then assign piMinExecTime = 0.
             if iExecTime gt piMinExecTime then do:
                 oLogger:Info(substitute("&1 | &2ms | &3",
-                                        oRequestInfo:ProcedureName, iExecTime, profiler:file-name)).
+                                        this-object:GetProcedureName(), iExecTime, profiler:file-name)).
                 profiler:write-data().
             end. /* iExecTime gt piMinExecTime */
             else
                 oLogger:Info(substitute("&1 | &2ms | -No Profiler Output-",
-                                        oRequestInfo:ProcedureName, iExecTime)).
+                                        this-object:GetProcedureName(), iExecTime)).
 
             return true.
         end. /* profiler:enabled */
         else
             oLogger:Info(substitute("&1 | &2ms | -Profiler Disabled-",
-                                    oRequestInfo:ProcedureName, iExecTime)).
+                                    this-object:GetProcedureName(), iExecTime)).
 
         return false. /* Profiler not enabled. */
 
@@ -495,30 +287,35 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             oLogger:Error(substitute("Error writing profiler: &1", err:GetMessage(1))).
             return false.
         end catch.
-        finally:
-            delete object oRequestInfo no-error.
-        end finally.
     end method. /* WriteProfiler */
 
 
     method public logical StartTrackingObjects ( ):
+        /**
+         * Request the current agent start tracking ABLObjects. This
+         * should first check a local flag to determine if tracking
+         * has already been started, as a request via OEJMX can be
+         * expensive, and the data is impossible to share across
+         * session memory.
+         */
+
         define variable iAgentID    as integer   no-undo.
         define variable cProcedure  as character no-undo.
         define variable cTrackFlag  as character no-undo.
         define variable lIsTracking as logical   no-undo initial false.
         define variable dFileCreate as datetime  no-undo.
 
-        this-object:CheckConfig(). /* Update configuration options. */
+        oConfig:RefreshConfig(). /* Update configuration options. */
 
-        if not this-object:ObjectsEnabled then do:
+        if not oConfig:ObjectsEnabled then do:
             oLogger:Debug("Objects disabled, leaving StartTrackingObjects").
             return false.
         end. /* not enabled */
 
         assign cProcedure = this-object:GetProcedureName().
-        if this-object:MetricsIgnoreList ne "" then do:
+        if oConfig:MetricsIgnoreList ne "" then do:
             /* Do not proceed if current request procedure is on the ignore list. */
-            if this-object:InMatchList(cProcedure, this-object:MetricsIgnoreList) then do:
+            if this-object:InMatchList(cProcedure, oConfig:MetricsIgnoreList) then do:
                 oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
                 return false.
             end. /* ignored */
@@ -527,12 +324,12 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
-        assign cTrackFlag = this-object:GetTrackingFlag(iAgentID).
+        assign cTrackFlag = oConfig:GetTrackingFlag(iAgentID).
         file-info:file-name = cTrackFlag.
         if file-info:full-pathname ne ? then do:
             /* Make sure flag was created AFTER the agent started this class instance. */
             assign dFileCreate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
-            if dFileCreate lt this-object:MetricsStarted then
+            if dFileCreate lt dMetricsStarted then
                 os-delete value(file-info:full-pathname). /* Remove the tracking flag. */
             else
                 assign lIsTracking = true. /* Flag exists, assume tracking is enabled. */
@@ -553,9 +350,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     method public logical StopTrackingObjects ( ):
+        /**
+         * Request the current agent stop tracking ABLObjects.
+         */
+
         define variable iAgentID as integer no-undo.
 
-        if not this-object:ObjectsEnabled then do:
+        if not oConfig:ObjectsEnabled then do:
             oLogger:Debug("Objects disabled, leaving StopTrackingObjects").
             return false.
         end. /* not enabled */
@@ -568,25 +369,28 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     
 
     method public logical GetABLObjectsReport ( ):
-        define variable iAgentID    as integer    no-undo.
-        define variable iCount      as integer    no-undo.
-        define variable cProcedure  as character  no-undo.
-        define variable cSessionID  as character  no-undo extent.
-        define variable cBasePath   as character  no-undo.
-        define variable lReturn     as logical    no-undo initial false.
-        define variable oObjReport  as JsonObject no-undo.
+        /**
+         * Return the ABLObjects report from the current agent.
+         */
 
-        this-object:CheckConfig(). /* Update configuration options. */
+        define variable iAgentID   as integer    no-undo.
+        define variable iCount     as integer    no-undo.
+        define variable cProcedure as character  no-undo.
+        define variable cSessionID as character  no-undo extent.
+        define variable lReturn    as logical    no-undo initial false.
+        define variable oObjReport as JsonObject no-undo.
 
-        if not this-object:ObjectsEnabled then do:
+        oConfig:RefreshConfig(). /* Update configuration options. */
+
+        if not oConfig:ObjectsEnabled then do:
             oLogger:Debug("Objects disabled, leaving GetABLObjectsReport").
             return false.
         end. /* not enabled */
 
         assign cProcedure = this-object:GetProcedureName().
-        if this-object:MetricsIgnoreList ne "" then do:
+        if oConfig:MetricsIgnoreList ne "" then do:
             /* Do not proceed if current request procedure is on the ignore list. */
-            if this-object:InMatchList(cProcedure, this-object:MetricsIgnoreList) then do:
+            if this-object:InMatchList(cProcedure, oConfig:MetricsIgnoreList) then do:
                 oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
                 return false.
             end. /* ignored */
@@ -594,24 +398,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
-        /* Assemble base path for output and create any needed directories. */
-        assign cBasePath = substitute("&1/metrics/ABLObjectsReport/&2", this-object:TemporaryDir, iAgentID).
-        os-create-dir value(cBasePath) no-error.
-
         /* Request the current ABLObjects report for this agent. */
         if oABLObjectsReport:ParseABLObjectReport(input  iAgentID,
-                                                  input  this-object:ObjectsExcluded,
+                                                  input  oConfig:ObjectsExcluded,
                                                   output oObjReport) then do:
             /* Output a file for each session in the report. */
             assign cSessionID = oObjReport:GetNames().
             do iCount = 1 to extent(cSessionID):
                 /* Output the report to a known location on disk for review/archival. */
                 assign lReturn = oObjReport:GetJsonArray(cSessionID[iCount])
-                                           :WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
-                                                                 cBasePath,
-                                                                 replace(iso-date(today), "-", ""),
-                                                                 mtime, iAgentID, cSessionID[iCount]),
-                                                                 true).
+                                           :WriteFile(this-object:GetReportPath(iAgentID, integer(cSessionID[iCount])), true).
             end. /* do iCount */
         end. /* ParseABLObjectReport */
 
@@ -624,6 +420,12 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     method public logical TrackAllAgents ( input plEnable as logical ):
+        /**
+         * Obtain a list of all available agents and make a request to each
+         * to begin tracking ABLObjects. This can be time-consuming if there
+         * are many agents configured per PAS instance.
+         */
+
         define variable oAgent   as JsonObject no-undo.
         define variable cAgentID as character  no-undo.
         define variable iCount   as integer    no-undo.
@@ -649,17 +451,22 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     method public logical GetAllABLObjectsReport ( ):
+        /**
+         * Obtain a list of all available agents and make a request to each
+         * to return the current ABLObjectsReport. This can be time-consuming
+         * if there are many agents configured per PAS instance.
+         */
+
         define variable oObjReport as JsonObject no-undo.
         define variable oAgent     as JsonObject no-undo.
         define variable cAgentID   as character  no-undo.
         define variable cSessionID as character  no-undo extent.
-        define variable cBasePath  as character  no-undo.
         define variable iCount     as integer    no-undo.
         define variable lReturn    as logical    no-undo initial false.
 
-        this-object:CheckConfig(). /* Update configuration options. */
+        oConfig:RefreshConfig(). /* Update configuration options. */
 
-        if not this-object:ObjectsEnabled then do:
+        if not oConfig:ObjectsEnabled then do:
             oLogger:Debug("Objects disabled, leaving GetAllABLObjectsReport").
             return false.
         end. /* not enabled */
@@ -676,24 +483,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 /* Extract the current agent for examination. */
                 assign cAgentID = oAgent:GetCharacter("pid").
 
-                /* Assemble base path for output and create any needed directories. */
-                assign cBasePath = substitute("&1/metrics/ABLObjectsReport/&2", this-object:TemporaryDir, cAgentID).
-                os-create-dir value(cBasePath) no-error.
-
                 /* Request the ABL objects for this specific agent. */
                 if oABLObjectsReport:ParseABLObjectReport(input  cAgentID,
-                                                          input  this-object:ObjectsExcluded,
+                                                          input  oConfig:ObjectsExcluded,
                                                           output oObjReport) then do:
                     /* Output a file for each session in the report. */
                     assign cSessionID = oObjReport:GetNames().
                     do iCount = 1 to extent(cSessionID):
                         /* Output the report to a known location on disk for review/archival. */
                         assign lReturn = oObjReport:GetJsonArray(cSessionID[iCount])
-                                                   :WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
-                                                                         cBasePath,
-                                                                         replace(iso-date(today), "-", ""),
-                                                                         mtime, cAgentID, cSessionID[iCount]),
-                                                                         true).
+                                                   :WriteFile(this-object:GetReportPath(integer(cAgentID), integer(cSessionID[iCount])), true).
                     end. /* do iCount */
                 end. /* ParseABLObjectReport */
             end. /* has agentId */
@@ -708,50 +507,46 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     method public logical GetSessionABLObjectsReport ( ):
+        /**
+         * Return the available ABLObjectsReport for the
+         * agent and session of the current request.
+         */
+
         define variable oObjReport as JsonArray no-undo.
         define variable iAgentID   as integer   no-undo.
         define variable iSessionID as integer   no-undo.
         define variable cProcedure as character no-undo.
-        define variable cBasePath  as character no-undo.
         define variable lReturn    as logical   no-undo initial false.
 
-        this-object:CheckConfig(). /* Update configuration options. */
+        oConfig:RefreshConfig(). /* Update configuration options. */
 
-        if not this-object:ObjectsEnabled then do:
+        if not oConfig:ObjectsEnabled then do:
             oLogger:Debug("Objects disabled, leaving GetAllABLObjectsReport").
             return false.
         end. /* not enabled */
 
         assign cProcedure = this-object:GetProcedureName().
-        if this-object:MetricsIgnoreList ne "" then do:
+        if oConfig:MetricsIgnoreList ne "" then do:
             /* Do not proceed if current request procedure is on the ignore list. */
-            if this-object:InMatchList(cProcedure, this-object:MetricsIgnoreList) then do:
+            if this-object:InMatchList(cProcedure, oConfig:MetricsIgnoreList) then do:
                 oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
                 return false.
             end. /* ignored */
         end. /* has ignore list */
 
-        assign
+        assign /* Get values from current request. */
             iAgentID   = this-object:GetAgentID()
             iSessionID = this-object:GetSessionID()
             .
-
-        /* Assemble base path for output and create any needed directories. */
-        assign cBasePath = substitute("&1/metrics/ABLObjectsReport/&2", this-object:TemporaryDir, iAgentID).
-        os-create-dir value(cBasePath) no-error.
 
         if iAgentID gt 0 and iSessionID gt 0 then do:
             /* Request the ABL objects for this specific agent and session. */
             if oABLObjectsReport:ParseSessionABLObjectReport(input  iAgentID,
                                                              input  iSessionID,
-                                                             input  this-object:ObjectsExcluded,
+                                                             input  oConfig:ObjectsExcluded,
                                                              output oObjReport) then
                 /* Output the report to a known location on disk for review/archival. */
-                assign lReturn = oObjReport:WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
-                                                                 cBasePath,
-                                                                 replace(iso-date(today), "-", ""),
-                                                                 mtime, iAgentID, iSessionID),
-                                                                 true).
+                assign lReturn = oObjReport:WriteFile(this-object:GetReportPath(iAgentID, iSessionID), true).
         end. /* Has Agent/Session */
 
         return lReturn.

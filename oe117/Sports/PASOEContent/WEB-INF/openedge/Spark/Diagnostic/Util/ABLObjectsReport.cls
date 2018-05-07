@@ -26,28 +26,6 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
     define public static property AgentList as JsonArray no-undo get. private set.
 
-    /*** Common Properties ***/
-
-    /* Set automatically as part of the PAS instance startup process. */
-    define private property CatalinaBase as character no-undo initial ""
-        get():
-            if CatalinaBase eq "" then do:
-                file-info:filename = trim(os-getenv("CATALINA_BASE")).
-                assign CatalinaBase = right-trim(replace(file-info:full-pathname, "~\", "~/"), "~/").
-            end.
-            return CatalinaBase.
-        end get.
-        set.
-
-    /* Used as a standard location for creating temporary files. */
-    define private property TemporaryDir as character no-undo initial ""
-        get():
-            if TemporaryDir eq "" then
-                assign TemporaryDir = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
-            return TemporaryDir.
-        end get.
-        set.
-
     /* Should obtain the Application Name from metrics_setenv.[bat|sh] */
     define private property ApplicationName as character no-undo initial ""
         get():
@@ -797,7 +775,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         Assert:NonZero(piSessionID).
 
         /* Leave a quick note about what is being built, and with any exceptions. */
-        oLogger:Debug(substitute("Reporting ABLObjects for Agent '&1'/Session '&2', excluding: &3",
+        oLogger:Debug(substitute("Reporting ABLObjects for Agent '&1', Session '&2', excluding: &3",
                                  pcAgentID, piSessionID, pcExclude)).
 
         if this-object:MetricSource eq "oejmx" then

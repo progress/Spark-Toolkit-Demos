@@ -12,8 +12,9 @@ using OpenEdge.Logging.* from propath.
 
 block-level on error undo, throw.
 
-class Spark.Diagnostic.Util.Logger abstract: 
+class Spark.Diagnostic.Util.Logger inherits Spark.Diagnostic.Util.OSPath abstract:
 
+    /* Automatically creates a logger instance for this class. */
     define protected property oLogger as ILogWriter no-undo
         get():
             /* Create single logger instance for this class. */
