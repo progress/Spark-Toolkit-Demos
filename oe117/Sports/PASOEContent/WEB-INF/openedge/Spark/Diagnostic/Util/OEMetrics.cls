@@ -352,6 +352,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * have no other dependencies or requirements of a class-instance method.
          */
 
+        define variable oRequestInfo as OERequestInfo no-undo.
+        define variable lFilterMatch as logical       no-undo initial false.
+        define variable cProcedure   as character     no-undo.
+        define variable cBasePath    as character     no-undo.
+        define variable cOutPath     as character     no-undo.
+        define variable ix           as integer       no-undo.
+
         this-object:CheckConfig(). /* Update configuration options. */
 
         if not this-object:ProfilerEnabled then do:
@@ -359,11 +366,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             return false.
         end. /* not enabled */
 
-        define variable oRequestInfo as OERequestInfo no-undo.
-        define variable lFilterMatch as logical       no-undo initial false.
-        define variable cBasePath    as character     no-undo.
-        define variable cOutPath     as character     no-undo.
-        define variable ix           as integer       no-undo.
+        assign cProcedure = this-object:GetProcedureName().
+        if this-object:MetricsIgnoreList ne "" then do:
+            /* Do not proceed if current request procedure is on the ignore list. */
+            if this-object:InMatchList(cProcedure, this-object:MetricsIgnoreList) then do:
+                oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
+                return false.
+            end. /* ignored */
+        end. /* has ignore list */
 
         /* Obtain the request information and set/increment special values. */
         assign oRequestInfo = this-object:GetRequestInfo().
@@ -496,6 +506,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable cProcedure  as character no-undo.
         define variable cTrackFlag  as character no-undo.
         define variable lIsTracking as logical   no-undo initial false.
+        define variable dFileCreate as datetime  no-undo.
 
         this-object:CheckConfig(). /* Update configuration options. */
 
@@ -520,14 +531,12 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         file-info:file-name = cTrackFlag.
         if file-info:full-pathname ne ? then do:
             /* Make sure flag was created AFTER the agent started this class instance. */
-            if datetime(file-info:file-create-date, file-info:file-create-time * 1000) lt this-object:MetricsStarted then
+            assign dFileCreate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
+            if dFileCreate lt this-object:MetricsStarted then
                 os-delete value(file-info:full-pathname). /* Remove the tracking flag. */
             else
                 assign lIsTracking = true. /* Flag exists, assume tracking is enabled. */
         end. /* file exists */
-
-        if not lIsTracking then /* Not obviously tracked, set up option for agent. */
-            assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
 
         if not lIsTracking then /* Turn on tracking if not already, and get latest result. */
             assign lIsTracking = oABLObjectsReport:TrackABLObjects(string(iAgentID), true).
@@ -535,6 +544,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Remember whether objects are being tracked for this agent. */
         if lIsTracking then do:
             output to value(cTrackFlag).
+            /* No output, just touch file. */
             output close.
         end. /* Tracking */
 
@@ -563,7 +573,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable cProcedure  as character  no-undo.
         define variable cSessionID  as character  no-undo extent.
         define variable cBasePath   as character  no-undo.
-        define variable lIsTracking as logical    no-undo initial false.
         define variable lReturn     as logical    no-undo initial false.
         define variable oObjReport  as JsonObject no-undo.
 
@@ -589,26 +598,22 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         assign cBasePath = substitute("&1/metrics/ABLObjectsReport/&2", this-object:TemporaryDir, iAgentID).
         os-create-dir value(cBasePath) no-error.
 
-        /* If tracking is enabled, obtain the latest ABLObjects report from the agent. */
-        assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
-        if lIsTracking then do:
-            if oABLObjectsReport:ParseABLObjectReport(input  iAgentID,
-                                                      input  this-object:ObjectsExcluded,
-                                                      output oObjReport) then do:
-                /* Output a file for each session in report. */
-                assign cSessionID = oObjReport:GetNames().
-                do iCount = 1 to extent(cSessionID):
-                    /* Output the report to a known location on disk for review/archival. */
-                    oObjReport:GetJsonArray(cSessionID[iCount])
-                              :WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
-                                                    cBasePath,
-                                                    replace(iso-date(today), "-", ""),
-                                                    mtime, iAgentID, cSessionID[iCount]), true).
-                end. /* do iCount */
-
-                assign lReturn = true.
-            end. /* ParseABLObjectReport */
-        end. /* lIsTracking */
+        /* Request the current ABLObjects report for this agent. */
+        if oABLObjectsReport:ParseABLObjectReport(input  iAgentID,
+                                                  input  this-object:ObjectsExcluded,
+                                                  output oObjReport) then do:
+            /* Output a file for each session in the report. */
+            assign cSessionID = oObjReport:GetNames().
+            do iCount = 1 to extent(cSessionID):
+                /* Output the report to a known location on disk for review/archival. */
+                assign lReturn = oObjReport:GetJsonArray(cSessionID[iCount])
+                                           :WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
+                                                                 cBasePath,
+                                                                 replace(iso-date(today), "-", ""),
+                                                                 mtime, iAgentID, cSessionID[iCount]),
+                                                                 true).
+            end. /* do iCount */
+        end. /* ParseABLObjectReport */
 
         return lReturn.
 
@@ -618,7 +623,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* GetABLObjectsReport */
 
 
-    method public logical TrackAllObjects ( input plEnable as logical ):
+    method public logical TrackAllAgents ( input plEnable as logical ):
         define variable oAgent   as JsonObject no-undo.
         define variable cAgentID as character  no-undo.
         define variable iCount   as integer    no-undo.
@@ -640,7 +645,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         end. /* do iCount */
 
         return lSuccess.
-    end method. /* TrackABLObjects */
+    end method. /* TrackAllAgents */
 
 
     method public logical GetAllABLObjectsReport ( ):
@@ -679,18 +684,17 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 if oABLObjectsReport:ParseABLObjectReport(input  cAgentID,
                                                           input  this-object:ObjectsExcluded,
                                                           output oObjReport) then do:
-                    /* Output a file for each session in report. */
+                    /* Output a file for each session in the report. */
                     assign cSessionID = oObjReport:GetNames().
                     do iCount = 1 to extent(cSessionID):
                         /* Output the report to a known location on disk for review/archival. */
-                        oObjReport:GetJsonArray(cSessionID[iCount])
-                                  :WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
-                                                        cBasePath,
-                                                        replace(iso-date(today), "-", ""),
-                                                        mtime, cAgentID, cSessionID[iCount]), true).
+                        assign lReturn = oObjReport:GetJsonArray(cSessionID[iCount])
+                                                   :WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
+                                                                         cBasePath,
+                                                                         replace(iso-date(today), "-", ""),
+                                                                         mtime, cAgentID, cSessionID[iCount]),
+                                                                         true).
                     end. /* do iCount */
-
-                    assign lReturn = true.
                 end. /* ParseABLObjectReport */
             end. /* has agentId */
         end. /* do iCount */
@@ -704,7 +708,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     method public logical GetSessionABLObjectsReport ( ):
-        define variable oReport    as JsonArray no-undo.
+        define variable oObjReport as JsonArray no-undo.
         define variable iAgentID   as integer   no-undo.
         define variable iSessionID as integer   no-undo.
         define variable cProcedure as character no-undo.
@@ -741,20 +745,19 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             if oABLObjectsReport:ParseSessionABLObjectReport(input  iAgentID,
                                                              input  iSessionID,
                                                              input  this-object:ObjectsExcluded,
-                                                             output oReport) then
+                                                             output oObjReport) then
                 /* Output the report to a known location on disk for review/archival. */
-                oReport:WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
-                                             cBasePath,
-                                             replace(iso-date(today), "-", ""),
-                                             mtime, iAgentID, iSessionID), true).
-
-            assign lReturn = true.
+                assign lReturn = oObjReport:WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
+                                                                 cBasePath,
+                                                                 replace(iso-date(today), "-", ""),
+                                                                 mtime, iAgentID, iSessionID),
+                                                                 true).
         end. /* Has Agent/Session */
 
         return lReturn.
 
         finally:
-            delete object oReport no-error.
+            delete object oObjReport no-error.
         end finally.
     end method. /* GetSessionABLObjectsReport */
 

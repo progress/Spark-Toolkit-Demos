@@ -36,14 +36,14 @@ class Business.System.Metrics:
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/startTracking", alias="startTracking", mediaType="application/json").
     method public void StartTracking ( output success as logical ):
         /* Start tracking the ABLObjects for all agents. */
-        assign success = OEMetrics:Instance:TrackAllObjects(true).
+        assign success = OEMetrics:Instance:TrackAllAgents(true).
     end method. /* StartTracking */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/stopTracking", alias="stopTracking", mediaType="application/json").
     method public void StopTracking ( output success as logical ):
         /* Stop tracking the ABLObjects for all agents. */
-        assign success = OEMetrics:Instance:TrackAllObjects(false).
+        assign success = OEMetrics:Instance:TrackAllAgents(false).
     end method. /* StopTracking */
 
 end class.
