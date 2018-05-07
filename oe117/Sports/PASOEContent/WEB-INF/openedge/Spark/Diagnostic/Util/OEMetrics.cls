@@ -578,7 +578,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable oReport   as JsonArray  no-undo.
         define variable oAgent    as JsonObject no-undo.
         define variable cAgentID  as character  no-undo.
-        define variable cBasePath as character no-undo.
+        define variable cBasePath as character  no-undo.
         define variable iCount    as integer    no-undo.
         define variable lReturn   as logical    no-undo initial false.
 
@@ -625,5 +625,51 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             delete object oReport no-error.
         end finally.
     end method. /* GetAllABLObjectsReport */
+
+
+    method public logical GetSessionABLObjectsReport ( ):
+        define variable oReport    as JsonArray no-undo.
+        define variable iAgentID   as integer   no-undo.
+        define variable iSessionID as integer   no-undo.
+        define variable cBasePath  as character no-undo.
+        define variable lReturn    as logical   no-undo initial false.
+
+        this-object:CheckConfig(). /* Update configuration options. */
+
+        if not this-object:ObjectsEnabled then do:
+            oLogger:Debug("Objects disabled, leaving GetAllABLObjectsReport").
+            return false.
+        end. /* not enabled */
+
+        assign
+            iAgentID   = this-object:GetAgentID()
+            iSessionID = this-object:GetSessionID()
+            .
+
+        /* Assemble base path for output and create any needed directories. */
+        assign cBasePath = substitute("&1/metrics/ABLObjectsReport/&2", this-object:TemporaryDir, iAgentID).
+        os-create-dir value(cBasePath) no-error.
+
+        if iAgentID gt 0 and iSessionID gt 0 then do:
+            /* Request the ABL objects for this specific agent and session. */
+            if oABLObjectsReport:ParseSessionABLObjectReport(input  iAgentID,
+                                                             input  iSessionID,
+                                                             input  this-object:ObjectsExcluded,
+                                                             output oReport) then
+                /* Output the report to a known location on disk for review/archival. */
+                oReport:WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
+                                             cBasePath,
+                                             replace(iso-date(today), "-", ""),
+                                             mtime, iAgentID, iSessionID), true).
+
+            assign lReturn = true.
+        end. /* Has Agent/Session */
+
+        return lReturn.
+
+        finally:
+            delete object oReport no-error.
+        end finally.
+    end method. /* GetSessionABLObjectsReport */
 
 end class.

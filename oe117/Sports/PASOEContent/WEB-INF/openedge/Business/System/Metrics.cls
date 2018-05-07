@@ -26,6 +26,13 @@ class Business.System.Metrics:
     end method. /* GetObjects */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
+    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/getSessionObjects", alias="getSessionObjects", mediaType="application/json").
+    method public void GetSessionObjects ( output success as logical ):
+        /* Obtain the current list of Objects in memory for this agent/session. */
+        assign success = OEMetrics:Instance:GetSessionABLObjectsReport().
+    end method. /* GetSessionObjects */
+
+    @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/startTracking", alias="startTracking", mediaType="application/json").
     method public void StartTracking ( output success as logical ):
         /* Start tracking the ABLObjects for all agents. */

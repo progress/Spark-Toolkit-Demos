@@ -257,6 +257,31 @@
         },
         "\/metrics": {
         },
+        "\/metrics\/getSessionObjects": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.System.Metrics",
+              "function": "GetSessionObjects",
+              "arg": [
+                {
+                  "ablName": "success",
+                  "ablType": "LOGICAL",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "success"
+                  }
+                }
+              ]
+            }
+          }
+        },
         "\/metrics\/startTracking": {
           "PUT": {
             "contentType": "application\/json",

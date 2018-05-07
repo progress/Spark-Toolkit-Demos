@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Fri May 04 14:01:20 EDT 2018",
+  "lastModified": "Fri May 04 16:14:29 EDT 2018",
   "services": [
     {
       "name": "system",
@@ -546,6 +546,19 @@
           "path": "\/metrics",
           "autoSave": true,
           "operations": [
+            {
+              "name": "getSessionObjects",
+              "path": "\/getSessionObjects",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "success",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
             {
               "name": "startTracking",
               "path": "\/startTracking",
