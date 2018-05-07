@@ -48,6 +48,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         end get.
         set.
 
+    define private property MetricsStarted as datetime no-undo initial ? get. set.
+
     define private property MetricsConfigLoaded as datetime no-undo initial ? get. set.
 
     define private property MetricsConfigPath as character no-undo initial ""
@@ -83,6 +85,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         end get.
         set.
 
+    define private property MetricsIgnoreList as character no-undo initial "" get. set.
+
     define private property RequestCount as integer no-undo initial 0 get. set.
 
     define private property RequestStart as datetime-tz no-undo initial ? get. set.
@@ -115,12 +119,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         end get.
         set.
 
-    define private temp-table ttAgentObjects no-undo
-        field AgentID    as integer
-        field IsTracking as logical
-        field LastOutput as datetime-tz
-        index pkAgent as primary unique AgentID.
-
 
     /***** Constructor/Destructor *****/
 
@@ -128,6 +126,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     constructor public OEMetrics ( ):
         super().
 
+        assign this-object:MetricsStarted = now. /* Note when class was created. */
         this-object:CheckTempPath(). /* Check for temporary directories. */
         this-object:CheckConfig(). /* Obtain configuration options. */
     end constructor.
@@ -202,6 +201,17 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             /* Set properties based on config options. */
             do ix = 1 to extent(cNames):
                 case cNames[ix]:
+                    when "general" then do:
+                        if oConfig:Has("general") and oConfig:GetType("general") eq JsonDataType:Object then do:
+                            assign oSubObj = oConfig:GetJsonObject("general").
+
+                            if oSubObj:Has("ignore") and oSubObj:GetType("ignore") eq JsonDataType:String then
+                                assign this-object:MetricsIgnoreList = oSubObj:GetCharacter("ignore").
+
+                            delete object oSubObj no-error.
+                        end. /* has sub-object */
+                    end. /* general */
+
                     when "objects" then do:
                         if oConfig:Has("objects") and oConfig:GetType("objects") eq JsonDataType:Object then do:
                             assign oSubObj = oConfig:GetJsonObject("objects").
@@ -250,9 +260,37 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* ParseConfig */
 
 
+    method private logical InMatchList ( input pcCompare as character,
+                                         input pcMatches as character ):
+        /* Check if value matches something in the list. */
+        define variable ix as integer no-undo.
+        do ix = 1 to num-entries(pcMatches):
+            if pcCompare matches entry(ix, pcMatches) then
+                return true.
+        end. /* do ix */
+
+        return false.
+    end method. /* InMatchList */
+    
+
     method private OERequestInfo GetRequestInfo ( ):
         return cast(session:current-request-info, OERequestInfo).
     end method. /* GetRequestInfo */
+
+
+    method private character GetProcedureName ( ):
+        define variable oRequestInfo as OERequestInfo no-undo.
+
+        assign oRequestInfo = this-object:GetRequestInfo().
+        if valid-object(oRequestInfo) then
+            return oRequestInfo:ProcedureName.
+
+        return "".
+
+        finally:
+            delete object oRequestInfo no-error.
+        end finally.
+    end method. /* GetProcedureName */
 
 
     method private integer GetAgentID ( ):
@@ -283,6 +321,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             delete object oRequestInfo no-error.
         end finally.
     end method. /* GetSessionID */
+
+
+    method private character GetTrackingFlag ( input piAgentID as integer ):
+        os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics/TrackingAgents", this-object:TemporaryDir)).
+
+        return substitute("&1/metrics/TrackingAgents/&2", this-object:TemporaryDir, piAgentID).
+    end method. /* GetTrackingFlag */
 
 
     /***** Public Methods *****/
@@ -327,13 +373,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Filter should not be blank, so fill with wildcard at least. */
         if (pcFilter gt "") ne true then assign pcFilter = "*".
 
-        /* Check if requested procedure is matches in the filter list. */
-        do ix = 1 to num-entries(pcFilter):
-            if oRequestInfo:ProcedureName matches entry(ix, pcFilter) then
-                assign lFilterMatch = true.
-        end. /* do ix */
-
-        if lFilterMatch then do:
+        /* Check if requested procedure matches in the filter whitelist. */
+        if this-object:InMatchList(oRequestInfo:ProcedureName, pcFilter) then do:
             /* Create base path for output and create any needed directories. */
             assign cBasePath = substitute("&1/metrics/ProfilerData/&2", this-object:TemporaryDir, oRequestInfo:AgentId).
             os-create-dir value(cBasePath) no-error.
@@ -451,8 +492,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     method public logical StartTrackingObjects ( ):
-        define variable iAgentID    as integer no-undo.
-        define variable lIsTracking as logical no-undo initial false.
+        define variable iAgentID    as integer   no-undo.
+        define variable cProcedure  as character no-undo.
+        define variable cTrackFlag  as character no-undo.
+        define variable lIsTracking as logical   no-undo initial false.
 
         this-object:CheckConfig(). /* Update configuration options. */
 
@@ -461,13 +504,29 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             return false.
         end. /* not enabled */
 
+        assign cProcedure = this-object:GetProcedureName().
+        if this-object:MetricsIgnoreList ne "" then do:
+            /* Do not proceed if current request procedure is on the ignore list. */
+            if this-object:InMatchList(cProcedure, this-object:MetricsIgnoreList) then do:
+                oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
+                return false.
+            end. /* ignored */
+        end. /* has ignore list */
+
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
-        if can-find(first ttAgentObjects no-lock
-                    where ttAgentObjects.AgentID eq iAgentID and ttAgentObjects.IsTracking) then
-            assign lIsTracking = true.
-        else
+        assign cTrackFlag = this-object:GetTrackingFlag(iAgentID).
+        file-info:file-name = cTrackFlag.
+        if file-info:full-pathname ne ? then do:
+            /* Make sure flag was created AFTER the agent started this class instance. */
+            if datetime(file-info:file-create-date, file-info:file-create-time * 1000) lt this-object:MetricsStarted then
+                os-delete value(file-info:full-pathname). /* Remove the tracking flag. */
+            else
+                assign lIsTracking = true. /* Flag exists, assume tracking is enabled. */
+        end. /* file exists */
+
+        if not lIsTracking then /* Not obviously tracked, set up option for agent. */
             assign lIsTracking = oABLObjectsReport:TrackingABLObjects(string(iAgentID)).
 
         if not lIsTracking then /* Turn on tracking if not already, and get latest result. */
@@ -475,19 +534,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         /* Remember whether objects are being tracked for this agent. */
         if lIsTracking then do:
-            /* Attempt to find an existing record for this agent. */
-            find first ttAgentObjects exclusive-lock
-                 where ttAgentObjects.AgentID eq iAgentID no-error.
-
-            /* No record, no problem. Create one. */
-            if not available(ttAgentObjects) then
-                create ttAgentObjects.
-
-            assign /* Update with new tracking state. */
-                ttAgentObjects.AgentID    = iAgentID
-                ttAgentObjects.IsTracking = true
-                ttAgentObjects.LastOutput = ?
-                .
+            output to value(cTrackFlag).
+            output close.
         end. /* Tracking */
 
         return lIsTracking.
@@ -512,6 +560,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     method public logical GetABLObjectsReport ( ):
         define variable iAgentID    as integer    no-undo.
         define variable iCount      as integer    no-undo.
+        define variable cProcedure  as character  no-undo.
         define variable cSessionID  as character  no-undo extent.
         define variable cBasePath   as character  no-undo.
         define variable lIsTracking as logical    no-undo initial false.
@@ -524,6 +573,15 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             oLogger:Debug("Objects disabled, leaving GetABLObjectsReport").
             return false.
         end. /* not enabled */
+
+        assign cProcedure = this-object:GetProcedureName().
+        if this-object:MetricsIgnoreList ne "" then do:
+            /* Do not proceed if current request procedure is on the ignore list. */
+            if this-object:InMatchList(cProcedure, this-object:MetricsIgnoreList) then do:
+                oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
+                return false.
+            end. /* ignored */
+        end. /* has ignore list */
 
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
@@ -649,6 +707,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable oReport    as JsonArray no-undo.
         define variable iAgentID   as integer   no-undo.
         define variable iSessionID as integer   no-undo.
+        define variable cProcedure as character no-undo.
         define variable cBasePath  as character no-undo.
         define variable lReturn    as logical   no-undo initial false.
 
@@ -658,6 +717,15 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             oLogger:Debug("Objects disabled, leaving GetAllABLObjectsReport").
             return false.
         end. /* not enabled */
+
+        assign cProcedure = this-object:GetProcedureName().
+        if this-object:MetricsIgnoreList ne "" then do:
+            /* Do not proceed if current request procedure is on the ignore list. */
+            if this-object:InMatchList(cProcedure, this-object:MetricsIgnoreList) then do:
+                oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
+                return false.
+            end. /* ignored */
+        end. /* has ignore list */
 
         assign
             iAgentID   = this-object:GetAgentID()

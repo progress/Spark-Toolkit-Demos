@@ -13,5 +13,8 @@ block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
 
+/* Output the current ABLObjects report for this session. */
+Spark.Diagnostic.Util.OEMetrics:Instance:GetSessionABLObjectsReport().
+
 /* Stop the profiler for this request, if enabled. */
 Spark.Diagnostic.Util.OEMetrics:Instance:WriteProfiler().

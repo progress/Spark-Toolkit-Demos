@@ -15,3 +15,6 @@ block-level on error undo, throw.
 
 /* Start the profiler for this request, if enabled. */
 Spark.Diagnostic.Util.OEMetrics:Instance:StartProfiler().
+
+/* Begin tracking all objects for the current agent. */
+Spark.Diagnostic.Util.OEMetrics:Instance:StartTrackingObjects().

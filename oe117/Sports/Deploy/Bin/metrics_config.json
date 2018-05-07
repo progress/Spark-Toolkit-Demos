@@ -1,4 +1,7 @@
 {
+	"general": {
+		"ignore": "Sports.Spark.Core.Security.SportsRealm"
+	},
 	"objects": {
 		"enabled": true,
 		"exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.Diagnostic.*",
@@ -7,6 +10,6 @@
 	"profiler": {
 		"enabled": true,
 		"filter": "*",
-		"threshold": 0
+		"threshold": 1000
 	}
 }
