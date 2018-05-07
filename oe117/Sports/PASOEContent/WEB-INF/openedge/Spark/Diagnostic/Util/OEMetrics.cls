@@ -510,10 +510,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     
 
     method public logical GetABLObjectsReport ( ):
-        define variable iAgentID    as integer   no-undo.
-        define variable cBasePath   as character no-undo.
-        define variable lIsTracking as logical   no-undo initial false.
-        define variable oObjReport  as JsonArray no-undo.
+        define variable iAgentID    as integer    no-undo.
+        define variable iCount      as integer    no-undo.
+        define variable cSessionID  as character  no-undo extent.
+        define variable cBasePath   as character  no-undo.
+        define variable lIsTracking as logical    no-undo initial false.
+        define variable lReturn     as logical    no-undo initial false.
+        define variable oObjReport  as JsonObject no-undo.
 
         this-object:CheckConfig(). /* Update configuration options. */
 
@@ -533,15 +536,23 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if lIsTracking then do:
             if oABLObjectsReport:ParseABLObjectReport(input  iAgentID,
                                                       input  this-object:ObjectsExcluded,
-                                                      output oObjReport) then
-                /* Output the report to a known location on disk for review/archival. */
-                return oObjReport:WriteFile(substitute("&1/&2.&3_A&4.json",
-                                                       cBasePath,
-                                                       replace(iso-date(today), "-", ""),
-                                                       mtime, iAgentID), true).
+                                                      output oObjReport) then do:
+                /* Output a file for each session in report. */
+                assign cSessionID = oObjReport:GetNames().
+                do iCount = 1 to extent(cSessionID):
+                    /* Output the report to a known location on disk for review/archival. */
+                    oObjReport:GetJsonArray(cSessionID[iCount])
+                              :WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
+                                                    cBasePath,
+                                                    replace(iso-date(today), "-", ""),
+                                                    mtime, iAgentID, cSessionID[iCount]), true).
+                end. /* do iCount */
+
+                assign lReturn = true.
+            end. /* ParseABLObjectReport */
         end. /* lIsTracking */
 
-        return false. /* Result for fall-through. */
+        return lReturn.
 
         finally:
             delete object oObjReport no-error.
@@ -575,12 +586,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     method public logical GetAllABLObjectsReport ( ):
-        define variable oReport   as JsonArray  no-undo.
-        define variable oAgent    as JsonObject no-undo.
-        define variable cAgentID  as character  no-undo.
-        define variable cBasePath as character  no-undo.
-        define variable iCount    as integer    no-undo.
-        define variable lReturn   as logical    no-undo initial false.
+        define variable oObjReport as JsonObject no-undo.
+        define variable oAgent     as JsonObject no-undo.
+        define variable cAgentID   as character  no-undo.
+        define variable cSessionID as character  no-undo extent.
+        define variable cBasePath  as character  no-undo.
+        define variable iCount     as integer    no-undo.
+        define variable lReturn    as logical    no-undo initial false.
 
         this-object:CheckConfig(). /* Update configuration options. */
 
@@ -608,21 +620,27 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 /* Request the ABL objects for this specific agent. */
                 if oABLObjectsReport:ParseABLObjectReport(input  cAgentID,
                                                           input  this-object:ObjectsExcluded,
-                                                          output oReport) then
-                    /* Output the report to a known location on disk for review/archival. */
-                    oReport:WriteFile(substitute("&1/&2.&3_A&4.json",
-                                                 cBasePath,
-                                                 replace(iso-date(today), "-", ""),
-                                                 mtime, cAgentID), true).
-            
-                assign lReturn = true.
+                                                          output oObjReport) then do:
+                    /* Output a file for each session in report. */
+                    assign cSessionID = oObjReport:GetNames().
+                    do iCount = 1 to extent(cSessionID):
+                        /* Output the report to a known location on disk for review/archival. */
+                        oObjReport:GetJsonArray(cSessionID[iCount])
+                                  :WriteFile(substitute("&1/&2.&3_A&4_S&5.json",
+                                                        cBasePath,
+                                                        replace(iso-date(today), "-", ""),
+                                                        mtime, cAgentID, cSessionID[iCount]), true).
+                    end. /* do iCount */
+
+                    assign lReturn = true.
+                end. /* ParseABLObjectReport */
             end. /* has agentId */
         end. /* do iCount */
 
         return lReturn.
 
         finally:
-            delete object oReport no-error.
+            delete object oObjReport no-error.
         end finally.
     end method. /* GetAllABLObjectsReport */
 

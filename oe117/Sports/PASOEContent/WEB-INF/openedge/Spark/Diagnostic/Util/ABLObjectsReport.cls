@@ -358,82 +358,68 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
          * array of objects based on the exclusion list provided.
          */
 
-        define variable oReport     as JsonArray  no-undo.
-        define variable oABLObjects as JsonArray  no-undo.
-        define variable oObjects    as JsonArray  no-undo.
-        define variable oABLObject  as JsonObject no-undo.
-        define variable cObjName    as character  no-undo.
-        define variable cObjSource  as character  no-undo.
-        define variable lTracking   as logical    no-undo.
-        define variable lMatches    as logical    no-undo.
-        define variable ix          as integer    no-undo.
-        define variable iy          as integer    no-undo.
-        define variable iz          as integer    no-undo.
+        define variable oReport    as JsonArray  no-undo.
+        define variable oObjects   as JsonArray  no-undo.
+        define variable oABLObject as JsonObject no-undo.
+        define variable cObjName   as character  no-undo.
+        define variable cObjSource as character  no-undo.
+        define variable lTracking  as logical    no-undo.
+        define variable lMatches   as logical    no-undo.
+        define variable ix         as integer    no-undo.
+        define variable iy         as integer    no-undo.
+        define variable iz         as integer    no-undo.
 
         /* Create the return array. */
         assign oReport = new JsonArray().
 
-        /* Continue parsing the output of the report. */
-        if valid-object(poObjData) and poObjData:Has("ABLObjects") and
-           poObjData:GetType("ABLObjects") eq JsonDataType:Array then
-            assign oABLObjects = poObjData:GetJsonArray("ABLObjects").
-        else
-            assign oABLObjects = ?.
+        /* Confirm that incoming data is a specific ABLObjects list. */
+        if valid-object(poObjData) and poObjData:Has("Objects") and
+           poObjData:GetType("Objects") eq JsonDataType:Array then
+            assign oObjects = poObjData:GetJsonArray("Objects").
 
-        /* Begin cycling through the ABL Object entries. */
-        if valid-object(oABLObjects) then
-        do ix = 1 to oABLObjects:Length:
-            /* Parse the report payload into a simpler form. */
-            assign oABLObject = oABLObjects:GetJsonObject(ix).
-            if valid-object(oABLObject) and oABLObject:Has("Objects") and
-               oABLObject:GetType("Objects") eq JsonDataType:Array then
-                assign oObjects = oABLObject:GetJsonArray("Objects").
-            else
-                assign oObjects = ?.
+        /* Now parse the objects, filtering out anything that doesn't belong. */
+        if valid-object(oObjects) and oObjects:Length gt 0 then
+        do iy = 1 to oObjects:Length:
+            if pcExclude eq "" then do:
+                /* If not excluding specific names, clone the object to the array. */
+                oReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+            end.
+            else if not oObjects:GetJsonObject(iy):Has("Name") then do:
+                /* Extract some values for comparison when filtering the results. */
+                assign
+                    cObjSource = oObjects:GetJsonObject(iy):GetCharacter("Source")
+                    lMatches   = false
+                    .
 
-            if valid-object(oObjects) and oObjects:Length gt 0 then
-            do iy = 1 to oObjects:Length:
-                if pcExclude eq "" then do:
-                    /* If not excluding specific names, clone the object to the array. */
+                do iz = 1 to num-entries(pcExclude):
+                    if cObjSource matches entry(iz, pcExclude) then
+                    assign lMatches = true. /* Remember if match found. */
+                end. /* do iz */
+
+                /* Retain only objects which DO NOT match the exclusion list. */
+                if not lMatches then
                     oReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
-                end.
-                else if not oObjects:GetJsonObject(iy):Has("Name") then do:
-                    /* Extract some values for comparison when filtering the results. */
-                    assign
-                        cObjSource = oObjects:GetJsonObject(iy):GetCharacter("Source")
-                        lMatches   = false
-                        .
+            end.
+            else do:
+                /* Extract some values for comparison when filtering the results. */
+                assign
+                    cObjName   = oObjects:GetJsonObject(iy):GetCharacter("Name")
+                    cObjSource = oObjects:GetJsonObject(iy):GetCharacter("Source")
+                    lMatches   = false
+                    .
 
-                    do iz = 1 to num-entries(pcExclude):
-                        if cObjSource matches entry(iz, pcExclude) then
-                        assign lMatches = true. /* Remember if match found. */
-                    end. /* do iz */
+                /* Determine if the current object matches the exclusion list. */
+                do iz = 1 to num-entries(pcExclude):
+                    if cObjName matches entry(iz, pcExclude) or
+                       cObjSource matches entry(iz, pcExclude) then
+                    assign lMatches = true. /* Remember if match found. */
+                end. /* do iz */
 
-                    /* Retain only objects which DO NOT match the exclusion list. */
-                    if not lMatches then
-                        oReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
-                end.
-                else do:
-                    /* Extract some values for comparison when filtering the results. */
-                    assign
-                        cObjName   = oObjects:GetJsonObject(iy):GetCharacter("Name")
-                        cObjSource = oObjects:GetJsonObject(iy):GetCharacter("Source")
-                        lMatches   = false
-                        .
-
-                    /* Determine if the current object matches the exclusion list. */
-                    do iz = 1 to num-entries(pcExclude):
-                        if cObjName matches entry(iz, pcExclude) or
-                           cObjSource matches entry(iz, pcExclude) then
-                        assign lMatches = true. /* Remember if match found. */
-                    end. /* do iz */
-
-                    /* Retain only objects which DO NOT match the exclusion list. */
-                    if not lMatches then
-                        oReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
-                end. /* do (Has Name) */
-            end. /* do iy (Objects) */
-        end. /* do ix (ABLObjects) */
+                /* Retain only objects which DO NOT match the exclusion list. */
+                if not lMatches then
+                    oReport:Add(cast(oObjects:GetJsonObject(iy):Clone(), JsonObject)).
+            end. /* do (Has Name) */
+        end. /* do iy (Objects) */
 
         return oReport.
 
@@ -667,7 +653,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
     method public logical ParseABLObjectReport ( input  piAgentID as integer,
                                                  input  pcExclude as character,
-                                                 output poReport  as JsonArray ):
+                                                 output poReport  as JsonObject ):
         /* Allow initial passing of Agent ID as an integer. */
         return this-object:ParseABLObjectReport(string(piAgentID), pcExclude, poReport).
     end method. /* ParseABLObjectReport */
@@ -675,13 +661,20 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
     method public logical ParseABLObjectReport ( input  pcAgentID as character,
                                                  input  pcExclude as character,
-                                                 output poReport  as JsonArray ):
-        define variable oABLOutput as JsonObject no-undo.
+                                                 output poReport  as JsonObject ):
+        define variable oABLOutput  as JsonObject no-undo.
+        define variable oABLObjects as JsonArray  no-undo.
+        define variable oSessionObj as JsonObject no-undo.
+        define variable cSessionID  as character  no-undo.
+        define variable ix          as integer    no-undo.
 
         Assert:NotNullOrEmpty(pcAgentID).
 
         /* Leave a quick note about what is being built, and with any exceptions. */
         oLogger:Debug(substitute("Reporting ABLObjects for Agent '&1', excluding: &2", pcAgentID, pcExclude)).
+
+        /* Create a new object with our per-session object list. */
+        assign poReport = new JsonObject().
 
         if this-object:MetricSource eq "oejmx" then
         do on error undo, throw:
@@ -705,7 +698,8 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
                     /* Obtain the necessary payload from the result. */
                     if oResults:GetJsonObject("getABLObjectsReport"):Has("ABLOutput") then
-                        assign oABLOutput = oResults:GetJsonObject("getABLObjectsReport"):GetJsonObject("ABLOutput").
+                        assign oABLOutput = oResults:GetJsonObject("getABLObjectsReport")
+                                                    :GetJsonObject("ABLOutput").
                 end. /* has result */
             end. /* File Exists */
 
@@ -738,7 +732,8 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
                 /* Obtain the necessary payload from the result. */
                 if oRequest:GetJsonObject("result"):Has("ABLOutput") then
-                    assign oABLOutput = oRequest:GetJsonObject("result"):GetJsonObject("ABLOutput").
+                    assign oABLOutput = oRequest:GetJsonObject("result")
+                                                :GetJsonObject("ABLOutput").
             end. /* has result */
 
             finally:
@@ -746,13 +741,30 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
             end finally.
         end. /* oemanager */
 
-        /* Filter the results based on the exclusion list. */
-        assign poReport = this-object:FilterABLObjects(oABLOutput, pcExclude).
+        /* Limit data to just the ABLObjects data. */
+        if valid-object(oABLOutput) and oABLOutput:Has("ABLObjects") and
+           oABLOutput:GetType("ABLObjects") eq JsonDataType:Array then
+            assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects").
 
-        /* Report how many objects were found within this agent. */
-        oLogger:Info(substitute("Total ABLObjects for Agent '&1': &2", pcAgentID, poReport:length)).
+        /* Begin cycling through each session's objects. */
+        if valid-object(oABLObjects) then
+        do ix = 1 to oABLObjects:Length:
+            /* Parse the report payload into a simpler form. */
+            assign
+                oSessionObj = oABLObjects:GetJsonObject(ix)
+                cSessionID  = string(oSessionObj:GetInteger("AgentSessionId"))
+                .
 
-        return (poReport:length gt 0).
+            /* Filter the results based on the exclusion list. */
+            poReport:Add(cSessionID, this-object:FilterABLObjects(oSessionObj, pcExclude)).
+
+            /* Report how many objects were found within this agent. */
+            oLogger:Info(substitute("Total ABLObjects for Agent '&1', Session '&2': &3",
+                                    pcAgentID, cSessionID,
+                                    poReport:GetJsonArray(cSessionID):length)).
+        end. /* do ix (ABLObjects) */
+
+        return valid-object(poReport).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in ParseABLObjectReport: &1", err:GetMessage(1))).
@@ -760,6 +772,8 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         end catch.
         finally:
             delete object oABLOutput no-error.
+            delete object oABLObjects no-error.
+            delete object oSessionObj no-error.
         end finally.
     end method. /* ParseABLObjectReport */
 
@@ -776,7 +790,8 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
                                                         input  piSessionID as integer,
                                                         input  pcExclude   as character,
                                                         output poReport    as JsonArray ):
-        define variable oABLOutput as JsonObject no-undo.
+        define variable oABLOutput  as JsonObject no-undo.
+        define variable oABLObjects as JsonObject no-undo.
 
         Assert:NotNullOrEmpty(pcAgentID).
         Assert:NonZero(piSessionID).
@@ -808,7 +823,8 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
                     /* Obtain the necessary payload from the result. */
                     if oResults:GetJsonObject("getABLSessionObjectsReport"):Has("ABLOutput") then
-                        assign oABLOutput = oResults:GetJsonObject("getABLSessionObjectsReport"):GetJsonObject("ABLOutput").
+                        assign oABLOutput = oResults:GetJsonObject("getABLSessionObjectsReport")
+                                                    :GetJsonObject("ABLOutput").
                 end. /* has result */
             end. /* File Exists */
 
@@ -841,7 +857,8 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
                 /* Obtain the necessary payload from the result. */
                 if oRequest:GetJsonObject("result"):Has("ABLOutput") then
-                    assign oABLOutput = oRequest:GetJsonObject("result"):GetJsonObject("ABLOutput").
+                    assign oABLOutput = oRequest:GetJsonObject("result")
+                                                :GetJsonObject("ABLOutput").
             end. /* has result */
 
             finally:
@@ -849,8 +866,13 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
             end finally.
         end. /* oemanager */
 
+        /* Limit data to the first ABLObject, which should be the requested session. */
+        if valid-object(oABLOutput) and oABLOutput:Has("ABLObjects") and
+           oABLOutput:GetType("ABLObjects") eq JsonDataType:Array then
+            assign oABLObjects = oABLOutput:GetJsonArray("ABLObjects"):GetJsonObject(1).
+
         /* Filter the results based on the exclusion list. */
-        assign poReport = this-object:FilterABLObjects(oABLOutput, pcExclude).
+        assign poReport = this-object:FilterABLObjects(oABLObjects, pcExclude).
 
         /* Report how many objects were found within this agent. */
         oLogger:Info(substitute("Total ABLObjects for Agent '&1', Session '&2': &3",
@@ -864,6 +886,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         end catch.
         finally:
             delete object oABLOutput no-error.
+            delete object oABLObjects no-error.
         end finally.
     end method. /* ParseSessionABLObjectReport */
 
