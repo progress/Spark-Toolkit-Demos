@@ -21,6 +21,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     define private variable dMetricsStarted as datetime no-undo initial ?.
 
+    define private variable dLastObjectOutput as datetime no-undo initial ?.
+
     /*** Static Instance ***/
 
     define public static property Instance as Spark.Diagnostic.Util.OEMetrics no-undo
@@ -542,5 +544,37 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             delete object oObjReport no-error.
         end finally.
     end method. /* GetSessionABLObjectsReport */
+
+
+    method public void PrepareABLObjectReport ( ):
+        /**
+         * Determine if the timing is right to output an ABLObject report
+         * for the current agent/session based on reporting interval. Since
+         * this class is started as a static instance, it should be tied to
+         * one and ONLY one session for any given agent. Therefore, we should
+         * be able to just check a single value in this class instance to know
+         * when we last output data, and whether it is time to do so again.
+         */
+
+        define variable dNextObjectOutput as datetime no-undo initial ?.
+        if dLastObjectOutput eq ? then do:
+            assign
+                dLastObjectOutput = now /* Begin the next interval as of right now. */
+                dNextObjectOutput = add-interval(now, oConfig:ObjectsOutputInterval, "milliseconds")
+                .
+        end.
+        else
+            assign dNextObjectOutput = add-interval(dLastObjectOutput, oConfig:ObjectsOutputInterval, "milliseconds").
+
+        /* Request report output if current time is equal/greater than the next expected interval. */
+        if now ge dNextObjectOutput then do:
+            /* Run the report request and update the timestamp. */
+            this-object:GetSessionABLObjectsReport().
+            assign dLastObjectOutput = now.
+        end. /* Do Output */
+        else
+            oLogger:Debug(substitute("Time Until Next ABLObjects Report: &1ms",
+                                     interval(dNextObjectOutput, now, "milliseconds"))).
+    end method. /* PrepareABLObjectReport */
 
 end class.

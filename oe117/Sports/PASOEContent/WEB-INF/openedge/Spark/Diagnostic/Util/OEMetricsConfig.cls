@@ -73,7 +73,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     define public property ObjectsExcluded as character no-undo initial "" get. private set.
 
-    define public property ObjectsOutput as integer no-undo initial 0 get. private set.
+    define public property ObjectsOutputInterval as integer no-undo initial 0 get. private set.
 
     define public property ObjectsSource as character no-undo initial "oejmx" get. private set.
 
@@ -164,7 +164,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                                 assign this-object:ObjectsExcluded = oSubObj:GetCharacter("exclude").
 
                             if oSubObj:Has("outputInterval") and oSubObj:GetType("outputInterval") eq JsonDataType:Number then
-                                assign this-object:ObjectsOutput = oSubObj:GetInteger("outputInterval").
+                                assign this-object:ObjectsOutputInterval = oSubObj:GetInteger("outputInterval").
 
                             if oSubObj:Has("source") and oSubObj:GetType("source") eq JsonDataType:String then
                                 assign this-object:ObjectsSource = oSubObj:GetCharacter("source").

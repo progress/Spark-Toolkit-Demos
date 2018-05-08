@@ -16,7 +16,7 @@ block-level on error undo, throw.
 do on error undo, leave:
 
     /* Output the current ABLObjects report for this agent/session. */
-    Spark.Diagnostic.Util.OEMetrics:Instance:GetSessionABLObjectsReport().
+    Spark.Diagnostic.Util.OEMetrics:Instance:PrepareABLObjectReport().
 
     /* Stop the profiler for this request, if enabled. */
     Spark.Diagnostic.Util.OEMetrics:Instance:WriteProfiler().
