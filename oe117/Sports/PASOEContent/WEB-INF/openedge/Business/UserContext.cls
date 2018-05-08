@@ -15,7 +15,7 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class Business.UserContext inherits Spark.Core.Service.SparkEntity:
+class Business.UserContext inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     {Common/webcontext.i}
 

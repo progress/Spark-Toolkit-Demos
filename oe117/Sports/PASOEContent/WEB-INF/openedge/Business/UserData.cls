@@ -17,7 +17,7 @@ using Spark.Core.Util.Sendmail from propath.
 
 block-level on error undo, throw.
 
-class Business.UserData inherits Spark.Core.Service.SparkEntity:
+class Business.UserData inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/sendResetCode", alias="sendResetCode", mediaType="application/json").

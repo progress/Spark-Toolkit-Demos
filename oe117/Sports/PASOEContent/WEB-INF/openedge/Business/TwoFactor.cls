@@ -17,7 +17,7 @@ using Spark.Core.Security.TOTP from propath.
 
 block-level on error undo, throw.
 
-class Business.TwoFactor inherits Spark.Core.Service.SparkEntity:
+class Business.TwoFactor inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     method private logical sendChallenge ( input pcEmail as character,
                                            input pcToken as character ):

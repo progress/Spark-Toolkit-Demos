@@ -13,7 +13,7 @@ using Progress.Lang.* from propath.
 
 block-level on error undo, throw.
 
-class Business.System.WebData inherits Spark.Core.Service.SparkEntity:
+class Business.System.WebData inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     {Common/webdatastore.i}
 

@@ -85,25 +85,11 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         super().
 
         assign oLogger = poLogger. /* Use the logger from the calling class. */
-        this-object:CheckTempPath(). /* Check for common temporary directories. */
         this-object:RefreshConfig(). /* Obtain initial configuration options. */
     end constructor.
 
 
     /***** Private Methods *****/
-
-
-    method private void CheckTempPath ( ):
-        define variable cTempPath as character no-undo.
-
-        /* Make sure we have a consistent path for temporary files. */
-        os-create-dir value(substitute("&1", this-object:TemporaryDir)).
-        os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
-
-        /* Make sure any necessary directories are created. */
-        os-create-dir value(substitute("&1/metrics/ABLObjectsReport", this-object:TemporaryDir)).
-        os-create-dir value(substitute("&1/metrics/ProfilerData", this-object:TemporaryDir)).
-    end method. /* CheckTempPath */
 
 
     method private void ParseConfig ( ):
@@ -233,7 +219,6 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
 
     method public character GetTrackingFlag ( input piAgentID as integer ):
-        os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/TrackingAgents", this-object:TemporaryDir)).
 
         return substitute("&1/metrics/TrackingAgents/&2", this-object:TemporaryDir, piAgentID).

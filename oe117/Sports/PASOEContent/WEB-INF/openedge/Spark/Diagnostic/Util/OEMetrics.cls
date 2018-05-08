@@ -56,6 +56,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     constructor public OEMetrics ( ):
         super().
 
+        /* Make sure we have a consistent path for temporary files. */
+        os-create-dir value(substitute("&1", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
+
+        /* Make sure any necessary subdirectories are created. */
+        os-create-dir value(substitute("&1/metrics/ABLObjectsReport", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics/ProfilerData", this-object:TemporaryDir)).
+
         assign dMetricsStarted = now. /* Note when class was created. */
         assign oConfig = new OEMetricsConfig(oLogger). /* Configuration options. */
     end constructor.

@@ -17,7 +17,7 @@ block-level on error undo, throw.
 
 {Common/config.i}
 
-class Business.Locality inherits Spark.Core.Service.SparkEntity:
+class Business.Locality inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     {Common/state.i}
 
@@ -45,8 +45,6 @@ class Business.Locality inherits Spark.Core.Service.SparkEntity:
         define variable oIter as IIterator       no-undo.
         define variable oPair as IMapEntry       no-undo.
 
-        define buffer bState for state.
-
         empty temp-table states.
 
         assign oMap = new StringStringMap().
@@ -67,7 +65,8 @@ class Business.Locality inherits Spark.Core.Service.SparkEntity:
 
         assign oIter = oMap:EntrySet:Iterator().
         do while oIter:HasNext():
-            oPair = cast(oIter:Next(), IMapEntry).
+            assign oPair = cast(oIter:Next(), IMapEntry).
+
             create states.
             assign
                 states.Abbrev   = string(oPair:key)
@@ -75,21 +74,25 @@ class Business.Locality inherits Spark.Core.Service.SparkEntity:
                 .
             release states no-error.
         end. /* do while */
+
+        finally:
+            delete object oMap no-error.
+            delete object oIter no-error.
+            delete object oPair no-error.
+        end finally.
     end method. /* getProvinces */
 
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/states", alias="states", mediaType="application/json").
     method public void getStates ( output table for states ):
-        define buffer bState for state.
-
         empty temp-table states.
 
-        for each bState no-lock:
+        for each state no-lock:
             create states.
             assign
-                states.Abbrev   = bState.State
-                states.FullName = bState.StateName
+                states.Abbrev   = state.State
+                states.FullName = state.StateName
                 .
             release states no-error.
         end. /* for each */

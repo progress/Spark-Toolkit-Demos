@@ -17,7 +17,7 @@ using Spark.Core.Util.OSTools from propath.
 
 block-level on error undo, throw.
 
-class Business.System.Access inherits Spark.Core.Service.SparkEntity:
+class Business.System.Access inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     define private temp-table ttLine
         field lineNo    as integer

@@ -13,7 +13,7 @@ using Progress.Lang.* from propath.
 
 block-level on error undo, throw.
 
-class Business.Ordering.SalesrepBE inherits Spark.Core.Service.SparkEntity:
+class Business.Ordering.SalesrepBE inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     {Common/salesrep.i}
 

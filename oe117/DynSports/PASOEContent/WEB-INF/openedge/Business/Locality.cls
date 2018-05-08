@@ -41,10 +41,10 @@ class Business.Locality inherits Spark.Core.Service.DynamicResource:
         case country:
             when "can" or
             when "canada" then
-                getProvinces(output table states by-reference).
+                this-object:getProvinces(output table states by-reference).
             when "us" or
             when "usa" then
-                getStates(output table states by-reference).
+                this-object:getStates(output table states by-reference).
         end case.
     end method. /* getStateProvince */
 
@@ -53,8 +53,6 @@ class Business.Locality inherits Spark.Core.Service.DynamicResource:
         define variable oMap  as StringStringMap no-undo.
         define variable oIter as IIterator       no-undo.
         define variable oPair as IMapEntry       no-undo.
-
-        define buffer bState for state.
 
         empty temp-table states.
 
@@ -76,27 +74,34 @@ class Business.Locality inherits Spark.Core.Service.DynamicResource:
 
         assign oIter = oMap:EntrySet:Iterator().
         do while oIter:HasNext():
-            oPair = cast(oIter:Next(), IMapEntry).
+            assign oPair = cast(oIter:Next(), IMapEntry).
+
             create states.
             assign
                 states.Abbrev   = string(oPair:key)
                 states.FullName = string(oPair:value)
                 .
-        end.
+            release states no-error.
+        end. /* do while */
+
+        finally:
+            delete object oMap no-error.
+            delete object oIter no-error.
+            delete object oPair no-error.
+        end finally.
     end method. /* getProvinces */
 
 
     method public void getStates ( output table for states ):
-        define buffer bState for state.
-
         empty temp-table states.
 
-        for each bState no-lock:
+        for each state no-lock:
             create states.
             assign
-                states.Abbrev   = bState.State
-                states.FullName = bState.StateName
+                states.Abbrev   = state.State
+                states.FullName = state.StateName
                 .
+            release states no-error.
         end. /* for each */
     end method. /* getStates */
 
