@@ -1,10 +1,13 @@
 {
 	"general": {
-		"ignore": "Sports.Spark.Core.Security.SportsRealm"
+		"pollIgnore": "Sports.Spark.Core.Security.SportsRealm",
+		"pollStart": "2018-05-07T18:00:00",
+		"pollStop": "2018-05-07T16:00:00"
 	},
 	"objects": {
 		"enabled": true,
-		"exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.Diagnostic.*",
+		"exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.*",
+		"outputInterval": 1200000,
 		"source": "oejmx"
 	},
 	"profiler": {

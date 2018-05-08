@@ -162,17 +162,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         oConfig:RefreshConfig(). /* Update configuration options. */
 
-        if not oConfig:ProfilerEnabled then do:
-            oLogger:Debug("Profiler disabled, leaving StartProfiler").
-            return false.
-        end. /* not enabled */
+        /* Check if profiling is allowed, based on flags and scheduled time. */
+        if not oConfig:IsProfilerEnabled("StartProfiler") then return false.
+        if not oConfig:OnValidSchedule() then return false.
 
         assign cProcedure = this-object:GetProcedureName().
-        if oConfig:MetricsIgnoreList ne "" then do:
+        if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
-            if this-object:InMatchList(cProcedure, oConfig:MetricsIgnoreList) then do:
-                oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
-                return false.
+            if this-object:InMatchList(cProcedure, oConfig:PollingIgnoreList) then do:
+                oLogger:Trace(substitute("[Profiler] Procedure Ignored: &1", cProcedure)).
+                return false. /* Leave on first match of ignore list. */
             end. /* ignored */
         end. /* has ignore list */
 
@@ -227,7 +226,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* StartProfiler */
 
 
-    method public logical WriteProfiler ( input piMinExecTime as integer ):
+    method public logical WriteProfiler ( input piExecThreshold as integer ):
         /**
          * Method is created as static to allow profiler output to be generated at
          * any time in the request lifecycle without dependency on a class instance.
@@ -238,9 +237,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * available or not (eg. excution time may always be reported).
          */
 
-        if not oConfig:ProfilerEnabled then do:
-            oLogger:Debug("Profiler disabled, leaving WriteProfiler").
-
+        if not oConfig:IsProfilerEnabled("WriteProfiler") then do:
             /* Even if profiling has been disabled, make sure we turn it off. */
             if profiler:enabled then            
                 assign
@@ -264,20 +261,21 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 .
 
             /* Only write the data out if execution time exceeds threshold. */
-            if piMinExecTime eq ? or piMinExecTime lt 0 then assign piMinExecTime = 0.
-            if iExecTime gt piMinExecTime then do:
+            if piExecThreshold eq ? or piExecThreshold lt 0 then assign piExecThreshold = 0.
+            if iExecTime gt piExecThreshold then do:
+                /* Execution time threshold met, output the profiler data. */
                 oLogger:Info(substitute("&1 | &2ms | &3",
                                         this-object:GetProcedureName(), iExecTime, profiler:file-name)).
                 profiler:write-data().
-            end. /* iExecTime gt piMinExecTime */
+            end. /* iExecTime gt piExecThreshold */
             else
-                oLogger:Info(substitute("&1 | &2ms | -No Profiler Output-",
+                oLogger:Info(substitute("&1 | &2ms | -Threshold Not Met; No Profiler Output-",
                                         this-object:GetProcedureName(), iExecTime)).
 
             return true.
         end. /* profiler:enabled */
         else
-            oLogger:Info(substitute("&1 | &2ms | -Profiler Disabled-",
+            oLogger:Info(substitute("&1 | &2ms | -Profiler Not Enabled-",
                                     this-object:GetProcedureName(), iExecTime)).
 
         return false. /* Profiler not enabled. */
@@ -307,17 +305,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         oConfig:RefreshConfig(). /* Update configuration options. */
 
-        if not oConfig:ObjectsEnabled then do:
-            oLogger:Debug("Objects disabled, leaving StartTrackingObjects").
-            return false.
-        end. /* not enabled */
+        /* Check if object reporting is allowed, based on flags and scheduled time. */
+        if not oConfig:AreObjectsEnabled("StartTrackingObjects") then return false.
+        if not oConfig:OnValidSchedule() then return false.
 
         assign cProcedure = this-object:GetProcedureName().
-        if oConfig:MetricsIgnoreList ne "" then do:
+        if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
-            if this-object:InMatchList(cProcedure, oConfig:MetricsIgnoreList) then do:
-                oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
-                return false.
+            if this-object:InMatchList(cProcedure, oConfig:PollingIgnoreList) then do:
+                oLogger:Trace(substitute("[Tracking] Procedure Ignored: &1", cProcedure)).
+                return false. /* Leave on first match of ignore list. */
             end. /* ignored */
         end. /* has ignore list */
 
@@ -354,17 +351,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * Request the current agent stop tracking ABLObjects.
          */
 
-        define variable iAgentID as integer no-undo.
-
-        if not oConfig:ObjectsEnabled then do:
-            oLogger:Debug("Objects disabled, leaving StopTrackingObjects").
-            return false.
-        end. /* not enabled */
-
-        assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
+        if not oConfig:AreObjectsEnabled("StopTrackingObjects") then return false.
 
         /* Just immediately disable the object tracking for this agent. */
-        return oABLObjectsReport:TrackABLObjects(string(iAgentID), false).
+        return oABLObjectsReport:TrackABLObjects(string(this-object:GetAgentID()), false).
     end method. /* StopTrackingObjects */
     
 
@@ -382,17 +372,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         oConfig:RefreshConfig(). /* Update configuration options. */
 
-        if not oConfig:ObjectsEnabled then do:
-            oLogger:Debug("Objects disabled, leaving GetABLObjectsReport").
-            return false.
-        end. /* not enabled */
+        /* Check if object reporting is allowed, based on flags and scheduled time. */
+        if not oConfig:AreObjectsEnabled("GetABLObjectsReport") then return false.
+        if not oConfig:OnValidSchedule() then return false.
 
         assign cProcedure = this-object:GetProcedureName().
-        if oConfig:MetricsIgnoreList ne "" then do:
+        if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
-            if this-object:InMatchList(cProcedure, oConfig:MetricsIgnoreList) then do:
-                oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
-                return false.
+            if this-object:InMatchList(cProcedure, oConfig:PollingIgnoreList) then do:
+                oLogger:Trace(substitute("[Objects] Procedure Ignored: &1", cProcedure)).
+                return false. /* Leave on first match of ignore list. */
             end. /* ignored */
         end. /* has ignore list */
 
@@ -466,10 +455,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         oConfig:RefreshConfig(). /* Update configuration options. */
 
-        if not oConfig:ObjectsEnabled then do:
-            oLogger:Debug("Objects disabled, leaving GetAllABLObjectsReport").
-            return false.
-        end. /* not enabled */
+        /* Check if object reporting is allowed, based on flags and scheduled time. */
+        if not oConfig:AreObjectsEnabled("GetAllABLObjectsReport") then return false.
+        if not oConfig:OnValidSchedule() then return false.
 
         /* Get the agents if object is not present. */
         if not valid-object(ABLObjectsReport:AgentList) then oABLObjectsReport:GetAgents().
@@ -520,17 +508,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         oConfig:RefreshConfig(). /* Update configuration options. */
 
-        if not oConfig:ObjectsEnabled then do:
-            oLogger:Debug("Objects disabled, leaving GetAllABLObjectsReport").
-            return false.
-        end. /* not enabled */
+        /* Check if object reporting is allowed, based on flags and scheduled time. */
+        if not oConfig:AreObjectsEnabled("GetAllABLObjectsReport") then return false.
+        if not oConfig:OnValidSchedule() then return false.
 
         assign cProcedure = this-object:GetProcedureName().
-        if oConfig:MetricsIgnoreList ne "" then do:
+        if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
-            if this-object:InMatchList(cProcedure, oConfig:MetricsIgnoreList) then do:
-                oLogger:Debug(substitute("Procedure skipped due to ignore list: &1", cProcedure)).
-                return false.
+            if this-object:InMatchList(cProcedure, oConfig:PollingIgnoreList) then do:
+                oLogger:Trace(substitute("[Objects] Procedure Ignored: &1", cProcedure)).
+                return false. /* Leave on first match of ignore list. */
             end. /* ignored */
         end. /* has ignore list */
 

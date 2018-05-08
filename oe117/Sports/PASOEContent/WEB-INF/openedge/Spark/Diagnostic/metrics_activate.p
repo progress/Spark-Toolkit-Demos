@@ -13,8 +13,16 @@ block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
 
-/* Start the profiler for this request, if enabled. */
-Spark.Diagnostic.Util.OEMetrics:Instance:StartProfiler().
+do on error undo, leave:
 
-/* Begin tracking all objects for the current agent. */
-Spark.Diagnostic.Util.OEMetrics:Instance:StartTrackingObjects().
+    /* Start the profiler for this request, if enabled. */
+    Spark.Diagnostic.Util.OEMetrics:Instance:StartProfiler().
+
+    /* Begin tracking all objects for the current agent. */
+    Spark.Diagnostic.Util.OEMetrics:Instance:StartTrackingObjects().
+
+    catch err as Progress.Lang.Error:
+        /* Catch and Release */
+        message substitute("Error in Metrics Activate: &1", err:GetMessage(1)).
+    end catch.
+end.

@@ -249,15 +249,15 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
         assign iTime = mtime. /* Each request should be timestamped. */
         assign cBinaryPath = substitute("&1/bin/&2", this-object:CatalinaBase, OEJMXBinary). /* oejmx.[bat|sh] */
-        assign cOutputPath = substitute("&1.&2.json", entry(1, pcQueryPath, "."), iTime).
+        assign cOutputPath = substitute("&1.&2.json", entry(1, pcQueryPath, "."), iTime). /* Temp output file. */
 
         /* Construct the final command string to be executed. */
         assign cCommand = substitute("&1 -R -Q &2 -O &3", cBinaryPath, pcQueryPath, cOutputPath).
 
         /* Run command and report information to log file. */
         oLogger:Debug(substitute("Running Command: &1", cCommand)).
-        os-command no-console value(cCommand).
-        oLogger:Debug(substitute("Command Finished: &1", pcQueryPath)).
+        os-command no-console value(cCommand). /* Cannot use silent or no-wait here. */
+        oLogger:Debug(substitute("Command Finished: &1 (&2ms)", pcQueryPath, (mtime - iTime))).
 
         return cOutputPath. /* Return the expected location of the query output. */
 
@@ -794,8 +794,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
                 assign oParser = new ObjectModelParser().
                 assign oResults = cast(oParser:ParseFile(cOutPath), JsonObject).
 
-                if valid-object(oResults) and oResults:Has("getABLSessionObjectsReport") then
-                do on error undo, throw:
+                if valid-object(oResults) and oResults:Has("getABLSessionObjectsReport") then do:
                     /* Cannot proceed if there is no result. */
                     if oResults:GetType("getABLSessionObjectsReport") ne JsonDataType:Object then return ?.
 

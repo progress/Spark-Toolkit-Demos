@@ -57,25 +57,25 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     /*** Public Properties ***/
 
-    define public property MetricsStartTime as datetime no-undo initial ? get. set.
+    define public property PollingIgnoreList as character no-undo initial "" get. private set.
 
-    define public property MetricsStopTime as datetime no-undo initial ? get. set.
+    define public property PollingStartTime as datetime no-undo initial ? get. private set.
 
-    define public property MetricsIgnoreList as character no-undo initial "" get. set.
+    define public property PollingStopTime as datetime no-undo initial ? get. private set.
 
-    define public property ProfilerEnabled as logical no-undo initial false get. set.
+    define public property ProfilerEnabled as logical no-undo initial false get. private set.
 
-    define public property ProfilerFilter as character no-undo initial "" get. set.
+    define public property ProfilerFilter as character no-undo initial "" get. private set.
 
-    define public property ProfilerThreshold as integer no-undo initial 0 get. set.
+    define public property ProfilerThreshold as integer no-undo initial 0 get. private set.
 
-    define public property ObjectsEnabled as logical no-undo initial false get. set.
+    define public property ObjectsEnabled as logical no-undo initial false get. private set.
 
-    define public property ObjectsExcluded as character no-undo initial "" get. set.
+    define public property ObjectsExcluded as character no-undo initial "" get. private set.
 
-    define public property ObjectsOutput as integer no-undo initial 0 get. set.
+    define public property ObjectsOutput as integer no-undo initial 0 get. private set.
 
-    define public property ObjectsSource as character no-undo initial "oejmx" get. set.
+    define public property ObjectsSource as character no-undo initial "oejmx" get. private set.
 
 
     /***** Constructor/Destructor *****/
@@ -131,14 +131,23 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                         if oConfig:Has("general") and oConfig:GetType("general") eq JsonDataType:Object then do:
                             assign oSubObj = oConfig:GetJsonObject("general").
 
-                            if oSubObj:Has("ignore") and oSubObj:GetType("ignore") eq JsonDataType:String then
-                                assign this-object:MetricsIgnoreList = oSubObj:GetCharacter("ignore").
+                            if oSubObj:Has("pollIgnore") and oSubObj:GetType("pollIgnore") eq JsonDataType:String then
+                                assign this-object:PollingIgnoreList = oSubObj:GetCharacter("pollIgnore").
 
-                            if oSubObj:Has("reportStart") and oSubObj:GetType("reportStart") eq JsonDataType:String then
-                                assign this-object:MetricsStartTime = oSubObj:GetDatetime("reportStart").
+                            if oSubObj:Has("pollStart") and oSubObj:GetType("pollStart") eq JsonDataType:String then
+                                assign this-object:PollingStartTime = oSubObj:GetDatetime("pollStart").
+                            else
+                                assign this-object:PollingStartTime = ?.
 
-                            if oSubObj:Has("reportStop") and oSubObj:GetType("reportStop") eq JsonDataType:String then
-                                assign this-object:MetricsStopTime = oSubObj:GetDatetime("reportStop").
+                            if oSubObj:Has("pollStop") and oSubObj:GetType("pollStop") eq JsonDataType:String then
+                                assign this-object:PollingStopTime = oSubObj:GetDatetime("pollStop").
+                            else
+                                assign this-object:PollingStopTime = ?.
+
+                            if this-object:PollingStartTime ne ? and this-object:PollingStopTime ne ? then
+                                oLogger:Debug(substitute("Using polling schedule: &1 to &2",
+                                                         this-object:PollingStartTime,
+                                                         this-object:PollingStopTime)).
 
                             delete object oSubObj no-error.
                         end. /* has sub-object */
@@ -230,4 +239,34 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         return substitute("&1/metrics/TrackingAgents/&2", this-object:TemporaryDir, piAgentID).
     end method. /* GetTrackingFlag */
 
+
+    method public logical AreObjectsEnabled ( input pcMethodName as character ):
+        if not this-object:ObjectsEnabled then do:
+            oLogger:Debug(substitute("Objects disabled, leaving &1", pcMethodName)).
+            return false.
+        end. /* not enabled */
+
+        return true.
+    end method. /* AreObjectsEnabled */
+
+
+    method public logical IsProfilerEnabled ( input pcMethodName as character ):
+        if not this-object:ProfilerEnabled then do:
+            oLogger:Debug(substitute("Profiler disabled, leaving &1", pcMethodName)).
+            return false.
+        end. /* not enabled */
+
+        return true.
+    end method. /* IsProfilerEnabled */
+
+
+    method public logical OnValidSchedule ():
+        if this-object:PollingStartTime ne ? and this-object:PollingStopTime ne ? then do:
+            /* Do not allow polling outside of scheduled start/stop times. */
+            if now lt this-object:PollingStartTime then return false. /* Before Start */
+            if now gt this-object:PollingStopTime then return false. /* After Stop */
+        end. /* has polling schedule */
+
+        return true.
+    end method. /* CheckSchedule */
 end class.
