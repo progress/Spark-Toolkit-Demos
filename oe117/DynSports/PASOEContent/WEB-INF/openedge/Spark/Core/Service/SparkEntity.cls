@@ -434,6 +434,12 @@ class Spark.Core.Service.SparkEntity inherits BusinessEntity implements ISparkEn
     end method. /* initialize */
 
     method public void dispose ( ):
+        define variable ix as integer no-undo.
+        do ix = 1 to extent(DataSourceArray):
+            delete object DataSourceArray[ix] no-error.
+        end.
+
+        delete object ProDataSet no-error.
     end method. /* dispose */
 
     method public void postRowFill ( input dataset-handle phDataset ):

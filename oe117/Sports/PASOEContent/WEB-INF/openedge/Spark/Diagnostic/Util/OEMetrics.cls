@@ -271,14 +271,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 profiler:write-data().
             end. /* iExecTime gt piExecThreshold */
             else
-                oLogger:Info(substitute("&1 | &2ms | -Threshold Not Met; No Profiler Output-",
-                                        this-object:GetProcedureName(), iExecTime)).
+                oLogger:Debug(substitute("&1 | &2ms | -Threshold Not Met; No Profiler Output-",
+                                         this-object:GetProcedureName(), iExecTime)).
 
             return true.
         end. /* profiler:enabled */
         else
-            oLogger:Info(substitute("&1 | &2ms | -Profiler Not Enabled-",
-                                    this-object:GetProcedureName(), iExecTime)).
+            oLogger:Trace(substitute("&1 | &2ms | -Profiler Not Enabled-",
+                                     this-object:GetProcedureName(), iExecTime)).
 
         return false. /* Profiler not enabled. */
 

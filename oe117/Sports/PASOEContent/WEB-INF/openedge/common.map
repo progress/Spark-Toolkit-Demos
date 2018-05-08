@@ -7,8 +7,8 @@
           "GET": {
             "contentType": "application\/json",
             "statusCode": 200,
-            "name": "dataservice.catalog",
-            "file": "$CATALINA_BASE\/webapps\/$oepas-webapp\/static\/common.json"
+            "file": "$CATALINA_BASE\/webapps\/$oepas-webapp\/static\/common.json",
+            "name": "dataservice.catalog"
           }
         },
         "\/user": {

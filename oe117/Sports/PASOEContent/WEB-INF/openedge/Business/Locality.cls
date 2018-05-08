@@ -30,10 +30,10 @@ class Business.Locality inherits Spark.Core.Service.SparkEntity:
         case country:
             when "can" or
             when "canada" then
-                getProvinces(output table states by-reference).
+                this-object:getProvinces(output table states by-reference).
             when "us" or
             when "usa" then
-                getStates(output table states by-reference).
+                this-object:getStates(output table states by-reference).
         end case.
     end method. /* getStateProvince */
 
@@ -73,7 +73,8 @@ class Business.Locality inherits Spark.Core.Service.SparkEntity:
                 states.Abbrev   = string(oPair:key)
                 states.FullName = string(oPair:value)
                 .
-        end.
+            release states no-error.
+        end. /* do while */
     end method. /* getProvinces */
 
 
@@ -90,6 +91,7 @@ class Business.Locality inherits Spark.Core.Service.SparkEntity:
                 states.Abbrev   = bState.State
                 states.FullName = bState.StateName
                 .
+            release states no-error.
         end. /* for each */
     end method. /* getStates */
 

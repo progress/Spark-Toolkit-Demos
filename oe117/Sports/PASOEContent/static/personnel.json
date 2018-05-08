@@ -1,10 +1,10 @@
 {
     "version": "1.5",
-    "lastModified": "Fri Dec 08 15:21:08 EST 2017",
+    "lastModified": "Tue May 08 13:13:16 EDT 2018",
     "services": [{
         "name": "personnel",
         "address": "\/web\/pdo\/personnel",
-        "useRequest": false,
+        "useRequest": true,
         "resources": [
             {
                 "name": "employee",
