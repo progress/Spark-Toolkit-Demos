@@ -19,9 +19,11 @@ block-level on error undo, throw.
 
 class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-widget-pool final:
 
-    define private variable dMetricsStarted as datetime no-undo initial ?.
-
     define private variable dLastObjectOutput as datetime no-undo initial ?.
+
+    define private variable hServer as handle no-undo.
+
+    define private variable hAsync as handle no-undo.
 
     /*** Static Instance ***/
 
@@ -64,12 +66,19 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         os-create-dir value(substitute("&1/metrics/ABLObjectsReport", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/ProfilerData", this-object:TemporaryDir)).
 
-        assign dMetricsStarted = now. /* Note when class was created. */
         assign oConfig = new OEMetricsConfig(oLogger). /* Configuration options. */
+
+        create server hServer. /* For potential use with APSV requests. */
     end constructor.
 
 
     destructor OEMetrics ( ):
+        if valid-handle(hServer) and hServer:connected() then do:
+            delete object hAsync no-error.
+            hServer:disconnect().
+            delete object hServer no-error.
+        end. /* hServer */
+
         delete object oConfig no-error.
         delete object oLogger no-error.
         delete object oABLObjectsReport no-error.
@@ -141,6 +150,22 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             delete object oRequestInfo no-error.
         end finally.
     end method. /* GetSessionID */
+
+
+    method private logical GetConnection ( ):
+        if valid-handle(hServer) and hServer:connected() then
+            hServer:disconnect().
+
+        if oConfig:ObjectsUseAPSV then do:
+            define variable cServerConn as character no-undo initial "".
+            assign cServerConn = substitute("-URL &1 -sessionModel Session-managed", oConfig:ObjectsApsvURI).
+
+            if not hServer:connected() then 
+                hServer:connect(cServerConn).
+        end. /* ObjectsUseAPSV */
+
+        return hServer:connected().
+    end method. /* GetConnection */
 
 
     /***** Public Methods *****/
@@ -309,30 +334,19 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         if oConfig:ObjectsUseAPSV then
         do on error undo, throw:
-            define variable cServerConn as character no-undo initial "".
-            assign cServerConn = substitute("-URL &1 -sessionModel Session-managed", oConfig:ObjectsApsvURI).
-
-            define variable hServer as handle no-undo.
-            create server hServer.
-
-            hServer:connect(cServerConn).
-            if hServer:connected() then do:
-                define variable hProc  as handle no-undo.
-                define variable hAsync as handle no-undo.
-                define variable hCPO   as handle no-undo.
-
+            if this-object:GetConnection() then do:
                 run "Spark/Diagnostic/Interface/StartTrackingObjects.p" on server hServer
                     asynchronous set hAsync (this-object:GetAgentID(), this-object:GetProcedureName()) no-error.
                 if error-status:error then
                     oLogger:Error(substitute("Error creating async handle: &1", error-status:get-message(1))).
-            end. /* connected */
 
-            finally:
-                if valid-handle(hServer) and hServer:connected() then
-                    hServer:disconnect().
-                delete object hAsync.
-                delete object hServer.
-            end finally.
+                return true.
+            end. /* Has Connection */
+
+            catch err as Progress.Lang.Error:
+                oLogger:Error(substitute("Error in APSV request: &1", err:GetMessage(1))).
+                return false.
+            end catch.
         end. /* Use APSV */
         else /* When no parameters passed, use the current agent ID. */
             return this-object:StartTrackingObjects(this-object:GetAgentID(), this-object:GetProcedureName()).
@@ -351,7 +365,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         define variable lIsTracking as logical   no-undo initial false.
         define variable cTrackFlag  as character no-undo.
-        define variable dFileCreate as datetime  no-undo.
 
         oConfig:RefreshConfig(). /* Update configuration options. */
 
@@ -370,13 +383,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
         assign cTrackFlag = oConfig:GetTrackingFlag(piAgentID).
         file-info:file-name = cTrackFlag.
+
         if file-info:full-pathname ne ? then do:
-            /* Make sure flag was created AFTER the agent started this class instance. */
-            assign dFileCreate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
-            if dFileCreate lt dMetricsStarted then
-                os-delete value(file-info:full-pathname). /* Remove the tracking flag. */
-            else
-                assign lIsTracking = true. /* Flag exists, assume tracking is enabled. */
+            assign lIsTracking = true. /* Flag exists, assume tracking is enabled. */
+            oLogger:Debug(substitute("Tracking Agent #&1: &2", piAgentID, lIsTracking)).
         end. /* file exists */
 
         if not lIsTracking then /* Turn on tracking if not already, and get latest result. */
@@ -405,6 +415,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          */
 
         if not oConfig:AreObjectsEnabled("StopTrackingObjects") then return false.
+
+        /* Remove the agent flag when tracking is stopped. */
+        define variable cTrackFlag as character no-undo.
+        assign cTrackFlag = oConfig:GetTrackingFlag(piAgentID).
+        file-info:file-name = cTrackFlag.
+        if file-info:full-pathname ne ? then
+            os-delete value(file-info:full-pathname).
 
         /* Just immediately disable the object tracking for this agent. */
         return oABLObjectsReport:TrackABLObjects(string(this-object:GetAgentID()), false).
@@ -641,30 +658,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         if oConfig:ObjectsUseAPSV then
         do on error undo, throw:
-            define variable cServerConn as character no-undo initial "".
-            assign cServerConn = substitute("-URL &1 -sessionModel Session-managed", oConfig:ObjectsApsvURI).
-
-            define variable hServer as handle no-undo.
-            create server hServer.
-
-            hServer:connect(cServerConn).
-            if hServer:connected() then do:
-                define variable hProc  as handle no-undo.
-                define variable hAsync as handle no-undo.
-                define variable hCPO   as handle no-undo.
-
+            if this-object:GetConnection() then do:
                 run "Spark/Diagnostic/Interface/PrepareSessionABLObjectReport.p" on server hServer
                     asynchronous set hAsync (piAgentID, piSessionID) no-error.
                 if error-status:error then
                     oLogger:Error(substitute("Error creating async handle: &1", error-status:get-message(1))).
-            end. /* connected */
+            end. /* Has Connection */
 
-            finally:
-                if valid-handle(hServer) and hServer:connected() then
-                    hServer:disconnect().
-                delete object hAsync.
-                delete object hServer.
-            end finally.
+            catch err as Progress.Lang.Error:
+                oLogger:Error(substitute("Error in APSV request: &1", err:GetMessage(1))).
+            end catch.
         end. /* Use APSV */
         else /* When no parameters passed, use the current agent ID. */
             this-object:PrepareSessionABLObjectReport(piAgentID, piSessionID).

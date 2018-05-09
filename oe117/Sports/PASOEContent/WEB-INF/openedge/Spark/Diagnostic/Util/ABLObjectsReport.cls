@@ -656,7 +656,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         Assert:NotNullOrEmpty(pcAgentID).
 
         /* Leave a quick note about what is being built, and with any exceptions. */
-        oLogger:Debug(substitute("Reporting ABLObjects for Agent '&1', excluding: &2", pcAgentID, pcExclude)).
+        oLogger:Debug(substitute("Reporting ABLObjects for Agent #&1, excluding: &2", pcAgentID, pcExclude)).
 
         /* Create a new object with our per-session object list. */
         assign poReport = new JsonObject().
@@ -782,7 +782,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         Assert:NonZero(piSessionID).
 
         /* Leave a quick note about what is being built, and with any exceptions. */
-        oLogger:Debug(substitute("Reporting ABLObjects for Agent '&1', Session '&2', excluding: &3",
+        oLogger:Debug(substitute("Reporting ABLObjects for Agent #&1, Session #&2, excluding: &3",
                                  pcAgentID, piSessionID, pcExclude)).
 
         if this-object:MetricSource eq "oejmx" then

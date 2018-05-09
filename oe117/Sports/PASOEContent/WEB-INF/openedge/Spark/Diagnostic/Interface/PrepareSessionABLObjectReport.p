@@ -16,6 +16,7 @@ define input parameter piSessionID as integer no-undo.
 
 /* ***************************  Main Block  *************************** */
 
-message "PrepareSessionABLObjectReport:" piAgentID "/" piSessionID.
+if log-manager:logging-level ge 3 then
+    message "Agent/Session:" piAgentID "/" piSessionID.
 
 Spark.Diagnostic.Util.OEMetrics:Instance:PrepareSessionABLObjectReport(piAgentID, piSessionID).

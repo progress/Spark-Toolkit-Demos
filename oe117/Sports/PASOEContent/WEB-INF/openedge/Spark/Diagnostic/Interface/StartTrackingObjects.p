@@ -16,6 +16,7 @@ define input parameter pcProcedure as character no-undo.
 
 /* ***************************  Main Block  *************************** */
 
-message "StartTrackingObjects:" piAgentID.
+if log-manager:logging-level ge 3 then
+    message "Agent/Proc:" piAgentID "/" pcProcedure.
 
 Spark.Diagnostic.Util.OEMetrics:Instance:StartTrackingObjects(piAgentID, pcProcedure).
