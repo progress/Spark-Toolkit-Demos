@@ -1,14 +1,16 @@
 {
 	"general": {
 		"pollIgnore": "Sports.Spark.Core.Security.SportsRealm*",
-		"pollStart": "2018-05-08T08:00:00",
-		"pollStop": "2018-05-08T17:00:00"
+		"pollStart": "2018-05-09T08:00:00",
+		"pollStop": "2018-05-09T17:00:00"
 	},
 	"objects": {
+		"apsvURI": "http://localhost:8830/sports/apsv",
 		"enabled": true,
 		"exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.*",
-		"outputInterval": 600000,
-		"source": "oejmx"
+		"outputInterval": 300000,
+		"source": "oejmx",
+		"useAPSV": true
 	},
 	"profiler": {
 		"enabled": true,

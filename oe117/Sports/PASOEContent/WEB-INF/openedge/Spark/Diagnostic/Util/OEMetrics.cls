@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
     File        : OEMetrics
-    Purpose     : Gather and report OE metrics for the current PAS instance 
-    Description : 
+    Purpose     : Gather and report OE metrics for the current PAS instance
+    Description :
     Author(s)   : Dustin Grau (dugrau@progress.com)
     Created     : Wed Apr 25 13:58:59 EDT 2018
     Notes       : Provides front-end methods to enable/disable features
@@ -17,7 +17,7 @@ using Spark.Diagnostic.Util.OEMetrics from propath.
 
 block-level on error undo, throw.
 
-class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-widget-pool final: 
+class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-widget-pool final:
 
     define private variable dMetricsStarted as datetime no-undo initial ?.
 
@@ -91,7 +91,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         return false.
     end method. /* InMatchList */
-    
+
 
     method private OERequestInfo GetRequestInfo ( ):
         return cast(session:current-request-info, OERequestInfo).
@@ -188,7 +188,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Obtain the request information and set/increment special values. */
         assign this-object:RequestCount = this-object:RequestCount + 1.
         assign this-object:RequestStart = now.
-        
+
         /* Filter should not be blank, so fill with wildcard at least. */
         if (pcFilter gt "") ne true then assign pcFilter = "*".
 
@@ -249,7 +249,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         if not oConfig:IsProfilerEnabled("WriteProfiler") then do:
             /* Even if profiling has been disabled, make sure we turn it off. */
-            if profiler:enabled then            
+            if profiler:enabled then
                 assign
                     profiler:profiling = false
                     profiler:enabled   = false
@@ -300,6 +300,48 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     method public logical StartTrackingObjects ( ):
         /**
+         * Send the request to obtain the report by either local (JMX/OEM)
+         * or remote (apsv) means. If using remote, the same code will be
+         * utilized though hopefully in an asynchronous way.
+         */
+
+        oConfig:RefreshConfig(). /* Update configuration options. */
+
+        if oConfig:ObjectsUseAPSV then
+        do on error undo, throw:
+            define variable cServerConn as character no-undo initial "".
+            assign cServerConn = substitute("-URL &1 -sessionModel Session-managed", oConfig:ObjectsApsvURI).
+
+            define variable hServer as handle no-undo.
+            create server hServer.
+
+            hServer:connect(cServerConn).
+            if hServer:connected() then do:
+                define variable hProc  as handle no-undo.
+                define variable hAsync as handle no-undo.
+                define variable hCPO   as handle no-undo.
+
+                run "Spark/Diagnostic/Interface/StartTrackingObjects.p" on server hServer
+                    asynchronous set hAsync (this-object:GetAgentID(), this-object:GetProcedureName()) no-error.
+                if error-status:error then
+                    oLogger:Error(substitute("Error creating async handle: &1", error-status:get-message(1))).
+            end. /* connected */
+
+            finally:
+                if valid-handle(hServer) and hServer:connected() then
+                    hServer:disconnect().
+                delete object hAsync.
+                delete object hServer.
+            end finally.
+        end. /* Use APSV */
+        else /* When no parameters passed, use the current agent ID. */
+            return this-object:StartTrackingObjects(this-object:GetAgentID(), this-object:GetProcedureName()).
+    end method. /* StartTrackingObjects */
+
+
+    method public logical StartTrackingObjects ( input piAgentID   as integer,
+                                                 input pcProcedure as character ):
+        /**
          * Request the current agent start tracking ABLObjects. This
          * should first check a local flag to determine if tracking
          * has already been started, as a request via OEJMX can be
@@ -307,10 +349,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * session memory.
          */
 
-        define variable iAgentID    as integer   no-undo.
-        define variable cProcedure  as character no-undo.
-        define variable cTrackFlag  as character no-undo.
         define variable lIsTracking as logical   no-undo initial false.
+        define variable cTrackFlag  as character no-undo.
         define variable dFileCreate as datetime  no-undo.
 
         oConfig:RefreshConfig(). /* Update configuration options. */
@@ -319,19 +359,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if not oConfig:AreObjectsEnabled("StartTrackingObjects") then return false.
         if not oConfig:OnValidSchedule() then return false.
 
-        assign cProcedure = this-object:GetProcedureName().
         if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
-            if this-object:InMatchList(cProcedure, oConfig:PollingIgnoreList) then do:
-                oLogger:Trace(substitute("[Tracking] Procedure Ignored: &1", cProcedure)).
+            if this-object:InMatchList(pcProcedure, oConfig:PollingIgnoreList) then do:
+                oLogger:Trace(substitute("[Tracking] Procedure Ignored: &1", pcProcedure)).
                 return false. /* Leave on first match of ignore list. */
             end. /* ignored */
         end. /* has ignore list */
 
-        assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
-
         /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
-        assign cTrackFlag = oConfig:GetTrackingFlag(iAgentID).
+        assign cTrackFlag = oConfig:GetTrackingFlag(piAgentID).
         file-info:file-name = cTrackFlag.
         if file-info:full-pathname ne ? then do:
             /* Make sure flag was created AFTER the agent started this class instance. */
@@ -343,7 +380,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         end. /* file exists */
 
         if not lIsTracking then /* Turn on tracking if not already, and get latest result. */
-            assign lIsTracking = oABLObjectsReport:TrackABLObjects(string(iAgentID), true).
+            assign lIsTracking = oABLObjectsReport:TrackABLObjects(string(piAgentID), true).
 
         /* Remember whether objects are being tracked for this agent. */
         if lIsTracking then do:
@@ -357,6 +394,12 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     method public logical StopTrackingObjects ( ):
+        /* Run the request using the current agent ID. */
+        return this-object:StopTrackingObjects(this-object:GetAgentID()).
+    end method. /* StopTrackingObjects */
+
+
+    method public logical StopTrackingObjects ( input piAgentID as integer ):
         /**
          * Request the current agent stop tracking ABLObjects.
          */
@@ -366,7 +409,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Just immediately disable the object tracking for this agent. */
         return oABLObjectsReport:TrackABLObjects(string(this-object:GetAgentID()), false).
     end method. /* StopTrackingObjects */
-    
+
 
     method public logical GetABLObjectsReport ( ):
         /**
@@ -505,14 +548,19 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     method public logical GetSessionABLObjectsReport ( ):
+        /* When no parameters passed, use the current agent/session ID's. */
+        return this-object:GetSessionABLObjectsReport(this-object:GetAgentID(), this-object:GetSessionID()).
+    end method. /* GetSessionABLObjectsReport */
+
+
+    method public logical GetSessionABLObjectsReport ( input piAgentID   as integer,
+                                                       input piSessionID as integer ):
         /**
          * Return the available ABLObjectsReport for the
          * agent and session of the current request.
          */
 
         define variable oObjReport as JsonArray no-undo.
-        define variable iAgentID   as integer   no-undo.
-        define variable iSessionID as integer   no-undo.
         define variable cProcedure as character no-undo.
         define variable lReturn    as logical   no-undo initial false.
 
@@ -531,19 +579,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             end. /* ignored */
         end. /* has ignore list */
 
-        assign /* Get values from current request. */
-            iAgentID   = this-object:GetAgentID()
-            iSessionID = this-object:GetSessionID()
-            .
-
-        if iAgentID gt 0 and iSessionID gt 0 then do:
+        if piAgentID gt 0 and piSessionID gt 0 then do:
             /* Request the ABL objects for this specific agent and session. */
-            if oABLObjectsReport:ParseSessionABLObjectReport(input  iAgentID,
-                                                             input  iSessionID,
+            if oABLObjectsReport:ParseSessionABLObjectReport(input  piAgentID,
+                                                             input  piSessionID,
                                                              input  oConfig:ObjectsExcluded,
                                                              output oObjReport) then
                 /* Output the report to a known location on disk for review/archival. */
-                assign lReturn = oObjReport:WriteFile(this-object:GetReportPath(iAgentID, iSessionID), true).
+                assign lReturn = oObjReport:WriteFile(this-object:GetReportPath(piAgentID, piSessionID), true).
         end. /* Has Agent/Session */
 
         return lReturn.
@@ -554,7 +597,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* GetSessionABLObjectsReport */
 
 
-    method public void PrepareABLObjectReport ( ):
+    method public void PrepareSessionABLObjectReport ( ):
         /**
          * Determine if the timing is right to output an ABLObject report
          * for the current agent/session based on reporting interval. Since
@@ -577,12 +620,54 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Request report output if current time is equal/greater than the next expected interval. */
         if now ge dNextObjectOutput then do:
             /* Run the report request and update the timestamp. */
-            this-object:GetSessionABLObjectsReport().
+            this-object:GetSessionABLObjectsReport(this-object:GetAgentID(), this-object:GetSessionID()).
             assign dLastObjectOutput = now.
         end. /* Do Output */
         else
             oLogger:Debug(substitute("Time Until Next ABLObjects Report: &1ms",
                                      interval(dNextObjectOutput, now, "milliseconds"))).
     end method. /* PrepareABLObjectReport */
+
+
+    method public void PrepareSessionABLObjectReport ( input piAgentID   as integer,
+                                                       input piSessionID as integer ):
+        /**
+         * Send the request to obtain the report by either local (JMX/OEM)
+         * or remote (apsv) means. If using remote, the same code will be
+         * utilized though hopefully in an asynchronous way.
+         */
+
+        oConfig:RefreshConfig(). /* Update configuration options. */
+
+        if oConfig:ObjectsUseAPSV then
+        do on error undo, throw:
+            define variable cServerConn as character no-undo initial "".
+            assign cServerConn = substitute("-URL &1 -sessionModel Session-managed", oConfig:ObjectsApsvURI).
+
+            define variable hServer as handle no-undo.
+            create server hServer.
+
+            hServer:connect(cServerConn).
+            if hServer:connected() then do:
+                define variable hProc  as handle no-undo.
+                define variable hAsync as handle no-undo.
+                define variable hCPO   as handle no-undo.
+
+                run "Spark/Diagnostic/Interface/PrepareSessionABLObjectReport.p" on server hServer
+                    asynchronous set hAsync (piAgentID, piSessionID) no-error.
+                if error-status:error then
+                    oLogger:Error(substitute("Error creating async handle: &1", error-status:get-message(1))).
+            end. /* connected */
+
+            finally:
+                if valid-handle(hServer) and hServer:connected() then
+                    hServer:disconnect().
+                delete object hAsync.
+                delete object hServer.
+            end finally.
+        end. /* Use APSV */
+        else /* When no parameters passed, use the current agent ID. */
+            this-object:PrepareSessionABLObjectReport(piAgentID, piSessionID).
+    end method. /* PrepareSessionABLObjectReport */
 
 end class.

@@ -145,6 +145,13 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
     constructor public ABLObjectsReport ( input pcSource as character ):
         super().
 
+        /* Make sure we have a consistent path for temporary files. */
+        os-create-dir value(substitute("&1", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
+
+        /* Make sure any necessary subdirectories are created. */
+        os-create-dir value(substitute("&1/metrics/ABLObjectsReport", this-object:TemporaryDir)).
+
         /* Set the means of obtaining metrics, or a sane default. */
         case pcSource:
             when "java" or
