@@ -29,7 +29,7 @@ do on error undo, throw:
     Spark.Diagnostic.Util.OEMetrics:Instance:WriteProfiler().
 
     /* Output the current ABLObjects report for this agent/session. */
-    Spark.Diagnostic.Util.OEMetrics:Instance:PrepareSessionABLObjectReport().
+    Spark.Diagnostic.Util.OEMetrics:Instance:PrepareSessionReports().
 
     if log-manager:logging-level ge 3 then
         message substitute("Elapsed: &1ms", (mtime - iStart)).

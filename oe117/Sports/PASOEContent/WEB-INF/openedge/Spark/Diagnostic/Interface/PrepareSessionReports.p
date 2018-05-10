@@ -1,6 +1,6 @@
-/*------------------------------------------------------------------------
-    File        : PrepareSessionABLObjectReport.p
-    Purpose     : 
+    /*------------------------------------------------------------------------
+    File        : PrepareSessionReports.p
+    Purpose     : Run metrics on a given Agent/Session
     Description : 
     Author(s)   : Dustin Grau
     Created     : Wed May 09 13:08:50 EDT 2018
@@ -19,4 +19,4 @@ define input parameter piSessionID as integer no-undo.
 if log-manager:logging-level ge 3 then
     message "Agent/Session:" piAgentID "/" piSessionID.
 
-Spark.Diagnostic.Util.OEMetrics:Instance:PrepareSessionABLObjectReport(piAgentID, piSessionID).
+Spark.Diagnostic.Util.OEMetrics:Instance:PrepareSessionReports(piAgentID, piSessionID).

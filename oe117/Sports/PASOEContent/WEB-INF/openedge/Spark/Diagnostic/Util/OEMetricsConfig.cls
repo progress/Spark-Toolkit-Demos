@@ -79,6 +79,8 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     define public property ObjectsSource as character no-undo initial "oejmx" get. private set.
 
+    define public property ObjectsTrackMem as logical no-undo initial false get. private set.
+
     define public property ObjectsUseAPSV as logical no-undo initial false get. private set.
 
 
@@ -164,6 +166,9 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
                             if oSubObj:Has("useAPSV") and oSubObj:GetType("useAPSV") eq JsonDataType:Boolean then
                                 assign this-object:ObjectsUseAPSV = oSubObj:GetLogical("useAPSV").
+
+                            if oSubObj:Has("trackMemory") and oSubObj:GetType("trackMemory") eq JsonDataType:Boolean then
+                                assign this-object:ObjectsTrackMem = oSubObj:GetLogical("trackMemory").
 
                             /* Cannot use APSV if no URI has been provided. */
                             if (this-object:ObjectsApsvURI gt "") ne true then
