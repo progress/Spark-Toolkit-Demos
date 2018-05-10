@@ -611,12 +611,12 @@
               },
               {
                 "name": "FirstLogin",
-                "ablType": "DATE",
+                "ablType": "DATETIME-TZ",
                 "extent": null
               },
               {
                 "name": "LastLogin",
-                "ablType": "DATE",
+                "ablType": "DATETIME-TZ",
                 "extent": null
               },
               {

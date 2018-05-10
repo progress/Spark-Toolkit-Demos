@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Tue May 08 13:13:23 EDT 2018",
+  "lastModified": "Thu May 10 13:01:27 EDT 2018",
   "services": [
     {
       "name": "system",
@@ -350,17 +350,17 @@
                         },
                         "FirstLogin": {
                           "type": "string",
-                          "ablType": "DATE",
+                          "ablType": "DATETIME-TZ",
                           "default": null,
                           "title": "First Time Login",
-                          "format": "date"
+                          "format": "date-time"
                         },
                         "LastLogin": {
                           "type": "string",
-                          "ablType": "DATE",
+                          "ablType": "DATETIME-TZ",
                           "default": null,
                           "title": "Last Login",
-                          "format": "date"
+                          "format": "date-time"
                         },
                         "LoginCount": {
                           "type": "integer",

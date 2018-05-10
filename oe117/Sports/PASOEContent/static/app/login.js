@@ -4,7 +4,7 @@
  *
  * Assumes presence of the following global variables:
  *  var serviceURI = "/<webapp_name>/"; // Prefix to utilize for all REST requests.
- *  var catalogURI = "/[web/pdo|<catalog>.json]"; // Location of the JSDO catalog file.
+ *  var catalogURI = "/[web/pdo|/static/<catalog>.json]"; // Location of the JSDO catalog file.
  *  var authModel = progress.data.Session.AUTH_TYPE_FORM; // Authentication model for JSDO.
  */
 var app = (function(){
@@ -143,7 +143,7 @@ var app = (function(){
                     .then(function(){
                         if (getStrings) {
                             // Update languages after session created, catalog downloaded.
-                            getLanguageStrings();                            
+                            getLanguageStrings();
                         }
                     });
             }, function(){
@@ -170,7 +170,7 @@ var app = (function(){
                     }
                 }, function(){
                     resetAttempt(); // Reset any prompts/flags.
-    
+
                     // Clear the credentials if login failed.
                     spark.clearSessionObject("username");
                     showMessage(getText("Login Failed"), "error");
@@ -281,16 +281,16 @@ var app = (function(){
 
         // Load the password reset modals.
         spark.loader.loadExtInclude("app/common/PassReset.html", "passResetModal")
-	        .then(function(){
-	            // When loading of HTML is complete, prepare to receive events from modal.
-	        	modalPassResetCtrl.vm.bind("modalDataReady", function(ev){
-	                // When event "modalDataReady" is triggered by the modal,
-	                // open the modal for the code confirmation (with context).
-	        		$("#ModalConfirmCode").modal("show");
-	                modalConfirmCodeCtrl.init();
-	                modalConfirmCodeCtrl.vm.doReset(ev.data);
-	            });
-	        });
+            .then(function(){
+                // When loading of HTML is complete, prepare to receive events from modal.
+                modalPassResetCtrl.vm.bind("modalDataReady", function(ev){
+                    // When event "modalDataReady" is triggered by the modal,
+                    // open the modal for the code confirmation (with context).
+                    $("#ModalConfirmCode").modal("show");
+                    modalConfirmCodeCtrl.init();
+                    modalConfirmCodeCtrl.vm.doReset(ev.data);
+                });
+            });
         spark.loader.loadExtInclude("app/common/ConfirmCode.html", "confirmCodeModal");
 
         // Set the year in the footer.
