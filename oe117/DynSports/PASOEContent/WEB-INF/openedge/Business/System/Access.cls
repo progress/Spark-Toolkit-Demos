@@ -5,7 +5,7 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-&GLOBAL-DEFINE WEBAPP_NAME DynSports
+&GLOBAL-DEFINE WEBAPP_NAME sports
 
 using Progress.Lang.* from propath.
 using Spark.Core.Manager.ISchemaManager from propath.
