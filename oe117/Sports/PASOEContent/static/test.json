@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Fri May 11 12:01:45 EDT 2018",
+  "lastModified": "Fri May 11 14:00:05 EDT 2018",
   "services": [
     {
       "name": "test",
@@ -17,7 +17,13 @@
               "path": "\/pollute",
               "useBeforeImage": false,
               "type": "invoke",
-              "verb": "put"
+              "verb": "put",
+              "params": [
+                {
+                  "name": "completed",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
             }
           ]
         }

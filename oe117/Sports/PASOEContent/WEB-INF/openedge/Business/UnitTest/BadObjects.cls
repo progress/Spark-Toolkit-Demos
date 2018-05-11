@@ -23,7 +23,7 @@ class Business.UnitTest.BadObjects inherits Spark.Core.Service.SparkEntity use-w
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/pollute", alias="pollute", mediaType="application/json").
-    method public void PolluteMemory ( ):
+    method public void PolluteMemory ( output completed as logical ):
         /* Run some faulty code to produce some known objects in session memory. */
         define variable hDS      as handle.
         define variable hDS2     as handle.
@@ -38,13 +38,22 @@ class Business.UnitTest.BadObjects inherits Spark.Core.Service.SparkEntity use-w
 
         assign oJsonObj = new JsonObject().
         oJsonObj:Add("company", "Progress").
+        
+        do on error undo, throw:
+            assign oParser = new ObjectModelParser().
+            oParser:Parse(oJsonObj:GetJsonText()).
 
-        assign oParser = new ObjectModelParser().
-        oParser:Parse(oJsonObj:GetJsonText()).
+            catch parseErr as Progress.Json.JsonParserError:
+                undo, throw new AppError(parseErr:GetMessage(1)).
+            end catch.
+        end.
 
         catch err as Progress.Lang.Error:
-            /* Don't report any errors. */
+            message err:GetMessage(1).
         end catch.
+        finally:
+            assign completed = true.
+        end finally.
     end method. /* PolluteMemory */
 
 end class.

@@ -25,6 +25,15 @@
               "name": "Business.UnitTest.BadObjects",
               "function": "PolluteMemory",
               "arg": [
+                {
+                  "ablName": "completed",
+                  "ablType": "LOGICAL",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "completed"
+                  }
+                }
               ]
             }
           }
