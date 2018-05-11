@@ -37,6 +37,9 @@
             var firstFolder = folders.length > 1 ? folders[1] : origin;
             var secondFolder = folders.length > 2 ? folders[2] : "";
             var serviceName = (window.location.protocol === "file:") ? "/" : (firstFolder === "static" ? "/" : "/" + firstFolder);
+            if (serviceName === "/") {
+                serviceName = ""; // Blank out this value if using the ROOT webapp (service being /).
+            }
             var customCatalog = ""; // A non-guessable, default service name for your application's catalog.
 
             var Catalog = {
