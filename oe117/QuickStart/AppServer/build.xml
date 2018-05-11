@@ -69,11 +69,7 @@
 
         <!-- Define standard variables for this environment. -->
         <property name="alias" value="MyPAS1"/>
-        <property name="path" value="C:/PASOE"/>
-        <property name="pas.root" value="${path}"/>
-        <property name="pas.path" value="${pas.root}/${alias}"/>
-        <property name="pas.bin" value="${pas.path}/bin"/>
-        <property name="pas.conf.pmfo" value="spark"/>
+        <property name="pas.conf.spark" value="spark"/>
         <property name="ablapp" value="${alias}"/>
         <property name="deploy" value="${basedir}/../Deploy/Conf"/>
 
@@ -89,16 +85,27 @@
 
     <target name="_init_unix" if="isUnix">
         <property name="scriptSuffix" value=".sh"/>
+        <property name="path" value="/usr/pas"/>
+        <property name="pas.root" value="${path}"/>
+        <property name="pas.path" value="${pas.root}/${alias}"/>
+        <property name="pas.bin" value="${pas.path}/bin"/>
+        <property name="pas.exec" value="pasman"/>
     </target>
 
     <target name="_init_windows" if="isWin64">
         <property name="scriptSuffix" value=".bat"/>
+        <property name="path" value="C:/PASOE"/>
+        <property name="pas.root" value="${path}"/>
+        <property name="pas.path" value="${pas.root}/${alias}"/>
+        <property name="pas.bin" value="${pas.path}/bin"/>
+        <property name="pas.exec" value="pasman.bat"/>
     </target>
 
     <target name="_create_instance">
         <!-- Create the PAS instance using the values (or defaults) provided. -->
         <echo message="Creating PAS instance '${alias}' at ${pas.path} with ports ${http}/${https}/${ajp}/${shut}..."/>
-        <exec dir="${dlc.bin}" executable="pasman${scriptSuffix}" output="create_${alias}.txt" failonerror="true">
+        <mkdir dir="${path}"/>
+        <exec dir="${dlc.bin}" executable="${pas.exec}" output="create_${alias}.txt" failonerror="true">
             <arg value="create"/>
             <arg value="-v"/>
             <arg value="-f"/>
@@ -142,13 +149,14 @@
             <fileset dir="${basedir}">
                 <include name="*.pl"/>
                 <include name="*.pf"/>
+            	<include name="*.config"/>
             </fileset>
         </copy>
 
         <!-- Copy initial configuration files to the PAS instance. -->
-        <mkdir dir="${pas.path}/conf/${pas.conf.pmfo}"/>
-        <mkdir dir="${pas.path}/conf/${pas.conf.pmfo}/signatures"/>
-        <copy toDir="${pas.path}/conf/${pas.conf.pmfo}">
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}"/>
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/signatures"/>
+        <copy toDir="${pas.path}/conf/${pas.conf.spark}">
             <fileset dir="${deploy}">
                 <include name="*.cp"/>
                 <include name="*.json"/>
