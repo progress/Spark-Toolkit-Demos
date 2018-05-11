@@ -3,7 +3,7 @@
 
 # Transport properties for the APSV protocol
 [${oepas-app}.${oepas-webapp}.APSV]
-	adapterEnabled=0
+	adapterEnabled=1
 	enableRequestChunking=1
 	useHTTPSessions=1
 
