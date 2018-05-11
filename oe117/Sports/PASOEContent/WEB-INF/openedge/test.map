@@ -1,0 +1,37 @@
+{
+  "services": {
+    "test": {
+      "version": "1.0.0",
+      "operations": {
+        "\/": {
+          "GET": {
+            "contentType": "application\/json",
+            "statusCode": 200,
+            "file": "$CATALINA_BASE\/webapps\/$oepas-webapp\/static\/test.json",
+            "name": "dataservice.catalog"
+          }
+        },
+        "\/objects": {
+        },
+        "\/objects\/pollute": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UnitTest.BadObjects",
+              "function": "PolluteMemory",
+              "arg": [
+              ]
+            }
+          }
+        }
+      },
+      "schemas": {
+      }
+    }
+  }
+}

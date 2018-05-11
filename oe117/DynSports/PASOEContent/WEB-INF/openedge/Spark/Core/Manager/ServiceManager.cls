@@ -352,6 +352,9 @@ class Spark.Core.Manager.ServiceManager inherits Spark.Core.Manager.Manager impl
         if poService:IsAbstract() then return ?. /* Cannot start an abstract class. */
         if poService:IsInterface() then return ?. /* Cannot start an interface class. */
 
+        oLoggingManager:logMessage(substitute("Starting service of type &1 (&2)",
+                                              poService:TypeName, pcAlias), "START-SVC", 4).
+
         oService = poService:New().
 
         if poService:IsA(get-class(IService)) then
