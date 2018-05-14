@@ -687,7 +687,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                     if error-status:error then
                         oLogger:Error(substitute("Error creating async handle: &1", error-status:get-message(1))).
                 end. /* Has Connection */
-    
+
                 catch err as Progress.Lang.Error:
                     oLogger:Error(substitute("Error in APSV request: &1", err:GetMessage(1))).
                 end catch.

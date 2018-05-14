@@ -710,9 +710,9 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
     end method. /* TrackABLObjects */
 
 
-    method public logical ParseABLObjectReport ( input  piAgentID as integer,
-                                                 input  pcExclude as character,
-                                                 output poReport  as JsonObject ):
+    method public logical FilterABLObjectReport ( input  piAgentID as integer,
+                                                  input  pcExclude as character,
+                                                  output poReport  as JsonObject ):
         define variable oABLOutput  as JsonObject no-undo.
         define variable oABLObjects as JsonArray  no-undo.
         define variable oSessionObj as JsonObject no-undo.
@@ -818,7 +818,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         return valid-object(poReport).
 
         catch err as Progress.Lang.Error:
-            oLogger:Error(substitute("Error in ParseABLObjectReport: &1", err:GetMessage(1))).
+            oLogger:Error(substitute("Error in FilterABLObjectReport: &1", err:GetMessage(1))).
             undo, throw err.
         end catch.
         finally:
@@ -826,13 +826,13 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
             delete object oABLObjects no-error.
             delete object oSessionObj no-error.
         end finally.
-    end method. /* ParseABLObjectReport */
+    end method. /* FilterABLObjectReport */
 
 
-    method public logical ParseSessionABLObjectReport ( input  piAgentID   as integer,
-                                                        input  piSessionID as integer,
-                                                        input  pcExclude   as character,
-                                                        output poReport    as JsonArray ):
+    method public logical FilterSessionABLObjectReport ( input  piAgentID   as integer,
+                                                         input  piSessionID as integer,
+                                                         input  pcExclude   as character,
+                                                         output poReport    as JsonArray ):
         define variable oABLOutput  as JsonObject no-undo.
         define variable oABLObjects as JsonObject no-undo.
 
@@ -923,13 +923,13 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         return (poReport:length gt 0).
 
         catch err as Progress.Lang.Error:
-            oLogger:Error(substitute("Error in ParseSessionABLObjectReport: &1", err:GetMessage(1))).
+            oLogger:Error(substitute("Error in FilterSessionABLObjectReport: &1", err:GetMessage(1))).
             undo, throw err.
         end catch.
         finally:
             delete object oABLOutput no-error.
             delete object oABLObjects no-error.
         end finally.
-    end method. /* ParseSessionABLObjectReport */
+    end method. /* FilterSessionABLObjectReport */
 
 end class.

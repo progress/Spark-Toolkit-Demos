@@ -39,6 +39,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     /*** Common Properties ***/
 
+    /* Property to allow sychronization of timestamps on output generation. */
+    define private property OutputTime as datetime no-undo initial ? get. set.
+
     define private property RequestCount as integer no-undo initial 0 get. set.
 
     define private property RequestStart as datetime-tz no-undo initial ? get. set.
@@ -65,7 +68,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
 
         /* Make sure any necessary subdirectories are created. */
-        os-create-dir value(substitute("&1/metrics/ABLObjectsReport", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics/ABLObjects", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/ProfilerData", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/SessionData", this-object:TemporaryDir)).
 
@@ -93,6 +96,47 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     /***** Private Methods *****/
+
+
+    method private character GetSessionPath ( input piAgentID as integer ):
+        define variable cBasePath as character no-undo.
+
+        /* Assemble base path for output and create any needed directories. */
+        assign cBasePath = substitute("&1/metrics/SessionData/&2", this-object:TemporaryDir, piAgentID).
+        os-create-dir value(cBasePath).
+
+        if this-object:OutputTime ne ? then
+            return substitute("&1/&2.&3_A&4.json",
+                              cBasePath,
+                              iso-date(this-object:OutputTime),
+                              mtime(this-object:OutputTime), piAgentID).
+        else
+            return substitute("&1/&2.&3_A&4.json",
+                              cBasePath,
+                              iso-date(now),
+                              mtime(now), piAgentID).
+    end method. /* GetSessionPath */
+
+
+    method private character GetObjectsPath ( input piAgentID   as integer,
+                                              input piSessionID as integer ):
+        define variable cBasePath as character no-undo.
+
+        /* Assemble base path for output and create any needed directories. */
+        assign cBasePath = substitute("&1/metrics/ABLObjects/&2", this-object:TemporaryDir, piAgentID).
+        os-create-dir value(cBasePath).
+
+        if this-object:OutputTime ne ? then
+            return substitute("&1/&2.&3_A&4_S&5.json",
+                              cBasePath,
+                              iso-date(this-object:OutputTime),
+                              mtime(this-object:OutputTime), piAgentID, piSessionID).
+        else
+            return substitute("&1/&2.&3_A&4_S&5.json",
+                              cBasePath,
+                              iso-date(now),
+                              mtime(now), piAgentID, piSessionID).
+    end method. /* GetObjectsPath */
 
 
     method private logical InMatchList ( input pcCompare as character,
@@ -230,7 +274,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
             /* Determine correct output location for this profiler log. */
             assign cOutPath = substitute("&1/&2.&3_R&4_A&5_S&6.prof",
-                                         cBasePath, replace(iso-date(today), "-", ""), mtime, this-object:RequestCount,
+                                         cBasePath, iso-date(today), mtime, this-object:RequestCount,
                                          this-object:GetAgentID(), this-object:GetSessionID()).
 
             assign /* Note: Order matters here, do not rearrange! */
@@ -467,15 +511,15 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Request the current ABLObjects report for this agent. */
-        if oABLObjectsReport:ParseABLObjectReport(input  iAgentID,
-                                                  input  oConfig:ObjectsExcluded,
-                                                  output oObjReport) then do:
+        if oABLObjectsReport:FilterABLObjectReport(input  iAgentID,
+                                                   input  oConfig:ObjectsExcluded,
+                                                   output oObjReport) then do:
             /* Output a file for each session in the report. */
             assign cSessionID = oObjReport:GetNames().
             do iCount = 1 to extent(cSessionID):
                 /* Output the report to a known location on disk for review/archival. */
                 assign lReturn = oObjReport:GetJsonArray(cSessionID[iCount])
-                                           :WriteFile(this-object:GetReportPath(iAgentID, integer(cSessionID[iCount])), true).
+                                           :WriteFile(this-object:GetObjectsPath(iAgentID, integer(cSessionID[iCount])), true).
             end. /* do iCount */
         end. /* ParseABLObjectReport */
 
@@ -551,15 +595,15 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 assign cAgentID = oAgent:GetCharacter("pid").
 
                 /* Request the ABL objects for this specific agent. */
-                if oABLObjectsReport:ParseABLObjectReport(input  integer(cAgentID),
-                                                          input  oConfig:ObjectsExcluded,
-                                                          output oObjReport) then do:
+                if oABLObjectsReport:FilterABLObjectReport(input  integer(cAgentID),
+                                                           input  oConfig:ObjectsExcluded,
+                                                           output oObjReport) then do:
                     /* Output a file for each session in the report. */
                     assign cSessionID = oObjReport:GetNames().
                     do iCount = 1 to extent(cSessionID):
                         /* Output the report to a known location on disk for review/archival. */
                         assign lReturn = oObjReport:GetJsonArray(cSessionID[iCount])
-                                                   :WriteFile(this-object:GetReportPath(integer(cAgentID), integer(cSessionID[iCount])), true).
+                                                   :WriteFile(this-object:GetObjectsPath(integer(cAgentID), integer(cSessionID[iCount])), true).
                     end. /* do iCount */
                 end. /* ParseABLObjectReport */
             end. /* has agentId */
@@ -607,12 +651,12 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         if piAgentID gt 0 and piSessionID gt 0 then do:
             /* Request the ABL objects for this specific agent and session. */
-            if oABLObjectsReport:ParseSessionABLObjectReport(input  piAgentID,
-                                                             input  piSessionID,
-                                                             input  oConfig:ObjectsExcluded,
-                                                             output oObjReport) then
+            if oABLObjectsReport:FilterSessionABLObjectReport(input  piAgentID,
+                                                              input  piSessionID,
+                                                              input  oConfig:ObjectsExcluded,
+                                                              output oObjReport) then
                 /* Output the report to a known location on disk for review/archival. */
-                assign lReturn = oObjReport:WriteFile(this-object:GetReportPath(piAgentID, piSessionID), true).
+                assign lReturn = oObjReport:WriteFile(this-object:GetObjectsPath(piAgentID, piSessionID), true).
         end. /* Has Agent/Session */
 
         return lReturn.
@@ -645,7 +689,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         oABLObjectsReport:GetSessions(input piAgentID, output oSessions).
 
         /* Output the report to a known location on disk for review/archival. */
-        oSessions:WriteFile(this-object:GetMetricsPath(piAgentID), true).
+        oSessions:WriteFile(this-object:GetSessionPath(piAgentID), true).
     end method. /* GetSessionMetrics */
 
 
@@ -719,9 +763,11 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if not oConfig:OnValidSchedule() then return.
 
         /* Run the following reports for the given agent/session. */
+        this-object:OutputTime = now. /* Synchronize output time. */
         this-object:GetSessionABLObjectsReport(piAgentID, piSessionID).
         if oConfig:ObjectsTrackMem then
             this-object:GetSessionMetrics(piAgentID). /* Memory, etc. */
+        this-object:OutputTime = ?. /* Reset timestamp. */
     end method. /* PrepareSessionReports */
 
 end class.
