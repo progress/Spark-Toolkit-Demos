@@ -19,9 +19,7 @@ block-level on error undo, throw.
 
 class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-widget-pool final:
 
-    define private variable dLastObjectOutput as datetime no-undo initial ?.
-
-    define private variable dLastSessionOutput as datetime no-undo initial ?.
+    define private variable dLastReportOutput as datetime no-undo initial ?.
 
     define private variable hServer as handle no-undo.
 
@@ -108,7 +106,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if this-object:OutputTime ne ? then
             return substitute("&1/&2.&3_A&4.json",
                               cBasePath,
-                              iso-date(this-object:OutputTime),
+                              iso-date(date(this-object:OutputTime)),
                               mtime(this-object:OutputTime), piAgentID).
         else
             return substitute("&1/&2.&3_A&4.json",
@@ -129,7 +127,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if this-object:OutputTime ne ? then
             return substitute("&1/&2.&3_A&4_S&5.json",
                               cBasePath,
-                              iso-date(this-object:OutputTime),
+                              iso-date(date(this-object:OutputTime)),
                               mtime(this-object:OutputTime), piAgentID, piSessionID).
         else
             return substitute("&1/&2.&3_A&4_S&5.json",
@@ -269,7 +267,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Check if requested procedure matches in the filter whitelist. */
         if this-object:InMatchList(cProcedure, pcFilter) then do:
             /* Create base path for output and create any needed directories. */
-            assign cBasePath = substitute("&1/metrics/ProfilerData/&2", this-object:TemporaryDir, this-object:GetAgentID()).
+            assign cBasePath = substitute("&1/metrics/ProfilerData/&2",
+                                          this-object:TemporaryDir, this-object:GetAgentID()).
             os-create-dir value(cBasePath).
 
             /* Determine correct output location for this profiler log. */
@@ -481,7 +480,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* StopTrackingObjects */
 
 
-    method public logical GetABLObjectsReport ( ):
+    method public logical GetABLObjects ( ):
         /**
          * Return the ABLObjects report from the current agent.
          */
@@ -496,7 +495,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         oConfig:RefreshConfig(). /* Update configuration options. */
 
         /* Check if object reporting is allowed, based on flags and scheduled time. */
-        if not oConfig:AreObjectsEnabled("GetABLObjectsReport") then return false.
+        if not oConfig:AreObjectsEnabled("GetABLObjects") then return false.
         if not oConfig:OnValidSchedule() then return false.
 
         assign cProcedure = this-object:GetProcedureName().
@@ -519,7 +518,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             do iCount = 1 to extent(cSessionID):
                 /* Output the report to a known location on disk for review/archival. */
                 assign lReturn = oObjReport:GetJsonArray(cSessionID[iCount])
-                                           :WriteFile(this-object:GetObjectsPath(iAgentID, integer(cSessionID[iCount])), true).
+                                           :WriteFile(this-object:GetObjectsPath(iAgentID,
+                                                                                 integer(cSessionID[iCount])),
+                                                                                 true).
             end. /* do iCount */
         end. /* ParseABLObjectReport */
 
@@ -528,7 +529,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         finally:
             delete object oObjReport no-error.
         end finally.
-    end method. /* GetABLObjectsReport */
+    end method. /* GetABLObjects */
 
 
     method public logical TrackAllAgents ( input plEnable as logical ):
@@ -603,7 +604,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                     do iCount = 1 to extent(cSessionID):
                         /* Output the report to a known location on disk for review/archival. */
                         assign lReturn = oObjReport:GetJsonArray(cSessionID[iCount])
-                                                   :WriteFile(this-object:GetObjectsPath(integer(cAgentID), integer(cSessionID[iCount])), true).
+                                                   :WriteFile(this-object:GetObjectsPath(integer(cAgentID),
+                                                                                         integer(cSessionID[iCount])),
+                                                                                         true).
                     end. /* do iCount */
                 end. /* ParseABLObjectReport */
             end. /* has agentId */
@@ -617,14 +620,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* GetAllABLObjectsReport */
 
 
-    method public logical GetSessionABLObjectsReport ( ):
+    method public logical GetSessionABLObjects ( ):
         /* When no parameters passed, use the current agent/session ID's. */
-        return this-object:GetSessionABLObjectsReport(this-object:GetAgentID(), this-object:GetSessionID()).
-    end method. /* GetSessionABLObjectsReport */
+        return this-object:GetSessionABLObjects(this-object:GetAgentID(), this-object:GetSessionID()).
+    end method. /* GetSessionABLObjects */
 
 
-    method public logical GetSessionABLObjectsReport ( input piAgentID   as integer,
-                                                       input piSessionID as integer ):
+    method public logical GetSessionABLObjects ( input piAgentID   as integer,
+                                                 input piSessionID as integer ):
         /**
          * Return the available ABLObjectsReport for the
          * agent and session of the current request.
@@ -664,7 +667,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         finally:
             delete object oObjReport no-error.
         end finally.
-    end method. /* GetSessionABLObjectsReport */
+    end method. /* GetSessionABLObjects */
 
 
     method public void GetSessionMetrics ( input piAgentID as integer ):
@@ -710,14 +713,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if not oConfig:OnValidSchedule() then return.
 
         define variable dNextObjectOutput as datetime no-undo initial ?.
-        if dLastObjectOutput eq ? then do:
+        if dLastReportOutput eq ? then do:
             assign
-                dLastObjectOutput = now /* Begin the next interval as of right now. */
+                dLastReportOutput = now /* Begin the next interval as of right now. */
                 dNextObjectOutput = add-interval(now, oConfig:ObjectsOutputInterval, "milliseconds")
                 .
         end.
         else
-            assign dNextObjectOutput = add-interval(dLastObjectOutput, oConfig:ObjectsOutputInterval, "milliseconds").
+            assign dNextObjectOutput = add-interval(dLastReportOutput,
+                                                    oConfig:ObjectsOutputInterval,
+                                                    "milliseconds").
 
         /* Request report output if current time is equal/greater than the next expected interval. */
         if now ge dNextObjectOutput then do:
@@ -727,9 +732,11 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             do on error undo, throw:
                 if this-object:GetConnection() then do:
                     run "Spark/Diagnostic/Interface/PrepareSessionReports.p" on server hServer
-                        asynchronous set hAsync (this-object:GetAgentID(), this-object:GetSessionID()) no-error.
+                        asynchronous set hAsync (this-object:GetAgentID(),
+                                                 this-object:GetSessionID()) no-error.
                     if error-status:error then
-                        oLogger:Error(substitute("Error creating async handle: &1", error-status:get-message(1))).
+                        oLogger:Error(substitute("Error creating async handle: &1",
+                                                 error-status:get-message(1))).
                 end. /* Has Connection */
     
                 catch err as Progress.Lang.Error:
@@ -740,7 +747,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 this-object:PrepareSessionReports(this-object:GetAgentID(), this-object:GetSessionID()).
 
             /* Immediately update the timestamp to avoid this session from requesting again. */
-            assign dLastObjectOutput = now.
+            assign dLastReportOutput = now.
         end. /* Do Output */
         else
             oLogger:Debug(substitute("Time Until Next Report: &1ms",
@@ -764,7 +771,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         /* Run the following reports for the given agent/session. */
         this-object:OutputTime = now. /* Synchronize output time. */
-        this-object:GetSessionABLObjectsReport(piAgentID, piSessionID).
+        this-object:GetSessionABLObjects(piAgentID, piSessionID).
         if oConfig:ObjectsTrackMem then
             this-object:GetSessionMetrics(piAgentID). /* Memory, etc. */
         this-object:OutputTime = ?. /* Reset timestamp. */

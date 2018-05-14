@@ -1,10 +1,10 @@
 /*------------------------------------------------------------------------
     File        : OSPath
     Purpose     : Helper properties for creating standard OS paths
-    Description : 
+    Description :
     Author(s)   : Dustin Grau
     Created     : Mon May 07 17:25:15 EDT 2018
-    Notes       : 
+    Notes       :
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
