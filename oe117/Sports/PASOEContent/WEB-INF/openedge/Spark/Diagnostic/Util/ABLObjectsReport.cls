@@ -486,7 +486,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
         /* Log output results of request. */
         if valid-object(AgentList) then
-            oLogger:Trace(substitute("Available Agents: &1", AgentList:GetJsonText())).
+            oLogger:Trace(substitute("Available Agents: &1", AgentList:Length)).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in GetAgents: &1", err:GetMessage(1))).
@@ -553,7 +553,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
         /* Log output results of request. */
         if valid-object(poSessions) then
-            oLogger:Trace(substitute("Available Sessions: &1", poSessions:GetJsonText())).
+            oLogger:Trace(substitute("Available Sessions: &1", poSessions:Length)).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in GetSessions: &1", err:GetMessage(1))).

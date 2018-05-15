@@ -236,17 +236,15 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * have no other dependencies or requirements of a class-instance method.
          */
 
+        /* Check if profiling is allowed, based on flags and scheduled time. */
+        if not oConfig:IsProfilerEnabled("StartProfiler") then return false.
+        if not oConfig:OnValidSchedule() then return false.
+
         define variable lFilterMatch as logical   no-undo initial false.
         define variable cBasePath    as character no-undo.
         define variable cProcedure   as character no-undo.
         define variable cOutPath     as character no-undo.
         define variable ix           as integer   no-undo.
-
-        oConfig:RefreshConfig(). /* Update configuration options. */
-
-        /* Check if profiling is allowed, based on flags and scheduled time. */
-        if not oConfig:IsProfilerEnabled("StartProfiler") then return false.
-        if not oConfig:OnValidSchedule() then return false.
 
         assign cProcedure = this-object:GetProcedureName().
         if (oConfig:PollingIgnoreList gt "") eq true then do:
@@ -378,8 +376,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * utilized though hopefully in an asynchronous way.
          */
 
-        oConfig:RefreshConfig(). /* Update configuration options. */
-
         /* Check if object reporting is allowed, based on flags and scheduled time. */
         if not oConfig:AreObjectsEnabled("StartTrackingObjects") then return false.
         if not oConfig:OnValidSchedule() then return false.
@@ -415,14 +411,12 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * session memory.
          */
 
-        define variable lIsTracking as logical   no-undo initial false.
-        define variable cTrackFlag  as character no-undo.
-
-        oConfig:RefreshConfig(). /* Update configuration options. */
-
         /* Check if object reporting is allowed, based on flags and scheduled time. */
         if not oConfig:AreObjectsEnabled("StartTrackingObjects") then return false.
         if not oConfig:OnValidSchedule() then return false.
+
+        define variable lIsTracking as logical   no-undo initial false.
+        define variable cTrackFlag  as character no-undo.
 
         if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
@@ -435,7 +429,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Avoid making the call to the agent if we have previously marked this agent as tracking objects. */
         assign cTrackFlag = oConfig:GetTrackingFlag(piAgentID).
         file-info:file-name = cTrackFlag.
-
         if file-info:full-pathname ne ? then do:
             assign lIsTracking = true. /* Flag exists, assume tracking is enabled. */
             oLogger:Debug(substitute("Tracking Agent #&1: &2", piAgentID, lIsTracking)).
@@ -485,18 +478,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * Return the ABLObjects report from the current agent.
          */
 
+        /* Check if object reporting is allowed, based on flags and scheduled time. */
+        if not oConfig:AreObjectsEnabled("GetABLObjects") then return false.
+        if not oConfig:OnValidSchedule() then return false.
+
         define variable iAgentID   as integer    no-undo.
         define variable iCount     as integer    no-undo.
         define variable cProcedure as character  no-undo.
         define variable cSessionID as character  no-undo extent.
         define variable lReturn    as logical    no-undo initial false.
         define variable oObjReport as JsonObject no-undo.
-
-        oConfig:RefreshConfig(). /* Update configuration options. */
-
-        /* Check if object reporting is allowed, based on flags and scheduled time. */
-        if not oConfig:AreObjectsEnabled("GetABLObjects") then return false.
-        if not oConfig:OnValidSchedule() then return false.
 
         assign cProcedure = this-object:GetProcedureName().
         if (oConfig:PollingIgnoreList gt "") eq true then do:
@@ -577,8 +568,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable iCount     as integer    no-undo.
         define variable lReturn    as logical    no-undo initial false.
 
-        oConfig:RefreshConfig(). /* Update configuration options. */
-
         /* Check if object reporting is allowed, based on flags and scheduled time. */
         if not oConfig:AreObjectsEnabled("GetAllABLObjectsReport") then return false.
         if not oConfig:OnValidSchedule() then return false.
@@ -637,8 +626,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable cProcedure as character no-undo.
         define variable lReturn    as logical   no-undo initial false.
 
-        oConfig:RefreshConfig(). /* Update configuration options. */
-
         /* Check if object reporting is allowed, based on flags and scheduled time. */
         if not oConfig:AreObjectsEnabled("GetAllABLObjectsReport") then return false.
         if not oConfig:OnValidSchedule() then return false.
@@ -679,8 +666,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         define variable oSessions as JsonArray.
 
-        oConfig:RefreshConfig(). /* Update configuration options. */
-
         /* Check special flag for session metrics (eg. memory). */
         if not oConfig:ObjectsTrackMem then return.
 
@@ -706,28 +691,32 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * when we last output data, and whether it is time to do so again.
          */
 
-        oConfig:RefreshConfig(). /* Update configuration options. */
-
         /* Check if object reporting is allowed, based on flags and scheduled time. */
         if not oConfig:AreObjectsEnabled("PrepareSessionABLObjectReport") then return.
         if not oConfig:OnValidSchedule() then return.
 
         define variable dNextObjectOutput as datetime no-undo initial ?.
-        if dLastReportOutput eq ? then do:
-            assign
-                dLastReportOutput = now /* Begin the next interval as of right now. */
-                dNextObjectOutput = add-interval(now, oConfig:ObjectsOutputInterval, "milliseconds")
-                .
-        end.
+        if oConfig:ObjectsOutputInterval gt 0 then do:
+            if dLastReportOutput eq ? then do:
+                assign
+                    dLastReportOutput = now /* Begin the next reporting interval as of right now. */
+                    dNextObjectOutput = add-interval(now, oConfig:ObjectsOutputInterval, "milliseconds")
+                    .
+            end.
+            else
+                assign dNextObjectOutput = add-interval(dLastReportOutput,
+                                                        oConfig:ObjectsOutputInterval,
+                                                        "milliseconds").
+        end. /* oConfig:ObjectsOutputInterval gt 0 */
         else
-            assign dNextObjectOutput = add-interval(dLastReportOutput,
-                                                    oConfig:ObjectsOutputInterval,
-                                                    "milliseconds").
+            assign dNextObjectOutput = now.
 
         /* Request report output if current time is equal/greater than the next expected interval. */
         if now ge dNextObjectOutput then do:
-            /* Run the report request and update the timestamp. */
+            /* Immediately update the timestamp to avoid this session requesting the report again. */
+            assign dLastReportOutput = now.
 
+            /* Run the report request via APSV call or locally. */
             if oConfig:ObjectsUseAPSV then
             do on error undo, throw:
                 if this-object:GetConnection() then do:
@@ -745,13 +734,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             end. /* Use APSV */
             else
                 this-object:PrepareSessionReports(this-object:GetAgentID(), this-object:GetSessionID()).
-
-            /* Immediately update the timestamp to avoid this session from requesting again. */
-            assign dLastReportOutput = now.
         end. /* Do Output */
         else
-            oLogger:Debug(substitute("Time Until Next Report: &1ms",
-                                     interval(dNextObjectOutput, now, "milliseconds"))).
+            oLogger:Debug(substitute("Time Until Next Report: &1s",
+                                     interval(dNextObjectOutput, now, "seconds"))).
     end method. /* PrepareSessionReports */
 
 
@@ -762,8 +748,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * or remote (apsv) means. If using remote, the same code will be
          * utilized though hopefully in an asynchronous way.
          */
-
-        oConfig:RefreshConfig(). /* Update configuration options. */
 
         /* Check if object reporting is allowed, based on flags and scheduled time. */
         if not oConfig:AreObjectsEnabled("PrepareSessionABLObjectReport") then return.
