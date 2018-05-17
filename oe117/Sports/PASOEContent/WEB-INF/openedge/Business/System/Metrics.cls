@@ -29,7 +29,7 @@ class Business.System.Metrics:
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/getSessionObjects", alias="getSessionObjects", mediaType="application/json").
     method public void GetSessionObjects ( output success as logical ):
         /* Obtain the current list of Objects in memory for this agent/session. */
-        assign success = OEMetrics:Instance:GetSessionABLObjectsReport().
+        assign success = OEMetrics:Instance:GetSessionABLObjects().
     end method. /* GetSessionObjects */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
