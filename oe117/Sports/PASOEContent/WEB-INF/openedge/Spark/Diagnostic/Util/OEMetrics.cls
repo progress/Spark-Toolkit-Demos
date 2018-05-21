@@ -679,7 +679,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         oABLObjectsReport:GetSessions(input piAgentID, output oSessions).
 
         /* Output the report to a known location on disk for review/archival. */
-        oSessions:WriteFile(this-object:GetSessionPath(piAgentID), true).
+        if valid-object(oSessions) and oSessions:Length gt 0 then
+            oSessions:WriteFile(this-object:GetSessionPath(piAgentID), true).
     end method. /* GetSessionMetrics */
 
 
