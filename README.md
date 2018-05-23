@@ -1,4 +1,4 @@
-# Spark Demo Projects
+# Progress Spark Toolkit Demo Projects
 
 Release-based projects ready for import to illustrate usage of the Progress Modernization Framework for OpenEdge.
 
