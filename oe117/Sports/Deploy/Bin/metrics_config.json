@@ -1,8 +1,8 @@
 {
 	"general": {
 		"pollIgnore": "Sports.Spark.Core.Security.SportsRealm*",
-		"pollStart": "2018-05-14T08:00:00",
-		"pollStop": "2018-05-18T20:00:00"
+		"pollStart": "2018-05-22T08:00:00",
+		"pollStop": "2018-05-25T20:00:00"
 	},
 	"objects": {
 		"apsvURI": "http://localhost:8830/sports/apsv",
