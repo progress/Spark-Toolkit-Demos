@@ -9,7 +9,7 @@
 
 /* ***************************  Definitions  ************************** */
 
-using progress.lang.* from propath.
+using Progress.Lang.* from propath.
 
 block-level on error undo, throw.
 
