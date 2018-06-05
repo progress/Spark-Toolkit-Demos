@@ -21,18 +21,27 @@ define variable oRequest as OERequestInfo no-undo.
 assign oRequest = cast(session:current-request-info, OERequestInfo).
 
 /* Report what is being run currently via APSV transport. */
-if oRequest:AdapterType:ToString() eq "APSV" then do:
+if oRequest:AdapterType:ToString() eq "APSV" then
+do on error undo, leave:
     define variable oLogger  as ILogWriter no-undo.
     define variable cMethod  as character  no-undo.
     define variable cProgram as character  no-undo.
+    define variable hCPO     as handle     no-undo.
 
+    /* This assumes use of a logging object "AppServerTransport" to be defined in the logging.config file, located in the PROPATH. */
     assign
-        oLogger  = LoggerBuilder:GetLogger("AppServerTransport")
-        cProgram = entry(1, oRequest:ProcedureName, "&")
-        cMethod  = entry(2, oRequest:ProcedureName, "&") when num-entries(oRequest:ProcedureName, "&") ge 2
+        oLogger  = LoggerBuilder:GetLogger("AppServerTransport") /* Name of the special logging object to be found in logging.config */
+        cProgram = entry(1, oRequest:ProcedureName, "&") /* Should be the original procedure name. */
+        cMethod  = entry(2, oRequest:ProcedureName, "&") when num-entries(oRequest:ProcedureName, "&") ge 2 /* Internal procedure, if present. */
+        hCPO     = oRequest:GetClientPrincipal() /* Obtain the CP token passed. */
         .
-    oLogger:Info(substitute("&1 | &2 &3", oRequest:ClientContextId, cProgram, cMethod)).
-    delete object oLogger no-error.
+
+    /* Output any values you wish, to be timestamped within the associated log file. */
+    oLogger:Info(substitute("&1 | &2 &3", hCPO:session-id, trim(cProgram), trim(cMethod))).
+
+    finally:
+        delete object oLogger no-error.
+    end finally.
 end. /* APSV */
 
 /* Startup the metrics from the diagnostic tools. */
@@ -40,7 +49,7 @@ run Spark/Diagnostic/metrics_activate.
 
 catch err as Progress.Lang.Error:
     /* Catch and Release */
-    message substitute("Metrics Activate Error: &1", err:GetMessage(1)).
+    message substitute("Activate Error: &1", err:GetMessage(1)).
 end catch.
 finally:
     delete object oRequest no-error.
