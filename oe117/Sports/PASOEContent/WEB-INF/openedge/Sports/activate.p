@@ -20,7 +20,7 @@ block-level on error undo, throw.
 define variable oRequest as OERequestInfo no-undo.
 assign oRequest = cast(session:current-request-info, OERequestInfo).
 
-/* Report what is being run currently via APSV transport. */
+/* Optional: Report what is being run currently via APSV transport. */
 if oRequest:AdapterType:ToString() eq "APSV" then
 do on error undo, leave:
     define variable oLogger  as ILogWriter no-undo.
@@ -40,11 +40,12 @@ do on error undo, leave:
     oLogger:Info(substitute("&1 | &2 &3", hCPO:session-id, trim(cProgram), trim(cMethod))).
 
     finally:
+        delete object hCPO no-error.
         delete object oLogger no-error.
     end finally.
 end. /* APSV */
 
-/* Startup the metrics from the diagnostic tools. */
+/* Optional: Startup the metrics from the diagnostic tools. */
 run Spark/Diagnostic/metrics_activate.
 
 catch err as Progress.Lang.Error:
