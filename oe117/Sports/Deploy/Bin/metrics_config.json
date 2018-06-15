@@ -5,15 +5,13 @@
 		"pollStop": "2018-06-30T20:00:00"
 	},
 	"objects": {
-		"apsvURI": "http://localhost:8830/sports/apsv",
 		"enabled": true,
 		"exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.*",
 		"oemUser": "tomcat",
 		"oemPass": "tomcat",
-		"outputInterval": 120000,
+		"outputInterval": 300000,
 		"source": "oemanager",
-		"trackMemory": true,
-		"useAPSV": false
+		"trackMemory": true
 	},
 	"profiler": {
 		"enabled": true,
