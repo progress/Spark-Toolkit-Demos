@@ -1,21 +1,21 @@
 {
-	"general": {
-		"pollIgnore": "Sports.Spark.Core.Security.SportsRealm*",
-		"pollStart": "2018-06-01T08:00:00",
-		"pollStop": "2018-06-30T20:00:00"
-	},
-	"objects": {
-		"enabled": true,
-		"exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.*",
-		"oemUser": "tomcat",
-		"oemPass": "tomcat",
-		"outputInterval": 300000,
-		"source": "oemanager",
-		"trackMemory": true
-	},
-	"profiler": {
-		"enabled": true,
-		"filter": "*",
-		"threshold": 1000
-	}
+    "general": {
+        "pollIgnore": "Sports.Spark.Core.Security.SportsRealm*",
+        "pollStart": "2018-06-01T08:00:00",
+        "pollStop": "2018-06-30T20:00:00"
+    },
+    "objects": {
+        "enabled": true,
+        "exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.*",
+        "oemUser": "tomcat",
+        "oemPass": "tomcat",
+        "outputInterval": 300000,
+        "source": "oemanager",
+        "trackMemory": true
+    },
+    "profiler": {
+        "enabled": true,
+        "filter": "*",
+        "threshold": 1000
+    }
 }
