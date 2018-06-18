@@ -1,4 +1,4 @@
-THIS IS NOT A PROJECT!
+# THIS IS NOT A PROJECT!
 
 This is a project overlay, meant to get you up and running quickly with the Spark libraries as part of the
 Progress Modernization Framework. To utilize this jump-start, start by creating an ABL Web App project via
@@ -19,3 +19,5 @@ To immediately create a compatible PAS instance, start a command prompt as Admin
 to your project's AppServer directory, and run "ant" from the command line. This will give sample usage
 instructions for using the script to generate a new PAS instance. If desired, adjust the parameters as
 necessary, and it will create and tailor an instance for use with your new Spark-based project.
+
+## This file may be removed after copying to your new project.
