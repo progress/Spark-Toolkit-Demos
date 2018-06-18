@@ -1,4 +1,4 @@
-// Type definitions for Kendo UI Professional v2017.3.913
+// Type definitions for Kendo UI Professional v2018.2.516
 // Project: http://www.telerik.com/kendo-ui
 // Definitions by: Telerik <https://github.com/telerik/>
 
@@ -810,9 +810,9 @@ declare namespace kendo.data {
     }
 
     interface PivotDataSourceOptions extends DataSourceOptions {
-        columns?: PivotDataSourceAxisOptions[];
-        measures?: PivotDataSourceMeasureOptions[];
-        rows?: PivotDataSourceAxisOptions[];
+        columns?: string[]|PivotDataSourceAxisOptions[];
+        measures?: string[]|PivotDataSourceMeasureOptions;
+        rows?: string[]|PivotDataSourceAxisOptions[];
         transport?: PivotTransport;
         schema?: PivotSchema;
     }
@@ -872,12 +872,12 @@ declare namespace kendo.data {
     }
 
     interface DataSourceTransport {
-        create?: DataSourceTransportCreate;
-        destroy?: DataSourceTransportDestroy;
+        create?: DataSourceTransportCreate | ((options: DataSourceTransportOptions) => void);
+        destroy?: DataSourceTransportDestroy | ((options: DataSourceTransportOptions) => void);
         push?: Function;
-        read?: DataSourceTransportRead;
-        signalr?: DataSourceTransportSignalr;
-        update?: DataSourceTransportUpdate;
+        read?: DataSourceTransportRead | ((options: DataSourceTransportOptions) => void);
+        signalr?: DataSourceTransportSignalr | ((options: DataSourceTransportOptions) => void);
+        update?: DataSourceTransportUpdate | ((options: DataSourceTransportOptions) => void);
 
         parameterMap?(data: DataSourceTransportParameterMapData, type: string): any;
     }
@@ -991,6 +991,7 @@ declare namespace kendo.data {
         max?: any;
         minLength?: any;
         maxLength?: any;
+    	[rule: string]: any;
     }
 
     class ObservableArray extends Observable {
@@ -1236,7 +1237,8 @@ declare namespace kendo.data {
         batch?: boolean;
         data?: any;
         filter?: any;
-        group?: DataSourceGroupItem[];
+        group?: DataSourceGroupItem | DataSourceGroupItem[];
+        inPlaceSort?: boolean;
         offlineStorage?: any;
         page?: number;
         pageSize?: number;
@@ -1362,20 +1364,19 @@ declare namespace kendo.ui {
         drop?(e: DropTargetDropEvent): void;
     }
 
-    interface DropTargetEvent {
+    interface DropTargetEvent extends JQueryEventObject {
         sender?: DropTarget;
+        draggable?: kendo.ui.Draggable;
+        dropTarget?: JQuery
     }
 
     interface DropTargetDragenterEvent extends DropTargetEvent {
-        draggable?: kendo.ui.Draggable;
     }
 
     interface DropTargetDragleaveEvent extends DropTargetEvent {
-        draggable?: kendo.ui.Draggable;
     }
 
     interface DropTargetDropEvent extends DropTargetEvent {
-        draggable?: kendo.ui.Draggable;
     }
 
     class DropTargetArea extends kendo.ui.Widget{
@@ -1454,6 +1455,7 @@ declare namespace kendo.ui {
         editor?(container: JQuery, options: TreeListEditorOptions): void;
     }
 }
+
 
 declare namespace kendo.dataviz.ui {
     function registerTheme(name: string, options: any): void;
@@ -1907,6 +1909,7 @@ declare namespace kendo.drawing {
 
         creator?: string;
         date?: Date;
+        imgDPI?: number;
         keywords?: string;
         landscape?: boolean;
         margin?: any;
@@ -2144,7 +2147,7 @@ declare namespace kendo.drawing {
     }
 
     interface SurfaceTooltip {
-        animation?: boolean|SurfaceTooltipAnimation;
+        animation?: boolean | SurfaceTooltipAnimation;
         appendTo?: string|JQuery;
     }
 
@@ -2646,7 +2649,7 @@ declare namespace kendo.dataviz.ui {
         findSeriesByName(name: string): kendo.dataviz.ChartSeries;
         getAxis(name: string): kendo.dataviz.ChartAxis;
         hideTooltip(): void;
-        plotArea(): void;
+        plotArea(): kendo.dataviz.ChartPlotArea;
         redraw(): void;
         refresh(): void;
         resize(force?: boolean): void;
@@ -2721,7 +2724,7 @@ declare namespace kendo.dataviz.ui {
         margin?: ChartAxisDefaultsLabelsMargin;
         mirror?: boolean;
         padding?: ChartAxisDefaultsLabelsPadding;
-        rotation?: ChartAxisDefaultsLabelsRotation;
+        rotation?: string | ChartAxisDefaultsLabelsRotation;
         skip?: number;
         step?: number;
         template?: string|Function;
@@ -2920,7 +2923,7 @@ declare namespace kendo.dataviz.ui {
         margin?: ChartCategoryAxisItemLabelsMargin;
         mirror?: boolean;
         padding?: ChartCategoryAxisItemLabelsPadding;
-        rotation?: ChartCategoryAxisItemLabelsRotation;
+        rotation?: string | ChartCategoryAxisItemLabelsRotation;
         skip?: number;
         step?: number;
         template?: string|Function;
@@ -3246,6 +3249,7 @@ declare namespace kendo.dataviz.ui {
         padding?: ChartLegendPadding;
         position?: string;
         reverse?: boolean;
+        spacing?: number;
         visible?: boolean;
         width?: number;
     }
@@ -3303,7 +3307,7 @@ declare namespace kendo.dataviz.ui {
         margin?: ChartPaneMargin;
         name?: string;
         padding?: ChartPanePadding;
-        title?: ChartPaneTitle;
+        title?: string | ChartPaneTitle;
     }
 
     interface ChartPannable {
@@ -3397,7 +3401,7 @@ declare namespace kendo.dataviz.ui {
 
     interface ChartSeriesItemExtremes {
         background?: string|Function;
-        border?: ChartSeriesItemExtremesBorder;
+        border?: Function | ChartSeriesItemExtremesBorder;
         size?: number|Function;
         type?: string|Function;
         rotation?: number|Function;
@@ -3534,7 +3538,7 @@ declare namespace kendo.dataviz.ui {
     interface ChartSeriesItemLine {
         color?: string;
         opacity?: number;
-        width?: string;
+        width?: number;
         style?: string;
     }
 
@@ -3557,7 +3561,7 @@ declare namespace kendo.dataviz.ui {
 
     interface ChartSeriesItemMarkersFrom {
         background?: string|Function;
-        border?: ChartSeriesItemMarkersFromBorder;
+        border?: Function | ChartSeriesItemMarkersFromBorder;
         size?: number|Function;
         type?: string|Function;
         visible?: boolean|Function;
@@ -3572,7 +3576,7 @@ declare namespace kendo.dataviz.ui {
 
     interface ChartSeriesItemMarkersTo {
         background?: string|Function;
-        border?: ChartSeriesItemMarkersToBorder;
+        border?: Function | ChartSeriesItemMarkersToBorder;
         size?: number|Function;
         type?: string|Function;
         visible?: boolean|Function;
@@ -3582,7 +3586,7 @@ declare namespace kendo.dataviz.ui {
 
     interface ChartSeriesItemMarkers {
         background?: string|Function;
-        border?: ChartSeriesItemMarkersBorder;
+        border?: Function | ChartSeriesItemMarkersBorder;
         from?: ChartSeriesItemMarkersFrom;
         size?: number|Function;
         to?: ChartSeriesItemMarkersTo;
@@ -3650,7 +3654,7 @@ declare namespace kendo.dataviz.ui {
 
     interface ChartSeriesItemOutliers {
         background?: string|Function;
-        border?: ChartSeriesItemOutliersBorder;
+        border?: Function | ChartSeriesItemOutliersBorder;
         size?: number|Function;
         type?: string|Function;
         rotation?: number|Function;
@@ -3672,11 +3676,11 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface ChartSeriesItemTargetLine {
-        width?: any|Function;
+        width?: number|Function;
     }
 
     interface ChartSeriesItemTarget {
-        border?: ChartSeriesItemTargetBorder;
+        border?: Function | ChartSeriesItemTargetBorder;
         color?: string|Function;
         line?: ChartSeriesItemTargetLine;
     }
@@ -3748,7 +3752,7 @@ declare namespace kendo.dataviz.ui {
         highlight?: ChartSeriesItemHighlight;
         holeSize?: number;
         labels?: ChartSeriesItemLabels;
-        line?: ChartSeriesItemLine;
+        line?: string | ChartSeriesItemLine;
         lowField?: string;
         margin?: ChartSeriesItemMargin;
         markers?: ChartSeriesItemMarkers;
@@ -3768,7 +3772,7 @@ declare namespace kendo.dataviz.ui {
         size?: number;
         sizeField?: string;
         spacing?: number;
-        stack?: boolean|ChartSeriesItemStack;
+        stack?: boolean | string | ChartSeriesItemStack;
         startAngle?: number;
         target?: ChartSeriesItemTarget;
         targetField?: string;
@@ -3987,7 +3991,7 @@ declare namespace kendo.dataviz.ui {
         scatter?: any;
         scatterLine?: any;
         spacing?: number;
-        stack?: boolean|ChartSeriesDefaultsStack;
+        stack?: boolean | ChartSeriesDefaultsStack;
         type?: string;
         tooltip?: ChartSeriesDefaultsTooltip;
         verticalArea?: any;
@@ -4082,6 +4086,7 @@ declare namespace kendo.dataviz.ui {
 
     interface ChartValueAxisItemCrosshair {
         color?: string;
+        dashType?: string;
         opacity?: number;
         tooltip?: ChartValueAxisItemCrosshairTooltip;
         visible?: boolean;
@@ -4122,7 +4127,7 @@ declare namespace kendo.dataviz.ui {
         margin?: ChartValueAxisItemLabelsMargin;
         mirror?: boolean;
         padding?: ChartValueAxisItemLabelsPadding;
-        rotation?: ChartValueAxisItemLabelsRotation;
+        rotation?: string | ChartValueAxisItemLabelsRotation;
         skip?: number;
         step?: number;
         template?: string|Function;
@@ -4360,6 +4365,7 @@ declare namespace kendo.dataviz.ui {
 
     interface ChartXAxisItemCrosshair {
         color?: string;
+        dashType?: string;
         opacity?: number;
         tooltip?: ChartXAxisItemCrosshairTooltip;
         visible?: boolean;
@@ -4410,7 +4416,7 @@ declare namespace kendo.dataviz.ui {
         margin?: ChartXAxisItemLabelsMargin;
         mirror?: boolean;
         padding?: ChartXAxisItemLabelsPadding;
-        rotation?: ChartXAxisItemLabelsRotation;
+        rotation?: string | ChartXAxisItemLabelsRotation;
         skip?: number;
         step?: number;
         template?: string|Function;
@@ -4649,6 +4655,7 @@ declare namespace kendo.dataviz.ui {
 
     interface ChartYAxisItemCrosshair {
         color?: string;
+        dashType?: string;
         opacity?: number;
         tooltip?: ChartYAxisItemCrosshairTooltip;
         visible?: boolean;
@@ -4921,8 +4928,8 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface ChartZoomable {
-        mousewheel?: boolean|ChartZoomableMousewheel;
-        selection?: boolean|ChartZoomableSelection;
+        mousewheel?: boolean | ChartZoomableMousewheel;
+        selection?: boolean | ChartZoomableSelection;
     }
 
     interface ChartExportImageOptions {
@@ -4961,21 +4968,22 @@ declare namespace kendo.dataviz.ui {
         dataSource?: any|any|kendo.data.DataSource;
         legend?: ChartLegend;
         panes?: ChartPane[];
-        pannable?: boolean|ChartPannable;
+        pannable?: boolean | ChartPannable;
         pdf?: ChartPdf;
+        persistSeriesVisibility?: boolean;
         plotArea?: ChartPlotArea;
         renderAs?: string;
         series?: ChartSeriesItem[];
         seriesColors?: any;
         seriesDefaults?: ChartSeriesDefaults;
         theme?: string;
-        title?: ChartTitle;
+        title?: string | ChartTitle;
         tooltip?: ChartTooltip;
         transitions?: boolean;
         valueAxis?: ChartValueAxisItem[];
         xAxis?: ChartXAxisItem[];
         yAxis?: ChartYAxisItem[];
-        zoomable?: boolean|ChartZoomable;
+        zoomable?: boolean | ChartZoomable;
         axisLabelClick?(e: ChartAxisLabelClickEvent): void;
         dataBound?(e: ChartDataBoundEvent): void;
         drag?(e: ChartDragEvent): void;
@@ -5256,8 +5264,8 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramConnectionDefaultsEndCap {
-        fill?: DiagramConnectionDefaultsEndCapFill;
-        stroke?: DiagramConnectionDefaultsEndCapStroke;
+        fill?: string | DiagramConnectionDefaultsEndCapFill;
+        stroke?: string | DiagramConnectionDefaultsEndCapStroke;
         type?: string;
     }
 
@@ -5278,7 +5286,7 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramConnectionDefaultsSelectionHandles {
-        fill?: DiagramConnectionDefaultsSelectionHandlesFill;
+        fill?: string | DiagramConnectionDefaultsSelectionHandlesFill;
         stroke?: DiagramConnectionDefaultsSelectionHandlesStroke;
         width?: number;
         height?: number;
@@ -5299,8 +5307,8 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramConnectionDefaultsStartCap {
-        fill?: DiagramConnectionDefaultsStartCapFill;
-        stroke?: DiagramConnectionDefaultsStartCapStroke;
+        fill?: string | DiagramConnectionDefaultsStartCapFill;
+        stroke?: string | DiagramConnectionDefaultsStartCapStroke;
         type?: string;
     }
 
@@ -5311,13 +5319,13 @@ declare namespace kendo.dataviz.ui {
 
     interface DiagramConnectionDefaults {
         content?: DiagramConnectionDefaultsContent;
-        editable?: boolean|DiagramConnectionDefaultsEditable;
-        endCap?: DiagramConnectionDefaultsEndCap;
+        editable?: boolean | DiagramConnectionDefaultsEditable;
+        endCap?: string | DiagramConnectionDefaultsEndCap;
         fromConnector?: string;
         hover?: DiagramConnectionDefaultsHover;
         selectable?: boolean;
         selection?: DiagramConnectionDefaultsSelection;
-        startCap?: DiagramConnectionDefaultsStartCap;
+        startCap?: string | DiagramConnectionDefaultsStartCap;
         stroke?: DiagramConnectionDefaultsStroke;
         toConnector?: string;
         type?: string;
@@ -5353,8 +5361,8 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramConnectionEndCap {
-        fill?: DiagramConnectionEndCapFill;
-        stroke?: DiagramConnectionEndCapStroke;
+        fill?: string | DiagramConnectionEndCapFill;
+        stroke?: string | DiagramConnectionEndCapStroke;
         type?: string;
     }
 
@@ -5385,7 +5393,7 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramConnectionSelectionHandles {
-        fill?: DiagramConnectionSelectionHandlesFill;
+        fill?: string | DiagramConnectionSelectionHandlesFill;
         stroke?: DiagramConnectionSelectionHandlesStroke;
         width?: number;
         height?: number;
@@ -5406,8 +5414,8 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramConnectionStartCap {
-        fill?: DiagramConnectionStartCapFill;
-        stroke?: DiagramConnectionStartCapStroke;
+        fill?: string | DiagramConnectionStartCapFill;
+        stroke?: string | DiagramConnectionStartCapStroke;
         type?: string;
     }
 
@@ -5423,16 +5431,16 @@ declare namespace kendo.dataviz.ui {
 
     interface DiagramConnection {
         content?: DiagramConnectionContent;
-        editable?: boolean|DiagramConnectionEditable;
-        endCap?: DiagramConnectionEndCap;
-        from?: DiagramConnectionFrom;
+        editable?: boolean | DiagramConnectionEditable;
+        endCap?: string | DiagramConnectionEndCap;
+        from?: string | DiagramConnectionFrom;
         fromConnector?: string;
         hover?: DiagramConnectionHover;
         points?: DiagramConnectionPoint[];
         selection?: DiagramConnectionSelection;
-        startCap?: DiagramConnectionStartCap;
+        startCap?: string | DiagramConnectionStartCap;
         stroke?: DiagramConnectionStroke;
-        to?: DiagramConnectionTo;
+        to?: string | DiagramConnectionTo;
         toConnector?: string;
         type?: string;
     }
@@ -5442,7 +5450,7 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramEditableDrag {
-        snap?: boolean|DiagramEditableDragSnap;
+        snap?: boolean | DiagramEditableDragSnap;
     }
 
     interface DiagramEditableResizeHandlesFill {
@@ -5462,7 +5470,7 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramEditableResizeHandlesHover {
-        fill?: DiagramEditableResizeHandlesHoverFill;
+        fill?: string | DiagramEditableResizeHandlesHoverFill;
         stroke?: DiagramEditableResizeHandlesHoverStroke;
     }
 
@@ -5473,7 +5481,7 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramEditableResizeHandles {
-        fill?: DiagramEditableResizeHandlesFill;
+        fill?: string | DiagramEditableResizeHandlesFill;
         height?: number;
         hover?: DiagramEditableResizeHandlesHover;
         stroke?: DiagramEditableResizeHandlesStroke;
@@ -5506,10 +5514,10 @@ declare namespace kendo.dataviz.ui {
 
     interface DiagramEditable {
         connectionTemplate?: string|Function;
-        drag?: boolean|DiagramEditableDrag;
+        drag?: boolean | DiagramEditableDrag;
         remove?: boolean;
-        resize?: boolean|DiagramEditableResize;
-        rotate?: boolean|DiagramEditableRotate;
+        resize?: boolean | DiagramEditableResize;
+        rotate?: boolean | DiagramEditableRotate;
         shapeTemplate?: string|Function;
         tools?: DiagramEditableTool[];
     }
@@ -5597,8 +5605,8 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramShapeDefaultsConnectorDefaultsHover {
-        fill?: DiagramShapeDefaultsConnectorDefaultsHoverFill;
-        stroke?: DiagramShapeDefaultsConnectorDefaultsHoverStroke;
+        fill?: string | DiagramShapeDefaultsConnectorDefaultsHoverFill;
+        stroke?: string | DiagramShapeDefaultsConnectorDefaultsHoverStroke;
     }
 
     interface DiagramShapeDefaultsConnectorDefaultsStroke {
@@ -5611,8 +5619,8 @@ declare namespace kendo.dataviz.ui {
         width?: number;
         height?: number;
         hover?: DiagramShapeDefaultsConnectorDefaultsHover;
-        fill?: DiagramShapeDefaultsConnectorDefaultsFill;
-        stroke?: DiagramShapeDefaultsConnectorDefaultsStroke;
+        fill?: string | DiagramShapeDefaultsConnectorDefaultsFill;
+        stroke?: string | DiagramShapeDefaultsConnectorDefaultsStroke;
     }
 
     interface DiagramShapeDefaultsConnectorFill {
@@ -5632,8 +5640,8 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramShapeDefaultsConnectorHover {
-        fill?: DiagramShapeDefaultsConnectorHoverFill;
-        stroke?: DiagramShapeDefaultsConnectorHoverStroke;
+        fill?: string | DiagramShapeDefaultsConnectorHoverFill;
+        stroke?: string | DiagramShapeDefaultsConnectorHoverStroke;
     }
 
     interface DiagramShapeDefaultsConnectorStroke {
@@ -5648,8 +5656,8 @@ declare namespace kendo.dataviz.ui {
         width?: number;
         height?: number;
         hover?: DiagramShapeDefaultsConnectorHover;
-        fill?: DiagramShapeDefaultsConnectorFill;
-        stroke?: DiagramShapeDefaultsConnectorStroke;
+        fill?: string | DiagramShapeDefaultsConnectorFill;
+        stroke?: string | DiagramShapeDefaultsConnectorStroke;
     }
 
     interface DiagramShapeDefaultsContent {
@@ -5702,7 +5710,7 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramShapeDefaultsHover {
-        fill?: DiagramShapeDefaultsHoverFill;
+        fill?: string | DiagramShapeDefaultsHoverFill;
     }
 
     interface DiagramShapeDefaultsRotation {
@@ -5719,8 +5727,8 @@ declare namespace kendo.dataviz.ui {
         connectors?: DiagramShapeDefaultsConnector[];
         connectorDefaults?: DiagramShapeDefaultsConnectorDefaults;
         content?: DiagramShapeDefaultsContent;
-        editable?: boolean|DiagramShapeDefaultsEditable;
-        fill?: DiagramShapeDefaultsFill;
+        editable?: boolean | DiagramShapeDefaultsEditable;
+        fill?: string | DiagramShapeDefaultsFill;
         height?: number;
         hover?: DiagramShapeDefaultsHover;
         minHeight?: number;
@@ -5754,8 +5762,8 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramShapeConnectorDefaultsHover {
-        fill?: DiagramShapeConnectorDefaultsHoverFill;
-        stroke?: DiagramShapeConnectorDefaultsHoverStroke;
+        fill?: string | DiagramShapeConnectorDefaultsHoverFill;
+        stroke?: string | DiagramShapeConnectorDefaultsHoverStroke;
     }
 
     interface DiagramShapeConnectorDefaultsStroke {
@@ -5768,8 +5776,8 @@ declare namespace kendo.dataviz.ui {
         width?: number;
         height?: number;
         hover?: DiagramShapeConnectorDefaultsHover;
-        fill?: DiagramShapeConnectorDefaultsFill;
-        stroke?: DiagramShapeConnectorDefaultsStroke;
+        fill?: string | DiagramShapeConnectorDefaultsFill;
+        stroke?: string | DiagramShapeConnectorDefaultsStroke;
     }
 
     interface DiagramShapeConnectorFill {
@@ -5789,8 +5797,8 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramShapeConnectorHover {
-        fill?: DiagramShapeConnectorHoverFill;
-        stroke?: DiagramShapeConnectorHoverStroke;
+        fill?: string | DiagramShapeConnectorHoverFill;
+        stroke?: string | DiagramShapeConnectorHoverStroke;
     }
 
     interface DiagramShapeConnectorStroke {
@@ -5806,8 +5814,8 @@ declare namespace kendo.dataviz.ui {
         width?: number;
         height?: number;
         hover?: DiagramShapeConnectorHover;
-        fill?: DiagramShapeConnectorFill;
-        stroke?: DiagramShapeConnectorStroke;
+        fill?: string | DiagramShapeConnectorFill;
+        stroke?: string | DiagramShapeConnectorStroke;
     }
 
     interface DiagramShapeContent {
@@ -5858,7 +5866,7 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface DiagramShapeHover {
-        fill?: DiagramShapeHoverFill;
+        fill?: string | DiagramShapeHoverFill;
     }
 
     interface DiagramShapeRotation {
@@ -5875,8 +5883,8 @@ declare namespace kendo.dataviz.ui {
         connectors?: DiagramShapeConnector[];
         connectorDefaults?: DiagramShapeConnectorDefaults;
         content?: DiagramShapeContent;
-        editable?: boolean|DiagramShapeEditable;
-        fill?: DiagramShapeFill;
+        editable?: boolean | DiagramShapeEditable;
+        fill?: string | DiagramShapeFill;
         height?: number;
         hover?: DiagramShapeHover;
         id?: string;
@@ -5914,11 +5922,11 @@ declare namespace kendo.dataviz.ui {
         connections?: DiagramConnection[];
         connectionsDataSource?: any|any|kendo.data.DataSource;
         dataSource?: any|any|kendo.data.DataSource;
-        editable?: boolean|DiagramEditable;
+        editable?: boolean | DiagramEditable;
         layout?: DiagramLayout;
-        pannable?: boolean|DiagramPannable;
+        pannable?: boolean | DiagramPannable;
         pdf?: DiagramPdf;
-        selectable?: boolean|DiagramSelectable;
+        selectable?: boolean | DiagramSelectable;
         shapeDefaults?: DiagramShapeDefaults;
         shapes?: DiagramShape[];
         template?: string|Function;
@@ -6100,7 +6108,7 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface LinearGaugeGaugeArea {
-        background?: any;
+        background?: string;
         border?: LinearGaugeGaugeAreaBorder;
         height?: number;
         margin?: LinearGaugeGaugeAreaMargin;
@@ -6298,9 +6306,9 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface MapControls {
-        attribution?: boolean|MapControlsAttribution;
-        navigator?: boolean|MapControlsNavigator;
-        zoom?: boolean|MapControlsZoom;
+        attribution?: boolean | MapControlsAttribution;
+        navigator?: boolean | MapControlsNavigator;
+        zoom?: boolean | MapControlsZoom;
     }
 
     interface MapLayerDefaultsBing {
@@ -6359,7 +6367,7 @@ declare namespace kendo.dataviz.ui {
     interface MapLayerDefaultsMarkerTooltip {
         autoHide?: boolean;
         animation?: MapLayerDefaultsMarkerTooltipAnimation;
-        content?: MapLayerDefaultsMarkerTooltipContent;
+        content?: string | Function | MapLayerDefaultsMarkerTooltipContent;
         template?: string;
         callout?: boolean;
         iframe?: boolean;
@@ -6454,7 +6462,7 @@ declare namespace kendo.dataviz.ui {
     interface MapLayerTooltip {
         autoHide?: boolean;
         animation?: MapLayerTooltipAnimation;
-        content?: MapLayerTooltipContent;
+        content?: string | Function | MapLayerTooltipContent;
         template?: string;
         callout?: boolean;
         iframe?: boolean;
@@ -6480,6 +6488,8 @@ declare namespace kendo.dataviz.ui {
         tooltip?: MapLayerTooltip;
         maxSize?: number;
         minSize?: number;
+        maxZoom?: number;
+        minZoom?: number;
         opacity?: number;
         subdomains?: any;
         symbol?: string|Function;
@@ -6512,7 +6522,7 @@ declare namespace kendo.dataviz.ui {
     interface MapMarkerDefaultsTooltip {
         autoHide?: boolean;
         animation?: MapMarkerDefaultsTooltipAnimation;
-        content?: MapMarkerDefaultsTooltipContent;
+        content?: string | Function | MapMarkerDefaultsTooltipContent;
         template?: string;
         callout?: boolean;
         iframe?: boolean;
@@ -6550,7 +6560,7 @@ declare namespace kendo.dataviz.ui {
     interface MapMarkerTooltip {
         autoHide?: boolean;
         animation?: MapMarkerTooltipAnimation;
-        content?: MapMarkerTooltipContent;
+        content?: string | Function | MapMarkerTooltipContent;
         template?: string;
         callout?: boolean;
         iframe?: boolean;
@@ -6788,7 +6798,7 @@ declare namespace kendo.dataviz.ui {
     }
 
     interface RadialGaugeGaugeArea {
-        background?: any;
+        background?: string;
         border?: RadialGaugeGaugeAreaBorder;
         height?: number;
         margin?: RadialGaugeGaugeAreaMargin;
@@ -7257,7 +7267,7 @@ declare namespace kendo.dataviz.ui {
 
     interface SparklineSeriesItemMarkers {
         background?: string|Function;
-        border?: SparklineSeriesItemMarkersBorder;
+        border?: Function | SparklineSeriesItemMarkersBorder;
         size?: number|Function;
         type?: string|Function;
         visible?: boolean|Function;
@@ -7330,7 +7340,7 @@ declare namespace kendo.dataviz.ui {
     interface SparklineSeriesItemTarget {
         line?: SparklineSeriesItemTargetLine;
         color?: string|Function;
-        border?: SparklineSeriesItemTargetBorder;
+        border?: Function | SparklineSeriesItemTargetBorder;
     }
 
     interface SparklineSeriesItemTooltipBorder {
@@ -7368,7 +7378,7 @@ declare namespace kendo.dataviz.ui {
         connectors?: SparklineSeriesItemConnectors;
         gap?: number;
         labels?: SparklineSeriesItemLabels;
-        line?: SparklineSeriesItemLine;
+        line?: string | SparklineSeriesItemLine;
         markers?: SparklineSeriesItemMarkers;
         missingValues?: string;
         style?: string;
@@ -7379,7 +7389,7 @@ declare namespace kendo.dataviz.ui {
         size?: number;
         startAngle?: number;
         spacing?: number;
-        stack?: boolean|SparklineSeriesItemStack;
+        stack?: boolean | string | SparklineSeriesItemStack;
         tooltip?: SparklineSeriesItemTooltip;
         width?: number;
         target?: SparklineSeriesItemTarget;
@@ -7442,7 +7452,7 @@ declare namespace kendo.dataviz.ui {
         overlay?: any;
         pie?: any;
         spacing?: number;
-        stack?: boolean|SparklineSeriesDefaultsStack;
+        stack?: boolean | SparklineSeriesDefaultsStack;
         type?: string;
         tooltip?: SparklineSeriesDefaultsTooltip;
     }
@@ -8523,7 +8533,7 @@ declare namespace kendo.dataviz.ui {
         margin?: StockChartNavigatorPaneMargin;
         name?: string;
         padding?: StockChartNavigatorPanePadding;
-        title?: StockChartNavigatorPaneTitle;
+        title?: string | StockChartNavigatorPaneTitle;
     }
 
     interface StockChartNavigatorSelectMousewheel {
@@ -8533,7 +8543,7 @@ declare namespace kendo.dataviz.ui {
 
     interface StockChartNavigatorSelect {
         from?: Date;
-        mousewheel?: boolean|StockChartNavigatorSelectMousewheel;
+        mousewheel?: boolean | StockChartNavigatorSelectMousewheel;
         to?: Date;
     }
 
@@ -8646,7 +8656,7 @@ declare namespace kendo.dataviz.ui {
         downColorField?: string;
         gap?: number;
         labels?: StockChartNavigatorSeriesItemLabels;
-        line?: StockChartNavigatorSeriesItemLine;
+        line?: string | StockChartNavigatorSeriesItemLine;
         lowField?: string;
         markers?: StockChartNavigatorSeriesItemMarkers;
         missingValues?: string;
@@ -8655,7 +8665,7 @@ declare namespace kendo.dataviz.ui {
         openField?: string;
         overlay?: StockChartNavigatorSeriesItemOverlay;
         spacing?: number;
-        stack?: boolean|StockChartNavigatorSeriesItemStack;
+        stack?: boolean | string | StockChartNavigatorSeriesItemStack;
         tooltip?: StockChartNavigatorSeriesItemTooltip;
         width?: number;
     }
@@ -8666,10 +8676,10 @@ declare namespace kendo.dataviz.ui {
         autoBind?: boolean;
         dateField?: string;
         pane?: StockChartNavigatorPane;
-        visible?: boolean;
         series?: StockChartNavigatorSeriesItem[];
         select?: StockChartNavigatorSelect;
         hint?: StockChartNavigatorHint;
+        visible?: boolean;
     }
 
     interface StockChartPaneBorder {
@@ -8703,7 +8713,7 @@ declare namespace kendo.dataviz.ui {
         border?: StockChartPaneBorder;
         clip?: boolean;
         height?: number;
-        title?: StockChartPaneTitle;
+        title?: string | StockChartPaneTitle;
     }
 
     interface StockChartPdfMargin {
@@ -8802,7 +8812,7 @@ declare namespace kendo.dataviz.ui {
 
     interface StockChartSeriesItemMarkers {
         background?: string|Function;
-        border?: StockChartSeriesItemMarkersBorder;
+        border?: Function | StockChartSeriesItemMarkersBorder;
         size?: number|Function;
         rotation?: number|Function;
         type?: string|Function;
@@ -8875,7 +8885,7 @@ declare namespace kendo.dataviz.ui {
     interface StockChartSeriesItemTarget {
         line?: StockChartSeriesItemTargetLine;
         color?: string|Function;
-        border?: StockChartSeriesItemTargetBorder;
+        border?: Function | StockChartSeriesItemTargetBorder;
     }
 
     interface StockChartSeriesItemTooltipBorder {
@@ -8915,7 +8925,7 @@ declare namespace kendo.dataviz.ui {
         downColorField?: string;
         gap?: number;
         labels?: StockChartSeriesItemLabels;
-        line?: StockChartSeriesItemLine;
+        line?: string | StockChartSeriesItemLine;
         lowField?: string;
         markers?: StockChartSeriesItemMarkers;
         missingValues?: string;
@@ -8925,7 +8935,7 @@ declare namespace kendo.dataviz.ui {
         openField?: string;
         overlay?: StockChartSeriesItemOverlay;
         spacing?: number;
-        stack?: boolean|StockChartSeriesItemStack;
+        stack?: boolean | string | StockChartSeriesItemStack;
         tooltip?: StockChartSeriesItemTooltip;
         visibleInLegend?: boolean;
         width?: number;
@@ -8990,7 +9000,7 @@ declare namespace kendo.dataviz.ui {
         overlay?: any;
         pie?: any;
         spacing?: number;
-        stack?: boolean|StockChartSeriesDefaultsStack;
+        stack?: boolean | StockChartSeriesDefaultsStack;
         type?: string;
         tooltip?: StockChartSeriesDefaultsTooltip;
     }
@@ -9296,6 +9306,7 @@ declare namespace kendo.dataviz.ui {
         legend?: StockChartLegend;
         panes?: StockChartPane[];
         pdf?: StockChartPdf;
+        persistSeriesVisibility?: boolean;
         plotArea?: StockChartPlotArea;
         renderAs?: string;
         series?: StockChartSeriesItem[];
@@ -9674,7 +9685,7 @@ declare namespace kendo.dataviz.map {
     interface MarkerTooltip {
         autoHide?: boolean;
         animation?: MarkerTooltipAnimation;
-        content?: MarkerTooltipContent;
+        content?: string | Function | MarkerTooltipContent;
         template?: string;
         callout?: boolean;
         iframe?: boolean;
@@ -9993,7 +10004,7 @@ declare namespace kendo.dataviz.diagram {
 
     interface CircleOptions {
         name?: string;
-        fill?: CircleFill;
+        fill?: string | CircleFill;
         stroke?: CircleStroke;
         center?: any;
         radius?: number;
@@ -10060,8 +10071,8 @@ declare namespace kendo.dataviz.diagram {
     }
 
     interface ConnectionEndCap {
-        fill?: ConnectionEndCapFill;
-        stroke?: ConnectionEndCapStroke;
+        fill?: string | ConnectionEndCapFill;
+        stroke?: string | ConnectionEndCapStroke;
         type?: string;
     }
 
@@ -10089,8 +10100,8 @@ declare namespace kendo.dataviz.diagram {
     }
 
     interface ConnectionStartCap {
-        fill?: ConnectionStartCapFill;
-        stroke?: ConnectionStartCapStroke;
+        fill?: string | ConnectionStartCapFill;
+        stroke?: string | ConnectionStartCapStroke;
         type?: string;
     }
 
@@ -10106,8 +10117,8 @@ declare namespace kendo.dataviz.diagram {
         fromY?: number;
         stroke?: ConnectionStroke;
         hover?: ConnectionHover;
-        startCap?: ConnectionStartCap;
-        endCap?: ConnectionEndCap;
+        startCap?: string | ConnectionStartCap;
+        endCap?: string | ConnectionEndCap;
         points?: ConnectionPoint[];
         selectable?: boolean;
         toConnector?: string;
@@ -10154,8 +10165,8 @@ declare namespace kendo.dataviz.diagram {
     }
 
     interface ConnectorHover {
-        fill?: ConnectorHoverFill;
-        stroke?: ConnectorHoverStroke;
+        fill?: string | ConnectorHoverFill;
+        stroke?: string | ConnectorHoverStroke;
     }
 
     interface ConnectorStroke {
@@ -10169,8 +10180,8 @@ declare namespace kendo.dataviz.diagram {
         width?: number;
         height?: number;
         hover?: ConnectorHover;
-        fill?: ConnectorFill;
-        stroke?: ConnectorStroke;
+        fill?: string | ConnectorFill;
+        stroke?: string | ConnectorStroke;
     }
     interface ConnectorEvent {
         sender: Connector;
@@ -10348,8 +10359,8 @@ declare namespace kendo.dataviz.diagram {
     }
 
     interface PathEndCap {
-        fill?: PathEndCapFill;
-        stroke?: PathEndCapStroke;
+        fill?: string | PathEndCapFill;
+        stroke?: string | PathEndCapStroke;
         type?: string;
     }
 
@@ -10386,8 +10397,8 @@ declare namespace kendo.dataviz.diagram {
     }
 
     interface PathStartCap {
-        fill?: PathStartCapFill;
-        stroke?: PathStartCapStroke;
+        fill?: string | PathStartCapFill;
+        stroke?: string | PathStartCapStroke;
         type?: string;
     }
 
@@ -10399,10 +10410,10 @@ declare namespace kendo.dataviz.diagram {
     interface PathOptions {
         name?: string;
         data?: string;
-        endCap?: PathEndCap;
-        fill?: PathFill;
+        endCap?: string | PathEndCap;
+        fill?: string | PathFill;
         height?: number;
-        startCap?: PathStartCap;
+        startCap?: string | PathStartCap;
         stroke?: PathStroke;
         width?: number;
         x?: number;
@@ -10468,8 +10479,8 @@ declare namespace kendo.dataviz.diagram {
     }
 
     interface PolylineEndCap {
-        fill?: PolylineEndCapFill;
-        stroke?: PolylineEndCapStroke;
+        fill?: string | PolylineEndCapFill;
+        stroke?: string | PolylineEndCapStroke;
         type?: string;
     }
 
@@ -10506,8 +10517,8 @@ declare namespace kendo.dataviz.diagram {
     }
 
     interface PolylineStartCap {
-        fill?: PolylineStartCapFill;
-        stroke?: PolylineStartCapStroke;
+        fill?: string | PolylineStartCapFill;
+        stroke?: string | PolylineStartCapStroke;
         type?: string;
     }
 
@@ -10518,9 +10529,9 @@ declare namespace kendo.dataviz.diagram {
 
     interface PolylineOptions {
         name?: string;
-        endCap?: PolylineEndCap;
-        fill?: PolylineFill;
-        startCap?: PolylineStartCap;
+        endCap?: string | PolylineEndCap;
+        fill?: string | PolylineFill;
+        startCap?: string | PolylineStartCap;
         stroke?: PolylineStroke;
     }
     interface PolylineEvent {
@@ -10604,7 +10615,7 @@ declare namespace kendo.dataviz.diagram {
 
     interface RectangleOptions {
         name?: string;
-        fill?: RectangleFill;
+        fill?: string | RectangleFill;
         height?: number;
         stroke?: RectangleStroke;
         width?: number;
@@ -10660,8 +10671,8 @@ declare namespace kendo.dataviz.diagram {
     }
 
     interface ShapeConnectorDefaultsHover {
-        fill?: ShapeConnectorDefaultsHoverFill;
-        stroke?: ShapeConnectorDefaultsHoverStroke;
+        fill?: string | ShapeConnectorDefaultsHoverFill;
+        stroke?: string | ShapeConnectorDefaultsHoverStroke;
     }
 
     interface ShapeConnectorDefaultsStroke {
@@ -10674,8 +10685,8 @@ declare namespace kendo.dataviz.diagram {
         width?: number;
         height?: number;
         hover?: ShapeConnectorDefaultsHover;
-        fill?: ShapeConnectorDefaultsFill;
-        stroke?: ShapeConnectorDefaultsStroke;
+        fill?: string | ShapeConnectorDefaultsFill;
+        stroke?: string | ShapeConnectorDefaultsStroke;
     }
 
     interface ShapeConnector {
@@ -10725,7 +10736,7 @@ declare namespace kendo.dataviz.diagram {
     }
 
     interface ShapeHover {
-        fill?: ShapeHoverFill;
+        fill?: string | ShapeHoverFill;
     }
 
     interface ShapeRotation {
@@ -10741,7 +10752,7 @@ declare namespace kendo.dataviz.diagram {
     interface ShapeOptions {
         name?: string;
         id?: string;
-        editable?: boolean|ShapeEditable;
+        editable?: boolean | ShapeEditable;
         path?: string;
         stroke?: ShapeStroke;
         type?: string;
@@ -10751,7 +10762,7 @@ declare namespace kendo.dataviz.diagram {
         minHeight?: number;
         width?: number;
         height?: number;
-        fill?: ShapeFill;
+        fill?: string | ShapeFill;
         hover?: ShapeHover;
         connectors?: ShapeConnector[];
         rotation?: ShapeRotation;
@@ -10842,7 +10853,7 @@ declare namespace kendo {
     namespace date {
         function setDayOfWeek(targetDate: Date, dayOfWeek: number, direction: number): void;
         function dayOfWeek(targetDate: Date, dayOfWeek: number, direction: number): Date;
-        function weekInYear(date: Date, weekStart?: Date): number;
+        function weekInYear(date: Date, weekStart?: number): number;
         function getDate(date: Date): Date;
         function isInDateRange(targetDate: Date, lowerLimitDate: Date, upperLimitDate: Date): boolean;
         function isInTimeRange(targetDate: Date, lowerLimitDate: Date, upperLimitDate: Date): boolean;
@@ -10889,13 +10900,14 @@ declare namespace kendo {
         function bind(element: JQuery, viewModel: kendo.data.ObservableObject, namespace?: any): void;
         function bind(element: Element, viewModel: any, namespace?: any): void;
         function bind(element: Element, viewModel: kendo.data.ObservableObject, namespace?: any): void;
-        function observableHierarchy(array: any): void;
         function confirm(text: string): JQueryPromise<any>;
         function culture(culture: string): void;
         function destroy(element: string): void;
         function destroy(element: JQuery): void;
         function destroy(element: Element): void;
+        function guid(): string;
         function htmlEncode(value: string): string;
+        function observableHierarchy(array: any): void;
         function parseDate(value: string, formats?: string, culture?: string): Date;
         function parseDate(value: string, formats?: any, culture?: string): Date;
         function parseFloat(value: string, culture?: string): number;
@@ -11030,6 +11042,7 @@ declare namespace kendo.ooxml {
         frozenColumns?: number;
         frozenRows?: number;
         filter?: WorkbookSheetFilter;
+        mergedCells?: any;
         name?: string;
         rows?: WorkbookSheetRow[];
         showGridLines?: boolean;
@@ -11486,6 +11499,7 @@ declare namespace kendo.dataviz.drawing {
 
         creator?: string;
         date?: Date;
+        imgDPI?: number;
         keywords?: string;
         landscape?: boolean;
         margin?: any;
@@ -11723,7 +11737,7 @@ declare namespace kendo.dataviz.drawing {
     }
 
     interface SurfaceTooltip {
-        animation?: boolean|SurfaceTooltipAnimation;
+        animation?: boolean | SurfaceTooltipAnimation;
         appendTo?: string|JQuery;
     }
 
