@@ -79,6 +79,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Make sure any necessary subdirectories are created. */
         os-create-dir value(substitute("&1/metrics/ABLObjects", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/ProfilerData", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics/Requests", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/SessionData", this-object:TemporaryDir)).
     end constructor.
 
@@ -92,6 +93,26 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
 
     /***** Private Methods *****/
+
+
+    method private character GetRequestPath ( input piAgentID as integer ):
+        define variable cBasePath as character no-undo.
+
+        /* Assemble base path for output and create any needed directories. */
+        assign cBasePath = substitute("&1/metrics/Requests/&2", this-object:TemporaryDir, piAgentID).
+        os-create-dir value(cBasePath).
+
+        if this-object:OutputTime ne ? then
+            return substitute("&1/&2.&3_A&4.json",
+                              cBasePath,
+                              iso-date(date(this-object:OutputTime)),
+                              mtime(this-object:OutputTime), piAgentID).
+        else
+            return substitute("&1/&2.&3_A&4.json",
+                              cBasePath,
+                              iso-date(now),
+                              mtime(now), piAgentID).
+    end method. /* GetRequestPath */
 
 
     method private character GetSessionPath ( input piAgentID as integer ):
@@ -640,6 +661,35 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* GetSessionABLObjects */
 
 
+    method public void GetRequestMetrics ( input piAgentID as integer ):
+        /**
+         * Send the request to obtain request metrics by either local (JMX/OEM).
+         */
+
+        define variable oRequests as JsonArray.
+
+        /* Check special flag for request metrics. */
+        if not oConfig:RequestsEnabled then return.
+
+        /* Check if general reporting is allowed, based on flags and scheduled time. */
+        if not oConfig:OnValidSchedule() then return.
+
+        /* Update username/password for OEM, if enabled. */
+        oConfig:UpdateCredentialsOEM(oABLObjectsReport).
+
+        /* Obtain the current list of sessions for this agent. */
+        oABLObjectsReport:GetRequestMetrics(input piAgentID, output oRequests).
+
+        /* Output the report to a known location on disk for review/archival. */
+        if valid-object(oRequests) and oRequests:Length gt 0 then
+            oRequests:WriteFile(this-object:GetRequestPath(piAgentID), true).
+
+        finally:
+            delete object oRequests no-error.
+        end finally.
+    end method. /* GetRequestMetrics */
+
+
     method public void GetSessionMetrics ( input piAgentID as integer ):
         /**
          * Send the request to obtain session metrics by either local (JMX/OEM).
@@ -663,6 +713,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Output the report to a known location on disk for review/archival. */
         if valid-object(oSessions) and oSessions:Length gt 0 then
             oSessions:WriteFile(this-object:GetSessionPath(piAgentID), true).
+
+        finally:
+            delete object oSessions no-error.
+        end finally.
     end method. /* GetSessionMetrics */
 
 
@@ -734,9 +788,15 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         this-object:OutputTime = now. /* Synchronize output time. */
         oLogger:Info(substitute("Running reports for Agent '&1', Session '&2' at &3",
                                 piAgentID, piSessionID, this-object:OutputTime)).
+
         this-object:GetSessionABLObjects(piAgentID, piSessionID). /* ABLObjects */
+
+        if oConfig:RequestsEnabled then
+            this-object:GetRequestMetrics(piAgentID). /* Last 1000 Requests */
+
         if oConfig:ObjectsTrackMem then
             this-object:GetSessionMetrics(piAgentID). /* Memory, etc. */
+
         this-object:OutputTime = ?. /* Reset output timestamp. */
 
         catch err as Progress.Lang.Error:
