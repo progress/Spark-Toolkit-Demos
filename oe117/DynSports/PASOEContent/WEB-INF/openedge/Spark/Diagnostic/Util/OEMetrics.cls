@@ -77,6 +77,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
 
         /* Make sure any necessary subdirectories are created. */
+        os-create-dir value(substitute("&1/metrics/ABLObjects", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/ProfilerData", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/Requests", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/SessionData", this-object:TemporaryDir)).

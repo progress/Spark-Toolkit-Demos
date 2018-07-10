@@ -162,6 +162,7 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
         /* Make sure we have a consistent path for temporary files. */
         os-create-dir value(substitute("&1", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
+        os-create-dir value(substitute("&1/metrics/ABLObjects", this-object:TemporaryDir)).
 
         /* Set the means of obtaining metrics, or a sane default. */
         case pcSource:
