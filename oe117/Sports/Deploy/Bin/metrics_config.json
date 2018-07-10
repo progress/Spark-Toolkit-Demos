@@ -4,14 +4,14 @@
         "pollStart": "2018-07-01T08:00:00",
         "pollStop": "2018-07-31T20:00:00"
     },
-    "objects": {
-        "enabled": true,
+    "remote": {
         "exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.*",
         "oemUser": "tomcat",
         "oemPass": "tomcat",
         "outputInterval": 300000,
         "source": "oemanager",
         "trackMemory": true,
+        "trackObjects": true,
         "trackRequests": true
     },
     "profiler": {

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
-   File        : ABLObjectsReport
+   File        : RemoteMetrics
    Purpose     : Utilize the OEManager or JMX tools to gather info on
-                 objects which remain in memory after code execution
+                 metrics for the current PASOE instance (agent/session)
    Description :
    Author(s)   : Irfan Syed (isyed@progress.com), Dustin Grau (dugrau@progress.com)
    Created     : Tue Nov 28 14:07:12 EST 2017
@@ -20,7 +20,7 @@ using OpenEdge.Net.HTTP.IAuthenticatedRequest from propath.
 
 block-level on error undo, throw.
 
-class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logger use-widget-pool final:
+class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger use-widget-pool final:
 
     /*** Static Properties ***/
 
@@ -156,15 +156,12 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
     /***** Constructor/Destructor *****/
 
 
-    constructor public ABLObjectsReport ( input pcSource as character ):
+    constructor public RemoteMetrics ( input pcSource as character ):
         super().
 
         /* Make sure we have a consistent path for temporary files. */
         os-create-dir value(substitute("&1", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics", this-object:TemporaryDir)).
-
-        /* Make sure any necessary subdirectories are created. */
-        os-create-dir value(substitute("&1/metrics/ABLObjects", this-object:TemporaryDir)).
 
         /* Set the means of obtaining metrics, or a sane default. */
         case pcSource:
@@ -183,7 +180,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
     end constructor.
 
 
-    destructor public ABLObjectsReport ( ):
+    destructor public RemoteMetrics ( ):
         delete object oLogger no-error.
     end destructor.
 
