@@ -423,8 +423,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             oLogger:Debug(substitute("Tracking Agent #&1: &2", piAgentID, lIsTracking)).
         end. /* file exists */
 
-        if not lIsTracking then /* Turn on tracking if not already, and get latest result. */
+        if not lIsTracking then do:
+            /* Turn on tracking if not already enabled, and record the latest result. */
             assign lIsTracking = oABLObjectsReport:TrackABLObjects(piAgentID, true).
+            
+            /* Also begin tracking requests by making an initial call to this endpoint. */
+            if oConfig:ObjectsTrackRequests then
+                this-object:GetRequestMetrics(piAgentID).
+        end. /* not lIsTracking */
 
         /* Remember whether objects are being tracked for this agent. */
         if lIsTracking then do:
@@ -669,7 +675,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable oRequests as JsonArray.
 
         /* Check special flag for request metrics. */
-        if not oConfig:RequestsEnabled then return.
+        if not oConfig:ObjectsTrackRequests then return.
 
         /* Check if general reporting is allowed, based on flags and scheduled time. */
         if not oConfig:OnValidSchedule() then return.
@@ -698,7 +704,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable oSessions as JsonArray.
 
         /* Check special flag for session metrics (eg. memory). */
-        if not oConfig:ObjectsTrackMem then return.
+        if not oConfig:ObjectsTrackMemory then return.
 
         /* Check if object reporting is allowed, based on flags and scheduled time. */
         if not oConfig:AreObjectsEnabled("GetSessionMetrics") then return.
@@ -730,39 +736,38 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * when we last output data, and whether it is time to do so again.
          */
 
-        /* Check if object reporting is allowed, based on flags and scheduled time. */
-        if not oConfig:AreObjectsEnabled("PrepareSessionABLObjectReport") then return.
+        /* Check if general reporting is allowed, based on scheduled time. */
         if not oConfig:OnValidSchedule() then return.
 
-        define variable dNextObjectOutput as datetime no-undo initial ?.
+        define variable dNextReportOutput as datetime no-undo initial ?.
         if oConfig:ObjectsOutputInterval gt 0 then do:
             /* Check when reports were last output. */
             if dLastReportOutput eq ? then do:
                 assign
                     dLastReportOutput = now /* Begin the next reporting interval as of right now. */
-                    dNextObjectOutput = add-interval(now, oConfig:ObjectsOutputInterval, "milliseconds")
+                    dNextReportOutput = add-interval(now, oConfig:ObjectsOutputInterval, "milliseconds")
                     .
             end. /* No Previous Interval Recorded */
             else
-                assign dNextObjectOutput = add-interval(dLastReportOutput,
+                assign dNextReportOutput = add-interval(dLastReportOutput,
                                                         oConfig:ObjectsOutputInterval,
                                                         "milliseconds").
         end. /* oConfig:ObjectsOutputInterval gt 0 */
         else
-            assign dNextObjectOutput = now. /* Prepare reports immediately. */
+            assign dNextReportOutput = now. /* Prepare reports immediately. */
 
         /* Request report output if current time is equal/greater than the next expected interval. */
-        if now ge dNextObjectOutput then do:
+        if now ge dNextReportOutput then do:
             /* Immediately update the timestamp to avoid this session requesting the report again. */
             assign dLastReportOutput = now.
 
-            oLogger:Debug(substitute("Requesting reports for Agent '&1', Session '&2' directly.",
+            oLogger:Debug(substitute("Requesting reports for Agent '&1', Session '&2'.",
                                      this-object:GetAgentID(), this-object:GetSessionID())).
             this-object:PrepareSessionReports(this-object:GetAgentID(), this-object:GetSessionID()).
         end. /* Do Output */
         else
             oLogger:Debug(substitute("Time Until Next Report Interval: &1s",
-                                     interval(dNextObjectOutput, now, "seconds"))).
+                                     interval(dNextReportOutput, now, "seconds"))).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Unable to check last report output for Agent '&1', Session '&2': &3",
@@ -780,7 +785,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         oLogger:Debug(substitute("Preparing reports for Agent '&1', Session '&2'",
                                  piAgentID, piSessionID)).
 
-        /* Check if object reporting is allowed, based on flags and scheduled time. */
+        /* Check if reporting is allowed, based flags and scheduled time. */
         if not oConfig:AreObjectsEnabled("PrepareSessionABLObjectReport") then return.
         if not oConfig:OnValidSchedule() then return.
 
@@ -791,11 +796,11 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         this-object:GetSessionABLObjects(piAgentID, piSessionID). /* ABLObjects */
 
-        if oConfig:RequestsEnabled then
-            this-object:GetRequestMetrics(piAgentID). /* Last 1000 Requests */
+        if oConfig:ObjectsTrackMemory then
+            this-object:GetSessionMetrics(piAgentID). /* Session Metrics, eg. Memory */
 
-        if oConfig:ObjectsTrackMem then
-            this-object:GetSessionMetrics(piAgentID). /* Memory, etc. */
+        if oConfig:ObjectsTrackRequests then
+            this-object:GetRequestMetrics(piAgentID). /* Last 1000 Requests */
 
         this-object:OutputTime = ?. /* Reset output timestamp. */
 

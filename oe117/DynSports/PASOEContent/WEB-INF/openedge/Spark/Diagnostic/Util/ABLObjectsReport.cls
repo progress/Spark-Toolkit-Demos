@@ -741,8 +741,8 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
     end method. /* TrackABLObjects */
 
 
-    method public void GetRequestMetrics ( input  piAgentID  as integer,
-                                           output poRequests as JsonArray ):
+    method public logical GetRequestMetrics ( input  piAgentID  as integer,
+                                              output poRequests as JsonArray ):
         define variable oResult as JsonObject no-undo.
 
         Assert:NonZero(piAgentID).
@@ -761,8 +761,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
             if file-info:full-pathname ne ? then do:
                 if file-info:file-size eq 0 then do:
                     oLogger:Error(substitute("Encountered Empty File: &1", cOutPath)).
-                    assign poRequests = new JsonArray().
-                    return.
+                    return false.
                 end.
 
                 assign oParser = new ObjectModelParser().
@@ -787,16 +786,16 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
             Assert:NotNullOrEmpty(this-object:InstanceURI).
 
             /* Build the initial URL, to obtain the tracking flag. */
-            assign cRequestURI = substitute("&1&2&3&4",
-                                            this-object:InstanceURI, this-object:GetRequestsURI,
-                                            this-object:ApplicationName, piAgentID).
+            assign cRequestURI = substitute("&1&2&3",
+                                            this-object:InstanceURI, this-object:ManagerURI, this-object:GetRequestsURI).
 
             /* Replace PAS instance name and specific Agent ID. */
             assign cRequestURI = substitute(cRequestURI, this-object:ApplicationName, piAgentID).
 
             /* Make the request to the endpoint and parse results. */
             assign oRequest = this-object:InvokeAPI(cRequestURI).
-            if valid-object(oRequest) and oRequest:Has("result") then do:
+            if valid-object(oRequest) and oRequest:Has("result") and
+               oRequest:GetType("result") eq JsonDataType:Object then do:
                 /* Return only a true/false value based on value available. */
                 assign oResult = oRequest:GetJsonObject("result").
             end. /* Has Result */
@@ -804,8 +803,10 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
 
         /* Extract requests from the results object. */
         if valid-object(oResult) and oResult:Has("AgentRequest") and
-           oResults:GetType("AgentRequest") eq JsonDataType:Array then
+           oResult:GetType("AgentRequest") eq JsonDataType:Array then
             assign poRequests = cast(oResult:GetJsonArray("AgentRequest"):Clone(), JsonArray).
+
+        return valid-object(poRequests).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error in GetRequestMetrics: &1", err:GetMessage(1))).
@@ -813,6 +814,7 @@ class Spark.Diagnostic.Util.ABLObjectsReport inherits Spark.Diagnostic.Util.Logg
         end catch.
         finally:
             delete object oRequest no-error.
+            delete object oResults no-error.
             delete object oResult no-error.
         end finally.
     end method. /* GetRequestMetrics */

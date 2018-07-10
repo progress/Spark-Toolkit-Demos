@@ -11,14 +11,12 @@
         "oemPass": "tomcat",
         "outputInterval": 300000,
         "source": "oemanager",
-        "trackMemory": true
+        "trackMemory": true,
+        "trackRequests": true
     },
     "profiler": {
         "enabled": true,
         "filter": "*",
         "threshold": 1000
-    },
-    "requests": {
-        "enabled": true
     }
 }

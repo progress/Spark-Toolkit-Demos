@@ -81,9 +81,9 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     define public property ObjectsSource as character no-undo initial "oejmx" get. private set.
 
-    define public property ObjectsTrackMem as logical no-undo initial false get. private set.
+    define public property ObjectsTrackMemory as logical no-undo initial false get. private set.
 
-    define public property RequestsEnabled as logical no-undo initial false get. private set.
+    define public property ObjectsTrackRequests as logical no-undo initial false get. private set.
 
 
     /***** Constructor/Destructor *****/
@@ -170,7 +170,10 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                                 assign this-object:ObjectsSource = oSubObj:GetCharacter("source").
 
                             if oSubObj:Has("trackMemory") and oSubObj:GetType("trackMemory") eq JsonDataType:Boolean then
-                                assign this-object:ObjectsTrackMem = oSubObj:GetLogical("trackMemory").
+                                assign this-object:ObjectsTrackMemory = oSubObj:GetLogical("trackMemory").
+
+                            if oSubObj:Has("trackRequests") and oSubObj:GetType("trackRequests") eq JsonDataType:Boolean then
+                                assign this-object:ObjectsTrackRequests = oSubObj:GetLogical("trackRequests").
 
                             delete object oSubObj no-error.
                         end. /* has sub-object */
@@ -192,17 +195,6 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                             delete object oSubObj no-error.
                         end. /* has sub-object */
                     end. /* profiler */
-
-                    when "requests" then do:
-                        if oConfig:Has("requests") and oConfig:GetType("requests") eq JsonDataType:Object then do:
-                            assign oSubObj = oConfig:GetJsonObject("requests").
-
-                            if oSubObj:Has("enabled") and oSubObj:GetType("enabled") eq JsonDataType:Boolean then
-                                assign this-object:RequestsEnabled = oSubObj:GetLogical("enabled").
-
-                            delete object oSubObj no-error.
-                        end. /* has sub-object */
-                    end. /* requests */
                 end case. /* cNames */
             end. /* do ix */
         end. /* valid object */
