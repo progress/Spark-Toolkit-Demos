@@ -69,7 +69,16 @@
 		               blockSize="4" cpInternal="utf-8" largeFiles="false"
 					   structFile="${basedir}/Sports2000/Sports2000.st" schemaFile="${basedir}/Sports2000/Sports2000.df">
 		</PCTCreateBase>
-		<PCTLoadData srcDir="${basedir}/Sports2000/Data" dlcHome="${dlcHome}">
+<!--
+Dumps are made using
+numformat=44,46
+dateformat=mdy-1950
+map=NO-MAP
+cpstream=UTF-8
+-->
+		<PCTLoadData srcDir="${basedir}/Sports2000/Data" dlcHome="${dlcHome}"
+            cpStream="UTF-8" cpInternal="UTF-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
+            <Option name="-d" value="mdy" />
 		    <DBConnection dbName="Sports2000" dbDir="${path}/Sports2000" singleUser="true"/>
 		</PCTLoadData>
 
@@ -77,8 +86,10 @@
 					   blockSize="4" cpInternal="utf-8" largeFiles="false"
 					   structFile="${basedir}/WebState/WebState.st" schemaFile="${basedir}/WebState/WebState.df">
 		</PCTCreateBase>
-		<PCTLoadData srcDir="${basedir}/WebState/Data" dlcHome="${dlcHome}"
-		             tables="weblookup,webmenu,webprofile,webrole,webroleprofile,webroletask,websetting,webtask">
+		<PCTLoadData srcDir="${basedir}/WebState/Data" dlcHome="${dlcHome}" 
+            cpStream="UTF-8" cpInternal="UTF-8" NumSep="44" NumDec="46" centuryYearOffset="1950"
+            tables="weblookup,webmenu,webprofile,webrole,webroleprofile,webroletask,websetting,webtask">
+            <Option name="-d" value="mdy" />
 		    <DBConnection dbName="WebState" dbDir="${path}/WebState" singleUser="true"/>
 		</PCTLoadData>
 
