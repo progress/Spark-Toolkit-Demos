@@ -83,9 +83,9 @@ var app = (function(){
         // Load translated strings from server.
         var userJSDO = spark.createJSDO("user");
         userJSDO.invoke("translations", {"langCode": langCode})
-            .then(function(jsdo, result, request){
+            .then(function(result){
                 // Populate local variable with any translated strings.
-                spark.strings.addTranslatedStrings((request.response || {}).langStrings || {});
+                spark.strings.addTranslatedStrings((result.request.response || {}).langStrings || {});
 
                 // Change culture as based on language preference of the user.
                 kendo.culture(langCode);
@@ -222,9 +222,9 @@ var app = (function(){
                 // Attempt login through TFA process.
                 var tfaJSDO = spark.createJSDO("tfa");
                 tfaJSDO.invoke("login", params)
-                    .then(function(jsdo, result, request){
+                    .then(function(result){
                         // Proceed with processing based on TFA option for account.
-                        var useTFA = (request.response || {}).useTFA || false;
+                        var useTFA = (result.request.response || {}).useTFA || false;
                         if (useTFA) {
                             // Continue with challenge dialog.
                             $("#ModalChallenge").modal("show");
@@ -236,7 +236,7 @@ var app = (function(){
                             setTimeout(function(){
                                 doSessionLogin(params.username, params.password);
                                 _processing = false;
-                            }, 0);
+                            }, 1);
                         }
                     }, resetAttempt);
             } else {

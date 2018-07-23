@@ -24,7 +24,7 @@
         window.spark = {
 
             /* Current version, tagged with a build date. */
-            version: "v4.2.1 (2018.03.19.032016)",
+            version: "vPRE (2018.07.23.054101)",
 
             /** Reserved Properties **/
 
@@ -117,23 +117,23 @@
              * @param {Object} request Original request object, which contains the response
              * @returns void
              */
-            jsdoFailure: function(jsdo, success, request){
+            jsdoFailure: function(result){
                 // Custom handler for individual CRUD operation wrappers.
-                if (request.xhr && request.xhr.status === 401 || request.xhr.status === 403) {
+                if (result.request && result.request.xhr && result.request.xhr.status === 401 || result.request.xhr.status === 403) {
                     // Check if an authentication error occurred during request.
                     if (window.spark.jsdoAuthError) {
-                        window.spark.jsdoAuthError(request);
+                        window.spark.jsdoAuthError(result.request);
                     } else {
                         alert("Session has expired. Please login again.");
                     }
-                } else if (request.response && request.response._errors && request.response._errors.length > 0) {
+                } else if (result.request && result.request._errors && result.request._errors.length > 0) {
                     // Interrogate the response and log any errors.
                     var errorMsg = "";
                     var idxError = null;
-                    var lenErrors = request.response._errors.length;
+                    var lenErrors = result.request.response._errors.length;
                     var errorEntry = "";
                     for (idxError=0; idxError<lenErrors; idxError+=1) {
-                        errorEntry = request.response._errors[idxError] || {};
+                        errorEntry = result.request.response._errors[idxError] || {};
                         errorMsg = errorMsg + " " + errorEntry._errorMsg || "UNKNOWN";
                     }
                     if ($.trim(errorMsg) !== "") {
@@ -1420,8 +1420,8 @@
                             // Create a method that can be called at-will to update data.
                             lookup.fetchData = function(params){
                                 return lookup._jsdo.invoke(fieldOptions.invokeMethod, (params || {}))
-                                    .done(function(jsdo, status, request){
-                                        var response = request.response || {};
+                                    .done(function(result){
+                                        var response = result.response || {};
                                         if (fieldOptions.invokeDataProperty) {
                                             // Data should be found within a specific response property.
                                             var data = response[fieldOptions.invokeDataProperty] || [];

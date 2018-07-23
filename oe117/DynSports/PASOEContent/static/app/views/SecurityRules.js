@@ -57,8 +57,8 @@ var SecurityRulesCtrl = (function(){
         getRules: function(){
             if (_accessJSDO && _rules) {
                 _accessJSDO.invoke("rules", {})
-                    .then(function(jsdo, result, request){
-                        var rules = (request.response || {}).rules || [];
+                    .then(function(result){
+                        var rules = (result.request.response || {}).rules || [];
                         _rules.dataSource.data(rules);
                     });
             }
@@ -67,8 +67,8 @@ var SecurityRulesCtrl = (function(){
             if (_accessJSDO && _rules) {
                 var data = _rules.dataSource.data();
                 _accessJSDO.invoke("apply", {rules: data})
-                    .then(function(jsdo, result, request){
-                        var success = (request.response || {}).success || false;
+                    .then(function(result){
+                        var success = (result.request.response || {}).success || false;
                         if (success) {
                             app.showMessage("Rules updated successfully.", "success");
                             primaryVM.getRules(); // Re-fetch rules from server.

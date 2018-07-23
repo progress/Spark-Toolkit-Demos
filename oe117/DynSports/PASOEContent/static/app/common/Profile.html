@@ -81,9 +81,9 @@
             getProfile: function(){
                 var userJSDO = spark.createJSDO("user");
                 userJSDO.invoke("getProfile", {})
-                    .done(function(jsdo, success, request){
+                    .done(function(result){
                         // Update screen with latest response data.
-                        var response = request.response || {};
+                        var response = result.request.response || {};
                         modalVM.set("params", {
                             FirstName: response.FirstName || "",
                             LastName: response.LastName || "",
@@ -129,8 +129,8 @@
                 if (spark.form.validate("#profileForm", validatorOptions)) {
                     var userJSDO = spark.createJSDO("user");
                     userJSDO.invoke("setProfile", params)
-                        .then(function(jsdo, result, request){
-                            var response = request.response || {};
+                        .then(function(result){
+                            var response = result.request.response || {};
                             if (response.updateSuccess) {
                                 // Re-fetch the current profile data.
                                 app.showMessage("Profile information updated.", "info");                                

@@ -73,8 +73,8 @@
                 if (spark.form.validate("#resetForm", validatorOptions)) {
                     var userJSDO = spark.createJSDO("user");
                     userJSDO.invoke("sendResetCode", params)
-                        .then(function(jsdo, result, request){
-                            var response = request.response || {};
+                        .then(function(result){
+                            var response = result.request.response || {};
                             if (response.opSuccess) {
                                 // Registration complete, hide modal and show message.
                                 $("#ModalPassReset").modal("hide");

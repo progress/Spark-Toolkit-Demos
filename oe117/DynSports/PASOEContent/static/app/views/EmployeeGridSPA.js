@@ -94,8 +94,8 @@ var EmployeeGridSPACtrl = (function(){
         };
 
         viewStateJSDO.fill(JSON.stringify(query))
-            .then(function(jsdo, result, request){
-                var dsWebContext = (request.response || {}).dsWebContext || {};
+            .then(function(result){
+                var dsWebContext = (result.request.response || {}).dsWebContext || {};
                 var ttWebContext = (dsWebContext.ttWebContext || [])[0] || {};
                 var myViewState = ttWebContext.ContextData || ""; // Get stringified data.
                 myViewState = myViewState !== "" ? JSON.parse(myViewState.replace(/\\\"/g, "\"")) : {};

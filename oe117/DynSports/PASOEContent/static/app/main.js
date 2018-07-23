@@ -205,8 +205,8 @@ var app = (function(){
 
         // Retrieve data from the JSDO and return with parsed data.
         lookupJSDO.invoke(lookupType, params || {})
-            .then(function(jsdo, result, request){
-                var data = (request.response || {}).ttLookup || null;
+            .then(function(result){
+                var data = (result.request.response || {}).ttLookup || null;
                 if (data && data.ttLookup) {
                     data = data.ttLookup;
                 }
@@ -238,12 +238,12 @@ var app = (function(){
                 // Create a JSDO for user context and fetch session info.
                 var userJSDO = spark.createJSDO("user");
                 userJSDO.invoke("session", {})
-                    .done(function(jsdo, success, request){
+                    .then(function(result){
                         // Compare the existing (stored) session to the latest session object.
-                        var latestSession = request.response;
+                        var latestSession = result.request.response;
                         var matches = true; // Assume true initially.
                         if (!$.isEmptyObject(existingSession) && existingSession.sessionID) {
-                            matches = (existingSession.sessionID === request.response.sessionID);
+                            matches = (existingSession.sessionID === result.request.response.sessionID);
                             if (!matches) {
                                 console.warn("SessionID values to not match, possible session expiration!");
                             }
@@ -259,8 +259,7 @@ var app = (function(){
                         // Save the user's current session info when returned.
                         spark.setSessionObject("sessionInfo", (latestSession || null));
                         promise.resolve(latestSession, matches, loggedIn);
-                    })
-                    .fail(function(){
+                    }, function(){
                         promise.reject("Failed to get session info from server.");
                     });
             });
@@ -321,7 +320,7 @@ var app = (function(){
                                 if (app.currentPage.ctrl && app.currentPage.ctrl.init) {
                                     app.currentPage.ctrl.init();
                                 }
-
+    
                                 // Translate items on the recently-loaded view.
                                 app.translateView("#" + app.currentPage.name + "View");
                             }
@@ -330,7 +329,7 @@ var app = (function(){
                             if (app.currentPage.ctrl && app.currentPage.ctrl.init) {
                                 app.currentPage.ctrl.init();
                             }
-
+    
                             // Translate items on the recently-loaded view.
                             app.translateView("#" + app.currentPage.name + "View");
                             showMessage(errorMsg, "warning"); // Display error message to user.
@@ -347,6 +346,7 @@ var app = (function(){
     var _menuLoading = false;
     function refreshMenu(loggedIn){
         var promise = $.Deferred();
+
         if (!_menuLoading) {
             _menuLoading = true; // Limit to 1 call at a time.
 
@@ -388,10 +388,10 @@ var app = (function(){
             // Create JSDO to access user's menu data.
             var userJSDO = spark.createJSDO("user");
             userJSDO.invoke("menu", {})
-                .then(function(jsdo, status, request){
-                    promise.resolve(updateMenu(request.response || {}));
-                }, function(jsdo, status, request){
-                    promise.resolve(updateMenu(request.response || {}));
+                .then(function(result){
+                    promise.resolve(updateMenu(result.request.response || {}));
+                }, function(result){
+                    promise.resolve(updateMenu(result.request.response || {}));
                 });
         }
         return promise;
@@ -580,9 +580,9 @@ var app = (function(){
         // Load translated strings from server.
         var userJSDO = spark.createJSDO("user");
         userJSDO.invoke("translations", {"langCode": langCode})
-            .then(function(jsdo, result, request){
+            .then(function(result){
                 // Populate local variable with any translated strings.
-                spark.strings.addTranslatedStrings((request.response || {}).langStrings || {});
+                spark.strings.addTranslatedStrings((result.request.response || {}).langStrings || {});
 
                 // Change culture as based on language preference of the user.
                 kendo.culture(langCode);
@@ -718,8 +718,9 @@ var app = (function(){
             // If object is available, check for fulfillment of promise.
             sessionReady.then(function(){
                 kendo.bind($("#mainHeader"), headerVM); // Bind VM to header.
+
                 getSessionInfo()
-                    .done(function(latestSession, matches, loggedIn){
+                    .then(function(latestSession, matches, loggedIn){
                         if (loggedIn && !matches) {
                             // Redirect user to index when sessionID changes.
                             spark.getJsdoSession().authProvider.logout()
@@ -727,14 +728,14 @@ var app = (function(){
                                     app.doLogoutAction();
                                 });
                         }
-
+    
                         // Get text replacements based on language.
                         getLanguageStrings(latestSession.language || "en-US");
-
+    
                         // Populate header with user information.
                         headerVM.set("user.fullName", latestSession.fullname);
                         headerVM.set("user.emailAddr", latestSession.emailAddr);
-
+    
                         // Perform first menu load after successful session check.
                         refreshMenu(loggedIn)
                             .then(function(data){

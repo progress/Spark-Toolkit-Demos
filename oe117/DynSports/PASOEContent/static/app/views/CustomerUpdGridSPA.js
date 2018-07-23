@@ -81,8 +81,8 @@ var CustomerUpdGridSPACtrl = (function(){
         };
 
         viewStateJSDO.fill(JSON.stringify(query))
-            .then(function(jsdo, result, request){
-                var dsWebContext = (request.response || {}).dsWebContext || {};
+            .then(function(result){
+                var dsWebContext = (result.request.response || {}).dsWebContext || {};
                 var ttWebContext = (dsWebContext.ttWebContext || [])[0] || {};
                 var myViewState = ttWebContext.ContextData || ""; // Get stringified data.
                 myViewState = myViewState !== "" ? JSON.parse(myViewState.replace(/\\\"/g, "\"")) : {};
@@ -143,7 +143,7 @@ var CustomerUpdGridSPACtrl = (function(){
                         request.objParam.filter = JSON.stringify(data);
                     }
                 },
-                onAfterSaveChanges: function(jsdo, success, request){
+                onAfterSaveChanges: function(result){
                     if (success && request.operation === progress.data.JSDO._OP_SUBMIT) {
                         // Obtain information about submit operation that just occurred.
                         var data = (((request || {}).response[datasetName] || {})[tableName] || [])[0] || null;
@@ -155,7 +155,7 @@ var CustomerUpdGridSPACtrl = (function(){
                     }
 
                     // Parse the result for any possible messages.
-                    var response = request.response;
+                    var response = result.request.response;
                     if (spark.notify.responseHasInfo(response) || spark.notify.responseHasErrors(response)) {
                         app.showMessages(response);
                     }
@@ -356,8 +356,8 @@ var CustomerUpdGridSPACtrl = (function(){
 
     function resetContext(){
         viewStateJSDO.invoke("clear", {contextType: "grid", contextViewID: viewName, contextTitle: gridName})
-            .then(function(jsdo, result, request){
-                var cleared = (request.response || {}).clearedRecords || 0;
+            .then(function(result){
+                var cleared = (result.request.response || {}).clearedRecords || 0;
                 if (cleared > 0) {
                     // Destroy the current grid and re-create without any user context present.
                     $(viewName + " div[name=" + gridName + "]").getKendoGrid().destroy();

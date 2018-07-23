@@ -117,23 +117,23 @@
              * @param {Object} request Original request object, which contains the response
              * @returns void
              */
-            jsdoFailure: function(jsdo, success, request){
+            jsdoFailure: function(result){
                 // Custom handler for individual CRUD operation wrappers.
-                if (request.xhr && request.xhr.status === 401 || request.xhr.status === 403) {
+                if (result.request && result.request.xhr && result.request.xhr.status === 401 || result.request.xhr.status === 403) {
                     // Check if an authentication error occurred during request.
                     if (window.spark.jsdoAuthError) {
-                        window.spark.jsdoAuthError(request);
+                        window.spark.jsdoAuthError(result.request);
                     } else {
                         alert("Session has expired. Please login again.");
                     }
-                } else if (request.response && request.response._errors && request.response._errors.length > 0) {
+                } else if (result.request && result.request._errors && result.request._errors.length > 0) {
                     // Interrogate the response and log any errors.
                     var errorMsg = "";
                     var idxError = null;
-                    var lenErrors = request.response._errors.length;
+                    var lenErrors = result.request.response._errors.length;
                     var errorEntry = "";
                     for (idxError=0; idxError<lenErrors; idxError+=1) {
-                        errorEntry = request.response._errors[idxError] || {};
+                        errorEntry = result.request.response._errors[idxError] || {};
                         errorMsg = errorMsg + " " + errorEntry._errorMsg || "UNKNOWN";
                     }
                     if ($.trim(errorMsg) !== "") {

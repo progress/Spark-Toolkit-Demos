@@ -94,8 +94,8 @@ var OrderUpdGridSPACtrl = (function(){
         };
 
         viewStateJSDO.fill(JSON.stringify(query))
-            .then(function(jsdo, result, request){
-                var dsWebContext = (request.response || {}).dsWebContext || {};
+            .then(function(result){
+                var dsWebContext = (result.request.response || {}).dsWebContext || {};
                 var ttWebContext = (dsWebContext.ttWebContext || [])[0] || {};
                 var myViewState = ttWebContext.ContextData || ""; // Get stringified data.
                 myViewState = myViewState !== "" ? JSON.parse(myViewState.replace(/\\\"/g, "\"")) : {};
@@ -156,9 +156,9 @@ var OrderUpdGridSPACtrl = (function(){
                         request.objParam.filter = JSON.stringify(data);
                     }
                 },
-                onAfterSaveChanges: function(jsdo, success, request){
+                onAfterSaveChanges: function(result){
                     // Parse the result for any possible messages.
-                    var response = request.response;
+                    var response = result.request.response;
                     if (spark.notify.responseHasInfo(response) || spark.notify.responseHasErrors(response)) {
                         app.showMessages(response);
                     }
