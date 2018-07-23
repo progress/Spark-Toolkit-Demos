@@ -1,21 +1,22 @@
 {
-	"general": {
-		"pollIgnore": "Sports.Spark.Core.Security.SportsRealm*",
-		"pollStart": "2018-05-22T08:00:00",
-		"pollStop": "2018-05-25T20:00:00"
-	},
-	"objects": {
-		"apsvURI": "http://localhost:8820/sports/apsv",
-		"enabled": true,
-		"exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.*",
-		"outputInterval": 120000,
-		"source": "oejmx",
-		"trackMemory": true,
-		"useAPSV": true
-	},
-	"profiler": {
-		"enabled": true,
-		"filter": "*",
-		"threshold": 1000
-	}
+    "general": {
+        "pollIgnore": "Sports.Spark.Core.Security.SportsRealm*",
+        "pollStart": "2018-07-01T08:00:00",
+        "pollStop": "2018-07-31T20:00:00"
+    },
+    "remote": {
+        "exclude": "*OpenEdge.Core.*,*OpenEdge.Logging.*,*OpenEdge.Net.*,*OpenEdge.Web.*,*Progress.Web.*,*Spark.*",
+        "oemUser": "tomcat",
+        "oemPass": "tomcat",
+        "outputInterval": 300000,
+        "source": "oemanager",
+        "trackMemory": true,
+        "trackObjects": true,
+        "trackRequests": true
+    },
+    "profiler": {
+        "enabled": true,
+        "filter": "*",
+        "threshold": 1000
+    }
 }

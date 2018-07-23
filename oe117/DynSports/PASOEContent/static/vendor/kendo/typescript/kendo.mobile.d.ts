@@ -1,4 +1,4 @@
-// Type definitions for Kendo UI Professional v2017.3.913
+// Type definitions for Kendo UI Professional v2018.2.516
 // Project: http://www.telerik.com/kendo-ui
 // Definitions by: Telerik <https://github.com/telerik/>
 
@@ -810,9 +810,9 @@ declare namespace kendo.data {
     }
 
     interface PivotDataSourceOptions extends DataSourceOptions {
-        columns?: PivotDataSourceAxisOptions[];
-        measures?: PivotDataSourceMeasureOptions[];
-        rows?: PivotDataSourceAxisOptions[];
+        columns?: string[]|PivotDataSourceAxisOptions[];
+        measures?: string[]|PivotDataSourceMeasureOptions;
+        rows?: string[]|PivotDataSourceAxisOptions[];
         transport?: PivotTransport;
         schema?: PivotSchema;
     }
@@ -872,12 +872,12 @@ declare namespace kendo.data {
     }
 
     interface DataSourceTransport {
-        create?: DataSourceTransportCreate;
-        destroy?: DataSourceTransportDestroy;
+        create?: DataSourceTransportCreate | ((options: DataSourceTransportOptions) => void);
+        destroy?: DataSourceTransportDestroy | ((options: DataSourceTransportOptions) => void);
         push?: Function;
-        read?: DataSourceTransportRead;
-        signalr?: DataSourceTransportSignalr;
-        update?: DataSourceTransportUpdate;
+        read?: DataSourceTransportRead | ((options: DataSourceTransportOptions) => void);
+        signalr?: DataSourceTransportSignalr | ((options: DataSourceTransportOptions) => void);
+        update?: DataSourceTransportUpdate | ((options: DataSourceTransportOptions) => void);
 
         parameterMap?(data: DataSourceTransportParameterMapData, type: string): any;
     }
@@ -991,6 +991,7 @@ declare namespace kendo.data {
         max?: any;
         minLength?: any;
         maxLength?: any;
+    	[rule: string]: any;
     }
 
     class ObservableArray extends Observable {
@@ -1236,7 +1237,8 @@ declare namespace kendo.data {
         batch?: boolean;
         data?: any;
         filter?: any;
-        group?: DataSourceGroupItem[];
+        group?: DataSourceGroupItem | DataSourceGroupItem[];
+        inPlaceSort?: boolean;
         offlineStorage?: any;
         page?: number;
         pageSize?: number;
@@ -1362,20 +1364,19 @@ declare namespace kendo.ui {
         drop?(e: DropTargetDropEvent): void;
     }
 
-    interface DropTargetEvent {
+    interface DropTargetEvent extends JQueryEventObject {
         sender?: DropTarget;
+        draggable?: kendo.ui.Draggable;
+        dropTarget?: JQuery
     }
 
     interface DropTargetDragenterEvent extends DropTargetEvent {
-        draggable?: kendo.ui.Draggable;
     }
 
     interface DropTargetDragleaveEvent extends DropTargetEvent {
-        draggable?: kendo.ui.Draggable;
     }
 
     interface DropTargetDropEvent extends DropTargetEvent {
-        draggable?: kendo.ui.Draggable;
     }
 
     class DropTargetArea extends kendo.ui.Widget{
@@ -1454,6 +1455,7 @@ declare namespace kendo.ui {
         editor?(container: JQuery, options: TreeListEditorOptions): void;
     }
 }
+
 
 declare namespace kendo.mobile {
     function init(selector: string): void;
@@ -2225,6 +2227,7 @@ declare namespace kendo.drawing {
 
         creator?: string;
         date?: Date;
+        imgDPI?: number;
         keywords?: string;
         landscape?: boolean;
         margin?: any;
@@ -2462,7 +2465,7 @@ declare namespace kendo.drawing {
     }
 
     interface SurfaceTooltip {
-        animation?: boolean|SurfaceTooltipAnimation;
+        animation?: boolean | SurfaceTooltipAnimation;
         appendTo?: string|JQuery;
     }
 
@@ -2615,7 +2618,7 @@ declare namespace kendo {
     namespace date {
         function setDayOfWeek(targetDate: Date, dayOfWeek: number, direction: number): void;
         function dayOfWeek(targetDate: Date, dayOfWeek: number, direction: number): Date;
-        function weekInYear(date: Date, weekStart?: Date): number;
+        function weekInYear(date: Date, weekStart?: number): number;
         function getDate(date: Date): Date;
         function isInDateRange(targetDate: Date, lowerLimitDate: Date, upperLimitDate: Date): boolean;
         function isInTimeRange(targetDate: Date, lowerLimitDate: Date, upperLimitDate: Date): boolean;
@@ -2662,13 +2665,14 @@ declare namespace kendo {
         function bind(element: JQuery, viewModel: kendo.data.ObservableObject, namespace?: any): void;
         function bind(element: Element, viewModel: any, namespace?: any): void;
         function bind(element: Element, viewModel: kendo.data.ObservableObject, namespace?: any): void;
-        function observableHierarchy(array: any): void;
         function confirm(text: string): JQueryPromise<any>;
         function culture(culture: string): void;
         function destroy(element: string): void;
         function destroy(element: JQuery): void;
         function destroy(element: Element): void;
+        function guid(): string;
         function htmlEncode(value: string): string;
+        function observableHierarchy(array: any): void;
         function parseDate(value: string, formats?: string, culture?: string): Date;
         function parseDate(value: string, formats?: any, culture?: string): Date;
         function parseFloat(value: string, culture?: string): number;
@@ -3117,7 +3121,7 @@ declare namespace kendo.mobile.ui {
         style?: string;
         template?: string|Function;
         type?: string;
-        filterable?: boolean|ListViewFilterable;
+        filterable?: boolean | ListViewFilterable;
         virtualViewSize?: number;
         click?(e: ListViewClickEvent): void;
         dataBound?(e: ListViewEvent): void;
@@ -3896,6 +3900,7 @@ declare namespace kendo.ooxml {
         frozenColumns?: number;
         frozenRows?: number;
         filter?: WorkbookSheetFilter;
+        mergedCells?: any;
         name?: string;
         rows?: WorkbookSheetRow[];
         showGridLines?: boolean;
@@ -4620,6 +4625,7 @@ declare namespace kendo.dataviz.drawing {
 
         creator?: string;
         date?: Date;
+        imgDPI?: number;
         keywords?: string;
         landscape?: boolean;
         margin?: any;
@@ -4857,7 +4863,7 @@ declare namespace kendo.dataviz.drawing {
     }
 
     interface SurfaceTooltip {
-        animation?: boolean|SurfaceTooltipAnimation;
+        animation?: boolean | SurfaceTooltipAnimation;
         appendTo?: string|JQuery;
     }
 

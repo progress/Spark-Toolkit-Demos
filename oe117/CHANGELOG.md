@@ -3,6 +3,11 @@
 
 ## OpenEdge 11.7
 
+### v4.2.2
+
+- Compiled all code/libraries under the new 11.7 SP3 release.
+- First public release under open-source license on GitHub!
+
 ### v4.2.1
 
 - Adjust logic in Spark DOH class to work with a single prefix, just like the original DOH from product.

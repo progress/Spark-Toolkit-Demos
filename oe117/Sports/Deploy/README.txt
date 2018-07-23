@@ -45,50 +45,11 @@ bin/openedge_setenv.bat (add below other JAVA_OPTS options):
     rem set network to ipv4 only
     set _oeopts=%_oeopts% -Djava.net.preferIPv4Stack=true
 
-
-conf/catalina.properties (adds common property for access log):
-
-    # LogValve properties
-    psc.as.accesslog.attribute=oemanager
-
-
 conf/catalina.properties (adjust list of compressible file types):
 
     psc.as.compress.min=256
     psc.as.compress.types=text/html,text/xml,text/javascript,text/css,application/json,application/javascript
 
+conf/catalina.properties (output access timestamp as ISO8601 format):
 
-conf/server.xml (replace existing AccessLogValve options):
-
-    <Valve className="org.apache.catalina.valves.AccessLogValve"
-           directory="${catalina.base}/logs"
-           prefix="localhost_access_log."
-           suffix=".txt"
-           conditionUnless="${psc.as.accesslog.attribute}"
-           pattern="%a %t %S %I %l %u %H %m %U %s %b %D" />
-
-    <!--
-        Where the pattern is derived from the following documentation:
-        https://tomcat.apache.org/tomcat-7.0-doc/api/org/apache/catalina/valves/AccessLogValve.html
-        %a - Remote IP address
-        %t - Date and time, in Common Log Format format
-        %S - User session ID
-        %I - current Request thread name (can compare later with stacktraces)
-        %l - Remote logical username from identd (always returns '-')
-        %u - Remote user that was authenticated
-        %H - Request protocol
-        %m - Request method
-        %U - Requested URL path
-        %s - HTTP status code of the response
-        %b - Bytes sent, excluding HTTP headers, or '-' if no bytes were sent
-        %D - Time taken to process the request, in milliseconds
-    -->
-
-    Another alternative is to add an Extended Access Log Valve:
-
-    <Valve className="org.apache.catalina.valves.ExtendedAccessLogValve"
-           directory="${catalina.base}/logs"
-           prefix="localhost_access_ext."
-           suffix=".log"
-           conditionUnless="${psc.as.accesslog.attribute}"
-           pattern="c-ip time x-H(requestedSessionIdValid) x-H(requestedSessionId) x-H(requestedSessionIdFromCookie) cs-method cs-uri sc-status bytes time-taken cs(cookie) cs(set-cookie)" />
+    psc.as.accesslog.pattern=%h %u [%{yyyy-MM-dd'T'HH:mm:ss.SSSZ}t] "%r" %s %b %D %I %S

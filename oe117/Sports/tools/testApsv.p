@@ -24,8 +24,7 @@ define variable lReturn  as logical   no-undo.
 create server hServer.
 
 /*assign cConnect = substitute("http://&1:&2@&3:&4/apsv", "apsvuser", "secret", "localhost", "8830").*/
-assign cConnect = substitute("http://&1:&2/DynSports/apsv", "localhost", "8820").
-/*assign cConnect = substitute("http://&1:&2/DynSports/apsv", "54.173.59.64", "8820").*/
+assign cConnect = substitute("http://&1:&2/sports/apsv", "localhost", "8830").
 
 assign lReturn = hServer:connect(substitute("-URL &1 -sessionModel Session-free", cConnect)) no-error.
 if error-status:error then
