@@ -7,7 +7,7 @@ var EmployeeGridSPACtrl = (function(){
     var searchField2 = "State";
     var searchOper2 = "eq";
     var datasetName = "dsEmployee";
-    var tableName = "ttEmployee";
+    var tableName = "associate";
     var gridName = "MasterGrid";
     var viewName = "#EmployeeGridSPAView";
     var searchOnLoad = true;
@@ -94,8 +94,8 @@ var EmployeeGridSPACtrl = (function(){
         };
 
         viewStateJSDO.fill(JSON.stringify(query))
-            .then(function(jsdo, result, request){
-                var dsWebContext = (request.response || {}).dsWebContext || {};
+            .then(function(result){
+                var dsWebContext = (result.request.response || {}).dsWebContext || {};
                 var ttWebContext = (dsWebContext.ttWebContext || [])[0] || {};
                 var myViewState = ttWebContext.ContextData || ""; // Get stringified data.
                 myViewState = myViewState !== "" ? JSON.parse(myViewState.replace(/\\\"/g, "\"")) : {};
@@ -131,7 +131,7 @@ var EmployeeGridSPACtrl = (function(){
             viewStateJSDO.add(jsrecord);
         }
         viewStateJSDO.saveChanges(true)
-            .always(function(){
+            .then(function(){
                 promise.resolve();
             });
 

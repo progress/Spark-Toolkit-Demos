@@ -119,7 +119,7 @@ var WebProfileCtrl = (function(){
                     options.data = data.selectedRow;
                     options.useSubmit = true;
                     spark.jsdo_create(jsdo, options)
-                        .done(function(jsdo, success, request){
+                        .then(function(result){
                             alert("Record successfully created.");
                         });
                 } else {
@@ -128,7 +128,7 @@ var WebProfileCtrl = (function(){
                     options.tableRef = tableName;
                     options.useSubmit = true;
                     spark.jsdo_update(jsdo, options)
-                        .done(function(jsdo, success, request){
+                        .then(function(result){
                             alert("Record successfully updated.");
                             self.doSearch(); // Refresh data.
                         });

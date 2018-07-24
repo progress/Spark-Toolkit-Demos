@@ -49,7 +49,7 @@ var OrderGridFormSPACtrl = (function(){
                 options.id = data.selectedRow._id || jsdo.getId();
                 options.useSubmit = true;
                 spark.jsdo_delete(jsdo, options)
-                    .done(function(jsdo, success, request){
+                    .then(function(result){
                         $(viewName + " form[name=editForm]").get(0).reset();
                         alert("Record successfully deleted.");
                     });
@@ -65,7 +65,7 @@ var OrderGridFormSPACtrl = (function(){
             if (data.mode === "new") {
                 options.data = data.selectedRow;
                 spark.jsdo_create(jsdo, options)
-                    .done(function(jsdo, success, request){
+                    .then(function(result){
                         alert("Record successfully created.");
                     });
             } else {
@@ -73,7 +73,7 @@ var OrderGridFormSPACtrl = (function(){
                 options.data = data.selectedRow || {};
                 options.tableRef = tableName;
                 spark.jsdo_update(jsdo, options)
-                    .done(function(jsdo, success, request){
+                    .then(function(result){
                         alert("Record successfully updated.");
                         self.doSearch(); // Refresh data.
                     });

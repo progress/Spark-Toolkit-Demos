@@ -81,8 +81,8 @@ var CustomerUpdGridSPACtrl = (function(){
         };
 
         viewStateJSDO.fill(JSON.stringify(query))
-            .then(function(jsdo, result, request){
-                var dsWebContext = (request.response || {}).dsWebContext || {};
+            .then(function(result){
+                var dsWebContext = (result.request.response || {}).dsWebContext || {};
                 var ttWebContext = (dsWebContext.ttWebContext || [])[0] || {};
                 var myViewState = ttWebContext.ContextData || ""; // Get stringified data.
                 myViewState = myViewState !== "" ? JSON.parse(myViewState.replace(/\\\"/g, "\"")) : {};
@@ -118,7 +118,7 @@ var CustomerUpdGridSPACtrl = (function(){
             viewStateJSDO.add(jsrecord);
         }
         viewStateJSDO.saveChanges(true)
-            .always(function(){
+            .then(function(){
                 promise.resolve();
             });
 
@@ -356,8 +356,8 @@ var CustomerUpdGridSPACtrl = (function(){
 
     function resetContext(){
         viewStateJSDO.invoke("clear", {contextType: "grid", contextViewID: viewName, contextTitle: gridName})
-            .then(function(jsdo, result, request){
-                var cleared = (request.response || {}).clearedRecords || 0;
+            .then(function(result){
+                var cleared = (result.request.response || {}).clearedRecords || 0;
                 if (cleared > 0) {
                     // Destroy the current grid and re-create without any user context present.
                     $(viewName + " div[name=" + gridName + "]").getKendoGrid().destroy();
@@ -384,8 +384,8 @@ var CustomerUpdGridSPACtrl = (function(){
                 // Obtain consistent data for dropdowns first.
                 var salesRepJSDO = spark.createJSDO("salesrep");
                 salesRepJSDO.fill()
-                    .done(function(jsdo, status, request){
-                        var response = (request || {}).response || {};
+                    .then(function(result){
+                        var response = (result.request || {}).response || {};
                         salesReps = (response.dsSalesrep || {}).ttSalesrep || [];
                         showGrid(); // Initialize grid.
                     });
