@@ -131,7 +131,7 @@ var EmployeeGridSPACtrl = (function(){
             viewStateJSDO.add(jsrecord);
         }
         viewStateJSDO.saveChanges(true)
-            .always(function(){
+            .then(function(){
                 promise.resolve();
             });
 

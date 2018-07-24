@@ -24,7 +24,7 @@
         window.spark = {
 
             /* Current version, tagged with a build date. */
-            version: "vPRE (2018.07.23.054101)",
+            version: "vPRE (2018.07.24.082016)",
 
             /** Reserved Properties **/
 
@@ -544,10 +544,9 @@
                     promise = jsdoObj.fill(filterQuery);
                 }
                 promise
-                    .done(function(jsdo, success, request){
+                    .then(function(result){
                         // Provide overrides or logic when request is successful.
-                    })
-                    .fail(window.spark.jsdoFailure);
+                    }, window.spark.jsdoFailure);
                 return promise;
             },
 
@@ -564,10 +563,9 @@
                 var jsrecord = jsdoObj.add(currentRecord);
                 var promise = jsdoObj.saveChanges(options.useSubmit);
                 promise
-                    .done(function(jsdo, success, request){
+                    .then(function(result){
                         // Provide overrides or logic when request is successful.
-                    })
-                    .fail(window.spark.jsdoFailure);
+                    }, window.spark.jsdoFailure);
                 return promise;
             },
 
@@ -595,10 +593,9 @@
                 }
                 var promise = jsdoObj.saveChanges(options.useSubmit);
                 promise
-                    .done(function(jsdo, success, request){
+                    .then(function(){
                         // Provide overrides or logic when request is successful.
-                    })
-                    .fail(window.spark.jsdoFailure);
+                    }, window.spark.jsdoFailure);
                 return promise;
             },
 
@@ -619,10 +616,9 @@
                 }
                 var promise = jsdoObj.saveChanges(options.useSubmit);
                 promise
-                    .done(function(jsdo, success, request){
+                    .then(function(){
                         // Provide overrides or logic when request is successful.
-                    })
-                    .fail(window.spark.jsdoFailure);
+                    }, window.spark.jsdoFailure);
                 return promise;
             }
 
@@ -1420,8 +1416,8 @@
                             // Create a method that can be called at-will to update data.
                             lookup.fetchData = function(params){
                                 return lookup._jsdo.invoke(fieldOptions.invokeMethod, (params || {}))
-                                    .done(function(result){
-                                        var response = result.response || {};
+                                    .then(function(result){
+                                        var response = (result.request || {}).response || {};
                                         if (fieldOptions.invokeDataProperty) {
                                             // Data should be found within a specific response property.
                                             var data = response[fieldOptions.invokeDataProperty] || [];

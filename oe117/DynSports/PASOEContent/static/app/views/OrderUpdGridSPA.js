@@ -131,7 +131,7 @@ var OrderUpdGridSPACtrl = (function(){
             viewStateJSDO.add(jsrecord);
         }
         viewStateJSDO.saveChanges(true)
-            .always(function(){
+            .then(function(){
                 promise.resolve();
             });
 
@@ -263,8 +263,8 @@ var OrderUpdGridSPACtrl = (function(){
                 // Obtain consistent data for dropdowns first.
                 var salesRepJSDO = spark.createJSDO("salesrep");
                 salesRepJSDO.fill()
-                    .done(function(jsdo, status, request){
-                        var response = (request || {}).response || {};
+                    .then(function(result){
+                        var response = (result.request || {}).response || {};
                         salesReps = (response.dsSalesrep || {}).ttSalesrep || [];
                         showGrid(); // Initialize grid.
                     });

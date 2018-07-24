@@ -544,10 +544,9 @@
                     promise = jsdoObj.fill(filterQuery);
                 }
                 promise
-                    .done(function(jsdo, success, request){
+                    .then(function(result){
                         // Provide overrides or logic when request is successful.
-                    })
-                    .fail(window.spark.jsdoFailure);
+                    }, window.spark.jsdoFailure);
                 return promise;
             },
 
@@ -564,10 +563,9 @@
                 var jsrecord = jsdoObj.add(currentRecord);
                 var promise = jsdoObj.saveChanges(options.useSubmit);
                 promise
-                    .done(function(jsdo, success, request){
+                    .then(function(result){
                         // Provide overrides or logic when request is successful.
-                    })
-                    .fail(window.spark.jsdoFailure);
+                    }, window.spark.jsdoFailure);
                 return promise;
             },
 
@@ -595,10 +593,9 @@
                 }
                 var promise = jsdoObj.saveChanges(options.useSubmit);
                 promise
-                    .done(function(jsdo, success, request){
+                    .then(function(){
                         // Provide overrides or logic when request is successful.
-                    })
-                    .fail(window.spark.jsdoFailure);
+                    }, window.spark.jsdoFailure);
                 return promise;
             },
 
@@ -619,10 +616,9 @@
                 }
                 var promise = jsdoObj.saveChanges(options.useSubmit);
                 promise
-                    .done(function(jsdo, success, request){
+                    .then(function(){
                         // Provide overrides or logic when request is successful.
-                    })
-                    .fail(window.spark.jsdoFailure);
+                    }, window.spark.jsdoFailure);
                 return promise;
             }
 

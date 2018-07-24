@@ -3,13 +3,13 @@ Contribute to the JSDO
 
 *Help us improve the JSDO* 
 
-* [Report an Issue](#bug "Learn how to report an issue")
-* [Request a Feature](#request "Learn how to submit a feature or improvement request")
-* [Contribute to the Code Base](#contribute "Learn how to submit your own improvements to the code")
+* [Report an Issue](#report-an-issue "Learn how to report an issue")
+* [Request a Feature](#request-a-feature "Learn how to submit a feature or improvement request")
+* [Contribute to the Code Base](#contribute-to-the-code-base "Learn how to submit your own improvements to the code")
 
 Report an Issue
 ===
-If you find a bug in the source code or a mistake in the documentation, you can submit an issue to our <a href="https://github.com/CloudDataObject/JSDO">GitHub Repository</a>.
+If you find a bug in the source code or a mistake in the documentation, you can submit an issue to our <a href="https://github.com/progress/JSDO">GitHub Repository</a>.
 Before you submit your issue, search the archive to check if a similar issues has been logged or addressed. This will let us focus on fixing issues and adding new features.
 If your issue appears to be a bug, and hasn't been reported, open a new issue. To help us investigate your issue and respond in a timely manner, you can provide is with the following details.
 
@@ -25,16 +25,19 @@ If your issue appears to be a bug, and hasn't been reported, open a new issue. T
 
 Request a Feature
 ===
-You can request a new feature by submitting an issue with the *enhancement* label to our <a href="https://github.com/CloudDataObject/JSDO">GitHub Repository</a>.
-If you want to implement a new feature yourself, consider submitting it to the <a href="https://github.com/CloudDataObject/JSDO">GitHub Repository</a> as a Pull Request.
+You can request a new feature by submitting an issue with the *enhancement* label to our <a href="https://github.com/progress/JSDO">GitHub Repository</a>.
+If you want to implement a new feature yourself, consider submitting it to the <a href="https://github.com/progress/JSDO">GitHub Repository</a> as a Pull Request.
 
 [Back to Top][1]
 
 Contribute to the Code Base
 ===
-Before you submit a Pull Request, consider the following guidelines.
+This project only accepts contributions via Pull Requests and only the project moderators  can check in to the main repository branch.
 
-* Search <a href="https://github.com/CloudDataObject/JSDO/pulls">GitHub</a> for an open or closed Pull Request that relates to your submission.
+Before you submit a Pull Request, consider the following guidelines:
+* By submitting a pull request, you represent that you have the right to license your contribution to Progress and the community, and agree by submitting the patch that your contributions are licensed under the <a href="https://github.com/progress/JSDO/blob/master/LICENSE">progress/JSDO license</a>.
+Notwithstanding the above, we reserve the right to ask you to sign a <a href="https://www.progress.com/jsdo/cla ">Contributor License Agreement (CLA)</a> for larger changes.
+* Search <a href="https://github.com/progress/JSDO/pulls">GitHub</a> for an open or closed Pull Request that relates to your submission.
 * Clone the repository.
 ```bash
     git clone git@github.com:CloudDataObject/JSDO.git
@@ -47,7 +50,7 @@ Before you submit a Pull Request, consider the following guidelines.
 ```bash
     git submodule update
 ```
-* Make your changes in a new `git` branch. We use the <a href="http://nvie.com/posts/a-successful-git-branching-model/">Gitflow branching model</a> so you will have to branch from our master branch.
+* Make your changes in a new `git` branch. We use the <a href="http://nvie.com/posts/a-successful-git-branching-model/">Gitflow branching model</a> so you will have to branch from our develop branch.
 
 * Commit your changes and create a descriptive commit message (the commit message is used to generate release notes).
 ```bash
@@ -72,7 +75,7 @@ When the patch is reviewed and merged, you can safely delete your branch and pul
 ```bash
     git push origin --delete my-fix-branch
 ```
-* Check out the master branch.
+* Check out the develop branch.
 ```bash
     git checkout master -f
 ```
@@ -80,7 +83,7 @@ When the patch is reviewed and merged, you can safely delete your branch and pul
 ```bash
     git branch -D my-fix-branch
 ```
-* Update your master branch with the latest upstream version.
+* Update your develop branch with the latest upstream version.
 ```
     git pull --ff upstream master
 ```

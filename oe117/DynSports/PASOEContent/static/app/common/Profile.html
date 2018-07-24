@@ -81,7 +81,7 @@
             getProfile: function(){
                 var userJSDO = spark.createJSDO("user");
                 userJSDO.invoke("getProfile", {})
-                    .done(function(result){
+                    .then(function(result){
                         // Update screen with latest response data.
                         var response = result.request.response || {};
                         modalVM.set("params", {
@@ -102,8 +102,7 @@
 	                            value: response.QR
 	                        });
                         }
-                    })
-                    .fail(function(){
+                    }, function(){
                         app.showMessage("Unable to obtain profile information.", "warning");
                     });
             },

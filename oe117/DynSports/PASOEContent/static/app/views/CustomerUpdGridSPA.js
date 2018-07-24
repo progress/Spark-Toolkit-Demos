@@ -118,7 +118,7 @@ var CustomerUpdGridSPACtrl = (function(){
             viewStateJSDO.add(jsrecord);
         }
         viewStateJSDO.saveChanges(true)
-            .always(function(){
+            .then(function(){
                 promise.resolve();
             });
 
@@ -143,7 +143,7 @@ var CustomerUpdGridSPACtrl = (function(){
                         request.objParam.filter = JSON.stringify(data);
                     }
                 },
-                onAfterSaveChanges: function(result){
+                onAfterSaveChanges: function(jsdo, success, request){
                     if (success && request.operation === progress.data.JSDO._OP_SUBMIT) {
                         // Obtain information about submit operation that just occurred.
                         var data = (((request || {}).response[datasetName] || {})[tableName] || [])[0] || null;
@@ -155,7 +155,7 @@ var CustomerUpdGridSPACtrl = (function(){
                     }
 
                     // Parse the result for any possible messages.
-                    var response = result.request.response;
+                    var response = request.response;
                     if (spark.notify.responseHasInfo(response) || spark.notify.responseHasErrors(response)) {
                         app.showMessages(response);
                     }
@@ -384,8 +384,8 @@ var CustomerUpdGridSPACtrl = (function(){
                 // Obtain consistent data for dropdowns first.
                 var salesRepJSDO = spark.createJSDO("salesrep");
                 salesRepJSDO.fill()
-                    .done(function(jsdo, status, request){
-                        var response = (request || {}).response || {};
+                    .then(function(result){
+                        var response = (result.request || {}).response || {};
                         salesReps = (response.dsSalesrep || {}).ttSalesrep || [];
                         showGrid(); // Initialize grid.
                     });
