@@ -21,6 +21,12 @@ Note: For compatibility with the security mechanisms in place within the applica
 
 Each demo is an "ABL Web App" project meant to work within a PAS instance. To make the setup process quick, there is an Ant build script in each project's "AppServer" directory. Simply running `ant create` will create a suitable PAS instance at a predetermined location (C:\PASOE) and automatically include the proper PROPATH entries and files to start the instance.
 
+
+## Internal Libraries
+
+The demo applications utilize [JSDO version 5.0.0](https://github.com/progress/JSDO) for managing data against Progress Data Objects. NOTE: This release changes the promise object to ES6 Promises, which alters the returned parameters. This affects data requests but not callback methods, and the related code in the demos has been updated to reflect this change.
+
+
 ## Third-Party Libraries
 
 Please be aware that the supplied demos make use of various third-party libraries (JQuery, Bootstrap, etc.) for use within the static/interface portions of the demo applications. All source should be supplied as per open-source licenses require, though there is a full copy of the Telerik KendoUI Professional components for JQuery included for evaluation purposes only. To get more information about the trial please visit [https://www.telerik.com/download-login-v2-kendoui](https://www.telerik.com/download-login-v2-kendoui) to sign up. A proper developer license is required for long-term use of these libraries!
