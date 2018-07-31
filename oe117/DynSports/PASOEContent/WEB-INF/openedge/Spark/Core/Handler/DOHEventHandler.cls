@@ -8,16 +8,17 @@
                   Can only be used with 11.6.3 or later.
   ----------------------------------------------------------------------*/
 
-&GLOBAL-DEFINE MIN_LOGGING_LEVEL 3
 &GLOBAL-DEFINE MIN_VERSION_11_7_2 (lookup(substring(proversion(1), 1, 6), "11.6.3,11.6.4,11.6.5,11.7.0,11.7.1") = 0)
 
 block-level on error undo, throw.
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
+using OpenEdge.Logging.* from propath.
 using OpenEdge.Net.HTTP.HttpHeader from propath.
 using OpenEdge.Net.HTTP.StatusCodeEnum from propath.
 using OpenEdge.Net.HTTP.StatusCodeHelper from propath.
+using OpenEdge.Web.DataObject.* from propath.
 using Spark.Core.Manager.ServiceLifeCycleEnum from propath.
 using Spark.Core.Service.ISparkEntity from propath.
 
@@ -33,41 +34,38 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
     define private variable oPrincipal as OpenEdge.Security.Principal no-undo.
 
     /* Access the standard logging manager for Spark. */
-    define protected property oLoggingManager as Spark.Core.Manager.ILoggingManager no-undo
-        get:
-            if not valid-object(oLoggingManager) then do:
-                define variable oManager as Ccs.Common.IManager no-undo.
-                assign oManager = Ccs.Common.Application:StartupManager:getManager(get-class(Spark.Core.Manager.ILoggingManager)).
-                if valid-object(oManager) then
-                    assign oLoggingManager = cast(oManager, Spark.Core.Manager.ILoggingManager).
-            end.
-            return oLoggingManager.
+    define protected property oLogger as ILogWriter no-undo
+        get():
+            /* Create single logger instance for this class. */
+            if not valid-object(oLogger) then
+                assign oLogger = LoggerBuilder:GetLogger(this-object:getClass()).
+            return oLogger.
         end get.
-        set.
+        private set.
 
     constructor public DOHEventHandler():
         assign oCheat = this-object.
 
-        OpenEdge.Web.DataObject.DataObjectHandler:LoadEntity:Subscribe(this-object:LoadEntityHandler).
-        OpenEdge.Web.DataObject.DataObjectHandler:Invoking:Subscribe(this-object:InvokingHandler).
-        OpenEdge.Web.DataObject.DataObjectHandler:Invoked:Subscribe(this-object:InvokedHandler).
-        OpenEdge.Web.DataObject.DataObjectHandler:OperationError:Subscribe(this-object:OperationErrorHandler).
+        DataObjectHandler:LoadEntity:Subscribe(this-object:LoadEntityHandler).
+        DataObjectHandler:Invoking:Subscribe(this-object:InvokingHandler).
+        DataObjectHandler:Invoked:Subscribe(this-object:InvokedHandler).
+        DataObjectHandler:OperationError:Subscribe(this-object:OperationErrorHandler).
         &IF {&MIN_VERSION_11_7_2} &THEN
         /* Only available for 11.7.2 and later. */
-        OpenEdge.Web.DataObject.DataObjectHandler:DiscoverService:Subscribe(this-object:DiscoverServiceHandler).
-        OpenEdge.Web.DataObject.DataObjectHandler:UnloadEntity:Subscribe(this-object:UnloadEntityHandler).
+        DataObjectHandler:DiscoverService:Subscribe(this-object:DiscoverServiceHandler).
+        DataObjectHandler:UnloadEntity:Subscribe(this-object:UnloadEntityHandler).
         &ENDIF
     end constructor.
 
     destructor DOHEventHandler():
-        OpenEdge.Web.DataObject.DataObjectHandler:LoadEntity:Unsubscribe(this-object:LoadEntityHandler).
-        OpenEdge.Web.DataObject.DataObjectHandler:Invoking:Unsubscribe(this-object:InvokingHandler).
-        OpenEdge.Web.DataObject.DataObjectHandler:Invoked:Unsubscribe(this-object:InvokedHandler).
-        OpenEdge.Web.DataObject.DataObjectHandler:OperationError:Unsubscribe(this-object:OperationErrorHandler).
+        DataObjectHandler:LoadEntity:Unsubscribe(this-object:LoadEntityHandler).
+        DataObjectHandler:Invoking:Unsubscribe(this-object:InvokingHandler).
+        DataObjectHandler:Invoked:Unsubscribe(this-object:InvokedHandler).
+        DataObjectHandler:OperationError:Unsubscribe(this-object:OperationErrorHandler).
         &IF {&MIN_VERSION_11_7_2} &THEN
         /* Only available for 11.7.2 and later. */
-        OpenEdge.Web.DataObject.DataObjectHandler:DiscoverService:Unsubscribe(this-object:DiscoverServiceHandler).
-        OpenEdge.Web.DataObject.DataObjectHandler:UnloadEntity:Unsubscribe(this-object:UnloadEntityHandler).
+        DataObjectHandler:DiscoverService:Unsubscribe(this-object:DiscoverServiceHandler).
+        DataObjectHandler:UnloadEntity:Unsubscribe(this-object:UnloadEntityHandler).
         &ENDIF
     end destructor.
 
@@ -110,19 +108,34 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
      * @param ServiceDiscoveryEventArgs Event args for this event
      */
     method private void DiscoverServiceHandler ( input poSender    as Progress.Lang.Object,
-                                                 input poEventArgs as OpenEdge.Web.DataObject.ServiceDiscoveryEventArgs):
+                                                 input poEventArgs as ServiceDiscoveryEventArgs):
         /* Existing pattern uses the URL path to determine the name and URI of the current service being requested,
          * essentially the part after the /web/<prefix>/ segment of our request. Once the name and URI of the service
          * has been isolated, use either poEventArgs:Registry or ServiceRegistry object instance is consulted via
          * HasService() and GetService() by poEventArgs:Name and poEventArgs:Version and assigned to poEventArgs:Service.
          * The default pattern is /pdo[[/{version}]/{service}] but could be adjusted to meet your needs.
+         *
+         * Note that the ServiceRegistry will attempt to load an implementation of the class from the CCS ServiceManager,
+         * or otherwise fall back to implementing the default class. When a .map file is present, it is the job of the
+         * ServiceRegistryLoader to configure each available service in the registry by use of the PutOperation and
+         * related methods in the ServiceRegistry implementation.
+         *
          */
-        oLoggingManager:logMessage(substitute("&1 &2 : &3 v&4",
-                                              poEventArgs:Request:WebAppPath, poEventArgs:Request:PathInfo,
-                                              poEventArgs:Name, poEventArgs:Version), "DISCOVER", {&MIN_LOGGING_LEVEL}).
+        oLogger:Debug(substitute("DISCOVER - &1&2&3 v&4",
+                                 poEventArgs:Request:WebAppPath, poEventArgs:Request:PathInfo,
+                                 poEventArgs:Name, poEventArgs:Version)).
+
+        if poEventArgs:Request:PathInfo eq "/hellosvc/" then
+            ServiceRegistry:RegisterFromFile("hellosvc.map").
+
+        define variable oDataObjectServices as DataObjectService extent no-undo.
+        oLogger:Trace(substitute("Valid Registry: &1", valid-object(poEventArgs:Registry))).
+        if valid-object(poEventArgs:Registry) then
+            assign oDataObjectServices = poEventArgs:Registry:GetServices().
+        oLogger:Trace(substitute("DataObjectServices: &1", extent(oDataObjectServices))).
 
         catch err as Progress.Lang.Error:
-            oLoggingManager:logError(string(poEventArgs:ServiceURI), err, "DISCOVER", 0).
+            oLogger:Error(substitute("DISCOVER - &1: &2", poEventArgs:ServiceURI, err)).
         end catch.
     end method. /* DiscoverServiceHandler */
 
@@ -132,15 +145,9 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
      * @param HandlerLoadEntityEventArgs Event args for this event
      */
     method private void LoadEntityHandler ( input poSender    as Progress.Lang.Object,
-                                            input poEventArgs as OpenEdge.Web.DataObject.HandlerLoadEntityEventArgs ):
-        if valid-object(oLoggingManager) then do:
-            /* Check if there has been a change to the logging options (logging.json). */
-            oLoggingManager:updateLoggingLevel().
-            oLoggingManager:updateLogEntryTypes().
-
-            /* Leave a log message that the DOH event handler is being loaded. */
-            oLoggingManager:logMessage(substitute("Requested Entity '&1'", poEventArgs:Operation:TargetName), "DOH-LOAD", {&MIN_LOGGING_LEVEL}).
-        end. /* valid-object */
+                                            input poEventArgs as HandlerLoadEntityEventArgs ):
+        /* Leave a log message that the DOH event handler is being loaded. */
+        oLogger:Debug(substitute("DOH-LOAD - Requested Entity '&1'", poEventArgs:Operation:TargetName)).
 
         /* Attempt to load the requested service for this business entity. */
         define variable oServiceClass as Progress.Lang.Class no-undo.
@@ -150,8 +157,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
             assign poEventArgs:BusinessEntity = Ccs.Common.Application:ServiceManager:getService(oServiceClass).
 
             /* Leave a log message that the DOH event handler has been loaded. */
-            if valid-object(oLoggingManager) then
-                oLoggingManager:logMessage(substitute("Located Entity '&1'", oServiceClass:TypeName), "DOH-LOAD", {&MIN_LOGGING_LEVEL}).
+            oLogger:Debug(substitute("DOH-LOAD - Located Entity '&1'", oServiceClass:TypeName)).
         end. /* valid-object */
     end method. /* LoadEntityHandler */
 
@@ -160,21 +166,21 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
      * @param OperationInvocationEventArgs Event args for this event
      */
     method private void InvokingHandler ( input poSender    as Progress.Lang.Object,
-                                          input poEventArgs as OpenEdge.Web.DataObject.OperationInvocationEventArgs ):
+                                          input poEventArgs as OperationInvocationEventArgs ):
         assign dInvokeTime = now. /* Remember when we start execution. */
 
         if poEventArgs:Operation:ServiceURI eq "/" then
-            oLoggingManager:logMessage(substitute("&1 /&2 (&3)",
-                                                  string(poEventArgs:Operation:Method),
-                                                  poEventArgs:Operation:ServiceName,
-                                                  poEventArgs:Operation:TargetName), "INVOKING", {&MIN_LOGGING_LEVEL}).
+            oLogger:Debug(substitute("INVOKING - &1 /&2 (&3)",
+                                     string(poEventArgs:Operation:Method),
+                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Operation:TargetName)).
         else
-            oLoggingManager:logMessage(substitute("&1 /&2/&3 -> &4:&5",
-                                                  string(poEventArgs:Operation:Method),
-                                                  poEventArgs:Operation:ServiceName,
-                                                  poEventArgs:Operation:ServiceURI,
-                                                  poEventArgs:Operation:TargetName,
-                                                  poEventArgs:Operation:TargetFunction), "INVOKING", {&MIN_LOGGING_LEVEL}).
+            oLogger:Debug(substitute("INVOKING - &1 /&2/&3 -> &4:&5",
+                                     string(poEventArgs:Operation:Method),
+                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Operation:ServiceURI,
+                                     poEventArgs:Operation:TargetName,
+                                     poEventArgs:Operation:TargetFunction)).
 
         /**
          * Assert the current user's identity for this session request.
@@ -188,7 +194,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         Ccs.Common.Application:SessionManager:establishRequestEnvironment(oPrincipal:Token).
 
         catch err as Progress.Lang.Error:
-            oLoggingManager:logError(string(poEventArgs:Operation:TargetName), err, "INVOKING", 0).
+            oLogger:Error(substitute("INVOKING - &1: &2", poEventArgs:Operation:TargetName, err)).
         end catch.
     end method. /* InvokingHandler */
 
@@ -197,19 +203,19 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
      * @param OperationInvocationEventArgs Event args for this event
      */
     method private void InvokedHandler ( input poSender    as Progress.Lang.Object,
-                                         input poEventArgs as OpenEdge.Web.DataObject.OperationInvocationEventArgs ):
+                                         input poEventArgs as OperationInvocationEventArgs ):
         if poEventArgs:Operation:ServiceURI eq "/" then
-            oLoggingManager:logMessage(substitute("&1 /&2 (&3)",
-                                                  string(poEventArgs:Operation:Method),
-                                                  poEventArgs:Operation:ServiceName,
-                                                  poEventArgs:Operation:TargetName), "INVOKED", {&MIN_LOGGING_LEVEL}).
+            oLogger:Debug(substitute("INVOKED - &1 /&2 (&3)",
+                                     string(poEventArgs:Operation:Method),
+                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Operation:TargetName)).
         else
-            oLoggingManager:logMessage(substitute("&1 /&2/&3 -> &4:&5",
-                                                  string(poEventArgs:Operation:Method),
-                                                  poEventArgs:Operation:ServiceName,
-                                                  poEventArgs:Operation:ServiceURI,
-                                                  poEventArgs:Operation:TargetName,
-                                                  poEventArgs:Operation:TargetFunction), "INVOKED", {&MIN_LOGGING_LEVEL}).
+            oLogger:Debug(substitute("INVOKED - &1 /&2/&3 -> &4:&5",
+                                     string(poEventArgs:Operation:Method),
+                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Operation:ServiceURI,
+                                     poEventArgs:Operation:TargetName,
+                                     poEventArgs:Operation:TargetFunction)).
 
         /* If dealing with a READ operation from an ISparkEntity class, attempt to get
          * the last-known number of records read and return as part of the response object.
@@ -252,7 +258,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         end. /* iStart gt 0 */
 
         catch err as Progress.Lang.Error:
-            oLoggingManager:logError(string(poEventArgs:Operation:TargetName), err, "INVOKED", 0).
+            oLogger:Error(substitute("INVOKED - &1: &2", poEventArgs:Operation:TargetName, err)).
         end catch.
         finally:
             this-object:SessionCleanup(). /* Perform any necessary cleanup. */
@@ -264,8 +270,8 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
      * @param HandlerErrorEventArgs Event args for this event
      */
     method private void OperationErrorHandler ( input poSender    as Progress.Lang.Object,
-                                                input poEventArgs as OpenEdge.Web.DataObject.HandlerErrorEventArgs ):
-        oLoggingManager:logError(string(poEventArgs:Operation:TargetName), poEventArgs:Error, "OP-ERROR", 0).
+                                                input poEventArgs as HandlerErrorEventArgs ):
+        oLogger:Error(substitute("OP-ERROR - &1: &2", poEventArgs:Operation:TargetName, poEventArgs:Error)).
 
         define variable iCode as integer no-undo.
         assign iCode = poEventArgs:Error:GetMessageNum(1).
@@ -294,12 +300,10 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
      * @param HandlerLoadEntityEventArgs Event args for this event
      */
     method private void UnloadEntityHandler ( input poSender    as Progress.Lang.Object,
-                                              input poEventArgs as OpenEdge.Web.DataObject.HandlerLoadEntityEventArgs ):
-        if valid-object(oLoggingManager) then do:
-            /* Leave a log message that the DOH event handler has been loaded. */
-            Ccs.Common.Application:ServiceManager:stopServices(ServiceLifeCycleEnum:request).
-            oLoggingManager:logMessage(poEventArgs:Operation:TargetName, "DOH-UNLD", {&MIN_LOGGING_LEVEL}).
-        end. /* valid-object */
+                                              input poEventArgs as HandlerLoadEntityEventArgs ):
+        /* Leave a log message that the DOH event handler has been loaded. */
+        Ccs.Common.Application:ServiceManager:stopServices(ServiceLifeCycleEnum:request).
+        oLogger:Debug(substitute("DOH-UNLD - &1", poEventArgs:Operation:TargetName)).
     end method. /* UnloadEntityHandler */
 
 end class.
