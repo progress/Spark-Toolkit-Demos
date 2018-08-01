@@ -14,11 +14,14 @@ block-level on error undo, throw.
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
+using OpenEdge.Core.* from propath.
+using OpenEdge.Core.Collections.* from propath.
 using OpenEdge.Logging.* from propath.
 using OpenEdge.Net.HTTP.HttpHeader from propath.
 using OpenEdge.Net.HTTP.StatusCodeEnum from propath.
 using OpenEdge.Net.HTTP.StatusCodeHelper from propath.
 using OpenEdge.Web.DataObject.* from propath.
+using OpenEdge.Web.SendExceptionError from propath.
 using Spark.Core.Manager.ServiceLifeCycleEnum from propath.
 using Spark.Core.Service.ISparkEntity from propath.
 
@@ -79,6 +82,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         delete object oPrincipal no-error. /* Delete the CP token. */
     end method. /* SessionCleanup */
 
+
     method private character GetStatusReason ( input piStatusCode as integer ).
         define variable cReason as character no-undo.
 
@@ -97,6 +101,48 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
         return cReason.
     end method. /* GetStatusReason */
+
+
+    method protected character extent 2 SplitServicePath (input pcPath as character):
+        /**
+         * Splits a URI path into a service and service-relative-uri.
+         * Can be used for tokenised paths or 'real' paths.
+         * -Method borrowed from OE.W.DO.DataObjectHandler for consistency
+         */
+        define variable cPath as character case-sensitive extent 2 no-undo.
+
+        Assert:NotNull(pcPath, "Path info").
+
+        /* PathInfo is going to be /pdo/service/resource/blah or /service/resource/blah  */
+        assign
+            cPath[2] = trim(pcPath, "/":u)
+            cPath[1] = entry(1, cPath[2], "/":u)
+            .
+
+        /* Could be /pdo/ or /something-else-service */
+        if cPath[1] eq "pdo":u then do:
+            if num-entries(cPath[2], "/":u) ge 2 then
+                assign cPath[1] = trim(entry(2, cPath[2], "/":u), "/":u)
+                       // Remove the service component from the path
+                       entry(2, cPath[2], "/":u) = "":u.
+            else
+                assign cPath[1] = "":u.
+        end.
+
+        /* Remove the pdo service component from the path */
+        assign entry(1, cPath[2], "/":u) = "":u
+               cPath[2] = trim(cPath[2], "/":u)
+               .
+        /* We don't want a blank key so we use "ROOT" */
+        if cPath[1] eq "":u then
+            assign cPath[1] = ServiceRegistry:ROOT_SERVICE_NAME.
+
+        /* We don't want a blank uri so we use "/" */
+        if cPath[2] eq "":u then
+            assign cPath[2] = ServiceRegistry:ROOT_SERVICE_URI.
+
+        return cPath.
+    end method. /* SplitServicePath */
 
 
     /***** Event Methods *****/
@@ -119,24 +165,102 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
          * or otherwise fall back to implementing the default class. When a .map file is present, it is the job of the
          * ServiceRegistryLoader to configure each available service in the registry by use of the PutOperation and
          * related methods in the ServiceRegistry implementation.
-         *
          */
-        oLogger:Debug(substitute("DISCOVER - &1&2&3 v&4",
+        define variable cServicePaths as character extent no-undo.
+        define variable oOperations   as JsonObject       no-undo.
+        define variable oCatalog      as JsonObject       no-undo.
+        define variable oSchemas      as JsonObject       no-undo.
+
+        /* If we have a service, or something already went wrong, return. */
+        if valid-object(poEventArgs:Service) or poEventArgs:Cancel or valid-object(poEventArgs:Error) then return.
+
+        /**
+         * We have a default name algorithm to obtain the service name and relative resource URI.
+         * These will be used to identify the potential entity to use, as well as the operation URI.
+         */
+        if String:IsNullOrEmpty(poEventArgs:Name) then
+            assign
+                cServicePaths          = SplitServicePath(poEventArgs:Request:PathInfo)
+                poEventArgs:Name       = cServicePaths[1]
+                poEventArgs:ServiceURI = cServicePaths[2]
+                poEventArgs:Registry   = ServiceRegistry:Registry
+                .
+
+        /* Output the parsed service-related values as seen by the registry. */
+        oLogger:Debug(substitute("DISCOVER - WebApp: &1 Path: &2 Service: &3 Version: &4 Resource: &5",
                                  poEventArgs:Request:WebAppPath, poEventArgs:Request:PathInfo,
-                                 poEventArgs:Name, poEventArgs:Version)).
+                                 poEventArgs:Name, poEventArgs:Version, poEventArgs:ServiceURI)).
 
-        if poEventArgs:Request:PathInfo eq "/hellosvc/" then
-            ServiceRegistry:RegisterFromFile("hellosvc.map").
+        /* Output info about what is about to be loaded as the service, if found to be available. */
+        oLogger:Debug(substitute("DISCOVER - &1 &2", poEventArgs:Request:Method, poEventArgs:Request:URI:ToString())).
 
-        define variable oDataObjectServices as DataObjectService extent no-undo.
-        oLogger:Trace(substitute("Valid Registry: &1", valid-object(poEventArgs:Registry))).
+        /* Consult the built-in registry which implements IServiceRegistry. */
         if valid-object(poEventArgs:Registry) then
-            assign oDataObjectServices = poEventArgs:Registry:GetServices().
-        oLogger:Trace(substitute("DataObjectServices: &1", extent(oDataObjectServices))).
+            if poEventArgs:Registry:HasService(poEventArgs:Name, poEventArgs:Version) then
+                assign poEventArgs:Service = poEventArgs:Registry:GetService(poEventArgs:Name, poEventArgs:Version).
+
+        /**
+         * Attempt to locate and register an available service from the Spark Toolkit metadata. In this use-case the available
+         * entities are dynamically discovered through class reflection and configured with specific URI patterns and verbs for
+         * access. This data can be converted into a compatible format as used by the OE.W.DO.ServiceRegistry and DOH classes.
+         */
+        oLogger:Trace(substitute("Service Exists: &1", valid-object(poEventArgs:Service))).
+        if not valid-object(poEventArgs:Service) then do:
+            /* Register the service using the prepared objects. */
+            poEventArgs:Registry:RegisterService(poEventArgs:Name, SemanticVersion:Parse(poEventArgs:Version), ?, ?).
+
+            /* Add the operation to the newly-created service. */
+            define variable oMapOp  as MappedOperation    no-undo.
+            define variable oParams as IList              no-undo.
+            define variable oParam  as OperationParameter no-undo.
+
+            /* Create the params for this service operation. */
+            oParams = new OpenEdge.Core.Collections.List().
+            oParam = new OperationParameter(IOModeEnum:Output, "character", "greeting").
+            extent(oParam:OutputElementType) = 1.
+            extent(oParam:OutputElementName) = 1.
+            oParam:OutputElementType[1] = ElementTypeEnum:Field.
+            oParam:OutputElementName[1] = "greeting".
+            oParams:Add(oParam).
+
+            /* Create the service operation. */
+            oMapOp = new MappedOperation(poEventArgs:Name, /* Service Name */
+                                         SemanticVersion:Parse(poEventArgs:Version), /* Service Version */
+                                         poEventArgs:ServiceURI, /* Service URI */
+                                         OpenEdge.Net.HTTP.MethodEnum:GET, /* Method */
+                                         "application/json", /* Content-Type */
+                                         TargetTypeEnum:Class:ToString(), /* Target Type via TargetTypeEnum */
+                                         "Business.HelloUser", /* Target Name of class/procedure or filename */
+                                         "Progress.Lang.Object", /* ABL Type of Target Name */
+                                         "SayHello", /* Function/Method */
+                                         ?, /* OperationOptions */
+                                         200, /* Status Code */
+                                         oParams). /* List of OperationParameter's */
+            poEventArgs:Registry:PutOperation(poEventArgs:Name, SemanticVersion:Parse(poEventArgs:Version), oMapOp).
+
+            /* Attempt to obtain the new service, failing appropriately if not valid and setting event args if available. */
+            if not valid-object(ServiceRegistry:Registry:GetService(poEventArgs:Name, poEventArgs:Version)) then do:
+                oLogger:Debug(substitute("Service not found for '&1 &2'",
+                                         poEventArgs:Request:Method, poEventArgs:Request:URI:ToString())).
+                undo, throw new SendExceptionError(StatusCodeEnum:NotFound,
+                                                   new AppError(substitute("Service not found for '&1 &2'",
+                                                                           poEventArgs:Request:Method,
+                                                                           poEventArgs:Request:URI:ToString()), 0)).
+            end. /* Not Valid */
+            assign poEventArgs:Service = poEventArgs:Registry:GetService(poEventArgs:Name, poEventArgs:Version).
+        end. /* No Service */
+
+        /* If we do not have a registered service by now, the default logic will look on disk for a .GEN and/or .MAP file. */
 
         catch err as Progress.Lang.Error:
+            assign poEventArgs:Error = err.
             oLogger:Error(substitute("DISCOVER - &1: &2", poEventArgs:ServiceURI, err)).
         end catch.
+        finally:
+            delete object oOperations no-error.
+            delete object oCatalog no-error.
+            delete object oSchemas no-error.
+        end finally.
     end method. /* DiscoverServiceHandler */
 
     /* Event published to invoke/load a piece of business logic (aka Business Entity).
@@ -194,6 +318,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         Ccs.Common.Application:SessionManager:establishRequestEnvironment(oPrincipal:Token).
 
         catch err as Progress.Lang.Error:
+            assign poEventArgs:Error = err.
             oLogger:Error(substitute("INVOKING - &1: &2", poEventArgs:Operation:TargetName, err)).
         end catch.
     end method. /* InvokingHandler */
@@ -258,6 +383,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         end. /* iStart gt 0 */
 
         catch err as Progress.Lang.Error:
+            assign poEventArgs:Error = err.
             oLogger:Error(substitute("INVOKED - &1: &2", poEventArgs:Operation:TargetName, err)).
         end catch.
         finally:
