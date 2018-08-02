@@ -10,6 +10,10 @@
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
 using Progress.Json.ObjectModel.ObjectModelParser.* from propath.
+using OpenEdge.Core.* from propath.
+using OpenEdge.Core.Collections.* from propath.
+using OpenEdge.Net.HTTP.MethodEnum from propath.
+using OpenEdge.Web.DataObject.* from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
 using Spark.Core.Manager.ILoggingManager from propath.
 using Spark.Core.Manager.IMessageManager from propath.
@@ -959,9 +963,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 where bMethod.ServiceURI eq pcServiceURI
                   and bMethod.ClassPath eq pcResClassPath
                   and bMethod.OperationType eq "read":
-                assign oParamArr = getMethodSignature( pcServiceURI,
-                                                       pcResClassPath,
-                                                       bMethod.MethodName ).
+                assign oParamArr = this-object:getMethodSignature( pcServiceURI,
+                                                                   pcResClassPath,
+                                                                   bMethod.MethodName ).
 
                 do iX = 1 to oParamArr:Length:
                     assign oParamObj = oParamArr:GetJsonObject(iX).
@@ -983,9 +987,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                  and bMethod.ClassPath eq pcResClassPath
                  and bMethod.OperationType eq "invoke"
                   by bMethod.MethodName:
-                assign oParamArr = getMethodSignature( pcServiceURI,
-                                                       pcResClassPath,
-                                                       bMethod.MethodName ).
+                assign oParamArr = this-object:getMethodSignature( pcServiceURI,
+                                                                   pcResClassPath,
+                                                                   bMethod.MethodName ).
 
                 do iX = 1 to oParamArr:Length:
                     assign oParamObj = oParamArr:GetJsonObject(iX).
@@ -1123,9 +1127,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             where bMethod.ServiceURI eq pcServiceURI
               and bMethod.ClassPath eq pcResClassPath
               and bMethod.OperationType eq "read":
-            assign oParamArr = getMethodSignature( pcServiceURI,
-                                                   pcResClassPath,
-                                                   bMethod.MethodName ).
+            assign oParamArr = this-object:getMethodSignature( pcServiceURI,
+                                                               pcResClassPath,
+                                                               bMethod.MethodName ).
 
             do iX = 1 to oParamArr:Length:
                 assign oParamObj = oParamArr:GetJsonObject(iX).
@@ -1414,9 +1418,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             operationObj:Add("verb", lc(bMethod.OperationVerb)).
 
             /* Obtain parameters for operation. */
-            assign oParamArr = getMethodSignature( pcServiceURI,
-                                                   bMethod.ClassPath,
-                                                   bMethod.MethodName ).
+            assign oParamArr = this-object:getMethodSignature( pcServiceURI,
+                                                               bMethod.ClassPath,
+                                                               bMethod.MethodName ).
 
             /* Add parameters for operation. */
             if valid-object(oParamArr) then
@@ -1989,9 +1993,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         end case.
 
         /* Obtain the method signature from this resource. */
-        assign oParamArr = getMethodSignature( pcServiceURI,
-                                               cClassPath,
-                                               cClassMethod ).
+        assign oParamArr = this-object:getMethodSignature( pcServiceURI,
+                                                           cClassPath,
+                                                           cClassMethod ).
 
         /* Prepare signature object with parsed values. */
         return new Spark.Core.Util.MethodSignature(cClassPath, cClassMethod, oParamArr).
@@ -2013,5 +2017,142 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             delete procedure bResource.ProcHandle no-error.
         end. /* for each */
     end method. /* stopProcedures */
+
+
+    method public void registerService ( input poRegistry       as IServiceRegistry,
+                                         input pcServiceName    as character,
+                                         input poServiceVersion as SemanticVersion ):
+        define variable cServiceURI  as character          no-undo.
+        define variable cContentType as character          no-undo.
+        define variable cTargetType  as character          no-undo.
+        define variable cTargetName  as character          no-undo.
+        define variable cEntityType  as character          no-undo.
+        define variable cFuncMethod  as character          no-undo.
+        define variable cParamMode   as character          no-undo.
+        define variable cParamName   as character          no-undo.
+        define variable cParamType   as character          no-undo.
+        define variable iStatusCode  as integer            no-undo.
+        define variable iX           as integer            no-undo.
+        define variable oParamArr    as JsonArray          no-undo.
+        define variable oParamObj    as JsonObject         no-undo.
+        define variable oHttpMethod  as MethodEnum         no-undo.
+        define variable oOperOpts    as OperationOptions   no-undo.
+        define variable oParams      as IList              no-undo.
+        define variable oParam       as OperationParameter no-undo.
+
+        define buffer bService  for ServiceList.
+        define buffer bResource for ResourceInfo.
+        define buffer bMethod   for MethodInfo.
+
+        for first bService no-lock
+            where bService.ServiceName eq pcServiceName:
+            /* Leave if the name of the service does not actually match the last element of the Service URI. */
+            if pcServiceName ne entry(num-entries(bService.ServiceURI, "/"), bService.ServiceURI, "/") then return.
+
+            /* Register the service using the name and version discovered. */
+            poRegistry:RegisterService(pcServiceName, poServiceVersion, ?, ?).
+
+            /* Set any options for the current operation. */
+            assign oOperOpts = new OperationOptions().
+            oOperOpts:WriteBI = false. /* Default: false */
+            oOperOpts:Timeout = 0. /* Default: 0 */
+            oOperOpts:HasRequestEnvelope = bService.UseRequest. /* Default: false */
+            oOperOpts:RequestEnvelope = "request". /* Default: request */
+            oOperOpts:HasResponseEnvelope = bService.UseRequest. /* Default: false */
+            oOperOpts:ResponseEnvelope = "response". /* Default: response */
+            oOperOpts:HasErrorEnvelope = bService.UseRequest. /* Default: false */
+            oOperOpts:ErrorEnvelope = "error". /* Default: response */
+
+            for each bResource no-lock
+               where bResource.ServiceURI eq bService.ServiceURI,
+                each bMethod no-lock
+               where bMethod.ServiceURI eq bResource.ServiceURI
+                 and bMethod.ClassPath eq bResource.ClassPath:
+                /* Prepare the common values for this operation mapping. */
+                assign
+                    cServiceURI  = (if (bMethod.PublicName gt "") eq true then substitute("&1/&2", bResource.PublicName, bMethod.PublicName) else bResource.PublicName)
+                    cContentType = "application/json"
+                    oHttpMethod  = MethodEnum:GetEnum(bMethod.OperationVerb)
+                    cTargetType  = (if bResource.IsClass then TargetTypeEnum:Class:ToString() else TargetTypeEnum:Procedure:ToString())
+                    cTargetName  = bMethod.ClassPath
+                    cEntityType  = (if bResource.IsClass then "Progress.Lang.Object" else ?)
+                    cFuncMethod  = bMethod.MethodName
+                    iStatusCode  = 200
+                    .
+
+                /* Log values to be used for mapping. */
+                oLoggingManager:logMessage(substitute("Mapping &1 &2/&3 to &4:&5",
+                                                      oHttpMethod:ToString(),
+                                                      pcServiceName,
+                                                      cServiceURI,
+                                                      cTargetName,
+                                                      cFuncMethod), "SPARK-SVC", 3).
+
+                /* Create a new list of parameters for this operation. */
+                assign oParams = new OpenEdge.Core.Collections.List().
+
+                /* Obtain the method signature for this resource. */
+                assign oParamArr = this-object:getMethodSignature( bResource.ServiceURI,
+                                                                   bResource.ClassPath,
+                                                                   bMethod.MethodName ).
+
+                /* Add the individual parameters for this operation. */
+                if valid-object(oParamArr) then
+                do iX = 1 to oParamArr:Length:
+                    /* Obtain parameter information. */
+                    assign oParamObj = oParamArr:GetJsonObject(iX).
+                    assign
+                        cParamMode = oParamObj:GetCharacter("mode") when oParamObj:Has("mode")
+                        cParamName = oParamObj:GetCharacter("name") when oParamObj:Has("name")
+                        cParamType = oParamObj:GetCharacter("type") when oParamObj:Has("type")
+                        .
+
+                    case true:
+                        when index(cParamType, ".") gt 0 then
+                            assign cParamType = substitute("class &1", cParamType).
+                        when cParamType eq "datasethandle" then
+                            assign cParamType = "dataset".
+                        when cParamType eq "datetimetz" then
+                            assign cParamType = "datetime-tz".
+                    end case.
+
+                    /* Log creation of each parameter. */
+                    oLoggingManager:logMessage(substitute("| &1: &2 as &3",
+                                                          cParamMode,
+                                                          cParamName,
+                                                          cParamType), "SPARK-SVC", 3).
+
+                    /* Create parameter and add to list. */
+                    assign oParam = new OperationParameter(IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
+                    extent(oParam:OutputElementType) = 1.
+                    extent(oParam:OutputElementName) = 1.
+                    oParam:OutputElementType[1] = ElementTypeEnum:Field.
+                    oParam:OutputElementName[1] = oParamObj:GetCharacter("name").
+                    oParams:Add(oParam).
+                end. /* do iX */
+
+                /* Add a mapped operation to the newly-registered service. */
+                poRegistry:PutOperation(pcServiceName,
+                                        poServiceVersion,
+                                        new MappedOperation( pcServiceName,
+                                                             poServiceVersion,
+                                                             cServiceURI,
+                                                             oHttpMethod,
+                                                             cContentType,
+                                                             cTargetType,
+                                                             cTargetName,
+                                                             cEntityType,
+                                                             cFuncMethod,
+                                                             oOperOpts,
+                                                             iStatusCode,
+                                                             oParams )).
+
+                finally:
+                    delete object oParamObj no-error.
+                    delete object oParamArr no-error.
+                end finally.
+            end. /* for each bResource, each bMethod */
+        end. /* for first bService */
+    end method. /* registerService */
 
 end class.
