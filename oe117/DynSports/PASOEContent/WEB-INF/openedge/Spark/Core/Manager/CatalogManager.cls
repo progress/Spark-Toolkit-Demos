@@ -2044,8 +2044,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define buffer bResource for ResourceInfo.
         define buffer bMethod   for MethodInfo.
 
-        for first bService no-lock
-            where bService.ServiceName eq pcServiceName:
+        find first bService no-lock
+             where bService.ServiceName eq pcServiceName no-error.
+        if available(bService) then do:
             /* Leave if the name of the service does not actually match the last element of the Service URI. */
             if pcServiceName ne entry(num-entries(bService.ServiceURI, "/"), bService.ServiceURI, "/") then return.
 
@@ -2152,7 +2153,43 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     delete object oParamArr no-error.
                 end finally.
             end. /* for each bResource, each bMethod */
-        end. /* for first bService */
+        end. /* available bService */
+        else do:
+            /* Create a special service for the ROOT if not already found. */
+            if pcServiceName eq "ROOT" then do:
+                /* Register the service using the name and version discovered. */
+                poRegistry:RegisterService(pcServiceName, SemanticVersion:Parse(""), ?, ?).
+
+                /* Create a new list of parameters for this operation. */
+                assign oParams = new OpenEdge.Core.Collections.List().
+
+                /* Create parameter and add to list. */
+                assign oParam = new OperationParameter(IOModeEnum:Output, "class Progress.Json.ObjectModel.JsonObject", "catalog").
+                extent(oParam:OutputElementType) = 1.
+                extent(oParam:OutputElementName) = 1.
+                oParam:OutputElementType[1] = ElementTypeEnum:Body.
+                oParam:OutputElementName[1] = "catalog".
+                oParams:Add(oParam).
+
+                /* Add a mapped operation to the newly-registered service. */
+                poRegistry:PutOperation(pcServiceName,
+                                        poServiceVersion,
+                                        new MappedOperation( pcServiceName,
+                                                             SemanticVersion:Parse(""),
+                                                             "/",
+                                                             MethodEnum:GET,
+                                                             "application/json",
+                                                             TargetTypeEnum:Class:ToString(),
+                                                             "Spark.Core.Service.Catalog",
+                                                             "Progress.Lang.Object",
+                                                             "getCatalog",
+                                                             ?,
+                                                             200,
+                                                             oParams )).
+            end. /* ROOT Service */
+            else
+                oLoggingManager:logMessage(substitute("Unable to locate service for '&1'", pcServiceName), "SPARK-SVC", 3).
+        end. /* not avaialble bService */
     end method. /* registerService */
 
 end class.

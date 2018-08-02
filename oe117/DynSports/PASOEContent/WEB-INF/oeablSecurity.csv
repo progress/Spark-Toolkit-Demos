@@ -18,6 +18,7 @@
 "/web/api/*","GET","permitAll()"
 "/web/api/common/tfa/*","PUT","permitAll()"
 "/web/api/common/user/*","*","permitAll()"
+"/web/api/common/hello/*","*","permitAll()"
 "/web/api/system/access/*","*","hasAnyRole('ROLE_WebAdmin')"
 "/web/api/tests/**","*","permitAll()"
 "/web/sample/**","*","permitAll()"
@@ -26,7 +27,6 @@
 "/web/status/login","GET","hasAnyRole('ROLE_PSCUser')"
 "/web/test/**","*","permitAll()"
 "/web/_oeping","*","permitAll()"
-"/web/common/**","*","permitAll()"
 "/web/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the default URI space #################

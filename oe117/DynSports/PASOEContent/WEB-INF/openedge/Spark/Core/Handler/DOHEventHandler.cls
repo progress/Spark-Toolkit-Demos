@@ -123,32 +123,48 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
         Assert:NotNull(pcPath, "Path info").
 
-        /* PathInfo is going to be /pdo/service/resource/blah or /service/resource/blah  */
+        /* PathInfo is going to be /pdo/service/resource/blah or /api/service/resource/blah or /service/resource/blah */
         assign
-            cPath[2] = trim(pcPath, "/":u)
-            cPath[1] = entry(1, cPath[2], "/":u)
+            cPath[2] = trim(pcPath, "/")
+            cPath[1] = entry(1, cPath[2], "/")
             .
 
         /* Could be /pdo/ or /something-else-service */
-        if cPath[1] eq "pdo":u then do:
-            if num-entries(cPath[2], "/":u) ge 2 then
-                assign cPath[1] = trim(entry(2, cPath[2], "/":u), "/":u)
-                       // Remove the service component from the path
-                       entry(2, cPath[2], "/":u) = "":u.
+        if cPath[1] eq "pdo" then do:
+            if num-entries(cPath[2], "/") ge 2 then
+                assign
+                    cPath[1] = trim(entry(2, cPath[2], "/"), "/")
+                    /* Remove the service component from the path */
+                    entry(2, cPath[2], "/") = ""
+                    .
             else
-                assign cPath[1] = "":u.
-        end.
+                assign cPath[1] = "".
+        end. /* pdo */
 
-        /* Remove the pdo service component from the path */
-        assign entry(1, cPath[2], "/":u) = "":u
-               cPath[2] = trim(cPath[2], "/":u)
-               .
+        /* Could be /api/ or /something-else-service */
+        if cPath[1] eq "api" then do:
+            if num-entries(cPath[2], "/") ge 2 then
+                assign
+                    cPath[1] = trim(entry(2, cPath[2], "/"), "/")
+                    /* Remove the service component from the path */
+                    entry(2, cPath[2], "/") = ""
+                    .
+            else
+                assign cPath[1] = "".
+        end. /* api */
+
+        /* Remove the service component from the path */
+        assign
+            entry(1, cPath[2], "/") = ""
+            cPath[2] = trim(cPath[2], "/")
+            .
+
         /* We don't want a blank key so we use "ROOT" */
-        if cPath[1] eq "":u then
+        if cPath[1] eq "" then
             assign cPath[1] = ServiceRegistry:ROOT_SERVICE_NAME.
 
         /* We don't want a blank uri so we use "/" */
-        if cPath[2] eq "":u then
+        if cPath[2] eq "" then
             assign cPath[2] = ServiceRegistry:ROOT_SERVICE_URI.
 
         return cPath.
