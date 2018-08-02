@@ -26,7 +26,7 @@
 "/web/status/login","GET","hasAnyRole('ROLE_PSCUser')"
 "/web/test/**","*","permitAll()"
 "/web/_oeping","*","permitAll()"
-"/web/hellosvc/**","*","permitAll()"
+"/web/common/**","*","permitAll()"
 "/web/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the default URI space #################

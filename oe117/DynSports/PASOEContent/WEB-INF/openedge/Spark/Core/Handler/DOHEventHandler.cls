@@ -18,10 +18,12 @@ using OpenEdge.Core.* from propath.
 using OpenEdge.Core.Collections.* from propath.
 using OpenEdge.Logging.* from propath.
 using OpenEdge.Net.HTTP.HttpHeader from propath.
+using OpenEdge.Net.HTTP.MethodEnum from propath.
 using OpenEdge.Net.HTTP.StatusCodeEnum from propath.
 using OpenEdge.Net.HTTP.StatusCodeHelper from propath.
 using OpenEdge.Web.DataObject.* from propath.
 using OpenEdge.Web.SendExceptionError from propath.
+using Spark.Core.Manager.ICatalogManager from propath.
 using Spark.Core.Manager.ServiceLifeCycleEnum from propath.
 using Spark.Core.Service.ISparkEntity from propath.
 
@@ -36,13 +38,23 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
     /* Contains the current Client-Principal token for this request. */
     define private variable oPrincipal as OpenEdge.Security.Principal no-undo.
 
-    /* Access the standard logging manager for Spark. */
+    /* Access the service-level logging manager. */
     define protected property oLogger as ILogWriter no-undo
         get():
             /* Create single logger instance for this class. */
             if not valid-object(oLogger) then
                 assign oLogger = LoggerBuilder:GetLogger(this-object:getClass()).
             return oLogger.
+        end get.
+        private set.
+
+    /* Access the Spark catalog manager to obtain service metadata. */
+    define protected property oCatalog as ICatalogManager no-undo
+        get():
+            /* Create single catalog instance for this class. */
+            if not valid-object(oCatalog) then
+                assign oCatalog = cast(Ccs.Common.Application:StartupManager:getManager(get-class(ICatalogManager)), ICatalogManager).
+            return oCatalog.
         end get.
         private set.
 
@@ -147,56 +159,79 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
     method private void RegisterService ( input poRegistry       as IServiceRegistry,
                                           input pcServiceName    as character,
-                                          input pcServiceVersion as character,
-                                          input pcServiceURI     as character ):        
-        define variable oVersion  as SemanticVersion    no-undo.
-        define variable oOperOpts as OperationOptions   no-undo.
-        define variable oMapOp    as MappedOperation    no-undo.
-        define variable oParams   as IList              no-undo.
-        define variable oParam    as OperationParameter no-undo.
+                                          input pcServiceVersion as character ):        
+        if valid-object(oCatalog) then do:
+            define variable cServiceURI  as character          no-undo.
+            define variable cContentType as character          no-undo.
+            define variable cTargetType  as character          no-undo.
+            define variable cTargetName  as character          no-undo.
+            define variable cEntityType  as character          no-undo.
+            define variable cFuncMethod  as character          no-undo.
+            define variable iStatusCode  as integer            no-undo.
+            define variable oHttpMethod  as MethodEnum         no-undo.
+            define variable oVersion     as SemanticVersion    no-undo.
+            define variable oOperOpts    as OperationOptions   no-undo.
+            define variable oMapOp       as MappedOperation    no-undo.
+            define variable oParams      as IList              no-undo.
+            define variable oParam       as OperationParameter no-undo.
 
-        /* Register the service using the name and version discovered. */
-        assign oVersion = SemanticVersion:Parse(pcServiceVersion).
-        poRegistry:RegisterService(pcServiceName, oVersion, ?, ?).
+            /* Register the service using the name and version discovered. */
+            assign oVersion = SemanticVersion:Parse(pcServiceVersion).
+            poRegistry:RegisterService(pcServiceName, oVersion, ?, ?).
 
-        /* Set options for the current operation. */
-        assign oOperOpts = new OperationOptions().
-        oOperOpts:WriteBI = false. /* Default: false */
-        oOperOpts:Timeout = 0. /* Default: 0 */
-        oOperOpts:HasRequestEnvelope = false. /* Default: false */
-        oOperOpts:RequestEnvelope = "request". /* Default: request */
-        oOperOpts:HasResponseEnvelope = false. /* Default: false */
-        oOperOpts:ResponseEnvelope = "response". /* Default: response */
-        oOperOpts:HasErrorEnvelope = false. /* Default: false */
-        oOperOpts:ErrorEnvelope = "error". /* Default: response */
+            /* Log this service registration being performed. */
+            oLogger:Debug(substitute("DISCOVER - Registering Service: '&1' v&2", pcServiceName, oVersion:ToString())).
 
-        /* Create the params for this service operation. */
-        oParams = new OpenEdge.Core.Collections.List().
-        oParam = new OperationParameter(IOModeEnum:Output, "character", "greeting").
-        extent(oParam:OutputElementType) = 1.
-        extent(oParam:OutputElementName) = 1.
-        oParam:OutputElementType[1] = ElementTypeEnum:Field.
-        oParam:OutputElementName[1] = "greeting".
+            /* Set any options for the current operation. */
+            assign oOperOpts = new OperationOptions().
+            oOperOpts:WriteBI = false. /* Default: false */
+            oOperOpts:Timeout = 0. /* Default: 0 */
+            oOperOpts:HasRequestEnvelope = false. /* Default: false */
+            oOperOpts:RequestEnvelope = "request". /* Default: request */
+            oOperOpts:HasResponseEnvelope = false. /* Default: false */
+            oOperOpts:ResponseEnvelope = "response". /* Default: response */
+            oOperOpts:HasErrorEnvelope = false. /* Default: false */
+            oOperOpts:ErrorEnvelope = "error". /* Default: response */
 
-        /* Add the operation parameter to the list. */
-        oParams:Add(oParam).
+            /* Create the params for this service operation. */
+            oParams = new OpenEdge.Core.Collections.List().
+            oParam = new OperationParameter(IOModeEnum:Output, "character", "greeting").
+            extent(oParam:OutputElementType) = 1.
+            extent(oParam:OutputElementName) = 1.
+            oParam:OutputElementType[1] = ElementTypeEnum:Field.
+            oParam:OutputElementName[1] = "greeting".
 
-        /* Create the operation for this service. */
-        oMapOp = new MappedOperation(pcServiceName, /* Service Name */
-                                     oVersion, /* Service Version */
-                                     pcServiceURI, /* Service URI */
-                                     OpenEdge.Net.HTTP.MethodEnum:GET, /* Method */
-                                     "application/json", /* Content-Type */
-                                     TargetTypeEnum:Class:ToString(), /* Target Type via TargetTypeEnum */
-                                     "Business.HelloUser", /* Target Name of class/procedure or filename */
-                                     "Progress.Lang.Object", /* ABL Type of Target Name */
-                                     "SayHello", /* Function/Method */
-                                     oOperOpts, /* OperationOptions */
-                                     200, /* Status Code */
-                                     oParams). /* List of OperationParameter's */
+            /* Add the operation parameter to the list. */
+            oParams:Add(oParam).
 
-        /* Add the operation to the newly-registered service. */
-        poRegistry:PutOperation(pcServiceName, oVersion, oMapOp).
+            assign
+                cServiceURI  = "hello/user"
+                cContentType = "application/json"
+                oHttpMethod  = MethodEnum:GET
+                cTargetType  = TargetTypeEnum:Class:ToString()
+                cTargetName  = "Business.HelloUser"
+                cEntityType  = "Progress.Lang.Object"
+                cFuncMethod  = "SayHelloUser"
+                iStatusCode  = 200
+                .
+
+            /* Create the operation for this service. */
+            assign oMapOp = new MappedOperation( pcServiceName,
+                                                 oVersion,
+                                                 cServiceURI,
+                                                 oHttpMethod,
+                                                 cContentType,
+                                                 cTargetType,
+                                                 cTargetName,
+                                                 cEntityType,
+                                                 cFuncMethod,
+                                                 oOperOpts,
+                                                 iStatusCode,
+                                                 oParams ).
+
+            /* Add the operation to the newly-registered service. */
+            poRegistry:PutOperation(pcServiceName, oVersion, oMapOp).
+        end. /* Valid Catalog Manager */
     end method. /* RegisterService */
 
 
@@ -222,9 +257,12 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
          * related methods in the ServiceRegistry implementation.
          */
         define variable cServicePaths as character extent no-undo.
+        define variable iStartTime    as integer          no-undo.
 
         /* If we have a service, or something already went wrong, return. */
         if valid-object(poEventArgs:Service) or poEventArgs:Cancel or valid-object(poEventArgs:Error) then return.
+
+        assign iStartTime = mtime. /* Record start of discovery process. */
 
         /**
          * We have a default name algorithm to obtain the service name and relative resource URI.
@@ -239,9 +277,10 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
                 .
 
         /* Output the parsed service-related values as seen by the registry. */
-        oLogger:Debug(substitute("DISCOVER - WebApp: &1 | Path: &2 | Service: &3 | Version: &4 | Resource: &5",
+        oLogger:Debug(substitute("DISCOVER - WebApp: &1 | Path: &2 | Service: &3 v&4 | URI: &5",
                                  poEventArgs:Request:WebAppPath, poEventArgs:Request:PathInfo,
-                                 poEventArgs:Name, poEventArgs:Version, poEventArgs:ServiceURI)).
+                                 poEventArgs:Name, SemanticVersion:Parse(poEventArgs:version),
+                                 poEventArgs:ServiceURI)).
 
         /* Output info about what is about to be loaded as the service, if found to be available. */
         oLogger:Debug(substitute("DISCOVER - &1 &2", poEventArgs:Request:Method, poEventArgs:Request:URI:ToString())).
@@ -259,10 +298,10 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         oLogger:Trace(substitute("DISCOVER - Service '&1' Exists: &2", poEventArgs:Name, valid-object(poEventArgs:Service))).
         if not valid-object(poEventArgs:Service) then do:
             /* Register the service from local metadata. */
-            this-object:RegisterService(poEventArgs:Registry, poEventArgs:Name, poEventArgs:Version, poEventArgs:ServiceURI).
+            this-object:RegisterService(poEventArgs:Registry, poEventArgs:Name, poEventArgs:Version).
 
             /* Attempt to obtain the new service, failing appropriately if not valid and setting event args if available. */
-            if not valid-object(poEventArgs:Registry:GetService(poEventArgs:Name, poEventArgs:Version)) then do:
+            if not poEventArgs:Registry:HasService(poEventArgs:Name, poEventArgs:Version) then do:
                 oLogger:Debug(substitute("Service not found for '&1 &2'",
                                          poEventArgs:Request:Method, poEventArgs:Request:URI:ToString())).
                 undo, throw new SendExceptionError(StatusCodeEnum:NotFound,
@@ -276,6 +315,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         /**
          * If we do not have a registered service by now, the default logic will look on disk for a .GEN and/or .MAP file.
          */
+        oLogger:Trace(substitute("DISCOVER - Completed in &1(ms)", trim(string((mtime - iStartTime), ">>>,>>9")))).
 
         catch err as Progress.Lang.Error:
             assign poEventArgs:Error = err.
@@ -353,12 +393,12 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
     method private void InvokedHandler ( input poSender    as Progress.Lang.Object,
                                          input poEventArgs as OperationInvocationEventArgs ):
         if poEventArgs:Operation:ServiceURI eq "/" then
-            oLogger:Debug(substitute("INVOKED - &1 /&2 (&3)",
+            oLogger:Debug(substitute("INVOKED_ - &1 /&2 (&3)",
                                      string(poEventArgs:Operation:Method),
                                      poEventArgs:Operation:ServiceName,
                                      poEventArgs:Operation:TargetName)).
         else
-            oLogger:Debug(substitute("INVOKED - &1 /&2/&3 -> &4:&5",
+            oLogger:Debug(substitute("INVOKED_ - &1 /&2/&3 -> &4:&5",
                                      string(poEventArgs:Operation:Method),
                                      poEventArgs:Operation:ServiceName,
                                      poEventArgs:Operation:ServiceURI,
@@ -407,7 +447,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
         catch err as Progress.Lang.Error:
             assign poEventArgs:Error = err.
-            oLogger:Error(substitute("INVOKED - &1: &2", poEventArgs:Operation:TargetName, err)).
+            oLogger:Error(substitute("INVOKED_ - &1: &2", poEventArgs:Operation:TargetName, err)).
         end catch.
         finally:
             this-object:SessionCleanup(). /* Perform any necessary cleanup. */
