@@ -159,8 +159,9 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
     method private void RegisterService ( input poRegistry       as IServiceRegistry,
                                           input pcServiceName    as character,
-                                          input pcServiceVersion as character ):        
-        if valid-object(oCatalog) then do:
+                                          input poServiceVersion as SemanticVersion ):        
+        if valid-object(oCatalog) then
+        do on error undo, throw:
             define variable cServiceURI  as character          no-undo.
             define variable cContentType as character          no-undo.
             define variable cTargetType  as character          no-undo.
@@ -169,18 +170,15 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
             define variable cFuncMethod  as character          no-undo.
             define variable iStatusCode  as integer            no-undo.
             define variable oHttpMethod  as MethodEnum         no-undo.
-            define variable oVersion     as SemanticVersion    no-undo.
             define variable oOperOpts    as OperationOptions   no-undo.
-            define variable oMapOp       as MappedOperation    no-undo.
             define variable oParams      as IList              no-undo.
             define variable oParam       as OperationParameter no-undo.
 
             /* Register the service using the name and version discovered. */
-            assign oVersion = SemanticVersion:Parse(pcServiceVersion).
-            poRegistry:RegisterService(pcServiceName, oVersion, ?, ?).
+            poRegistry:RegisterService(pcServiceName, poServiceVersion, ?, ?).
 
             /* Log this service registration being performed. */
-            oLogger:Debug(substitute("DISCOVER - Registering Service: '&1' v&2", pcServiceName, oVersion:ToString())).
+            oLogger:Debug(substitute("DISCOVER - Registering Service: '&1' v&2", pcServiceName, poServiceVersion:ToString())).
 
             /* Set any options for the current operation. */
             assign oOperOpts = new OperationOptions().
@@ -193,15 +191,15 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
             oOperOpts:HasErrorEnvelope = false. /* Default: false */
             oOperOpts:ErrorEnvelope = "error". /* Default: response */
 
-            /* Create the params for this service operation. */
-            oParams = new OpenEdge.Core.Collections.List().
-            oParam = new OperationParameter(IOModeEnum:Output, "character", "greeting").
+            /* Create a new list of parameters for this operation. */
+            assign oParams = new OpenEdge.Core.Collections.List().
+
+            /* Add the individual parameters for this service operation. */
+            assign oParam = new OperationParameter(IOModeEnum:Output, "character", "greeting").
             extent(oParam:OutputElementType) = 1.
             extent(oParam:OutputElementName) = 1.
             oParam:OutputElementType[1] = ElementTypeEnum:Field.
             oParam:OutputElementName[1] = "greeting".
-
-            /* Add the operation parameter to the list. */
             oParams:Add(oParam).
 
             assign
@@ -215,22 +213,21 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
                 iStatusCode  = 200
                 .
 
-            /* Create the operation for this service. */
-            assign oMapOp = new MappedOperation( pcServiceName,
-                                                 oVersion,
-                                                 cServiceURI,
-                                                 oHttpMethod,
-                                                 cContentType,
-                                                 cTargetType,
-                                                 cTargetName,
-                                                 cEntityType,
-                                                 cFuncMethod,
-                                                 oOperOpts,
-                                                 iStatusCode,
-                                                 oParams ).
-
-            /* Add the operation to the newly-registered service. */
-            poRegistry:PutOperation(pcServiceName, oVersion, oMapOp).
+            /* Add a mapped operation to the newly-registered service. */
+            poRegistry:PutOperation(pcServiceName,
+                                    poServiceVersion,
+                                    new MappedOperation( pcServiceName,
+                                                         poServiceVersion,
+                                                         cServiceURI,
+                                                         oHttpMethod,
+                                                         cContentType,
+                                                         cTargetType,
+                                                         cTargetName,
+                                                         cEntityType,
+                                                         cFuncMethod,
+                                                         oOperOpts,
+                                                         iStatusCode,
+                                                         oParams )).
         end. /* Valid Catalog Manager */
     end method. /* RegisterService */
 
@@ -298,7 +295,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         oLogger:Trace(substitute("DISCOVER - Service '&1' Exists: &2", poEventArgs:Name, valid-object(poEventArgs:Service))).
         if not valid-object(poEventArgs:Service) then do:
             /* Register the service from local metadata. */
-            this-object:RegisterService(poEventArgs:Registry, poEventArgs:Name, poEventArgs:Version).
+            this-object:RegisterService(poEventArgs:Registry, poEventArgs:Name, SemanticVersion:Parse(poEventArgs:Version)).
 
             /* Attempt to obtain the new service, failing appropriately if not valid and setting event args if available. */
             if not poEventArgs:Registry:HasService(poEventArgs:Name, poEventArgs:Version) then do:
