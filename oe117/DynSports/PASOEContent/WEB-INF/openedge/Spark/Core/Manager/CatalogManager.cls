@@ -2037,6 +2037,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable oParamArr    as JsonArray          no-undo.
         define variable oParamObj    as JsonObject         no-undo.
         define variable oHttpMethod  as MethodEnum         no-undo.
+        define variable oElementType as ElementTypeEnum    no-undo.
         define variable oOperOpts    as OperationOptions   no-undo.
         define variable oParams      as IList              no-undo.
         define variable oParam       as OperationParameter no-undo.
@@ -2081,6 +2082,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     cFuncMethod  = bMethod.MethodName
                     iStatusCode  = 200
                     .
+
+                if bResource.IsClass then do:
+                    define variable oResource as Progress.Lang.Class no-undo.
+                    assign oResource = Progress.Lang.Class:GetClass(bResource.ClassPath).
+                    if valid-object(oResource) and oResource:IsA("OpenEdge.BusinessLogic.BusinessEntity") then
+                        assign cServiceURI = bResource.PublicName. /* Just use name of the resource. */
+                end. /* Is Class */
 
                 /* Log values to be used for mapping. */
                 oLoggingManager:logMessage(substitute("Mapping &1 &2/&3 to &4:&5",
@@ -2127,12 +2135,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             assign cParamType = substitute("class &1", cParamType).
                     end case.
 
-                    /* Log creation of each parameter. */
-                    oLoggingManager:logMessage(substitute("| &1: &2 as &3",
-                                                          cParamMode,
-                                                          cParamName,
-                                                          cParamType), "SPARK-SVC", 3).
-
                     if cParamType eq "dataset" then do:
                         oSchemaManager:getDataset(cParamName, dataset-handle hSchema by-reference).
                         poRegistry:PutSchema(pcServiceName, poServiceVersion, cParamName, hSchema).
@@ -2150,17 +2152,29 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     if cParamMode begins "input" then do:
                         extent(oParam:InputElementType) = 1.
                         extent(oParam:InputElementName) = 1.
-                        oParam:InputElementType[1] = ElementTypeEnum:Field.
+                        if oHttpMethod eq MethodEnum:GET then
+                            oElementType = ElementTypeEnum:Query. /* Use query parameters for GET. */
+                        else
+                            oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
+                        oParam:InputElementType[1] = oElementType.
                         oParam:InputElementName[1] = cParamName.
                     end. /* input */
                     if cParamMode eq "output" or
                        cParamMode eq "input-output" then do:
                         extent(oParam:OutputElementType) = 1.
                         extent(oParam:OutputElementName) = 1.
-                        oParam:OutputElementType[1] = ElementTypeEnum:Field.
+                        oElementType = ElementTypeEnum:Field. /* By default use field of body. */
+                        oParam:OutputElementType[1] = oElementType.
                         oParam:OutputElementName[1] = cParamName.
                     end. /* output */
                     oParams:Add(oParam).
+
+                    /* Log creation of each parameter. */
+                    oLoggingManager:logMessage(substitute("| &1: &2 as &3 [&4]",
+                                                          cParamMode,
+                                                          cParamName,
+                                                          cParamType,
+                                                          oElementType:ToString()), "SPARK-SVC", 3).
 
                     finally:
                         delete object oParamObj no-error.

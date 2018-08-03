@@ -19,11 +19,23 @@ method {&ClassProtected} void logMessage
 function logMessage returns logical {&FunctionPrivate}
 &endif
     ( pcMessage as character, pcSubSystem as character, piLogLevel as integer ):
-    /* 0 (None), 1 (Errors), 2 (Basic), 3 (Verbose), 4 (Extended) */
-    if piLogLevel eq ? then assign piLogLevel = 2.
+    define variable oLogger as OpenEdge.Logging.ILogWriter no-undo.
 
-    if valid-handle(log-manager) and log-manager:logfile-name ne ? and log-manager:logging-level ge piLogLevel then
-        log-manager:write-message(pcMessage, caps(pcSubSystem)).
+    /* Prepare a logger using a custom name for the Spark Toolkit overall. */
+    assign oLogger = OpenEdge.Logging.LoggerBuilder:GetLogger("SparkToolkit").
+
+    case piLogLevel:
+        when 0 then
+            . /* Do Nothing */
+        when 1 then
+            oLogger:Error(pcSubSystem, pcMessage).
+        when 2 then
+            oLogger:Info(pcSubSystem, pcMessage).
+        when 3 then
+            oLogger:Debug(pcSubSystem, pcMessage).
+        otherwise
+            oLogger:Trace(pcSubSystem, pcMessage).
+    end case.
 &if ({&IsClass} eq true) &then
 end method.
 &else
