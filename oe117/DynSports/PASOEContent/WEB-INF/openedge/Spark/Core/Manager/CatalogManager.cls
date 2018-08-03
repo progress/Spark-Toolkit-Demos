@@ -2111,15 +2111,20 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         hSchema    = ?
                         .
 
+                    /* Adjust parameter mode if using a non-standard name. */
+                    if cParamMode eq "inputoutput" then
+                        assign cParamMode = "Input-Output".
+
+                    /* Adjust parameter type based on name or format. */
                     case true:
-                        when cParamMode eq "inputoutput" then
-                            assign cParamMode = "input-output".
-                        when index(cParamType, ".") gt 0 then
-                            assign cParamType = substitute("class &1", cParamType).
-                        when cParamType eq "datasethandle" then
-                            assign cParamType = "dataset".
                         when cParamType eq "datetimetz" then
                             assign cParamType = "datetime-tz".
+                        when cParamType begins "dataset" then
+                            assign cParamType = "dataset".
+                        when cParamType begins "table" then
+                            assign cParamType = "table".
+                        when index(cParamType, ".") gt 0 then
+                            assign cParamType = substitute("class &1", cParamType).
                     end case.
 
                     /* Log creation of each parameter. */

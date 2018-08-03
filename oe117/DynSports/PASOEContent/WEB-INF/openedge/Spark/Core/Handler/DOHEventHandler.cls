@@ -380,9 +380,8 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
             define variable fElapsed as decimal    no-undo initial 0.
             define variable oHeader  as HttpHeader no-undo.
 
-            /* Add the elapsed time for this request as a header value. */
+            /* Add the elapsed time for this request as a custom header value. */
             assign fElapsed = interval(now, dInvokeTime, string(OpenEdge.Core.DateTimeAddIntervalEnum:Milliseconds)) / 1000.
-
             assign oHeader = new HttpHeader("X-Elapsed", trim(string(fElapsed, ">>>9.99")) + "sec.").
             poEventArgs:Response:SetHeader(oHeader).
         end. /* iStart gt 0 */
