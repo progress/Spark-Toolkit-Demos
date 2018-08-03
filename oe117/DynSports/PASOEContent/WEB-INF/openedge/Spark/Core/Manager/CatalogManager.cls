@@ -2033,6 +2033,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cParamType   as character          no-undo.
         define variable iStatusCode  as integer            no-undo.
         define variable iX           as integer            no-undo.
+        define variable hSchema      as handle             no-undo.
         define variable oParamArr    as JsonArray          no-undo.
         define variable oParamObj    as JsonObject         no-undo.
         define variable oHttpMethod  as MethodEnum         no-undo.
@@ -2099,13 +2100,15 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                 /* Add the individual parameters for this operation. */
                 if valid-object(oParamArr) then
-                do iX = 1 to oParamArr:Length:
+                do iX = 1 to oParamArr:Length
+                on error undo, throw:
                     /* Obtain parameter information. */
                     assign oParamObj = oParamArr:GetJsonObject(iX).
                     assign
                         cParamMode = oParamObj:GetCharacter("mode") when oParamObj:Has("mode")
                         cParamName = oParamObj:GetCharacter("name") when oParamObj:Has("name")
                         cParamType = oParamObj:GetCharacter("type") when oParamObj:Has("type")
+                        hSchema    = ?
                         .
 
                     case true:
@@ -2123,6 +2126,18 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                           cParamName,
                                                           cParamType), "SPARK-SVC", 3).
 
+                    if cParamType eq "dataset" then do:
+                        oSchemaManager:getDataset(cParamName, dataset-handle hSchema by-reference).
+                        poRegistry:PutSchema(pcServiceName, poServiceVersion, cParamName, hSchema).
+                        oLoggingManager:logMessage(substitute("| Schema: &1 as dataset", cParamName), "SPARK-SVC", 3).
+                    end. /* dataset */
+
+                    if cParamType eq "table" then do:
+                        oSchemaManager:getTempTable(cParamName, table-handle hSchema by-reference).
+                        poRegistry:PutSchema(pcServiceName, poServiceVersion, cParamName, hSchema).
+                        oLoggingManager:logMessage(substitute("| Schema: &1 as table", cParamName), "SPARK-SVC", 3).
+                    end. /* table */
+
                     /* Create parameter and add to list. */
                     assign oParam = new OperationParameter(IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
                     extent(oParam:OutputElementType) = 1.
@@ -2130,6 +2145,11 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     oParam:OutputElementType[1] = ElementTypeEnum:Field.
                     oParam:OutputElementName[1] = oParamObj:GetCharacter("name").
                     oParams:Add(oParam).
+
+                    finally:
+                        delete object oParamObj no-error.
+                        delete object hSchema no-error.
+                    end finally.
                 end. /* do iX */
 
                 /* Add a mapped operation to the newly-registered service. */
@@ -2149,7 +2169,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                              oParams )).
 
                 finally:
-                    delete object oParamObj no-error.
                     delete object oParamArr no-error.
                 end finally.
             end. /* for each bResource, each bMethod */
