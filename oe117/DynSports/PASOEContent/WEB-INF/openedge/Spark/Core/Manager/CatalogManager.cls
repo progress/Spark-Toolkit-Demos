@@ -2112,6 +2112,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         .
 
                     case true:
+                        when cParamMode eq "inputoutput" then
+                            assign cParamMode = "input-output".
                         when index(cParamType, ".") gt 0 then
                             assign cParamType = substitute("class &1", cParamType).
                         when cParamType eq "datasethandle" then
@@ -2140,10 +2142,19 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                     /* Create parameter and add to list. */
                     assign oParam = new OperationParameter(IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
-                    extent(oParam:OutputElementType) = 1.
-                    extent(oParam:OutputElementName) = 1.
-                    oParam:OutputElementType[1] = ElementTypeEnum:Field.
-                    oParam:OutputElementName[1] = oParamObj:GetCharacter("name").
+                    if cParamMode begins "input" then do:
+                        extent(oParam:InputElementType) = 1.
+                        extent(oParam:InputElementName) = 1.
+                        oParam:InputElementType[1] = ElementTypeEnum:Field.
+                        oParam:InputElementName[1] = cParamName.
+                    end. /* input */
+                    if cParamMode eq "output" or
+                       cParamMode eq "input-output" then do:
+                        extent(oParam:OutputElementType) = 1.
+                        extent(oParam:OutputElementName) = 1.
+                        oParam:OutputElementType[1] = ElementTypeEnum:Field.
+                        oParam:OutputElementName[1] = cParamName.
+                    end. /* output */
                     oParams:Add(oParam).
 
                     finally:
