@@ -62,12 +62,14 @@ class Business.Ordering.OrderBE inherits Spark.Core.Service.DynamicEntity use-wi
         protected set.
 
     define public override property operations as character
-        initial "CRUD,Submit" no-undo get.
+        initial "ReadOnly,Submit" no-undo get.
         protected set.
 
 
     method public override void initialize ( ):
-        /* Describe any properties about invoke methods to be exposed. */
+        /* Describe any overrides to the operations to be exposed. */
+        Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadOrder").
+        Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitOrder").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
 
         /* Describe any properties to be added the entity tables. */
@@ -169,28 +171,22 @@ class Business.Ordering.OrderBE inherits Spark.Core.Service.DynamicEntity use-wi
     end method. /* postRowFill */
 
 
-    method public override void readData ( input  filter  as character,
-                                           output numRecs as int64,
-                                           output dataset-handle phDataSet ):
-        assign numRecs = filterData(filter).
+    method public void ReadOrder ( input  filter  as character,
+                                   output dataset dsOrder ):
+        define variable iNumRecs as int64 no-undo.
+        super:ReadData(filter, iNumRecs, output dataset dsOrder by-reference).
+
         for each ttOrderLine share-lock:
             for first Item no-lock
                 where Item.ItemNum eq ttOrderLine.ItemNum:
                 assign ttOrderLine.ItemName = Item.ItemName.
             end. /* for first */
         end. /* for each */
-        phDataSet:copy-dataset(ProDataSet).
-    end method. /* readData */
+    end method. /* ReadOrder */
 
 
-    method public override void submitData ( input-output dataset-handle phDataSet ):
-        super:submitData(input-output dataset-handle phDataSet).
-        this-object:oResponse:addError("", ErrorTypeEnum:success, "Order successfully updated.").
-    end method. /* submitData */
-
-
-    method public void getCount ( input filter as character, output numRecs as int64 ):
-        assign numRecs = filterData(filter).
-    end method. /* getCount */
+    method public void SubmitOrder ( input-output dataset dsOrder ):
+        super:SubmitData(input-output dataset dsOrder by-reference).
+    end method. /* SubmitOrder */
 
 end class.

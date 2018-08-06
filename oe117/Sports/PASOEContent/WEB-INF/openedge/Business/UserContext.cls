@@ -103,7 +103,8 @@ class Business.UserContext inherits Spark.Core.Service.SparkEntity use-widget-po
     @progress.service.resourceMapping(type="REST", operation="read", URI="?filter=~{filter~}", alias="", mediaType="application/json").
     @openapi.openedge.method.property(name="mappingType", value="AFP").
     @openapi.openedge.method.property(name="capabilities", value="filter,top,skip,id,sort,orderBy").
-    method public void ReadContext ( input filter as character, output dataset dsWebContext ):
+    method public void ReadContext ( input  filter  as character,
+                                     output dataset dsWebContext ):
         define variable oFilterObj as JsonObject no-undo.
         define variable oFilter    as JsonObject no-undo.
         define variable oFilters   as JsonArray  no-undo.

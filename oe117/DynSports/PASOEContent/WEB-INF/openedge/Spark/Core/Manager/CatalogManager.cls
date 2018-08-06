@@ -2058,7 +2058,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                          input pcServiceName    as character,
                                          input poServiceVersion as SemanticVersion ):
         define variable cServiceURI  as character          no-undo.
-        define variable cContentType as character          no-undo.
+        define variable cContentType as character          no-undo initial "application/json".
         define variable cTargetType  as character          no-undo.
         define variable cTargetName  as character          no-undo.
         define variable cEntityType  as character          no-undo.
@@ -2111,7 +2111,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 /* Prepare the common values for this operation mapping. */
                 assign
                     cServiceURI  = (if (bMethod.PublicName gt "") eq true then substitute("&1/&2", bResource.PublicName, bMethod.PublicName) else bResource.PublicName)
-                    cContentType = "application/json"
                     oHttpMethod  = MethodEnum:GetEnum(bMethod.OperationVerb)
                     cTargetType  = (if bResource.IsClass then TargetTypeEnum:Class:ToString() else TargetTypeEnum:Procedure:ToString())
                     cTargetName  = bMethod.ClassPath
@@ -2213,8 +2212,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         extent(oParam:OutputElementType) = 1.
                         extent(oParam:OutputElementName) = 1.
 
-                        if lIsEntity and cParamName eq cSchemaName then
-                            oElementType = ElementTypeEnum:Body. /* Output entity dataset as body. */
+                        if can-do("dataset,table", cParamType) then
+                            oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
                         else
                             oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
 

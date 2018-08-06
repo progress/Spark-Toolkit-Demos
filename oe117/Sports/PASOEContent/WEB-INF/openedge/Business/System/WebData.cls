@@ -38,7 +38,8 @@ class Business.System.WebData inherits Spark.Core.Service.SparkEntity use-widget
     @progress.service.resourceMapping(type="REST", operation="read", URI="?filter=~{filter~}", alias="", mediaType="application/json").
     @openapi.openedge.method.property(name="mappingType", value="AFP").
     @openapi.openedge.method.property(name="capabilities", value="filter,top,skip,id,sort,orderBy").
-    method public void ReadWebData ( input filter as character, output dataset dsWebDataStore ):
+    method public void ReadWebData ( input filter as character,
+                                     output dataset dsWebDataStore ):
         define variable iNumRecs as int64 no-undo.
         super:ReadData(filter, iNumRecs, output dataset dsWebDataStore by-reference).
     end method. /* ReadWebData */

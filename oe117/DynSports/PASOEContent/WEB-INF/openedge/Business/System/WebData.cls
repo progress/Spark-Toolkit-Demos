@@ -44,6 +44,9 @@ class Business.System.WebData inherits Spark.Core.Service.DynamicEntity use-widg
 
 
     method public override void initialize ( ):
+        /* Describe any overrides to the operations to be exposed. */
+        Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadWebData").
+
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.
         assign oFieldProps = new FieldInfo("dsWebDataStore", "ttWebDataStore").
@@ -70,5 +73,12 @@ class Business.System.WebData inherits Spark.Core.Service.DynamicEntity use-widg
         SkipListArray[1] = "WebSessionID,ObjectName".
         SkipList = SkipListArray.
     end constructor.
+
+
+    method public void ReadWebData ( input filter as character,
+                                     output dataset dsWebDataStore ):
+        define variable iNumRecs as int64 no-undo.
+        super:ReadData(filter, iNumRecs, output dataset dsWebDataStore by-reference).
+    end method. /* ReadWebData */
 
 end class.

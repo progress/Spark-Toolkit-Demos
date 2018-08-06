@@ -38,6 +38,8 @@ class Business.Locality inherits Spark.Core.Service.DynamicResource use-widget-p
 
     method public void getStateProvince ( input  country as character,
                                           output table for states ):
+        if (country gt "") ne true then assign country = "usa".
+
         case country:
             when "can" or
             when "canada" then

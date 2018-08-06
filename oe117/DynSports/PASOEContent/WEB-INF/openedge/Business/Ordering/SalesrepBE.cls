@@ -40,12 +40,14 @@ class Business.Ordering.SalesrepBE inherits Spark.Core.Service.DynamicEntity use
         protected set.
 
     define public override property operations as character
-        initial "CRUD,Submit" no-undo get.
+        initial "ReadOnly,Submit" no-undo get.
         protected set.
 
 
     method public override void initialize ( ):
-        /* Describe any properties about invoke methods to be exposed. */
+        /* Describe any overrides to the operations to be exposed. */
+        Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadSalesrep").
+        Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitSalesrep").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
 
         /* Describe any properties to be added the entity tables. */
@@ -113,8 +115,15 @@ class Business.Ordering.SalesrepBE inherits Spark.Core.Service.DynamicEntity use
     end method. /* validateData */
 
 
-    method public void getCount ( input filter as character, output numRecs as int64 ):
-        assign numRecs = filterData(filter).
-    end method. /* getCount */
+    method public void ReadSalesrep ( input  filter  as character,
+                                      output dataset dsSalesrep ):
+        define variable iNumRecs as int64 no-undo.
+        super:ReadData(filter, iNumRecs, output dataset dsSalesrep by-reference).
+    end method. /* ReadSalesrep */
+
+
+    method public void SubmitSalesrep ( input-output dataset dsSalesrep ):
+        super:SubmitData(input-output dataset dsSalesrep by-reference).
+    end method. /* SubmitSalesrep */
 
 end class.

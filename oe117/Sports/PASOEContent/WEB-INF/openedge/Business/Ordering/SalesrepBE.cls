@@ -77,7 +77,8 @@ class Business.Ordering.SalesrepBE inherits Spark.Core.Service.SparkEntity use-w
     @progress.service.resourceMapping(type="REST", operation="read", URI="?filter=~{filter~}", alias="", mediaType="application/json").
     @openapi.openedge.method.property(name="mappingType", value="AFP").
     @openapi.openedge.method.property(name="capabilities", value="filter,top,skip,id,sort,orderBy").
-    method public void ReadSalesrep ( input filter as character, output dataset dsSalesrep ):
+    method public void ReadSalesrep ( input  filter  as character,
+                                      output dataset dsSalesrep ):
         define variable iNumRecs as int64 no-undo.
         super:ReadData(filter, iNumRecs, output dataset dsSalesrep by-reference).
     end method. /* ReadSalesrep */

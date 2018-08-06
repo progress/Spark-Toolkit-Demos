@@ -38,7 +38,8 @@ class Business.Personnel.EmployeeBE inherits Spark.Core.Service.SparkEntity use-
     @progress.service.resourceMapping(type="REST", operation="read", URI="?filter=~{filter~}", alias="", mediaType="application/json").
     @openapi.openedge.method.property(name="mappingType", value="AFP").
     @openapi.openedge.method.property(name="capabilities", value="filter,top,skip,id,sort,orderBy").
-    method public void ReadEmployee ( input filter as character, output dataset dsEmployee ):
+    method public void ReadEmployee ( input  filter  as character,
+                                      output dataset dsEmployee ):
         define variable iNumRecs as int64 no-undo.
         super:ReadData(filter, iNumRecs, output dataset dsEmployee by-reference).
     end method. /* ReadEmployee */
