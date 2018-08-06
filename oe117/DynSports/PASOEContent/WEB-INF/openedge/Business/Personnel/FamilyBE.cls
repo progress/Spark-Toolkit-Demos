@@ -9,7 +9,7 @@ using Progress.Lang.* from propath.
 
 block-level on error undo, throw.
 
-class Business.Personnel.FamilyBE inherits Spark.Core.Service.DynamicEntity:
+class Business.Personnel.FamilyBE inherits Spark.Core.Service.DynamicEntity use-widget-pool:
 
     {Common/family.i}
 

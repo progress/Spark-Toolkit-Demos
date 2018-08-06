@@ -9,7 +9,7 @@ using Progress.Lang.* from propath.
 
 block-level on error undo, throw.
 
-class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity:
+class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity use-widget-pool:
 
     {Common/webrole.i}
 

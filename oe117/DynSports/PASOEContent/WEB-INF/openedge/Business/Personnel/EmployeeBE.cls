@@ -11,7 +11,7 @@ using Spark.Core.Util.ForeignKey from propath.
 
 block-level on error undo, throw.
 
-class Business.Personnel.EmployeeBE inherits Spark.Core.Service.DynamicEntity:
+class Business.Personnel.EmployeeBE inherits Spark.Core.Service.DynamicEntity use-widget-pool:
 
     {Common/employee.i}
 

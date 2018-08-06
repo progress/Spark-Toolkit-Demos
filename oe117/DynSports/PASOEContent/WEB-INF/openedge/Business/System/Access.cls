@@ -13,7 +13,7 @@ using Spark.Core.Util.OSTools from propath.
 
 block-level on error undo, throw.
 
-class Business.System.Access inherits Spark.Core.Service.DynamicResource:
+class Business.System.Access inherits Spark.Core.Service.DynamicResource use-widget-pool:
 
     define override public property serviceURI as character
         initial "/web/api/system" no-undo get.

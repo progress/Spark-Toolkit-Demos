@@ -15,7 +15,7 @@ block-level on error undo, throw.
 
 {Common/config.i}
 
-class Business.Locality inherits Spark.Core.Service.DynamicResource:
+class Business.Locality inherits Spark.Core.Service.DynamicResource use-widget-pool:
 
     {Common/state.i}
 

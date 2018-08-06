@@ -13,7 +13,7 @@ using Spark.Core.Util.Sendmail from propath.
 
 block-level on error undo, throw.
 
-class Business.UserData inherits Spark.Core.Service.DynamicResource:
+class Business.UserData inherits Spark.Core.Service.DynamicResource use-widget-pool:
 
     define public override property serviceURI as character
         initial "/web/api/common" no-undo get.

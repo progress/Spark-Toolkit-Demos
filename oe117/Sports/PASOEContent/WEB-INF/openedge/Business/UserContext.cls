@@ -208,8 +208,7 @@ class Business.UserContext inherits Spark.Core.Service.SparkEntity use-widget-po
            where bContext.IdentityName eq oClientContext:userID
              and (contextType eq "" or bContext.ContextType eq contextType)
              and (contextViewID eq "" or bContext.ContextViewID eq contextViewID)
-             and (contextTitle eq "" or bContext.ContextTitle eq contextTitle)
-             and (contextSeqNo eq ? or bContext.ContextSeqNo eq contextSeqNo):
+             and (contextTitle eq "" or bContext.ContextTitle eq contextTitle):
             message substitute("Deleting context for &1 &2 &3 &4", contextType, contextViewID, contextTitle, contextSeqNo).
             delete bContext. /* Delete matching record. */
             assign clearedRecords = clearedRecords + 1.

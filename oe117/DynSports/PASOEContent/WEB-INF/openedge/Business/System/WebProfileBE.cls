@@ -10,7 +10,7 @@ using Spark.Core.Util.FieldInfo from propath.
 
 block-level on error undo, throw.
 
-class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity:
+class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use-widget-pool:
 
     {Common/webprofile.i}
 

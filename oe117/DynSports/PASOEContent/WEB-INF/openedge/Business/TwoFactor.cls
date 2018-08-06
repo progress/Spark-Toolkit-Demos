@@ -13,7 +13,7 @@ using Spark.Core.Security.TOTP from propath.
 
 block-level on error undo, throw.
 
-class Business.TwoFactor inherits Spark.Core.Service.DynamicResource:
+class Business.TwoFactor inherits Spark.Core.Service.DynamicResource use-widget-pool:
 
     define override public property serviceURI as character no-undo
         initial "/web/api/common" get. set.

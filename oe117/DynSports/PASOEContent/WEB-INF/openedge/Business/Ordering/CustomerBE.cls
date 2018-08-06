@@ -12,7 +12,7 @@ using Spark.Core.Util.ForeignKey from propath.
 
 block-level on error undo, throw.
 
-class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity:
+class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use-widget-pool:
 
     {Common/customer.i}
 
