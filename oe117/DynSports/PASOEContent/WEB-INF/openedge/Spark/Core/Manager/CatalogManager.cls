@@ -2263,6 +2263,19 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     delete object oParamArr no-error.
                 end finally.
             end. /* for each bResource, each bMethod */
+
+            /* Debug the current service by dumping to a JSON file. */
+/*            define variable oDOSvc  as OpenEdge.Web.DataObject.DataObjectService no-undo.       */
+/*            define variable oWriter as OpenEdge.Web.DataObject.Writer.ServiceJsonWriter no-undo.*/
+/*            define variable oJson   as JsonObject no-undo.                                      */
+/*                                                                                                */
+/*            oDOSvc = ServiceRegistry:GetService(pcServiceName).                                 */
+/*            oWriter = new ServiceJsonWriter().                                                  */
+/*            oWriter:open().                                                                     */
+/*            oWriter:write(oDOSvc).                                                              */
+/*            oWriter:close().                                                                    */
+/*            oJson = cast(oWriter:Value, JsonObject).                                            */
+/*            oJson:WriteFile(substitute("&1/&2.map", session:temp-dir, pcServiceName), yes).     */
         end. /* available bService */
         else do:
             /* Create a special service for the ROOT if not already found. */

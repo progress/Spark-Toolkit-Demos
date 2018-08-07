@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
     File        : EmployeeBE.cls
     Author(s)   : Code Wizard
-    Created     : 03/01/16
+    Created     : 08/06/18
     Notes       : Customized BE instance with AFP features available.
   ----------------------------------------------------------------------*/
 

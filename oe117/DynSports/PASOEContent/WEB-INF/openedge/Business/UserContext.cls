@@ -2,7 +2,7 @@
     File        : WebContext.cls
     Purpose     : Simple class for User context data
     Author(s)   : Dustin Grau (dugrau@progress.com)
-    Created     : Wed Feb 21 11:25:07 EST 2018
+    Created     : 02/21/18
     Notes       :
   ----------------------------------------------------------------------*/
 

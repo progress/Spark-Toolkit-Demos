@@ -3,7 +3,7 @@
     Purpose     : Implement 2FA login/challenge
     Description :
     Author(s)   : Dustin Grau (dugrau@progress.com)
-    Created     : Mon Oct 16 08:19:05 EDT 2017
+    Created     : 10/16/17
     Notes       :
   ----------------------------------------------------------------------*/
 

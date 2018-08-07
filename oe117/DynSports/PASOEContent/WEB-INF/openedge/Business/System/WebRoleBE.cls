@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
     File        : WebRoleBE.cls
     Author(s)   : Code Wizard
-    Created     : 05/09/17
+    Created     : 08/06/18
     Notes       : Customized BE instance with AFP features available.
   ----------------------------------------------------------------------*/
 

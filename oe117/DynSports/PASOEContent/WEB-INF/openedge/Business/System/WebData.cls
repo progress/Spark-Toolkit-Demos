@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
     File        : WebDataBE.cls
     Author(s)   : Code Wizard
-    Created     : 08/04/16
+    Created     : 08/06/18
     Notes       : Customized BE instance with AFP features available.
   ----------------------------------------------------------------------*/
 

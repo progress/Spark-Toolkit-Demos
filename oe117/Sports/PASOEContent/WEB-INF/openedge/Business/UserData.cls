@@ -2,7 +2,7 @@
     File        : UserData
     Purpose     : Simple class for direct User data
     Author(s)   : Dustin Grau (dugrau@progress.com)
-    Created     : Wed May 13 15:21:07 EST 2015
+    Created     : 05/13/15
     Notes       :
   ----------------------------------------------------------------------*/
 

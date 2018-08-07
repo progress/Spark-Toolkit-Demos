@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Thu May 10 13:01:27 EDT 2018",
+  "lastModified": "Tue Aug 07 08:46:55 EDT 2018",
   "services": [
     {
       "name": "system",
@@ -535,65 +535,6 @@
                 },
                 {
                   "name": "numRecs",
-                  "type": "RESPONSE_BODY"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "metrics",
-          "path": "\/metrics",
-          "autoSave": true,
-          "operations": [
-            {
-              "name": "getSessionObjects",
-              "path": "\/getSessionObjects",
-              "useBeforeImage": false,
-              "type": "invoke",
-              "verb": "put",
-              "params": [
-                {
-                  "name": "success",
-                  "type": "RESPONSE_BODY"
-                }
-              ]
-            },
-            {
-              "name": "startTracking",
-              "path": "\/startTracking",
-              "useBeforeImage": false,
-              "type": "invoke",
-              "verb": "put",
-              "params": [
-                {
-                  "name": "success",
-                  "type": "RESPONSE_BODY"
-                }
-              ]
-            },
-            {
-              "name": "getObjects",
-              "path": "\/getObjects",
-              "useBeforeImage": false,
-              "type": "invoke",
-              "verb": "put",
-              "params": [
-                {
-                  "name": "success",
-                  "type": "RESPONSE_BODY"
-                }
-              ]
-            },
-            {
-              "name": "stopTracking",
-              "path": "\/stopTracking",
-              "useBeforeImage": false,
-              "type": "invoke",
-              "verb": "put",
-              "params": [
-                {
-                  "name": "success",
                   "type": "RESPONSE_BODY"
                 }
               ]

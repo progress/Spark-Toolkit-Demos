@@ -2,7 +2,7 @@
     File        : Locality
     Purpose     : Simple class for locality data
     Author(s)   : Dustin Grau (dugrau@progress.com)
-    Created     : Tue Jun 02 09:51:10 EDT 2015
+    Created     : 08/06/18
     Notes       :
   ----------------------------------------------------------------------*/
 
@@ -26,6 +26,7 @@ class Business.Locality inherits Spark.Core.Service.DynamicResource use-widget-p
     define public override property resourceName as character
         initial "locality" no-undo get.
         protected set.
+
 
     method public override void initialize ( ):
         /* Describe any properties about invoke methods to be exposed. */
