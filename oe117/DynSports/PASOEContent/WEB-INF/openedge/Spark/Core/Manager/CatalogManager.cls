@@ -14,6 +14,7 @@ using OpenEdge.Core.* from propath.
 using OpenEdge.Core.Collections.* from propath.
 using OpenEdge.Net.HTTP.MethodEnum from propath.
 using OpenEdge.Web.DataObject.* from propath.
+using OpenEdge.Web.DataObject.Writer.ServiceJsonWriter from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
 using Spark.Core.Manager.ILoggingManager from propath.
 using Spark.Core.Manager.IMessageManager from propath.
@@ -1562,10 +1563,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
         /**
          * Set default name for Service Prefix.
-         * The default for OE.W.DO.DOH is "pdo".
+         * The default for Spark Toolkit is "api".
          */
         if (this-object:ServicePrefix gt "") ne true then
-            this-object:ServicePrefix = "pdo".
+            this-object:ServicePrefix = "api".
 
         /* Obtain a default service name (first from list). */
         find first ServiceList no-error.
@@ -2054,9 +2055,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* stopProcedures */
 
 
-    method public void registerService ( input poRegistry       as IServiceRegistry,
-                                         input pcServiceName    as character,
-                                         input poServiceVersion as SemanticVersion ):
+    method public DataObjectService registerService ( input poRegistry       as IServiceRegistry,
+                                                      input pcServiceName    as character,
+                                                      input poServiceVersion as SemanticVersion ):
         define variable cServiceURI  as character          no-undo.
         define variable cContentType as character          no-undo initial "application/json".
         define variable cTargetType  as character          no-undo.
@@ -2071,26 +2072,32 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable iX           as integer            no-undo.
         define variable lIsEntity    as logical            no-undo.
         define variable hSchema      as handle             no-undo.
+        define variable dExecTime    as datetime extent 2  no-undo.
         define variable oParamArr    as JsonArray          no-undo.
         define variable oParamObj    as JsonObject         no-undo.
         define variable oHttpMethod  as MethodEnum         no-undo.
         define variable oElementType as ElementTypeEnum    no-undo.
+        define variable oService     as DataObjectService  no-undo.
+        define variable oOperation   as MappedOperation    no-undo.
         define variable oOperOpts    as OperationOptions   no-undo.
-        define variable oParams      as IList              no-undo.
         define variable oParam       as OperationParameter no-undo.
+        define variable oSvcWriter   as ServiceJsonWriter  no-undo.
+        define variable oSvcJson     as JsonObject         no-undo.
 
         define buffer bService  for ServiceList.
         define buffer bResource for ResourceInfo.
         define buffer bMethod   for MethodInfo.
 
+        assign oSvcWriter = new ServiceJsonWriter().
+
         find first bService no-lock
              where bService.ServiceName eq pcServiceName no-error.
         if available(bService) then do:
             /* Leave if the name of the service does not actually match the last element of the Service URI. */
-            if pcServiceName ne entry(num-entries(bService.ServiceURI, "/"), bService.ServiceURI, "/") then return.
+            if pcServiceName ne entry(num-entries(bService.ServiceURI, "/"), bService.ServiceURI, "/") then return ?.
 
             /* Register the service using the name and version discovered. */
-            poRegistry:RegisterService(pcServiceName, poServiceVersion, ?, ?).
+            assign oService = poRegistry:RegisterService(pcServiceName, poServiceVersion, ?, ?).
 
             /* Set any options for the current operation. */
             assign oOperOpts = new OperationOptions().
@@ -2118,17 +2125,41 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     cFuncMethod  = bMethod.MethodName
                     iStatusCode  = 200
                     lIsEntity    = false
+                    dExecTime[1] = now
                     .
+
+                /* Just use name of the resource for CRUD operations. */
+                if lIsEntity and can-do("Create,Read,Update,Delete", bMethod.OperationType) then
+                    assign cServiceURI = bResource.PublicName. /* Should just be "/<resource>" */
+
+                /* Denote start of operation mapping. */
+                oLoggingManager:logMessage(substitute("Mapping &1 &2/&3 to &4:&5",
+                                                      oHttpMethod:ToString(),
+                                                      pcServiceName,
+                                                      cServiceURI,
+                                                      cTargetName,
+                                                      cFuncMethod),
+                                                      "SPARK-SVC", 4).
 
                 if bResource.IsClass then do:
                     define variable oResource as Progress.Lang.Class no-undo.
                     assign oResource = Progress.Lang.Class:GetClass(bResource.ClassPath).
-                    if valid-object(oResource) and oResource:IsA("OpenEdge.BusinessLogic.BusinessEntity") then
+                    if valid-object(oResource) and oResource:IsA(get-class(OpenEdge.BusinessLogic.BusinessEntity)) then
                         assign lIsEntity = true.
                 end. /* Is Class */
 
-                /* Create a new list of parameters for this operation. */
-                assign oParams = new OpenEdge.Core.Collections.List().
+                /* Create a new mapped operation for this service. */
+                assign oOperation = new MappedOperation( oService,
+                                                         cServiceURI,
+                                                         oHttpMethod,
+                                                         cContentType,
+                                                         cTargetType,
+                                                         cTargetName,
+                                                         cEntityType,
+                                                         cFuncMethod,
+                                                         oOperOpts,
+                                                         iStatusCode,
+                                                         new OpenEdge.Core.Collections.List() ).
 
                 /* Obtain the method signature for this resource. */
                 assign oParamArr = this-object:getMethodSignature( bResource.ServiceURI,
@@ -2151,10 +2182,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     /* Adjust parameter mode if using a non-standard name. */
                     if cParamMode eq "inputoutput" then
                         assign cParamMode = "Input-Output".
-
-                    /* Just use name of the resource for CRUD operations. */
-                    if lIsEntity and can-do("Create,Read,Update,Delete", bMethod.OperationType) then
-                        assign cServiceURI = bResource.PublicName. /* Should just be "/<resource>" */
 
                     /* Adjust parameter type based on name or format. */
                     case true:
@@ -2193,34 +2220,32 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             oLoggingManager:logMessage(substitute("| Schema: no table handle for &1", cParamName), "SPARK-SVC", 2).
                     end. /* table */
 
-                    /* Create parameter and add to list. */
-                    assign oParam = new OperationParameter(IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
+                    /* Create parameter for this method. */
+                    assign oParam = new OperationParameter(oOperation, IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
+
                     if cParamMode begins "input" then do:
-                        extent(oParam:InputElementType) = 1.
-                        extent(oParam:InputElementName) = 1.
-
                         if oHttpMethod eq MethodEnum:GET then
-                            oElementType = ElementTypeEnum:Query. /* Use query parameters for GET. */
+                            assign oElementType = ElementTypeEnum:Query. /* Use query parameters for GET. */
                         else
-                            oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
+                            assign oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
 
-                        oParam:InputElementType[1] = oElementType.
-                        oParam:InputElementName[1] = cParamName.
-                    end. /* input */
+                        extent(oParam:InputElement) = 1.
+                        assign oParam:InputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Input).
+                    end. /* input/input-output */
+
                     if cParamMode eq "output" or
                        cParamMode eq "input-output" then do:
-                        extent(oParam:OutputElementType) = 1.
-                        extent(oParam:OutputElementName) = 1.
-
                         if can-do("dataset,table", cParamType) then
-                            oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
+                            assign oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
                         else
-                            oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
+                            assign oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
 
-                        oParam:OutputElementType[1] = oElementType.
-                        oParam:OutputElementName[1] = cParamName.
-                    end. /* output */
-                    oParams:Add(oParam).
+                        extent(oParam:OutputElement) = 1.
+                        assign oParam:OutputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Output).
+                    end. /* output/input-output */
+
+                    /* Add parameter to the operation. */
+                    oOperation:Parameters:Add(oParam).
 
                     /* Log creation of each parameter. */
                     oLoggingManager:logMessage(substitute("| &1: &2 as &3 [&4]",
@@ -2235,29 +2260,14 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     end finally.
                 end. /* do iX */
 
-                /* Log values to be used for mapping. */
-                oLoggingManager:logMessage(substitute("Mapping &1 &2/&3 to &4:&5",
-                                                      oHttpMethod:ToString(),
-                                                      pcServiceName,
-                                                      cServiceURI,
-                                                      cTargetName,
-                                                      cFuncMethod), "SPARK-SVC", 4).
+                /* Add a mapped operation to the current service. */
+                oService:PutOperation(oOperation).
 
-                /* Add a mapped operation to the newly-registered service. */
-                poRegistry:PutOperation(pcServiceName,
-                                        poServiceVersion,
-                                        new MappedOperation( pcServiceName,
-                                                             poServiceVersion,
-                                                             cServiceURI,
-                                                             oHttpMethod,
-                                                             cContentType,
-                                                             cTargetType,
-                                                             cTargetName,
-                                                             cEntityType,
-                                                             cFuncMethod,
-                                                             oOperOpts,
-                                                             iStatusCode,
-                                                             oParams )).
+                /* Denote end of operation mapping. */
+                assign dExecTime[2] = now.
+                oLoggingManager:logMessage(substitute("Mapped in &1ms",
+                                                      interval(dExecTime[2], dExecTime[1], string(DateTimeAddIntervalEnum:Milliseconds))),
+                                                      "SPARK-SVC", 4).
 
                 finally:
                     delete object oParamArr no-error.
@@ -2265,54 +2275,69 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             end. /* for each bResource, each bMethod */
 
             /* Debug the current service by dumping to a JSON file. */
-/*            define variable oDOSvc  as OpenEdge.Web.DataObject.DataObjectService no-undo.       */
-/*            define variable oWriter as OpenEdge.Web.DataObject.Writer.ServiceJsonWriter no-undo.*/
-/*            define variable oJson   as JsonObject no-undo.                                      */
-/*                                                                                                */
-/*            oDOSvc = ServiceRegistry:GetService(pcServiceName).                                 */
-/*            oWriter = new ServiceJsonWriter().                                                  */
-/*            oWriter:open().                                                                     */
-/*            oWriter:write(oDOSvc).                                                              */
-/*            oWriter:close().                                                                    */
-/*            oJson = cast(oWriter:Value, JsonObject).                                            */
-/*            oJson:WriteFile(substitute("&1/&2.map", session:temp-dir, pcServiceName), yes).     */
+            if valid-object(oService) then do:
+                oSvcWriter:open().
+                oSvcWriter:write(oService).
+                oSvcWriter:close().
+                oSvcJson = cast(oSvcWriter:Value, JsonObject).
+                oSvcJson:WriteFile(substitute("&1/&2.map", session:temp-dir, pcServiceName), yes).
+            end.
         end. /* available bService */
         else do:
             /* Create a special service for the ROOT if not already found. */
             if pcServiceName eq "ROOT" then do:
-                /* Register the service using the name and version discovered. */
-                poRegistry:RegisterService(pcServiceName, SemanticVersion:Parse(""), ?, ?).
+                assign dExecTime[1] = now. /* Mark start of mapping. */
 
-                /* Create a new list of parameters for this operation. */
-                assign oParams = new OpenEdge.Core.Collections.List().
+                /* Register the service using the name and version discovered. */
+                assign oService = poRegistry:RegisterService(pcServiceName, SemanticVersion:Parse(""), ?, ?).
+
+                /* Create a new mapped operation for this service. */
+                assign oOperation = new MappedOperation( oService,
+                                                         "/",
+                                                         MethodEnum:GET,
+                                                         "application/json",
+                                                         TargetTypeEnum:Class:ToString(),
+                                                         "Spark.Core.Service.Catalog",
+                                                         "Progress.Lang.Object",
+                                                         "getCatalog",
+                                                         ?,
+                                                         200,
+                                                         new OpenEdge.Core.Collections.List() ).
 
                 /* Create parameter and add to list. */
-                assign oParam = new OperationParameter(IOModeEnum:Output, "class Progress.Json.ObjectModel.JsonObject", "catalog").
-                extent(oParam:OutputElementType) = 1.
-                extent(oParam:OutputElementName) = 1.
-                oParam:OutputElementType[1] = ElementTypeEnum:Body.
-                oParam:OutputElementName[1] = "catalog".
-                oParams:Add(oParam).
+                assign oParam = new OperationParameter(oOperation, IOModeEnum:Output, "class Progress.Json.ObjectModel.JsonObject", "catalog").
+                extent(oParam:OutputElement) = 1.
+                assign oParam:OutputElement[1] = new MessageElement(ElementTypeEnum:Body, "catalog", IOModeEnum:Output).
+                oOperation:Parameters:Add(oParam).
 
-                /* Add a mapped operation to the newly-registered service. */
-                poRegistry:PutOperation(pcServiceName,
-                                        poServiceVersion,
-                                        new MappedOperation( pcServiceName,
-                                                             SemanticVersion:Parse(""),
-                                                             "/",
-                                                             MethodEnum:GET,
-                                                             "application/json",
-                                                             TargetTypeEnum:Class:ToString(),
-                                                             "Spark.Core.Service.Catalog",
-                                                             "Progress.Lang.Object",
-                                                             "getCatalog",
-                                                             ?,
-                                                             200,
-                                                             oParams )).
+                /* Add a mapped operation to the current service. */
+                oService:PutOperation(oOperation).
+
+                /* Log values to be used for mapping. */
+                assign dExecTime[2] = now.
+                oLoggingManager:logMessage(substitute("Mapped GET ROOT (/) to Spark.Core.Service.Catalog:getCatalog in &1ms",
+                                                      interval(dExecTime[2], dExecTime[1], string(DateTimeAddIntervalEnum:Milliseconds))),
+                                                      "SPARK-SVC", 4).
+
+                /* Debug the current service by dumping to a JSON file. */
+                if valid-object(oService) then do:
+                    oSvcWriter:open().
+                    oSvcWriter:write(oService).
+                    oSvcWriter:close().
+                    oSvcJson = cast(oSvcWriter:Value, JsonObject).
+                    oSvcJson:WriteFile(substitute("&1/ROOT.map", session:temp-dir), yes).
+                end.
             end. /* ROOT Service */
             else
                 oLoggingManager:logMessage(substitute("Unable to locate service for '&1'", pcServiceName), "SPARK-SVC", 1).
         end. /* not avaialble bService */
+
+        return oService. /* Return the service created by the method. */
+
+        finally:
+            delete object oSvcWriter no-error.
+            delete object oSvcJson no-error.
+        end finally.
     end method. /* registerService */
 
 end class.

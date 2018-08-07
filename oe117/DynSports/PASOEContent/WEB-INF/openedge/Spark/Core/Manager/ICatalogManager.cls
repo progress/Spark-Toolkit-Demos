@@ -9,6 +9,7 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
+using OpenEdge.Web.DataObject.DataObjectService from propath.
 using Ccs.Common.IManager from propath.
 
 interface Spark.Core.Manager.ICatalogManager inherits IManager:
@@ -57,8 +58,8 @@ interface Spark.Core.Manager.ICatalogManager inherits IManager:
 
     method public void stopProcedures ( ).
 
-    method public void registerService ( input poRegistry       as OpenEdge.Web.DataObject.IServiceRegistry,
-                                         input pcServiceName    as character,
-                                         input poServiceVersion as OpenEdge.Core.SemanticVersion ).
+    method public DataObjectService registerService ( input poRegistry       as OpenEdge.Web.DataObject.IServiceRegistry,
+                                                      input pcServiceName    as character,
+                                                      input poServiceVersion as OpenEdge.Core.SemanticVersion ).
 
 end interface.
