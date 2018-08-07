@@ -2058,37 +2058,35 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     method public DataObjectService registerService ( input poRegistry       as IServiceRegistry,
                                                       input pcServiceName    as character,
                                                       input poServiceVersion as SemanticVersion ):
-        define variable cServiceURI  as character          no-undo.
-        define variable cContentType as character          no-undo initial "application/json".
-        define variable cTargetType  as character          no-undo.
-        define variable cTargetName  as character          no-undo.
-        define variable cEntityType  as character          no-undo.
-        define variable cFuncMethod  as character          no-undo.
-        define variable cParamMode   as character          no-undo.
-        define variable cParamName   as character          no-undo.
-        define variable cParamType   as character          no-undo.
-        define variable cSchemaName  as character          no-undo.
-        define variable iStatusCode  as integer            no-undo.
-        define variable iX           as integer            no-undo.
-        define variable lIsEntity    as logical            no-undo.
-        define variable hSchema      as handle             no-undo.
-        define variable dExecTime    as datetime extent 2  no-undo.
-        define variable oParamArr    as JsonArray          no-undo.
-        define variable oParamObj    as JsonObject         no-undo.
-        define variable oHttpMethod  as MethodEnum         no-undo.
-        define variable oElementType as ElementTypeEnum    no-undo.
-        define variable oService     as DataObjectService  no-undo.
-        define variable oOperation   as MappedOperation    no-undo.
-        define variable oOperOpts    as OperationOptions   no-undo.
-        define variable oParam       as OperationParameter no-undo.
-        define variable oSvcWriter   as ServiceJsonWriter  no-undo.
-        define variable oSvcJson     as JsonObject         no-undo.
+        define variable cServiceURI  as character           no-undo.
+        define variable cContentType as character           no-undo initial "application/json".
+        define variable cTargetType  as character           no-undo.
+        define variable cTargetName  as character           no-undo.
+        define variable cEntityType  as character           no-undo.
+        define variable cFuncMethod  as character           no-undo.
+        define variable cParamMode   as character           no-undo.
+        define variable cParamName   as character           no-undo.
+        define variable cParamType   as character           no-undo.
+        define variable cSchemaName  as character           no-undo.
+        define variable iStatusCode  as integer             no-undo.
+        define variable iX           as integer             no-undo.
+        define variable lIsEntity    as logical             no-undo.
+        define variable hSchema      as handle              no-undo.
+        define variable dExecTime    as datetime extent 2   no-undo.
+        define variable oParamArr    as JsonArray           no-undo.
+        define variable oParamObj    as JsonObject          no-undo.
+        define variable oHttpMethod  as MethodEnum          no-undo.
+        define variable oElementType as ElementTypeEnum     no-undo.
+        define variable oResource    as Progress.Lang.Class no-undo.
+        define variable oService     as DataObjectService   no-undo.
+        define variable oOperation   as MappedOperation     no-undo.
+        define variable oOperOpts    as OperationOptions    no-undo.
+        define variable oParam       as OperationParameter  no-undo.
+        define variable oSvcJson     as JsonObject          no-undo.
 
         define buffer bService  for ServiceList.
         define buffer bResource for ResourceInfo.
         define buffer bMethod   for MethodInfo.
-
-        assign oSvcWriter = new ServiceJsonWriter().
 
         find first bService no-lock
              where bService.ServiceName eq pcServiceName no-error.
@@ -2128,6 +2126,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     dExecTime[1] = now
                     .
 
+                if bResource.IsClass then do:
+                    /* If resource is a class, determine if used as a business entity. */
+                    assign oResource = Progress.Lang.Class:GetClass(bResource.ClassPath).
+                    if valid-object(oResource) and oResource:IsA(get-class(OpenEdge.BusinessLogic.BusinessEntity)) then
+                        assign lIsEntity = true.
+                end. /* Is Class */
+
                 /* Just use name of the resource for CRUD operations. */
                 if lIsEntity and can-do("Create,Read,Update,Delete", bMethod.OperationType) then
                     assign cServiceURI = bResource.PublicName. /* Should just be "/<resource>" */
@@ -2140,13 +2145,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                       cTargetName,
                                                       cFuncMethod),
                                                       "SPARK-SVC", 4).
-
-                if bResource.IsClass then do:
-                    define variable oResource as Progress.Lang.Class no-undo.
-                    assign oResource = Progress.Lang.Class:GetClass(bResource.ClassPath).
-                    if valid-object(oResource) and oResource:IsA(get-class(OpenEdge.BusinessLogic.BusinessEntity)) then
-                        assign lIsEntity = true.
-                end. /* Is Class */
 
                 /* Create a new mapped operation for this service. */
                 assign oOperation = new MappedOperation( oService,
@@ -2265,7 +2263,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                 /* Denote end of operation mapping. */
                 assign dExecTime[2] = now.
-                oLoggingManager:logMessage(substitute("Mapped in &1ms",
+                oLoggingManager:logMessage(substitute("| Completed in &1ms",
                                                       interval(dExecTime[2], dExecTime[1], string(DateTimeAddIntervalEnum:Milliseconds))),
                                                       "SPARK-SVC", 4).
 
@@ -2273,15 +2271,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     delete object oParamArr no-error.
                 end finally.
             end. /* for each bResource, each bMethod */
-
-            /* Debug the current service by dumping to a JSON file. */
-            if valid-object(oService) then do:
-                oSvcWriter:open().
-                oSvcWriter:write(oService).
-                oSvcWriter:close().
-                oSvcJson = cast(oSvcWriter:Value, JsonObject).
-                oSvcJson:WriteFile(substitute("&1/&2.map", session:temp-dir, pcServiceName), yes).
-            end.
         end. /* available bService */
         else do:
             /* Create a special service for the ROOT if not already found. */
@@ -2318,26 +2307,41 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 oLoggingManager:logMessage(substitute("Mapped GET ROOT (/) to Spark.Core.Service.Catalog:getCatalog in &1ms",
                                                       interval(dExecTime[2], dExecTime[1], string(DateTimeAddIntervalEnum:Milliseconds))),
                                                       "SPARK-SVC", 4).
-
-                /* Debug the current service by dumping to a JSON file. */
-                if valid-object(oService) then do:
-                    oSvcWriter:open().
-                    oSvcWriter:write(oService).
-                    oSvcWriter:close().
-                    oSvcJson = cast(oSvcWriter:Value, JsonObject).
-                    oSvcJson:WriteFile(substitute("&1/ROOT.map", session:temp-dir), yes).
-                end.
             end. /* ROOT Service */
             else
                 oLoggingManager:logMessage(substitute("Unable to locate service for '&1'", pcServiceName), "SPARK-SVC", 1).
         end. /* not avaialble bService */
 
-        return oService. /* Return the service created by the method. */
+        /* Debug the current service by dumping to a JSON file. */
+        if valid-object(oService) then do on error undo, leave:
+            define variable oSvcWriter as ServiceJsonWriter no-undo.
 
-        finally:
-            delete object oSvcWriter no-error.
-            delete object oSvcJson no-error.
-        end finally.
+            assign oSvcWriter = new ServiceJsonWriter().
+
+            oSvcWriter:open().
+            oSvcWriter:write(oService).
+            oSvcWriter:close().
+            oSvcJson = cast(oSvcWriter:Value, JsonObject).
+            oSvcJson:WriteFile(substitute("&1/&2.map", right-trim(replace(session:temp-directory, "~\", "~/"), "~/"), pcServiceName), yes).
+
+            catch err as Progress.Lang.Error:
+                oLoggingManager:logError("Error while dumping service.", err, "SPARK-SVC", 2).
+            end catch.
+            finally:
+                delete object oSvcWriter no-error.
+                delete object oSvcJson no-error.
+            end finally.
+        end. /* MAP Output */
+
+        if valid-object(oService) then
+            return oService. /* Return the service created by the method. */
+        else
+            return ?. /* Return unknown rather than an invalid object. */
+
+        catch err as Progress.Lang.Error:
+            oLoggingManager:logError("Error while creating service.", err, "SPARK-SVC", 1).
+            undo, throw err.
+        end catch.
     end method. /* registerService */
 
 end class.
