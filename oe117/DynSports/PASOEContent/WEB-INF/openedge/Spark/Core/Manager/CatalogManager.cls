@@ -2077,7 +2077,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cParamMode   as character           no-undo.
         define variable cParamName   as character           no-undo.
         define variable cParamType   as character           no-undo.
-        define variable cSchemaName  as character           no-undo.
         define variable iStatusCode  as integer             no-undo.
         define variable iX           as integer             no-undo.
         define variable lIsEntity    as logical             no-undo.
@@ -2106,17 +2105,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
             /* Register the service using the name and version discovered. */
             assign oService = poRegistry:RegisterService(pcServiceName, poServiceVersion, ?, ?).
-
-            /* Set any options for the current operation. */
-            assign oOperOpts = new OperationOptions().
-            oOperOpts:WriteBI = false. /* Default: false */
-            oOperOpts:Timeout = 0. /* Default: 0 */
-            oOperOpts:HasRequestEnvelope = bService.UseRequest. /* Default: false */
-            oOperOpts:RequestEnvelope = "request". /* Default: request */
-            oOperOpts:HasResponseEnvelope = bService.UseRequest. /* Default: false */
-            oOperOpts:ResponseEnvelope = "response". /* Default: response */
-            oOperOpts:HasErrorEnvelope = bService.UseRequest. /* Default: false */
-            oOperOpts:ErrorEnvelope = "error". /* Default: response */
 
             for each bResource no-lock
                where bResource.ServiceURI eq bService.ServiceURI,
@@ -2155,6 +2143,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                       cTargetName,
                                                       cFuncMethod),
                                                       "SPARK-SVC", 4).
+
+                /* Set any options for the current operation. */
+                assign oOperOpts = new OperationOptions().
+                oOperOpts:WriteBI = lIsEntity. /* Should be true for entities, otherwise false. */
 
                 /* Create a new mapped operation for this service. */
                 assign oOperation = new MappedOperation( oService,
@@ -2203,24 +2195,22 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             assign cParamType = substitute("class &1", cParamType).
                     end case.
 
-                    if cParamType eq "dataset" then do:
-                        if lIsEntity and cParamName ne bResource.EntityName then
-                            assign cSchemaName = bResource.EntityName. /* Use entity name for dataset schema definition. */
-                        else
-                            assign cSchemaName = cParamName. /* Otherwise use the name of the actual parameter as given. */
+                    if lIsEntity and cParamType eq "dataset" then do:
+                        if cParamName ne bResource.EntityName then
+                            assign cParamName = bResource.EntityName.
 
-                        if not oService:HasSchema(cSchemaName) then do:
-                            oSchemaManager:getDataset(cSchemaName, dataset-handle hSchema by-reference).
+                        if not oService:HasSchema(cParamName) then do:
+                            oSchemaManager:getDataset(cParamName, dataset-handle hSchema by-reference).
                             if valid-handle(hSchema) then do:
-                                poRegistry:PutSchema(pcServiceName, poServiceVersion, cSchemaName, hSchema).
-                                oLoggingManager:logMessage(substitute("| Schema: &1 as dataset", cSchemaName), "SPARK-SVC", 4).
+                                poRegistry:PutSchema(pcServiceName, poServiceVersion, cParamName, hSchema).
+                                oLoggingManager:logMessage(substitute("| Schema: &1 as dataset", cParamName), "SPARK-SVC", 4).
                             end. /* valid-handle */
                             else
-                                oLoggingManager:logMessage(substitute("| Schema: no dataset handle for &1", cSchemaName), "SPARK-SVC", 2).
+                                oLoggingManager:logMessage(substitute("| Schema: no dataset handle for &1", cParamName), "SPARK-SVC", 2).
                         end. /* not HasSchema */
                     end. /* dataset */
 
-                    if cParamType eq "table" then do:
+                    if lIsEntity and cParamType eq "table" then do:
                         if not oService:HasSchema(cParamName) then do:
                             oSchemaManager:getTempTable(cParamName, table-handle hSchema by-reference).
                             if valid-handle(hSchema) then do:
@@ -2235,7 +2225,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     /* Create parameter for this method. */
                     assign oParam = new OperationParameter(oOperation, IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
 
-                    if cParamMode begins "input" then do:
+                    if cParamMode eq "input" then do:
                         if oHttpMethod eq MethodEnum:GET then
                             assign oElementType = ElementTypeEnum:Query. /* Use query parameters for GET. */
                         else
@@ -2243,17 +2233,32 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                         extent(oParam:InputElement) = 1.
                         assign oParam:InputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Input).
-                    end. /* input/input-output */
-
-                    if cParamMode eq "output" or
-                       cParamMode eq "input-output" then do:
+                    end. /* input */
+                    else if cParamMode eq "output" then do:
                         if can-do("dataset,table", cParamType) then
-                            assign oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
+                            assign
+                                cParamName   = ? /* No name is needed for body parameter. */
+                                oElementType = ElementTypeEnum:Body /* Output dataset/table as body. */
+                                .
                         else
                             assign oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
 
                         extent(oParam:OutputElement) = 1.
                         assign oParam:OutputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Output).
+                    end. /* output */
+                    else if cParamMode eq "input-output" then do:
+                        if can-do("dataset,table", cParamType) then
+                            assign
+                                cParamName   = ? /* No name is needed for body parameter. */
+                                oElementType = ElementTypeEnum:Body /* Output dataset/table as body. */
+                                .
+                        else
+                            assign oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
+
+                        extent(oParam:InputElement) = 1.
+                        extent(oParam:OutputElement) = 1.
+                        assign oParam:InputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:InputOutput).
+                        assign oParam:OutputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:InputOutput).
                     end. /* output/input-output */
 
                     /* Add parameter to the operation. */

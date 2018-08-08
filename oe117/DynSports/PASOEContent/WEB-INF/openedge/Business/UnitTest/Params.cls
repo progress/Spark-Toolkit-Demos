@@ -103,7 +103,6 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:
-            this-object:oResponse:addError("Field", ErrorTypeEnum:warning, "No records available from input temp-table.").
             create ttOutParam.
             assign
                 ttOutParam.cString  = "OutString"
@@ -127,7 +126,6 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:
-            this-object:oResponse:addError("Field", ErrorTypeEnum:warning, "No records available from input dataset.").
             create ttOutParam.
             assign
                 ttOutParam.cString  = "OutString"
