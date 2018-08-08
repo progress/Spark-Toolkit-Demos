@@ -16,10 +16,12 @@ using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.* from propath.
 using OpenEdge.Logging.* from propath.
+using OpenEdge.Net.HTTP.Filter.Writer.* from propath.
 using OpenEdge.Net.HTTP.HttpHeader from propath.
 using OpenEdge.Net.HTTP.StatusCodeEnum from propath.
 using OpenEdge.Net.HTTP.StatusCodeHelper from propath.
 using OpenEdge.Web.DataObject.* from propath.
+using OpenEdge.Web.DataObject.Writer.* from propath.
 using OpenEdge.Web.SendExceptionError from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
 using Spark.Core.Manager.ServiceLifeCycleEnum from propath.
@@ -71,6 +73,22 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
         /* Inform the DOH of what portion of the URL is to be ignored. */
         DataObjectHandler:HANDLER_PREFIX = oCatalogManager:ServicePrefix.
+
+        /* Start some of the internal registries by accessing the static properties. */
+        ArgumentValueWriterRegistry:Registry.
+        BodyWriterRegistry:Registry.
+        EntityWriterRegistry:Registry.
+        LogFilterBuilderRegistry:Registry.
+        LoggerFilterRegistry:Registry.
+        OperationHandlerRegistry:Registry.
+        ResponseElementWriterRegistry:Registry.
+        ServiceRegistry:Registry.
+
+        /* Register the ROOT service for handling the catalog. */
+        oCatalogManager:registerService(ServiceRegistry:Registry, ServiceRegistry:ROOT_SERVICE_NAME, SemanticVersion:Parse("")).
+
+        /* Register all known services for this application. */
+        oCatalogManager:registerAllServices(ServiceRegistry:Registry).
     end constructor.
 
     destructor DOHEventHandler():
@@ -164,7 +182,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
          * entities are dynamically discovered through class reflection and configured with specific URI patterns and verbs for
          * access. This data can be converted into a compatible format as used by the OE.W.DO.ServiceRegistry and DOH classes.
          */
-        oLogger:Trace(substitute("DISCOVER - Service '&1' &2",
+        oLogger:Debug(substitute("DISCOVER - Service '&1' &2",
                                  poEventArgs:Name, string(valid-object(poEventArgs:Service), "exists/does not exist"))).
         if not valid-object(poEventArgs:Service) then do:
             /* Log this service registration being performed. */
@@ -191,7 +209,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         end catch.
         finally:
             assign dExecTime[2] = now.
-            oLogger:Trace(substitute("DISCOVER - Completed in &1ms",
+            oLogger:Debug(substitute("DISCOVER - Completed in &1ms",
                                      interval(dExecTime[2], dExecTime[1], string(DateTimeAddIntervalEnum:Milliseconds)))).
         end finally.
     end method. /* DiscoverServiceHandler */

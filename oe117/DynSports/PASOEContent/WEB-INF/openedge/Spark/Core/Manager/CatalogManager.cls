@@ -2055,6 +2055,16 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* stopProcedures */
 
 
+    method public void registerAllServices ( input poRegistry as IServiceRegistry ):
+        define buffer bService for ServiceList.
+
+        for each bService no-lock:
+            /* Register each known service for this application. */
+            this-object:registerService(poRegistry, lc(bService.ServiceName), SemanticVersion:Parse("")).
+        end. /* for each bService */
+    end method. /* registerAllServices */
+
+
     method public DataObjectService registerService ( input poRegistry       as IServiceRegistry,
                                                       input pcServiceName    as character,
                                                       input poServiceVersion as SemanticVersion ):
@@ -2199,23 +2209,27 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         else
                             assign cSchemaName = cParamName. /* Otherwise use the name of the actual parameter as given. */
 
-                        oSchemaManager:getDataset(cSchemaName, dataset-handle hSchema by-reference).
-                        if valid-handle(hSchema) then do:
-                            poRegistry:PutSchema(pcServiceName, poServiceVersion, cSchemaName, hSchema).
-                            oLoggingManager:logMessage(substitute("| Schema: &1 as dataset", cSchemaName), "SPARK-SVC", 4).
-                        end. /* valid-handle */
-                        else
-                            oLoggingManager:logMessage(substitute("| Schema: no dataset handle for &1", cSchemaName), "SPARK-SVC", 2).
+                        if not oService:HasSchema(cSchemaName) then do:
+                            oSchemaManager:getDataset(cSchemaName, dataset-handle hSchema by-reference).
+                            if valid-handle(hSchema) then do:
+                                poRegistry:PutSchema(pcServiceName, poServiceVersion, cSchemaName, hSchema).
+                                oLoggingManager:logMessage(substitute("| Schema: &1 as dataset", cSchemaName), "SPARK-SVC", 4).
+                            end. /* valid-handle */
+                            else
+                                oLoggingManager:logMessage(substitute("| Schema: no dataset handle for &1", cSchemaName), "SPARK-SVC", 2).
+                        end. /* not HasSchema */
                     end. /* dataset */
 
                     if cParamType eq "table" then do:
-                        oSchemaManager:getTempTable(cParamName, table-handle hSchema by-reference).
-                        if valid-handle(hSchema) then do:
-                            poRegistry:PutSchema(pcServiceName, poServiceVersion, cParamName, hSchema).
-                            oLoggingManager:logMessage(substitute("| Schema: &1 as table", cParamName), "SPARK-SVC", 4).
-                        end. /* valid-handle */
-                        else
-                            oLoggingManager:logMessage(substitute("| Schema: no table handle for &1", cParamName), "SPARK-SVC", 2).
+                        if not oService:HasSchema(cParamName) then do:
+                            oSchemaManager:getTempTable(cParamName, table-handle hSchema by-reference).
+                            if valid-handle(hSchema) then do:
+                                poRegistry:PutSchema(pcServiceName, poServiceVersion, cParamName, hSchema).
+                                oLoggingManager:logMessage(substitute("| Schema: &1 as table", cParamName), "SPARK-SVC", 4).
+                            end. /* valid-handle */
+                            else
+                                oLoggingManager:logMessage(substitute("| Schema: no table handle for &1", cParamName), "SPARK-SVC", 2).
+                        end. /* not HasSchema */
                     end. /* table */
 
                     /* Create parameter for this method. */
@@ -2254,7 +2268,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                     finally:
                         delete object oParamObj no-error.
-                        delete object hSchema no-error.
                     end finally.
                 end. /* do iX */
 

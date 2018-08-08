@@ -309,9 +309,9 @@ class OpenEdge.Web.DataObject.DataObjectHandler implements IWebHandler, ISupport
     method protected void InvokeEntity(input pEntityLoadArgs as HandlerLoadEntityEventArgs):
         define variable invokeTime as datetime extent 2 no-undo.
 
-        Assert:NotNull(pEntityLoadArgs, 'Entity load event args').
-
         assign invokeTime[1] = now.
+
+        Assert:NotNull(pEntityLoadArgs, 'Entity load event args').
 
         OnLoadEntity(pEntityLoadArgs).
 
@@ -323,20 +323,26 @@ class OpenEdge.Web.DataObject.DataObjectHandler implements IWebHandler, ISupport
                                                                 (if valid-object(pEntityLoadArgs:EntityType) then pEntityLoadArgs:EntityType:TypeName else get-class(Progress.Lang.Object):TypeName) ),
                                                             0)).
 
-        Logger:Debug(substitute('Using business entity &1 of type &2',
+        Logger:Debug(substitute('Using business entity &1 of type "&2"',
                                 pEntityLoadArgs:BusinessEntity,
                                 pEntityLoadArgs:BusinessEntity:GetClass():TypeName)).
 
         if valid-object(pEntityLoadArgs:EntityType) then
             Assert:IsType(pEntityLoadArgs:BusinessEntity, pEntityLoadArgs:EntityType).
 
-        assign invokeTime[2] = now.
+        if Logger:LogLevel eq OpenEdge.Logging.LogLevelEnum:TRACE then
+            Logger:Trace(substitute('Using entity "&1" for operation: &2',
+                            pEntityLoadArgs:BusinessEntity:ToString(), pEntityLoadArgs:Operation:ToString())).
+        else
+            Logger:Debug(substitute('Using entity "&1" for operation.',
+                            pEntityLoadArgs:BusinessEntity:ToString())).
 
-        Logger:Debug(substitute('Using entity &1 for operation &2',
-                        pEntityLoadArgs:BusinessEntity:ToString(), pEntityLoadArgs:Operation:ToString())).
-        Logger:Trace(substitute('Entity &1 invoked in &2(ms)',
-                        pEntityLoadArgs:BusinessEntity:ToString(),
-                        interval(invokeTime[2], invokeTime[1], string(DateTimeAddIntervalEnum:Milliseconds)))).
+        finally:
+            assign invokeTime[2] = now.
+            Logger:Debug(substitute('Invoke of entity "&1" (LoadEntity event, dynamic-new) took &2ms',
+                            pEntityLoadArgs:BusinessEntity:ToString(),
+                            interval(invokeTime[2], invokeTime[1], string(DateTimeAddIntervalEnum:Milliseconds)))).
+        end finally.
     end method.
 
     /* Processes a request. The primary entrypoint into the handler.
@@ -572,26 +578,26 @@ class OpenEdge.Web.DataObject.DataObjectHandler implements IWebHandler, ISupport
                .
         OnInvoking(oOperationArgs).
 
-        /* do the work */
-        assign operationTime     = now
+        /* do the work to initialize the operation handler */
+        assign operationTime     = now /* reset timer */
                oOperationHandler = GetOperationHandler(poOperation:TargetType)
                operationLogger   = cast(oOperationHandler, ISupportLogging):Logger
                // always use the DOH's logger
                cast(oOperationHandler, ISupportLogging):Logger = this-object:Logger
-
                oStopError        = new HttpRequestError(string(integer(StatusCodeEnum:RequestTimeOut)),
                                              poRequest:Method,
                                              poRequest:URI:ToString()).
 
-        Logger:Trace(substitute('Service &2 &1 operation handler for target type &3 init time(ms)=&4',
-                            poOperation:Service:Name,
-                            string(poOperation:Method),
-                            string(poOperation:TargetType),
-                            interval(now, operationTime, string(DateTimeAddIntervalEnum:Milliseconds)))).
+        Logger:Debug(substitute('&1 service "&2" operation handler for target type "&3" invoked in &4ms',
+                                string(poOperation:Method),
+                                poOperation:Service:Name,
+                                string(poOperation:TargetType),
+                                interval(now, operationTime, string(DateTimeAddIntervalEnum:Milliseconds)))).
 
-        assign operationTime = now
+        assign operationTime = now /* reset timer */
                iTimeout      = poOperation:Options:Timeout
                .
+
         if valid-object(oOperationHandler) then
         do  on stop undo, return error oStopError
             on error undo, throw
@@ -601,20 +607,22 @@ class OpenEdge.Web.DataObject.DataObjectHandler implements IWebHandler, ISupport
         end.
         else
             undo, throw new AppError(substitute('Unable to service request for "&1 &2"',
-                                            poOperation:Method,
-                                            poOperation:ServiceURI),
-                                    0).
-
-        Logger:Trace(substitute('Service &2 &1 execute handler time(ms)=&3',
-                            poOperation:Service:Name,
-                            string(poOperation:Method),
-                            interval(now, operationTime, string(DateTimeAddIntervalEnum:Milliseconds)))).
+                                                poOperation:Method,
+                                                poOperation:ServiceURI), 0).
 
         assign oOperationArgs = new OperationInvocationEventArgs(poRequest, entityArgs:BusinessEntity, poResponse, poOperation)
                oOperationArgs:RequestBody      = poMessageBody
                oOperationArgs:ReturnStatusCode = iStatusCode
                .
+
+        Logger:Debug(substitute('&1 service "&2" operation handler for target type "&3" total execution: &4ms',
+                                string(poOperation:Method),
+                                poOperation:Service:Name,
+                                string(poOperation:TargetType),
+                                interval(now, operationTime, string(DateTimeAddIntervalEnum:Milliseconds)))).
+
         OnInvoked(oOperationArgs).
+
         if valid-object(oOperationArgs:Error) then
             undo, throw new DataObjectError(oOperationArgs).
 
@@ -1027,8 +1035,8 @@ class OpenEdge.Web.DataObject.DataObjectHandler implements IWebHandler, ISupport
                    lbEntity.Version    = pVersion
                    lbEntity.EntityName = pcEntityName
                    .
-            Logger:Debug(substitute('Entity "&1" cached for service "&2" &3',
-                            pcEntityName, pcService, pVersion)).
+            Logger:Debug(substitute('SetEntity: &1 &2 cached for service "&3" v&4',
+                                    pcEntityName, poBusinessEntity:GetClass():TypeName, pcService, pVersion)).
         end.
 
         assign lbEntity.Entity = poBusinessEntity.
@@ -1352,8 +1360,12 @@ class OpenEdge.Web.DataObject.DataObjectHandler implements IWebHandler, ISupport
             return error new SendExceptionError(StatusCodeEnum:NotFound).
         end.
 
-        Logger:Debug(substitute('Using mapped operation for &1 &4 &2: &3',
-                        string(oOperation:Method), serviceURI, string(oOperation), cPathType)).
+        if Logger:LogLevel eq OpenEdge.Logging.LogLevelEnum:TRACE then
+            Logger:Trace(substitute('Using mapped operation for &1 &2 "&3": &4',
+                            string(oOperation:Method), cPathType, serviceURI, string(oOperation))).
+        else
+            Logger:Debug(substitute('Using mapped operation for &1 &2 "&3"',
+                            string(oOperation:Method), cPathType, serviceURI)).
 
         return oOperation.
     end method.

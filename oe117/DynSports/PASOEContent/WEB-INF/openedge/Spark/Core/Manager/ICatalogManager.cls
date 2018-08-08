@@ -58,6 +58,8 @@ interface Spark.Core.Manager.ICatalogManager inherits IManager:
 
     method public void stopProcedures ( ).
 
+    method public void registerAllServices ( input poRegistry as OpenEdge.Web.DataObject.IServiceRegistry ).
+
     method public DataObjectService registerService ( input poRegistry       as OpenEdge.Web.DataObject.IServiceRegistry,
                                                       input pcServiceName    as character,
                                                       input poServiceVersion as OpenEdge.Core.SemanticVersion ).
