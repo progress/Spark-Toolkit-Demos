@@ -13,6 +13,7 @@ using Progress.Json.ObjectModel.ObjectModelParser.* from propath.
 using OpenEdge.Core.* from propath.
 using OpenEdge.Core.Collections.* from propath.
 using OpenEdge.Net.HTTP.MethodEnum from propath.
+using OpenEdge.Net.HTTP.StatusCodeEnum from propath.
 using OpenEdge.Web.DataObject.* from propath.
 using OpenEdge.Web.DataObject.Writer.ServiceJsonWriter from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
@@ -56,9 +57,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         end get.
         set.
 
-    define private variable cPreLoader  as character no-undo.
-    define private variable cDefaultURI as character no-undo.
-    define private variable lUseDebugs  as logical   no-undo.
+    define private variable cPreLoader   as character  no-undo.
+    define private variable cDefaultURI  as character  no-undo.
+    define private variable lUseDebugs   as logical    no-undo.
+    define private variable oCatRegistry as JsonObject no-undo.
 
     define private temp-table GeneralParam no-undo serialize-name "General"
         field ApiVersion    as decimal   /* Expected version to be used with all API's.             */
@@ -1572,6 +1574,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         find first ServiceList no-error.
         if available(ServiceList) then
             assign cDefaultURI = ServiceList.ServiceURI.
+
+        /* Create the initial object to hold the catalog registry. */
+        assign oCatRegistry = new JsonObject().
     end method. /* initialize */
 
 
@@ -1964,14 +1969,31 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
     method public JsonObject getCatalog ( input pcServiceURI   as character,
                                           input pcResourceName as character ):
-        define variable catalogObj as JsonObject no-undo.
+        define variable cHash as character no-undo.
 
-        assign catalogObj = new JsonObject().
-        catalogObj:Add("version", 1.5).
-        catalogObj:Add("lastModified", now).
-        catalogObj:Add("services", this-object:getServices(pcServiceURI, pcResourceName)).
+        /* Use a simple hash to identify this combination of URI and Resource Name. */
+        assign cHash = encode(pcServiceURI + pcResourceName).
 
-        return catalogObj.
+        if not oCatRegistry:Has(cHash) then do:
+            /**
+             * Catalog data should be static after first generation by URI/Resource,
+             * and only changes when MSAS sessions are started or when data is first
+             * requested. Therefore we should be able to cache this data for speed.
+             */
+            define variable oCatalog as JsonObject no-undo.
+
+            assign oCatalog = new JsonObject().
+            oCatalog:Add("version", 1.5).
+            oCatalog:Add("lastModified", now).
+            oCatalog:Add("services", this-object:getServices(pcServiceURI, pcResourceName)).
+
+            oLoggingManager:logMessage(substitute("Caching catalog data for URI '&1' Resource '&2'",
+                                                  pcServiceURI, pcResourceName), "SPARK-CAT", 3).
+
+            oCatRegistry:Add(cHash, oCatalog). /* Add to local registry for this combination. */
+        end. /* oCatalog Exists */
+
+        return oCatRegistry:GetJsonObject(cHash).
     end method. /* getCatalog */
 
 
@@ -2119,7 +2141,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     cTargetName  = bMethod.ClassPath
                     cEntityType  = (if bResource.IsClass then "Progress.Lang.Object" else ?)
                     cFuncMethod  = bMethod.MethodName
-                    iStatusCode  = 200
+                    iStatusCode  = integer(StatusCodeEnum:ok)
                     lIsEntity    = false
                     dExecTime[1] = now
                     .
@@ -2308,7 +2330,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                          "Progress.Lang.Object",
                                                          "getCatalog",
                                                          ?,
-                                                         200,
+                                                         integer(StatusCodeEnum:ok),
                                                          new OpenEdge.Core.Collections.List() ).
 
                 /* Create parameter and add to list. */
