@@ -2217,8 +2217,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             assign cParamType = substitute("class &1", cParamType).
                     end case.
 
-                    if lIsEntity and cParamType eq "dataset" then do:
-                        if cParamName ne bResource.EntityName then
+                    if cParamType eq "dataset" then do:
+                        if lIsEntity and cParamName ne bResource.EntityName then
                             assign cParamName = bResource.EntityName.
 
                         if not oService:HasSchema(cParamName) then do:
@@ -2232,7 +2232,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         end. /* not HasSchema */
                     end. /* dataset */
 
-                    if lIsEntity and cParamType eq "table" then do:
+                    if cParamType eq "table" then do:
                         if not oService:HasSchema(cParamName) then do:
                             oSchemaManager:getTempTable(cParamName, table-handle hSchema by-reference).
                             if valid-handle(hSchema) then do:
@@ -2247,6 +2247,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     /* Create parameter for this method. */
                     assign oParam = new OperationParameter(oOperation, IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
 
+                    /* Assign message elements based on the parameter IO mode. */
                     if cParamMode eq "input" then do:
                         if oHttpMethod eq MethodEnum:GET then
                             assign oElementType = ElementTypeEnum:Query. /* Use query parameters for GET. */
@@ -2258,10 +2259,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     end. /* input */
                     else if cParamMode eq "output" then do:
                         if can-do("dataset,table", cParamType) then
-                            assign
-                                cParamName   = ? /* No name is needed for body parameter. */
-                                oElementType = ElementTypeEnum:Body /* Output dataset/table as body. */
-                                .
+                            assign oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
                         else
                             assign oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
 
@@ -2271,9 +2269,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     else if cParamMode eq "input-output" then do:
                         if can-do("dataset,table", cParamType) then
                             assign
-                                cParamName   = ? /* No name is needed for body parameter. */
-                                oElementType = ElementTypeEnum:Body /* Output dataset/table as body. */
-                                .
+                                oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
                         else
                             assign oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
 

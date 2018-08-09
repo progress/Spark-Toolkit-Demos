@@ -34,8 +34,8 @@ define temp-table ttOrder no-undo before-table bttOrder
     field SalesRepName as character label "Sales Rep Name"
     index seq          is primary unique seq
     index CustOrder    is unique  CustNum     ascending Ordernum ascending
-    index OrderDate               OrderDate   ascending
     index OrderNum     is unique  OrderNum    ascending
+    index OrderDate               OrderDate   ascending
     index OrderStatus             OrderStatus ascending
     index SalesRep                SalesRep    ascending
     .

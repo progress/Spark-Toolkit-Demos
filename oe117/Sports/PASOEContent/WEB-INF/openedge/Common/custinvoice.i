@@ -52,9 +52,9 @@ define temp-table ttInvoice before-table bttInvoice
     field OrderNum    as integer   label "Order Num"
     field ShipCharge  as decimal   label "Ship Charge"
     index pkSeq       is primary unique seq
+    index idxInvoiceNum is unique Invoicenum  descending
     index idxCustNum              CustNum     descending
     index idxInvoiceDate          InvoiceDate descending
-    index idxInvoiceNum is unique Invoicenum  descending
     index idxOrderNum             OrderNum    descending
     .
 

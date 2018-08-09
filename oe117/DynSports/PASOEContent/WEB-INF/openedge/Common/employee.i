@@ -30,9 +30,9 @@ define temp-table ttEmployee no-undo serialize-name "associate" before-table btt
     field VacationDaysLeft as integer   label "Vacation Days Left" serialize-name "RemainingPTO"
     field SickDaysLeft     as integer   label "Sick Days Left"
     index pkSeq            is primary unique seq
-    index idxDeptCode                 DeptCode
     index idxEmpNo         is unique  EmpNum
     index idxName          is unique  LastName FirstName
+    index idxDeptCode                 DeptCode
     .
 
 define dataset dsEmployee for ttEmployee.

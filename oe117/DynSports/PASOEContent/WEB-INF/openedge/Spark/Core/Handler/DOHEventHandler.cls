@@ -249,12 +249,12 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         if poEventArgs:Operation:ServiceURI eq "/" then
             oLogger:Debug(substitute("INVOKING - &1 '&2' (&3)",
                                      string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:Service:Name,
+                                     poEventArgs:Operation:ServiceName,
                                      poEventArgs:Operation:TargetName)).
         else
             oLogger:Debug(substitute("INVOKING - &1 /&2/&3 -> &4:&5",
                                      string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:Service:Name,
+                                     poEventArgs:Operation:ServiceName,
                                      poEventArgs:Operation:ServiceURI,
                                      poEventArgs:Operation:TargetName,
                                      poEventArgs:Operation:TargetFunction)).
@@ -286,12 +286,12 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         if poEventArgs:Operation:ServiceURI eq "/" then
             oLogger:Debug(substitute("INVOKED_ - &1 '&2' (&3)",
                                      string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:Service:Name,
+                                     poEventArgs:Operation:ServiceName,
                                      poEventArgs:Operation:TargetName)).
         else
             oLogger:Debug(substitute("INVOKED_ - &1 /&2/&3 -> &4:&5",
                                      string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:Service:Name,
+                                     poEventArgs:Operation:ServiceName,
                                      poEventArgs:Operation:ServiceURI,
                                      poEventArgs:Operation:TargetName,
                                      poEventArgs:Operation:TargetFunction)).
@@ -351,7 +351,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
      */
     method private void OperationErrorHandler ( input poSender    as Progress.Lang.Object,
                                                 input poEventArgs as HandlerErrorEventArgs ):
-        oLogger:Error(substitute("OP-ERROR - &1: &2", poEventArgs:Operation:TargetName, poEventArgs:Error)).
+        oLogger:Error(substitute("OP-ERROR - &1: &2", poEventArgs:Operation:TargetName, poEventArgs:Error:GetMessage(1))).
 
         define variable iCode as integer no-undo.
         assign iCode = poEventArgs:Error:GetMessageNum(1).
