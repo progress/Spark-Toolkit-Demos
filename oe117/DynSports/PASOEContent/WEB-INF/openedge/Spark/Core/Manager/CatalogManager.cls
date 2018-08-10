@@ -1,4 +1,4 @@
- /*------------------------------------------------------------------------
+/*------------------------------------------------------------------------
     File        : CatalogManager
     Purpose     :
     Description :
@@ -1592,7 +1592,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
         assign oDOS = ServiceRegistry:Registry:GetServices().
         do iX = 1 to extent(oDOS):
-            message substitute("Deregistering Service: &1 v&2", oDOS[iX]:Name, oDOS[iX]:version:ToString()).
+            message substitute("Deregistering Service: '&1' v&2", oDOS[iX]:Name, oDOS[iX]:version:ToString()).
             ServiceRegistry:Registry:DeregisterService(oDOS[iX]:Name, oDOS[iX]:Version).
         end. /* do iX */
 
@@ -2142,9 +2142,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             if pcServiceName ne entry(num-entries(bService.ServiceURI, "/"), bService.ServiceURI, "/") then return ?.
 
             /* Denote start of operation mapping. */
-            oLoggingManager:logMessage(substitute("Registering Service: &1 v&2",
-                                                  pcServiceName,
-                                                  poServiceVersion:ToString()),
+            oLoggingManager:logMessage(substitute("Registering Service: '&1' v&2",
+                                                  pcServiceName, poServiceVersion:ToString()),
                                                   "SPARK-SVC", 3).
 
             /* Register the service using the name and version discovered. */

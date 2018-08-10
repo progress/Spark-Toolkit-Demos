@@ -158,22 +158,19 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
          * ServiceRegistryLoader to configure each available service in the registry by use of the PutOperation and
          * related methods in the ServiceRegistry implementation.
          */
-        define variable cServicePath as character          no-undo.
-        define variable dExecTime    as datetime  extent 2 no-undo.
+        define variable dStart  as datetime no-undo.
+        define variable lExists as logical  no-undo.
 
-        assign dExecTime[1] = now. /* Record start of discovery process. */
+        assign dStart = now. /* Record start of discovery process. */
 
         /* If we have a service, or something already went wrong, return. */
         if valid-object(poEventArgs:Service) or poEventArgs:Cancel or valid-object(poEventArgs:Error) then return.
 
         /* Output the parsed service-related values as seen by the registry. */
-        oLogger:Debug(substitute("DISCOVER - WebApp: &1 | Path: &2 | Service: &3 v&4 | URI: &5",
-                                 poEventArgs:Request:WebAppPath, cServicePath,
+        oLogger:Debug(substitute("DISCOVER - WebApp: &1 | Service: &2 v&3 | URI: &4 [&5 &6]",
+                                 poEventArgs:Request:WebAppPath,
                                  poEventArgs:Name, SemanticVersion:Parse(poEventArgs:version):ToString(),
-                                 poEventArgs:ServiceURI)).
-
-        /* Output info about what is about to be loaded as the service, if found to be available. */
-        oLogger:Debug(substitute("DISCOVER - &1 &2", poEventArgs:Request:Method, poEventArgs:Request:URI:ToString())).
+                                 poEventArgs:ServiceURI, poEventArgs:Request:Method, poEventArgs:Request:URI:ToString())).  
 
         /* Consult the built-in registry which implements IServiceRegistry. */
         if valid-object(poEventArgs:Registry) then
@@ -185,12 +182,8 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
          * entities are dynamically discovered through class reflection and configured with specific URI patterns and verbs for
          * access. This data can be converted into a compatible format as used by the OE.W.DO.ServiceRegistry and DOH classes.
          */
-        oLogger:Debug(substitute("DISCOVER - Service '&1' &2",
-                                 poEventArgs:Name, string(valid-object(poEventArgs:Service), "exists/does not exist"))).
-        if not valid-object(poEventArgs:Service) then do:
-            /* Log this service registration being performed. */
-            oLogger:Debug(substitute("DISCOVER - Registering Service: '&1' v&2", poEventArgs:Name, SemanticVersion:Parse(poEventArgs:Version):ToString())).
-
+        assign lExists = valid-object(poEventArgs:Service).
+        if not lExists then do:
             /* Utilize the catalog manager to obtain service information. */
             assign poEventArgs:Service = oCatalogManager:registerService(poEventArgs:Registry,
                                                                          poEventArgs:Name,
@@ -198,8 +191,8 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
             /* If service is still not available, log a message and allow event to run the default handler. */
             if not valid-object(poEventArgs:Service) then
-                oLogger:Debug(substitute("DISCOVER - Service not available for '&1 &2'",
-                                         poEventArgs:Request:Method, poEventArgs:Request:URI:ToString())).
+                oLogger:Debug(substitute("DISCOVER - Service registration failed for '&1' v&2",
+                                         poEventArgs:Name, SemanticVersion:Parse(poEventArgs:Version):ToString())).
         end. /* No Service Available */
 
         /**
@@ -211,9 +204,9 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
             oLogger:Error(substitute("DISCOVER - &1: &2", poEventArgs:ServiceURI, err:GetMessage(1))).
         end catch.
         finally:
-            assign dExecTime[2] = now.
-            oLogger:Debug(substitute("DISCOVER - Completed in &1ms",
-                                     interval(dExecTime[2], dExecTime[1], string(DateTimeAddIntervalEnum:Milliseconds)))).
+            oLogger:Debug(substitute("DISCOVER - Service '&1' &2 in &3ms",
+                                     poEventArgs:Name, string(lExists, "located/created"),
+                                     interval(now, dStart, string(DateTimeAddIntervalEnum:Milliseconds)))).
         end finally.
     end method. /* DiscoverServiceHandler */
 
@@ -250,7 +243,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         assign dInvokeTime = now. /* Remember when we start execution. */
 
         if poEventArgs:Operation:ServiceURI eq "/" then
-            oLogger:Debug(substitute("INVOKING - &1 '&2' (&3)",
+            oLogger:Debug(substitute("INVOKING - &1 '&2' [&3]",
                                      string(poEventArgs:Operation:Method),
                                      poEventArgs:Operation:ServiceName,
                                      poEventArgs:Operation:TargetName)).
@@ -286,19 +279,6 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
      */
     method private void InvokedHandler ( input poSender    as Progress.Lang.Object,
                                          input poEventArgs as OperationInvocationEventArgs ):
-        if poEventArgs:Operation:ServiceURI eq "/" then
-            oLogger:Debug(substitute("INVOKED_ - &1 '&2' (&3)",
-                                     string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:ServiceName,
-                                     poEventArgs:Operation:TargetName)).
-        else
-            oLogger:Debug(substitute("INVOKED_ - &1 /&2/&3 -> &4:&5",
-                                     string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:ServiceName,
-                                     poEventArgs:Operation:ServiceURI,
-                                     poEventArgs:Operation:TargetName,
-                                     poEventArgs:Operation:TargetFunction)).
-
         /* If dealing with a READ operation from an ISparkEntity class, attempt to get
          * the last-known number of records read and return as part of the response object.
          */
@@ -328,15 +308,30 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
             end finally.
         end. /* Read Operation */
 
+        define variable fElapsed as decimal no-undo initial 0.
         if dInvokeTime ne ? then do on error undo, throw:
-            define variable fElapsed as decimal    no-undo initial 0.
             define variable oHeader  as HttpHeader no-undo.
 
             /* Add the elapsed time for this request as a custom header value. */
-            assign fElapsed = interval(now, dInvokeTime, string(OpenEdge.Core.DateTimeAddIntervalEnum:Milliseconds)) / 1000.
-            assign oHeader = new HttpHeader("X-Elapsed", trim(string(fElapsed, ">>>9.99")) + "sec.").
+            assign fElapsed = interval(now, dInvokeTime, string(OpenEdge.Core.DateTimeAddIntervalEnum:Milliseconds)).
+            assign oHeader = new HttpHeader("X-Elapsed", trim(string(fElapsed, ">>>,>>9")) + "ms").
             poEventArgs:Response:SetHeader(oHeader).
         end. /* iStart gt 0 */
+
+        if poEventArgs:Operation:ServiceURI eq "/" then
+            oLogger:Debug(substitute("INVOKED_ - &1 '&2' [&3] (&4ms)",
+                                     string(poEventArgs:Operation:Method),
+                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Operation:TargetName,
+                                     fElapsed)).
+        else
+            oLogger:Debug(substitute("INVOKED_ - &1 /&2/&3 -> &4:&5 (&6ms)",
+                                     string(poEventArgs:Operation:Method),
+                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Operation:ServiceURI,
+                                     poEventArgs:Operation:TargetName,
+                                     poEventArgs:Operation:TargetFunction,
+                                     fElapsed)).
 
         catch err as Progress.Lang.Error:
             assign poEventArgs:Error = err.
