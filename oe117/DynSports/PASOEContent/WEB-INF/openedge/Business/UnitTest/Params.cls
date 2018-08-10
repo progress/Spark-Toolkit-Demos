@@ -37,6 +37,7 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
         field dDate    as date
         field dDTime   as datetime
         field dDTimeTZ as datetime-tz
+        index pkMain as primary cString
         .
     define dataset dsInParam for ttInParam.
 
@@ -47,6 +48,7 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
         field dDate    as date
         field dDTime   as datetime
         field dDTimeTZ as datetime-tz
+        index pkMain as primary cString
         .
     define dataset dsOutParam for ttOutParam.
 

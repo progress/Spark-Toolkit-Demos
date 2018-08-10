@@ -89,6 +89,9 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
         /* Register all known services for this application. */
         oCatalogManager:registerAllServices(ServiceRegistry:Registry).
+
+        /* Create a master catalog for all services (caches output). */
+        oCatalogManager:getCatalog("", "").
     end constructor.
 
     destructor DOHEventHandler():

@@ -1585,6 +1585,22 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             /* Delete entity properties when manager is disposed. */
             delete object EntityProperty.FieldData no-error.
         end.
+
+        define variable oDOS as DataObjectService no-undo extent.
+        define variable cCat as character         no-undo extent.
+        define variable iX   as integer           no-undo.
+
+        assign oDOS = ServiceRegistry:Registry:GetServices().
+        do iX = 1 to extent(oDOS):
+            message substitute("Deregistering Service: &1 v&2", oDOS[iX]:Name, oDOS[iX]:version:ToString()).
+            ServiceRegistry:Registry:DeregisterService(oDOS[iX]:Name, oDOS[iX]:Version).
+        end. /* do iX */
+
+        assign cCat = oCatRegistry:GetNames().
+        do iX = 1 to extent(cCat):
+            oCatRegistry:Remove(cCat[iX]). /* Remove cached catalog. */
+        end. /* do iX */
+        delete object oCatRegistry no-error. /* Clear the catalog registry. */
     end method. /* dispose */
 
 
@@ -1777,8 +1793,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 create ServiceInfo.
                 buffer-copy ServiceList to ServiceInfo no-error.
             end. /* for each */
-            dataset dsConfig:write-json("file", "Config.json", true).
-            dataset dsResource:write-json("file", "Resources.json", true).
+            dataset dsConfig:write-json("file", substitute("&1/CatalogDetail.json", right-trim(replace(session:temp-directory, "~\", "~/"), "~/")), true).
+            dataset dsResource:write-json("file", substitute("&1/ResourceMetadata.json", right-trim(replace(session:temp-directory, "~\", "~/"), "~/")), true).
             oSchemaManager:dumpObjects().
         end. /* lUseDebugs */
     end method. /* loadResources */
@@ -1988,7 +2004,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             oCatalog:Add("services", this-object:getServices(pcServiceURI, pcResourceName)).
 
             oLoggingManager:logMessage(substitute("Caching catalog data for URI '&1' Resource '&2'",
-                                                  pcServiceURI, pcResourceName), "SPARK-CAT", 3).
+                                                  pcServiceURI, pcResourceName), "SPARK-CTLG", 3).
 
             oCatRegistry:Add(cHash, oCatalog). /* Add to local registry for this combination. */
         end. /* oCatalog Exists */
@@ -2125,6 +2141,12 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             /* Leave if the name of the service does not actually match the last element of the Service URI. */
             if pcServiceName ne entry(num-entries(bService.ServiceURI, "/"), bService.ServiceURI, "/") then return ?.
 
+            /* Denote start of operation mapping. */
+            oLoggingManager:logMessage(substitute("Registering Service: &1 v&2",
+                                                  pcServiceName,
+                                                  poServiceVersion:ToString()),
+                                                  "SPARK-SVC", 3).
+
             /* Register the service using the name and version discovered. */
             assign oService = poRegistry:RegisterService(pcServiceName, poServiceVersion, ?, ?).
 
@@ -2224,7 +2246,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         if not oService:HasSchema(cParamName) then do:
                             oSchemaManager:getDataset(cParamName, dataset-handle hSchema by-reference).
                             if valid-handle(hSchema) then do:
-                                poRegistry:PutSchema(pcServiceName, poServiceVersion, cParamName, hSchema).
+                                oService:PutSchema(cParamName, hSchema). /* Add schema to service. Do not delete hSchema handle!. */
                                 oLoggingManager:logMessage(substitute("| Schema: &1 as dataset", cParamName), "SPARK-SVC", 4).
                             end. /* valid-handle */
                             else
@@ -2236,7 +2258,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         if not oService:HasSchema(cParamName) then do:
                             oSchemaManager:getTempTable(cParamName, table-handle hSchema by-reference).
                             if valid-handle(hSchema) then do:
-                                poRegistry:PutSchema(pcServiceName, poServiceVersion, cParamName, hSchema).
+                                oService:PutSchema(cParamName, hSchema). /* Add schema to service. Do not delete hSchema handle!. */
                                 oLoggingManager:logMessage(substitute("| Schema: &1 as table", cParamName), "SPARK-SVC", 4).
                             end. /* valid-handle */
                             else
@@ -2244,10 +2266,11 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         end. /* not HasSchema */
                     end. /* table */
 
-                    /* Create parameter for this method. */
+                    /* Create the parameter for this method. */
                     assign oParam = new OperationParameter(oOperation, IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
 
                     /* Assign message elements based on the parameter IO mode. */
+
                     if cParamMode eq "input" then do:
                         if oHttpMethod eq MethodEnum:GET then
                             assign oElementType = ElementTypeEnum:Query. /* Use query parameters for GET. */
@@ -2257,6 +2280,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         extent(oParam:InputElement) = 1.
                         assign oParam:InputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Input).
                     end. /* input */
+
                     else if cParamMode eq "output" then do:
                         if can-do("dataset,table", cParamType) then
                             assign oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
@@ -2266,10 +2290,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         extent(oParam:OutputElement) = 1.
                         assign oParam:OutputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Output).
                     end. /* output */
+
                     else if cParamMode eq "input-output" then do:
                         if can-do("dataset,table", cParamType) then
-                            assign
-                                oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
+                            assign oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
                         else
                             assign oElementType = ElementTypeEnum:Field. /* Otherwise, use field of body. */
 
