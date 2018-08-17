@@ -51,9 +51,13 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
     /* Access the Spark catalog manager to obtain service metadata. */
     define protected property oCatalogManager as ICatalogManager no-undo
         get():
-            /* Create single catalog instance for this class. */
-            if not valid-object(oCatalogManager) then
-                assign oCatalogManager = cast(Ccs.Common.Application:StartupManager:getManager(get-class(ICatalogManager)), ICatalogManager).
+            if not valid-object(oCatalogManager) then do:
+                /* Manager may be optionally created, so check for existence before using. */
+                define variable oManager as Ccs.Common.IManager no-undo.
+                assign oManager = Ccs.Common.Application:StartupManager:getManager(get-class(ICatalogManager)).
+                if valid-object(oManager) then
+                    assign oCatalogManager = cast(oManager, ICatalogManager).
+            end.
             return oCatalogManager.
         end get.
         private set.
@@ -72,7 +76,8 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         &ENDIF
 
         /* Inform the DOH of what portion of the URL is to be ignored. */
-        DataObjectHandler:HANDLER_PREFIX = oCatalogManager:ServicePrefix.
+        if valid-object(oCatalogManager) then
+            DataObjectHandler:HANDLER_PREFIX = oCatalogManager:ServicePrefix.
 
         /* Start some of the internal registries by accessing the static properties. */
         ArgumentValueWriterRegistry:Registry.
@@ -85,13 +90,16 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         ServiceRegistry:Registry.
 
         /* Register the ROOT service for handling the catalog. */
-        oCatalogManager:registerService(ServiceRegistry:Registry, ServiceRegistry:ROOT_SERVICE_NAME, SemanticVersion:Parse("")).
+        if valid-object(oCatalogManager) then
+            oCatalogManager:registerService(ServiceRegistry:Registry, ServiceRegistry:ROOT_SERVICE_NAME, SemanticVersion:Parse("")).
 
         /* Register all known services for this application. */
-        oCatalogManager:registerAllServices(ServiceRegistry:Registry).
+        if valid-object(oCatalogManager) then
+            oCatalogManager:registerAllServices(ServiceRegistry:Registry).
 
         /* Create a master catalog for all services (caches output). */
-        oCatalogManager:getCatalog("", "").
+        if valid-object(oCatalogManager) then
+            oCatalogManager:getCatalog("", "").
     end constructor.
 
     destructor DOHEventHandler():
@@ -183,7 +191,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
          * access. This data can be converted into a compatible format as used by the OE.W.DO.ServiceRegistry and DOH classes.
          */
         assign lExists = valid-object(poEventArgs:Service).
-        if not lExists then do:
+        if valid-object(oCatalogManager) and not lExists then do:
             /* Utilize the catalog manager to obtain service information. */
             assign poEventArgs:Service = oCatalogManager:registerService(poEventArgs:Registry,
                                                                          poEventArgs:Name,
