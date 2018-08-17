@@ -13,5 +13,5 @@ block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
 
-/* Example: Startup the metrics from the diagnostic tools. */
+/* Optional: Startup the metrics from the diagnostic tools. */
 run Spark/Diagnostic/metrics_activate.

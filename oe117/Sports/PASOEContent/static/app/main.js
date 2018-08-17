@@ -346,6 +346,7 @@ var app = (function(){
     var _menuLoading = false;
     function refreshMenu(loggedIn){
         var promise = $.Deferred();
+
         if (!_menuLoading) {
             _menuLoading = true; // Limit to 1 call at a time.
 
@@ -717,6 +718,7 @@ var app = (function(){
             // If object is available, check for fulfillment of promise.
             sessionReady.then(function(){
                 kendo.bind($("#mainHeader"), headerVM); // Bind VM to header.
+
                 getSessionInfo()
                     .then(function(latestSession, matches, loggedIn){
                         if (loggedIn && !matches) {

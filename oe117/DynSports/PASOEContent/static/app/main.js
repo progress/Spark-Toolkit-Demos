@@ -320,7 +320,7 @@ var app = (function(){
                                 if (app.currentPage.ctrl && app.currentPage.ctrl.init) {
                                     app.currentPage.ctrl.init();
                                 }
-    
+
                                 // Translate items on the recently-loaded view.
                                 app.translateView("#" + app.currentPage.name + "View");
                             }
@@ -329,7 +329,7 @@ var app = (function(){
                             if (app.currentPage.ctrl && app.currentPage.ctrl.init) {
                                 app.currentPage.ctrl.init();
                             }
-    
+
                             // Translate items on the recently-loaded view.
                             app.translateView("#" + app.currentPage.name + "View");
                             showMessage(errorMsg, "warning"); // Display error message to user.
@@ -728,14 +728,14 @@ var app = (function(){
                                     app.doLogoutAction();
                                 });
                         }
-    
+
                         // Get text replacements based on language.
                         getLanguageStrings(latestSession.language || "en-US");
-    
+
                         // Populate header with user information.
                         headerVM.set("user.fullName", latestSession.fullname);
                         headerVM.set("user.emailAddr", latestSession.emailAddr);
-    
+
                         // Perform first menu load after successful session check.
                         refreshMenu(loggedIn)
                             .then(function(data){
