@@ -2192,8 +2192,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 oOperOpts:WriteBI = lIsEntity. /* Should be true for entities, otherwise false. */
 
                 /* Create a new mapped operation for this service. */
-                assign oOperation = new MappedOperation( oService,
-                                                         cServiceURI,
+                assign oOperation = new MappedOperation( cServiceURI,
                                                          oHttpMethod,
                                                          cContentType,
                                                          cTargetType,
@@ -2201,8 +2200,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                          cEntityType,
                                                          cFuncMethod,
                                                          oOperOpts,
-                                                         iStatusCode,
-                                                         new OpenEdge.Core.Collections.List() ).
+                                                         iStatusCode ).
 
                 /* Obtain the method signature for this resource. */
                 assign oParamArr = this-object:getMethodSignature( bResource.ServiceURI,
@@ -2266,7 +2264,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     end. /* table */
 
                     /* Create the parameter for this method. */
-                    assign oParam = new OperationParameter(oOperation, IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
+                    assign oParam = new OperationParameter( IOModeEnum:GetEnum(cParamMode), cParamType, cParamName ).
 
                     /* Assign message elements based on the parameter IO mode. */
 
@@ -2340,8 +2338,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 assign oService = poRegistry:RegisterService(pcServiceName, SemanticVersion:Parse(""), ?, ?).
 
                 /* Create a new mapped operation for this service. */
-                assign oOperation = new MappedOperation( oService,
-                                                         "/",
+                assign oOperation = new MappedOperation( "/",
                                                          MethodEnum:GET,
                                                          "application/json",
                                                          TargetTypeEnum:Class:ToString(),
@@ -2349,11 +2346,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                          "Progress.Lang.Object",
                                                          "getCatalog",
                                                          ?,
-                                                         integer(StatusCodeEnum:ok),
-                                                         new OpenEdge.Core.Collections.List() ).
+                                                         integer(StatusCodeEnum:ok) ).
 
                 /* Create parameter and add to list. */
-                assign oParam = new OperationParameter(oOperation, IOModeEnum:Output, "class Progress.Json.ObjectModel.JsonObject", "catalog").
+                assign oParam = new OperationParameter( IOModeEnum:Output, "class Progress.Json.ObjectModel.JsonObject", "catalog" ).
                 extent(oParam:OutputElement) = 1.
                 assign oParam:OutputElement[1] = new MessageElement(ElementTypeEnum:Body, "catalog", IOModeEnum:Output).
                 oOperation:Parameters:Add(oParam).

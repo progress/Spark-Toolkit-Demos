@@ -245,12 +245,12 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         if poEventArgs:Operation:ServiceURI eq "/" then
             oLogger:Debug(substitute("INVOKING - &1 '&2' [&3]",
                                      string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Service:Name,
                                      poEventArgs:Operation:TargetName)).
         else
             oLogger:Debug(substitute("INVOKING - &1 /&2/&3 -> &4:&5",
                                      string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Service:Name,
                                      poEventArgs:Operation:ServiceURI,
                                      poEventArgs:Operation:TargetName,
                                      poEventArgs:Operation:TargetFunction)).
@@ -321,13 +321,13 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         if poEventArgs:Operation:ServiceURI eq "/" then
             oLogger:Debug(substitute("INVOKED_ - &1 '&2' [&3] (&4ms)",
                                      string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Service:Name,
                                      poEventArgs:Operation:TargetName,
                                      fElapsed)).
         else
             oLogger:Debug(substitute("INVOKED_ - &1 /&2/&3 -> &4:&5 (&6ms)",
                                      string(poEventArgs:Operation:Method),
-                                     poEventArgs:Operation:ServiceName,
+                                     poEventArgs:Service:Name,
                                      poEventArgs:Operation:ServiceURI,
                                      poEventArgs:Operation:TargetName,
                                      poEventArgs:Operation:TargetFunction,
