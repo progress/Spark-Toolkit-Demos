@@ -46,7 +46,7 @@
     </target>
 
     <target name="create" depends="_init_env,_init_unix,_init_windows">
-		<taskdef resource="PCT.properties" classpath="${basedir}/PCT.jar"/>
+		<taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
 
 		<mkdir dir="${path}"/>

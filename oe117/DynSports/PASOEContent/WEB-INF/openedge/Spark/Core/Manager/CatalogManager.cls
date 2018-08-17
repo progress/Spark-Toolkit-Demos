@@ -2371,8 +2371,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 oLoggingManager:logMessage(substitute("Unable to locate service for '&1'", pcServiceName), "SPARK-SVC", 1).
         end. /* not avaialble bService */
 
-        /* Debug the current service by dumping to a JSON file. */
-        if valid-object(oService) then do on error undo, leave:
+        /* Debug the current service by dumping to a JSON file when logging level is verbose. */
+        if log-manager:logging-level ge 3 and valid-object(oService) then do on error undo, leave:
             define variable oSvcWriter as ServiceJsonWriter no-undo.
 
             assign oSvcWriter = new ServiceJsonWriter().

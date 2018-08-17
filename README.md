@@ -7,6 +7,9 @@ Release-based projects ready for import to illustrate usage of the Progress Mode
 
 OpenEdge 11.7.3 or later, as the Spark.pl library is compiled on 11.7.3 and thus highly recommended as the installed version.
 
+Apache Ant 1.9.x+ (now included with OE 11.7.0 at DLC/ant)
+
+Progress Compile Tools, or "PCT" (now included with OE 11.7.3 at DLC/pct/PCT.jar)
 
 ## Installation / Setup
 

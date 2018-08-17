@@ -101,7 +101,8 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
         if can-find(first ttInParam) then
             for each ttInParam:
                 create ttOutParam.
-                message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
+                if log-manager:logging-level ge 3 then
+                    message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:
@@ -124,7 +125,8 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
         if can-find(first ttInParam) then
             for each ttInParam:
                 create ttOutParam.
-                message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
+                if log-manager:logging-level ge 3 then
+                    message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:
