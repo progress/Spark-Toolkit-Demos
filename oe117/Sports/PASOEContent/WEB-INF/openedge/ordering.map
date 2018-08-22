@@ -286,6 +286,14 @@
                   "seq:asc"
                 ]
               },
+              "idxCustNum": {
+                "primary": false,
+                "unique": true,
+                "word": false,
+                "fields": [
+                  "CustNum:asc"
+                ]
+              },
               "idxComments": {
                 "primary": false,
                 "unique": false,
@@ -301,14 +309,6 @@
                 "fields": [
                   "Country:asc",
                   "PostalCode:asc"
-                ]
-              },
-              "idxCustNum": {
-                "primary": false,
-                "unique": true,
-                "word": false,
-                "fields": [
-                  "CustNum:asc"
                 ]
               },
               "idxName": {
@@ -509,20 +509,20 @@
                   "Ordernum:asc"
                 ]
               },
-              "OrderDate": {
-                "primary": false,
-                "unique": false,
-                "word": false,
-                "fields": [
-                  "OrderDate:asc"
-                ]
-              },
               "OrderNum": {
                 "primary": false,
                 "unique": true,
                 "word": false,
                 "fields": [
                   "OrderNum:asc"
+                ]
+              },
+              "OrderDate": {
+                "primary": false,
+                "unique": false,
+                "word": false,
+                "fields": [
+                  "OrderDate:asc"
                 ]
               },
               "OrderStatus": {

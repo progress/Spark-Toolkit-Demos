@@ -199,14 +199,6 @@
                   "seq:asc"
                 ]
               },
-              "idxDeptCode": {
-                "primary": false,
-                "unique": false,
-                "word": false,
-                "fields": [
-                  "DeptCode:asc"
-                ]
-              },
               "idxEmpNo": {
                 "primary": false,
                 "unique": true,
@@ -222,6 +214,14 @@
                 "fields": [
                   "LastName:asc",
                   "FirstName:asc"
+                ]
+              },
+              "idxDeptCode": {
+                "primary": false,
+                "unique": false,
+                "word": false,
+                "fields": [
+                  "DeptCode:asc"
                 ]
               }
             },

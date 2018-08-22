@@ -65,41 +65,9 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
     constructor public DOHEventHandler():
         assign oCheat = this-object.
 
-        DataObjectHandler:LoadEntity:Subscribe(this-object:LoadEntityHandler).
-        DataObjectHandler:Invoking:Subscribe(this-object:InvokingHandler).
-        DataObjectHandler:Invoked:Subscribe(this-object:InvokedHandler).
-        DataObjectHandler:OperationError:Subscribe(this-object:OperationErrorHandler).
-        &IF {&MIN_VERSION_11_7_2} &THEN
-        /* Only available for 11.7.2 and later. */
-        DataObjectHandler:DiscoverService:Subscribe(this-object:DiscoverServiceHandler).
-        DataObjectHandler:UnloadEntity:Subscribe(this-object:UnloadEntityHandler).
-        &ENDIF
+        this-object:DefineEvents(). /* Subscribe to standard DOH events. */
 
-        /* Inform the DOH of what portion of the URL is to be ignored. */
-        if valid-object(oCatalogManager) then
-            DataObjectHandler:HANDLER_PREFIX = oCatalogManager:ServicePrefix.
-
-        /* Start some of the internal registries by accessing the static properties. */
-        ArgumentValueWriterRegistry:Registry.
-        BodyWriterRegistry:Registry.
-        EntityWriterRegistry:Registry.
-        LogFilterBuilderRegistry:Registry.
-        LoggerFilterRegistry:Registry.
-        OperationHandlerRegistry:Registry.
-        ResponseElementWriterRegistry:Registry.
-        ServiceRegistry:Registry.
-
-        /* Register the ROOT service for handling the catalog. */
-        if valid-object(oCatalogManager) then
-            oCatalogManager:registerService(ServiceRegistry:Registry, ServiceRegistry:ROOT_SERVICE_NAME, SemanticVersion:Parse("")).
-
-        /* Register all known services for this application. */
-        if valid-object(oCatalogManager) then
-            oCatalogManager:registerAllServices(ServiceRegistry:Registry).
-
-        /* Create a master catalog for all services (caches output). */
-        if valid-object(oCatalogManager) then
-            oCatalogManager:getCatalog("", "").
+        this-object:InitializeRegistries(). /* Prepare the registries. */
     end constructor.
 
     destructor DOHEventHandler():
@@ -145,6 +113,48 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
     end method. /* GetStatusReason */
 
 
+    method private void DefineEvents ( ):
+        DataObjectHandler:LoadEntity:Subscribe(this-object:LoadEntityHandler).
+        DataObjectHandler:Invoking:Subscribe(this-object:InvokingHandler).
+        DataObjectHandler:Invoked:Subscribe(this-object:InvokedHandler).
+        DataObjectHandler:OperationError:Subscribe(this-object:OperationErrorHandler).
+        &IF {&MIN_VERSION_11_7_2} &THEN
+        /* Only available for 11.7.2 and later. */
+        DataObjectHandler:DiscoverService:Subscribe(this-object:DiscoverServiceHandler).
+        DataObjectHandler:UnloadEntity:Subscribe(this-object:UnloadEntityHandler).
+        &ENDIF
+    end method. /* Define Events */
+
+
+    method private void InitializeRegistries ( ):
+        /* Inform the DOH of what portion of the URL is to be ignored. */
+        if valid-object(oCatalogManager) then
+            DataObjectHandler:HANDLER_PREFIX = oCatalogManager:ServicePrefix.
+
+        /* Start some of the internal registries by accessing the static properties. */
+        ArgumentValueWriterRegistry:Registry.
+        BodyWriterRegistry:Registry.
+        EntityWriterRegistry:Registry.
+        LogFilterBuilderRegistry:Registry.
+        LoggerFilterRegistry:Registry.
+        OperationHandlerRegistry:Registry.
+        ResponseElementWriterRegistry:Registry.
+        ServiceRegistry:Registry.
+
+        /* Register the ROOT service for handling the catalog. */
+        if valid-object(oCatalogManager) then
+            oCatalogManager:registerService(ServiceRegistry:Registry, ServiceRegistry:ROOT_SERVICE_NAME, SemanticVersion:Parse("")).
+
+        /* Register all known services for this application. */
+        if valid-object(oCatalogManager) then
+            oCatalogManager:registerAllServices(ServiceRegistry:Registry).
+
+        /* Create a master catalog for all services (caches output). */
+        if valid-object(oCatalogManager) then
+            oCatalogManager:getCatalog("", "").
+    end method. /* InitializeRegistries */
+
+
     /***** Event Methods *****/
 
 
@@ -167,7 +177,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
          * related methods in the ServiceRegistry implementation.
          */
         define variable dStart  as datetime no-undo.
-        define variable lExists as logical  no-undo.
+        define variable lExists as logical  no-undo initial false.
 
         assign dStart = now. /* Record start of discovery process. */
 
@@ -178,44 +188,50 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         oLogger:Debug(substitute("DISCOVER - WebApp: &1 | Service: &2 v&3 | URI: &4 [&5 &6]",
                                  poEventArgs:Request:WebAppPath,
                                  poEventArgs:Name, SemanticVersion:Parse(poEventArgs:version):ToString(),
-                                 poEventArgs:ServiceURI, poEventArgs:Request:Method, poEventArgs:Request:URI:ToString())).  
+                                 poEventArgs:ServiceURI, poEventArgs:Request:Method, poEventArgs:Request:URI:ToString())).
 
-        /* Consult the built-in registry which implements IServiceRegistry. */
-        if valid-object(poEventArgs:Registry) then
-            if poEventArgs:Registry:HasService(poEventArgs:Name, poEventArgs:Version) then
-                assign poEventArgs:Service = poEventArgs:Registry:GetService(poEventArgs:Name, poEventArgs:Version).
+        if valid-object(oCatalogManager) then do on error undo, leave:
+            /* Consult the built-in registry which implements IServiceRegistry. */
+            if valid-object(poEventArgs:Registry) then
+                if poEventArgs:Registry:HasService(poEventArgs:Name, poEventArgs:Version) then
+                    assign poEventArgs:Service = poEventArgs:Registry:GetService(poEventArgs:Name, poEventArgs:Version).
+
+            /**
+             * Attempt to locate and register an available service from the Spark Toolkit metadata. In this use-case the available
+             * entities are dynamically discovered through class reflection and configured with specific URI patterns and verbs for
+             * access. This data can be converted into a compatible format as used by the OE.W.DO.ServiceRegistry and DOH classes.
+             */
+            assign lExists = valid-object(poEventArgs:Service).
+            if not lExists then do:
+                /* Utilize the catalog manager to obtain service information. */
+                assign poEventArgs:Service = oCatalogManager:registerService(poEventArgs:Registry,
+                                                                             poEventArgs:Name,
+                                                                             SemanticVersion:Parse(poEventArgs:Version)).
+
+                /* If service is still not available, log a message and allow event to run the default handler. */
+                if not valid-object(poEventArgs:Service) then
+                    oLogger:Debug(substitute("DISCOVER - Service registration failed for '&1' v&2",
+                                             poEventArgs:Name, SemanticVersion:Parse(poEventArgs:Version):ToString())).
+            end. /* No Service Available */
+
+            catch err as Progress.Lang.Error:
+                /* Important: Don't throw an error, just assign to the event args, create a message, and continue. */
+                assign poEventArgs:Error = err.
+                oLogger:Error(substitute("DISCOVER - &1: &2", poEventArgs:ServiceURI, err:GetMessage(1))).
+            end catch.
+            finally:
+                /* Note whether we found or created the service being returned. */
+                oLogger:Debug(substitute("DISCOVER - Service '&1' &2 in &3ms",
+                                         poEventArgs:Name, string(lExists, "located/created"),
+                                         interval(now, dStart, string(DateTimeAddIntervalEnum:Milliseconds)))).
+            end finally.
+        end. /* Catalog Manager Not Enabled */
+        else
+            oLogger:Debug("DISCOVER - Catalog Manager not in use for service discovery.").
 
         /**
-         * Attempt to locate and register an available service from the Spark Toolkit metadata. In this use-case the available
-         * entities are dynamically discovered through class reflection and configured with specific URI patterns and verbs for
-         * access. This data can be converted into a compatible format as used by the OE.W.DO.ServiceRegistry and DOH classes.
+         * If we do not have a registered service by now, the default event logic will look on disk for a .GEN and/or .MAP file.
          */
-        assign lExists = valid-object(poEventArgs:Service).
-        if valid-object(oCatalogManager) and not lExists then do:
-            /* Utilize the catalog manager to obtain service information. */
-            assign poEventArgs:Service = oCatalogManager:registerService(poEventArgs:Registry,
-                                                                         poEventArgs:Name,
-                                                                         SemanticVersion:Parse(poEventArgs:Version)).
-
-            /* If service is still not available, log a message and allow event to run the default handler. */
-            if not valid-object(poEventArgs:Service) then
-                oLogger:Debug(substitute("DISCOVER - Service registration failed for '&1' v&2",
-                                         poEventArgs:Name, SemanticVersion:Parse(poEventArgs:Version):ToString())).
-        end. /* No Service Available */
-
-        /**
-         * If we do not have a registered service by now, the default logic will look on disk for a .GEN and/or .MAP file.
-         */
-
-        catch err as Progress.Lang.Error:
-            assign poEventArgs:Error = err.
-            oLogger:Error(substitute("DISCOVER - &1: &2", poEventArgs:ServiceURI, err:GetMessage(1))).
-        end catch.
-        finally:
-            oLogger:Debug(substitute("DISCOVER - Service '&1' &2 in &3ms",
-                                     poEventArgs:Name, string(lExists, "located/created"),
-                                     interval(now, dStart, string(DateTimeAddIntervalEnum:Milliseconds)))).
-        end finally.
     end method. /* DiscoverServiceHandler */
 
 
