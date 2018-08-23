@@ -3,6 +3,13 @@
 
 ## OpenEdge 11.7
 
+### v4.3.0
+
+- Adapted the DOHEventsHandler class to access service metadata as stored in the CatalogManager.
+- Added logic to convert service metadata into a form usable by the ServiceRegistry in the DOH pattern.
+- Removed all UI code which relied on the KendoUI Professional license components (moved to internal repository).
+- Removed all other 3rd-party components (eg. PCT, jQuery, Bootstrap) to streamline approval process with legal.
+
 ### v4.2.2
 
 - Compiled all code/libraries under the new 11.7 SP3 release.
