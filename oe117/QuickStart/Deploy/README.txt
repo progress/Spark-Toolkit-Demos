@@ -3,7 +3,7 @@ a PAS instance. Note that CATALINA_BASE is your PAS server instance's directory.
 
 THESE SHOULD BE DEPLOYED BEFORE THE FIRST START OF YOUR PAS INSTANCE!
 
-Conf/ - Primary configuration directory for Spark toolkit services.
+Conf/ - Primary configuration directory for Spark (Spark) framework options.
         Files in this directory should be copied to CATALINA_BASE/conf/spark by default.
 Conf/Realm - Specific configuration options for use with OERealm security.
              The SparkRealm.cp should be copied to CATALINA_BASE/common/lib (per Tomcat rules)
