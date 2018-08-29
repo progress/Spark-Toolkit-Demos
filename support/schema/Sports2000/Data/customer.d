@@ -1,13 +1,13 @@
-1 "USA" "Lift Tours" "276 North Drive" "Suite 100" "Burlington" "MA" "01730" "Gloria Shepley" "(617) 450-0086" "HXM" 66700 903.64 "Net30" 35 "This customer is on credit hold." "" "test5@aol.com"
-2 "Finland" "Urpon Frisbee" "Rattipolku 3" "" "Oslo" "Uusima" "45321" "Urpo Leppakoski" "(603) 532 5471" "DKP" 27600 437.63 "Net30" 35 "Ship all products 2nd Day Air." "" ""
-3 "USA" "Hoops " "Suite 415" "40 Grove St." "Atlanta" "GA" "02112" "Michael Traitser" "(617) 355-1557" "HXM" 75000 1199.95 "Net30" 10 "This customer is now OFF credit hold." "" ""
+1 "USA" "Lift Tours" "276 North Drive" "Suite 105" "Burlington" "MA" "01730" "Gloria Shepley" "(617) 450-0086" "HXM" 66700 903.64 "Net30" 35 "This customer is on credit hold." "" "test6@aol.com"
+2 "Finland" "Urpon Frisbee" "Rattipolku 4" "Suite 1" "Oslo" "Uusima" "45321" "Urpo Leppakoski" "(603) 532 5471" "DKP" 27600 437.63 "Net30" 35 "Ship all products 2nd Day Air." "" ""
+3 "USA" "Hoops" "Suite 417" "40 Grove St." "Atlanta" "GA" "02112" "Michael Traitser" "(617) 355-1557" "HXM" 75000 1199.95 "Net30" 10 "This customer is now OFF credit hold." "" ""
 4 "United Kingdom" "Go Fishing Ltd" "Unit 2" "83 Ponders End Rd" "Harrow" "Middlesex" "HB8 BBB" "Alan Frogbrook" "081 883 6827" "SLS" 15000 14235.14 "Net30" 10 "Use the \\north\user share.
 Empty """" quotes.
 	This is a tab.
 This is a ""test"".
 1<2 && 2>1" "" ""
 5 "USA" "Match Point Tennis" "66 Homer Pl" "Suite 2000" "Boston" "MA" "02134" "Robert Dorr" "(817) 498-2801" "JAL" 11000 0 "Net30" 50 "" "" ""
-6 "United Kingdom" "Fanatical Athletes" "20 Bicep Bridge Rd" "Leyton" "Montgomery" "AL" "48855" "Andrew Strong" "0224 692 903" "SLS" 38900 1202.66 "Net30" 785 "Ship C.O.D. at all times." "" ""
+6 "United Kingdom" "Fanatical Athletes" "20 Bicep Bridge Rd" "Leyton" "Montgomery" "London" "48855" "Andrew Strong" "0224 692 903" "SLS" 38900 1202.66 "Net30" 785 "Ship C.O.D. at all times." "" ""
 7 "Finland" "Aerobics valine Ky" "Peltolantie 3" "" "Tikkurila" "Uusimaa" "4567" "Elli Ilmanen" "(90) 054 6399" "DKP" 13500 1112.44 "Net30" 15 "" "" ""
 8 "USA" "Game Set Match" "Box 60" "" "Deatsville" "AL" "851 14" "Tore Break" "060-60 62 61" "RDR" 15000 8254 "Net30" 50 "This customer is back on Credit Hold." "" ""
 9 "Finland" "Pihtiputaan Pyora" "Putikontie 2" "" "Pihtipudas" "Etela-Savo" "44800" "Markku Ventolinen" "(60) 162 5007" "DKP" 29900 1242.14 "Net30" 99 "Call for shipping instructions." "" ""
@@ -22,7 +22,7 @@ This is a ""test"".
 18 "Finland" "Antin Metsastysase" "Vanhainkodinkuja 1" "" "Sysma" "Keski-Suomi" "19700" "Antti Oyrinmetsa" "(71) 432 1317" "DKP" 21300 1188.39 "Net30" 35 "" "" ""
 19 "USA" "Buffalo Shuffleboard" "155 Carolina Ave" "" "Buffalo" "NY" "13142" "George Buitkus" "(716) 344-0966" "HXM" 35800 1228.02 "Net30" 20 "Ship to Green Bay warehouse." "" ""
 20 "Finland" "Espoon Pallokeskus" "Sinikalliontie 18" "" "Espoo" "Uusimaa" "1200" "Pekka Maukajarvi" "(90) 083 7737" "DKP" 12500 0 "Net30" 25 "" "" ""
-21 "USA" "Pedal Power Cycles" "11 Perkins St" "" "Boston" "MA" "02145" "Alicia Primes" "(617) 245-6969" "HXM" 6000 3369.01 "Net30" 50 "" "" ""
+21 "USA" "Pedal Power Cycles" "11 Perkins St" "Suite 1" "Boston" "MA" "02145" "Alicia Primes" "(617) 245-6969" "HXM" 6000 3369.01 "Net30" 50 "" "" ""
 22 "Finland" "Kesport Katiska" "Koskisillantie 4" "" "Forssa" "Etela-Hame" "30100" "Pentti Koskinen" "(91) 676 4644" "DKP" 31000 1156.84 "Net30" 50 "Credit Hold." "" ""
 24 "Finland" "Jazz Futis Kauppa" "Yrjonkatu 10" "" "Pori" "Satakunta" "28100" "Markku Yla-liedeoja" "(60) 349 9254" "DKP" 96200 1173.07 "Net30" 35 "" "" ""
 25 "France" "La Boule Lyonnaise" "rue de la gare" "Z.A. Bellecourt" "Lyon" "Rhone" "69010" "Mr Roulemousse" "78 98 23 25" "DOS" 13000 624.34 "Net30" 30 "Ship all products overnight." "" ""
@@ -80,14 +80,14 @@ This is a ""test"".
 77 "France" "Le Hollandais volant" "35, rue des Oiseaux" "3eme etage" "Rennes" "Bretagne" "35000" "Alain Verse" "99 86 12 48" "DOS" 9500 0 "Net30" 10 "This customer is now ON credit hold." "" ""
 78 "USA" "Jack's Jacksssss" "45 Walnut Ave." "" "Boston" "MA" "02155" "Christina Zugrulow" "(617) 499-2733" "HXM" 9500 614.93 "Net30" 40 "" "" ""
 79 "USA" "Blue Line Hockey" "15 Farquah Ct" "" "Orrington" "ME" "04474" "Pierre Buffle" "(207) 577-2003" "HXM" 11500 0 "Net30" 35 "Ship all products with Saturday Delivery." "" ""
-80 "USA" "Stickywicket Cricket" "456 Hampstead Road" "" "Nisswa" "MN" "56468" "Dory Schweitzer" "(218) 265-7798" "JAL" 54800 1181.16 "Net30" 35 "" "" ""
+80 "USA" "Stickywicket Cricket" "456 Hampstead Road" "Suite 200" "Nisswa" "MN" "56468" "Dory Schweitzer" "(218) 265-7798" "JAL" 54800 1181.16 "Net30" 35 "" "" ""
 81 "USA" "Off The Wall" "20 Leedsville Ave" "" "Export" "PA" "15632" "Nicole Beller" "(717) 367-9777" "HXM" 6200 1211.3 "Net30" 25 "" "" ""
 82 "USA" "Second Skin Scuba" "79 Farrar Ave" "" "Yuma" "AZ" "85369" "Ron Ferrante" "(602) 542-0365" "JAL" 38700 1214.74 "Net30" 25 "" "" ""
 83 "USA" "Fallen Arch Running" "49 Millmont St" "" "Codys Corner" "FL" "32010" "Kevin Mallone" "(904) 734-7868" "HXM" 73500 1166.03 "Net30" 5 "" "" ""
 84 "USA" "Spike's Volleyball" "34 Dudley St" "" "Genoa" "NV" "89411" "Craig Eleazer" "(702) 272-9264" "KIK" 20400 1173.46 "Net30" 5 "" "" ""
 1005 "USA" "Mike's Sports" "2454 Industrial Rd" "" "Cambridge" "MA" "01809" "Jill Smith" "617 234-3433" "BBB" 1500 0 "Net30" 0 "" "" ""
 1015 "USA" "Aqua Sport" "1234 West Oak Dr" "" "Philadelphia" "PA" "09998" "Jill Sanders" "215 456-4894" "KIK" 1500 0 "Net30" 10 "" "" ""
-1020 "USA" "Abc Sports" "3233 Pine St" "" "Newtown" "CA" "90999" "S. Feinstein" "714 434-3422" "SLS" 1500 0 "Net30" 0 "" "" ""
+1020 "USA" "Abc Sports" "3233 Pine St" "" "Newtown" "CA" "90999" "S. Feinstein" "714 434-3422" "RDR" 1500 0 "Net30" 0 "" "" ""
 1025 "USA" "Athlete's Track" "" "24 Chestnut St" "Vienna" "VA" "" "" "703 909-2322" "GPE" 1500 0 "Net30" 0 "" "" ""
 1030 "USA" "Soccer Universe" "" "987 Union St" "Oak Brook" "IL" "" "" "708 323-3233" "RDR" 1500 0 "Net30" 0 "" "" ""
 1035 "USA" "Sports Usa" "322 Beach Rd" "" "Boca Raton" "FL" "84938" "" "407 898-7878" "GPE" 1500 0 "Net30" 0 "" "" ""
@@ -130,7 +130,6 @@ This is a ""test"".
 1115 "USA" "Tnt Sports" "108 KELLER AVE N" "" "Amery" "WI" "54001" "Arturo Vargas" "(715) 268-8685" "DOS" 29300 21539.43 "Net30" 10 "" "" ""
 1116 "USA" "Gorilla & Sons" "1530 CORNWALL AVE" "" "Bellingham" "WA" "98225" "Shu Kwong" "(360) 738-3490" "DKP" 36300 7629.42 "Net30" 20 "" "" ""
 1117 "USA" "Great Adventure" "201 E CHESTNUT ST" "" "Bellingham" "WA" "98225" "Leonard Dankner" "(360) 671-4615" "HXM" 48100 0 "Net30" 25 "" "" ""
-1118 "USA" "Bcw Sports" "946 W NORTHLAND AVE" "" "Appleton" "WI" "54914" "C Fernandes" "(414) 738-6768" "BBB" 49200 42083.67 "Net30" 25 "" "" ""
 1119 "USA" "E J Arena Sports" "3127 W SPENCER ST" "" "Appleton" "WI" "54914" "Ronald Burke" "(414) 739-7742" "DKP" 35500 0 "Net30" 20 "" "" ""
 1120 "USA" "Diamond Hitch Sports" "18008 BOTHELL WAY SE" "" "Bothell" "WA" "98012" "K Jackson" "(206) 481-1342" "SLS" 44000 32072 "Net30" 25 "" "" ""
 1121 "USA" "D & A Sporting Goods" "413 S 4TH ST" "" "Abbotsford" "WI" "54405" "Pearl Johnson" "(715) 223-4450" "DOS" 30300 0 "Net30" 20 "" "" ""
@@ -243,7 +242,7 @@ This is a ""test"".
 1228 "USA" "Athletic Attic" "2150 NORTHWOODS BLVD" "" "Charleston" "SC" "29406" "C Davis" "(803) 797-7512" "JAL" 43600 0 "Net30" 25 "" "" ""
 1229 "USA" "Sportsworld" "114 E CHURCH ST" "" "Bishopville" "SC" "29010" "Donald Huang" "(803) 484-5555" "SLS" 7000 0 "Net30" 20 "" "" ""
 1230 "USA" "Four Seasons Sporting Goods" "3101 N MAIN ST SP P4" "" "Anderson" "SC" "29621" "Miriam Brooks" "(864) 231-8831" "RDR" 21600 12306.74 "Net30" 10 "" "" ""
-1231 "USA" "A & J Sports Inc" "1186 EDDIE DOWLING HWY" "" "North Smithfield" "RI" "02896" "E Powell" "(401) 765-4400" "DOS" 7400 0 "Net30" 25 "" "" ""
+1231 "USA" "A & J Sports Inc" "1186 EDDIE DOWLING HWY" "" "North Smithfield" "RI" "02896" "E Powell" "(401) 765-4400" "DKP" 7400 0 "Net30" 25 "" "" ""
 1232 "USA" "Bennett Sports" "900 PHENIX AVE" "" "Cranston" "RI" "02921" "K Chaudhry" "(401) 943-7600" "GPE" 46000 0 "Net30" 25 "" "" ""
 1233 "USA" "Dwight E Kuntz Sporting Goods" "621 QUAKER RUN RD" "" "Aspers" "PA" "17304" "E Roth" "(717) 677-9429" "DKP" 25900 22315.54 "Net30" 10 "" "" ""
 1234 "USA" "Soc-hoc Sports Shop" "3900 HAMILTON BLVD" "" "Allentown" "PA" "18103" "Ward Hamilton" "(610) 820-5370" "DOS" 41300 1761.51 "Net30" 25 "" "" ""
@@ -886,7 +885,7 @@ This is a ""test"".
 1871 "USA" "Champs Sports" "1520 SPRINGHILL MALL" "" "Dundee" "IL" "60118" "Joakuim Cabral" "(847) 836-1020" "DKP" 24500 18326.33 "Net30" 10 "" "" ""
 1872 "USA" "Bike & Hike" "217 LINCOLN AVE" "" "Charleston" "IL" "61920" "Antonio Dacosta" "(217) 345-1316" "HXM" 7900 0 "Net30" 10 "" "" ""
 1873 "USA" "C D Tripleplay Sportscenter" "1414 6TH ST" "" "Charleston" "IL" "61920" "Tim Sieber" "(217) 348-8218" "SLS" 8900 0 "Net30" 10 "" "" ""
-1874 "USA" "A P Sports" "6124 N MILWAUKEE AVE" "" "Chicago" "IL" "60646" "Sheila Nicholas" "(773) 631-6868" "HXM" 47100 9317.69 "Net30" 25 "" "" ""
+1874 "USA" "A P Sports" "6124 N MILWAUKEE AVE" "" "Chicago" "IL" "60646" "Sheila Nicholas" "(773) 631-6868" "HXM" 47100 9317.69 "Net30" 25 "Test" "" ""
 1875 "USA" "Simerly's" "280 S IDAHO ST" "" "Wendell" "ID" "83355" "Antonio Carreira" "(208) 536-6651" "HXM" 15800 0 "Net30" 5 "" "" ""
 1876 "USA" "Hoffies Imprinted Sportswear" "100 N MAIN ST" "" "Abingdon" "IL" "61410" "Monica Bittencourt" "(309) 462-2807" "DKP" 15900 0 "Net30" 5 "" "" ""
 1877 "USA" "Pro Image Inc" "4 2ND AVE" "" "Addison" "IL" "60101" "M Rivera" "(630) 543-8877" "HXM" 5100 0 "Net30" 5 "" "" ""
@@ -904,7 +903,7 @@ This is a ""test"".
 1889 "USA" "Bent Rod" "ELM & CUSTER" "" "Mackay" "ID" "83251" "Ryan Smith" "(208) 588-3310" "GPE" 15900 0 "Net30" 5 "" "" ""
 1890 "USA" "Sticks & Stone Mountaineering" "49 E MAIN ST" "" "Rexburg" "ID" "83440" "Artur Ribeiro" "(208) 356-7116" "BBB" 16000 0 "Net30" 5 "" "" ""
 1891 "USA" "Spirit Express" "4307 E 300 N" "" "Rigby" "ID" "83442" "Rebekah Warfield" "(208) 745-8973" "JAL" 42600 0 "Net30" 25 "" "" ""
-1892 "USA" "A To Z Sports" "30 W BRIDGE ST" "" "Blackfoot" "ID" "83221" "John Souza" "(208) 785-0232" "HXM" 45700 0 "Net30" 25 "" "" ""
+1892 "USA" "A To Z Sports" "30 W BRIDGE ST" "" "Blackfoot" "GA" "83221" "John Souza" "(208) 785-0232" "HXM" 45700 0 "Net30" 25 "" "" ""
 1893 "USA" "Sports West Outlet" "955 W BRIDGE ST" "" "Blackfoot" "ID" "83221" "Joao Riberio" "(208) 785-2290" "BBB" 35800 0 "Net30" 20 "" "" ""
 1894 "USA" "Outdoor Outlet" "" "" "Challis" "ID" "83226" "Mario Ribeiro" "(208) 879-4814" "DKP" 22000 959.34 "Net30" 10 "" "" ""
 1895 "USA" "Terry's Sports Shop & Video" "HIGHWAY 93" "" "Challis" "ID" "83226" "F Romereiro" "(208) 879-2500" "JAL" 3400 0 "Net30" 10 "" "" ""
@@ -945,7 +944,7 @@ This is a ""test"".
 1930 "USA" "Hockey Shop" "4880 LOWER ROSWELL RD" "" "Marietta" "GA" "30068" "Kelly Kosienski" "(770) 977-3995" "DKP" 31600 19097 "Net30" 20 "" "" ""
 1931 "USA" "J & J Schwin" "1791 ROSWELL RD" "" "Marietta" "GA" "30062" "James Delaney" "(770) 971-3508" "DKP" 3400 0 "Net30" 20 "" "" ""
 1932 "USA" "Advanced Hunting Equipment Inc" "8630 WALLACE TATUM RD" "" "Cumming" "GA" "30130" "Donald Palladino" "(770) 887-1171" "DOS" 8700 0 "Net30" 20 "" "" ""
-1933 "USA" "Bicycle City" "2905 N EXPWY" "" "Griffin" "GA" "30223" "Michael Gregory" "(770) 228-7422" "RDR" 32700 0 "Net30" 20 "" "" ""
+1933 "USA" "Bicycle City 2" "2905 N EXPWY" "" "Griffin" "GA" "30223" "Michael Gregory" "(770) 228-7422" "RDR" 32700 0 "Net30" 20 "" "" ""
 1934 "USA" "Famous Footwear" "681 N EXPWY" "" "Griffin" "GA" "30223" "Mark Ranslem" "(770) 228-7812" "BBB" 17900 0 "Net30" 5 "" "" ""
 1935 "USA" "Bikeabout Bicycles" "31 MILL ST Suite 200" "" "Marietta" "GA" "30060" "A Bacheller" "(770) 426-8195" "JAL" 21000 15835.09 "Net30" 10 "" "" ""
 1936 "USA" "Rei-recreational Equipment Inc" "1800 NO EXPY NE" "" "Atlanta" "GA" "30329" "Brenda Hui" "(404) 633-6508" "GPE" 29400 14443.4 "Net30" 10 "" "" ""
@@ -1117,17 +1116,18 @@ This is a ""test"".
 2102 "USA" "Lighthouse Grocery & Liquor" "10750 N TONGASS HWY" "" "Ketchikan" "AK" "99901" "Elyce Abrams" "(907) 247-2626" "DKP" 31600 25828.35 "Net30" 20 "" "" ""
 2103 "USA" "Alaska Fisheries" "3685 ARCTIC BLVD" "" "Anchorage" "AK" "99503" "Aaron Martin" "(907) 563-1166" "GPE" 21300 0 "Net30" 10 "" "" ""
 2104 "USA" "Alaska Par T Golf Pro Shop" "1307 E 74TH AVE" "" "Anchorage" "AK" "99518" "Shih Liu" "(907) 344-5717" "GPE" 7300 1901.51 "Net30" 10 "" "" ""
-2105 "USA" "All Weather wear" "4001 GEIST RD Suite 12" "" "Fairbanks" "AK" "99709" "George Romano" "(907) 474-8184" "DOS" 2200 0 "Net30" 10 "" "" ""
+2105 "USA" "All Weather wear" "4001 GEIST RD Suite 12" "" "Fairbanks" "GA" "99709" "George Romano" "(907) 474-8184" "DOS" 2200 0 "Net30" 10 "" "" ""
 2106 "USA" "Apocalypse Design Inc" "101 COLLEGE RD" "" "Fairbanks" "AK" "99701" "A Rockwell" "(907) 451-7555" "SLS" 10300 0 "Net30" 5 "" "" ""
+2107 "USA" "Test Customer" "123 Main St." "" "Denver" "CO" "80015" "" "" "DOS" 0 0 "" 0 "" "" ""
 .
 PSC
 filename=Customer
 records=0000000001117
 ldbname=sports2000
-timestamp=2014/04/01-11:51:10
+timestamp=2018/08/29-17:24:18
 numformat=44,46
 dateformat=mdy-1950
 map=NO-MAP
 cpstream=UTF-8
 .
-0000165859
+0000165843

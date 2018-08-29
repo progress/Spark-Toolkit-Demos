@@ -7,13 +7,14 @@ using OpenEdge.Core.*.
 
 routine-level on error undo, throw.
 
-define variable dLastDate as date    no-undo.
-define variable iDaysDiff as integer no-undo.
+define variable dLastDate  as date    no-undo.
+define variable iDaysDiff  as integer no-undo.
+define variable iYearsDiff as integer no-undo.
 
-/* Get the last shipping date from the order table. */
+/* Get the last shipping date from the order table to adjust all Orders, Invoices, and PO's by an equal amount. */
 for last Order no-lock
    where Order.ShipDate ne ?
-    by Order.ShipDate {&THROW}:
+      by Order.ShipDate {&THROW}:
     assign dLastDate = Order.ShipDate.
 end.
 
@@ -47,4 +48,35 @@ if iDaysDiff gt 1 then do:
         if PurchaseOrder.ReceiveDate ne ? then
             assign PurchaseOrder.ReceiveDate = add-interval(PurchaseOrder.ReceiveDate, iDaysDiff, DateTimeAddIntervalEnum:Days:ToString()).
     end.
+end. /* iDaysDiff */
+
+/* Get the youngest family member based on birthdate prior to 2010 (a millennial family). */
+for last Family no-lock
+   where Family.Birthdate lt 1/1/2010
+      by Family.Birthdate {&THROW}:
+    assign dLastDate = Family.Birthdate.
 end.
+
+/* Number of years difference from last date and 2010. */
+assign iYearsDiff = interval(1/1/2010, dLastDate, DateTimeAddIntervalEnum:Years:ToString()).
+
+message "Latest Date:" dLastDate skip
+        "Years Difference:" iYearsDiff view-as alert-box.
+
+if iYearsDiff gt 1 then do:
+    /* Advance the employee's birthdate and start date. */
+	for each Employee exclusive-lock:
+		assign
+			Employee.Birthdate = add-interval(Employee.Birthdate, iYearsDiff, DateTimeAddIntervalEnum:Years:ToString())
+			Employee.StartDate = add-interval(Employee.StartDate, iYearsDiff, DateTimeAddIntervalEnum:Years:ToString())
+			.
+	end.
+
+	/* Advance the family member's birthdate and benefit date. */
+	for each Family exclusive-lock:
+		assign
+			Family.Birthdate   = add-interval(Family.Birthdate, iYearsDiff, DateTimeAddIntervalEnum:Years:ToString())
+		    Family.BenefitDate = add-interval(Family.BenefitDate, iYearsDiff, DateTimeAddIntervalEnum:Years:ToString())
+			.
+	end.
+end. /* iYearsDiff */
