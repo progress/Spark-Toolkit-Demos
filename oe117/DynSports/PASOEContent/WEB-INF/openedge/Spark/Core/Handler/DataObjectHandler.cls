@@ -66,6 +66,11 @@ class Spark.Core.Handler.DataObjectHandler inherits Spark.Core.Handler.SparkHand
         end get.
         set.
 
+    constructor public DataObjectHandler ( ):
+        message "NOTICE: The Spark.Core.Handler.DataObjectHandler is slated for deprecation in the near future. "
+              + "Please use the product-supplied OpenEdge.Web.DataObject.DataObjectHandler instead.".
+    end constructor.
+
 
     /** Protected Methods **/
 

@@ -1,6 +1,6 @@
-Upgrade process from 2.x to 3.x (first introduction of the CCS-based classes):
+Please follow the provided upgrade process from version 2.x to 3.x (first introduction of the CCS-based classes):
 
-startup.p, ln48:
+startup.p:
     ConfigManager:Instance:sessionStart -> Ccs.Common.Application:StartupManager = Spark.Core.Manager.StartupManager:Instance
 
 Obsoleted:
@@ -39,7 +39,7 @@ Replacements:
 
 Configuration Changes:
     Move the "SessionParam" property/object from config.json to session.json config file.
-    Rename the config.json file to startup.json (to match the StartupManager as it's consumer).
+    Rename the config.json file to startup.json (to match the StartupManager as its consumer).
     In the startup.json file, make sure your "ManagerMapping" array contains the appropriate values for the Service and Session managers:
     {
         "Manager": "Spark.Core.Manager.IServiceManager",
