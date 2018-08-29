@@ -24,9 +24,6 @@
         }, {
             "Manager": "Spark.Core.Manager.IStateManager",
             "Implementation": "Spark.Core.Manager.StateManager"
-        }, {
-            "Manager": "Spark.Core.Manager.IStatsManager",
-            "Implementation": "Spark.Core.Manager.StatsManager"
         }]
     }
 }
