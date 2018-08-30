@@ -1548,6 +1548,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             this-object:ServicePrefix = GeneralParam.ServicePrefix.
             this-object:CatalogService = GeneralParam.CatalogService.
 
+            /* Provide a known default interface class for the catalog output. */
+            if (this-object:CatalogService gt "") ne true then
+                this-object:CatalogService = "Spark.Core.Service.ICatalog".
+
             assign /* Obtain defaults for general operation. */
                 cPreLoader = GeneralParam.PreLoader /* Executes code prior to anything else. */
                 lUseDebugs = (GeneralParam.EnableDebugs eq true) or log-manager:logging-level ge 4
@@ -2341,12 +2345,19 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 assign oService = poRegistry:RegisterService(pcServiceName, SemanticVersion:Parse(""), ?, ?).
 
                 /* Create a new mapped operation for this service, which MUST implement the ICatalog interface. */
-                if Progress.Lang.Class:GetClass(this-object:CatalogService):IsA(get-class(Spark.Core.Service.ICatalog)) then do:
+                define variable oServiceClass as Progress.Lang.Class  no-undo.
+                define variable oServiceImpl  as Progress.Lang.Object no-undo.
+
+                assign oServiceClass = Progress.Lang.Class:GetClass(this-object:CatalogService).
+                if valid-object(oServiceClass) then
+                    assign oServiceImpl = Ccs.Common.Application:ServiceManager:getService(oServiceClass) no-error.
+
+                if valid-object(oServiceImpl) then do:
                     assign oOperation = new MappedOperation( "/",
                                                              MethodEnum:GET,
                                                              "application/json",
                                                              TargetTypeEnum:Class:ToString(),
-                                                             this-object:CatalogService,
+                                                             oServiceImpl:GetClass():TypeName,
                                                              "Progress.Lang.Object",
                                                              "getCatalog", /* Should be a known method in ICatalog. */
                                                              ?, /* No operation options required for this endpoint. */
@@ -2360,7 +2371,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                     /* Add a mapped operation to the current service. */
                     oService:PutOperation(oOperation).
-                end. /* CatalogService is ICatalog */
+                end. /* Valid Implementation */
+                else
+                    undo, throw new AppError(substitute("Service implementation not configured for catalog (&1).", this-object:CatalogService), -500).
 
                 /* Log values to be used for mapping. */
                 assign dExecTime[2] = now.
