@@ -24,8 +24,8 @@ define variable lReturn  as logical   no-undo.
 create server hServer.
 
 /*assign cConnect = substitute("http://&1:&2@&3:&4/apsv", "apsvuser", "secret", "localhost", "8830").*/
-assign cConnect = substitute("http://&1:&2/DynSports/apsv", "localhost", "8820").
-/*assign cConnect = substitute("http://&1:&2/DynSports/apsv", "54.173.59.64", "8820").*/
+assign cConnect = substitute("http://&1:&2/sports/apsv", "localhost", "8820").
+/*assign cConnect = substitute("http://&1:&2/sports/apsv", "54.173.59.64", "8820").*/
 
 assign lReturn = hServer:connect(substitute("-URL &1 -sessionModel Session-free", cConnect)) no-error.
 if error-status:error then
@@ -75,38 +75,12 @@ if hServer:connected() then do:
                                         output cJsonResponse ).
 
         assign oParser = new ObjectModelParser().
-        cast(oParser:parse(cJsonResponse), JsonObject):WriteFile("output1.json", true).
+        if (cJsonResponse gt "") eq true then
+            cast(oParser:parse(cJsonResponse), JsonObject):WriteFile("output1.json", true).
         message "Length:" length(cJsonResponse, "raw") view-as alert-box.
     end. /* do */
 
     delete object hCPO no-error.
-
-    create client-principal hCPO.
-    hCPO:initialize("dev2", "0").
-    hCPO:domain-name = "spark".
-    hCPO:seal("spark01").
-    hServer:request-info:SetClientPrincipal(hCPO).
-
-    do stop-after 20 on stop undo, leave:
-        run Spark/Core/ApsvFacade.p on server hServer single-run set hFacade no-error.
-        if error-status:error then
-            message return-value view-as alert-box.
-
-        if valid-handle(hFacade) then
-            run runService in hFacade ( input  "customer",
-                                        input  "read",
-                                        input  "get",
-                                        input  "/web/api/ordering",
-                                        input  "",
-                                        output fElapsedTime,
-                                        output iResponseCode,
-                                        output cHeadResponse,
-                                        output cJsonResponse ).
-
-        assign oParser = new ObjectModelParser().
-        cast(oParser:parse(cJsonResponse), JsonObject):WriteFile("output2.json", true).
-        message "Length:" length(cJsonResponse, "raw") view-as alert-box.
-    end. /* do */
 end. /* connected */
 
 finally:

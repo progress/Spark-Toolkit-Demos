@@ -2387,23 +2387,23 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
         /* Debug the current service by dumping to a JSON file when logging level is verbose. */
         if log-manager:logging-level ge 3 and valid-object(oService) then do on error undo, leave:
-/*            define variable oSvcWriter as ServiceJsonWriter no-undo.                                                                       */
+            define variable oSvcWriter as MappingFileServiceWriter no-undo.
 
-/*            assign oSvcWriter = new ServiceJsonWriter().                                                                                   */
+            assign oSvcWriter = new MappingFileServiceWriter().
 
-/*            oSvcWriter:open().                                                                                                             */
-/*            oSvcWriter:write(oService).                                                                                                    */
-/*            oSvcWriter:close().                                                                                                            */
-/*            oSvcJson = cast(oSvcWriter:Value, JsonObject).                                                                                 */
-/*            oSvcJson:WriteFile(substitute("&1/&2.map", right-trim(replace(session:temp-directory, "~\", "~/"), "~/"), pcServiceName), yes).*/
+            oSvcWriter:open().
+            oSvcWriter:write(oService).
+            oSvcWriter:close().
+            oSvcJson = cast(oSvcWriter:Value, JsonObject).
+            oSvcJson:WriteFile(substitute("&1/&2.map", right-trim(replace(session:temp-directory, "~\", "~/"), "~/"), pcServiceName), yes).
 
-/*            catch err as Progress.Lang.Error:                                                                                              */
-/*                oLoggingManager:logError("Error while dumping service.", err, "SPARK-SVC", 2).                                             */
-/*            end catch.                                                                                                                     */
-/*            finally:                                                                                                                       */
-/*                delete object oSvcWriter no-error.                                                                                         */
-/*                delete object oSvcJson no-error.                                                                                           */
-/*            end finally.                                                                                                                   */
+            catch err as Progress.Lang.Error:
+                oLoggingManager:logError("Error while dumping service.", err, "SPARK-SVC", 2).
+            end catch.
+            finally:
+                delete object oSvcWriter no-error.
+                delete object oSvcJson no-error.
+            end finally.
         end. /* MAP Output */
 
         if valid-object(oService) then
