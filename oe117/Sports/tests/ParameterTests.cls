@@ -43,7 +43,6 @@ class tests.ParameterTests inherits tests.SparkUnit:
         end finally.
     end method.
 
-
     /*------------------------------------------------------------------------------
         Purpose:
         Notes:
@@ -70,23 +69,21 @@ class tests.ParameterTests inherits tests.SparkUnit:
     end method.
 
     /*------------------------------------------------------------------------------
-        Purpose: Confirm the IManager interface is present and valid.
+        Purpose: Confirm the ServiceManager is present and valid.
         Notes:
     ------------------------------------------------------------------------------*/
     @Test.
-    method public void testManager ( ):
-        OpenEdge.Core.Assert:IsTrue(this-object:HasManagerInterface()).
+    method public void testServiceManager ( ):
+        OpenEdge.Core.Assert:IsTrue(valid-object(Ccs.Common.Application:ServiceManager)).
     end method.
 
     /*------------------------------------------------------------------------------
-        Purpose: Confirm a DirectFacade is present and usable.
+        Purpose: Confirm the SessionManager is present and valid.
         Notes:
     ------------------------------------------------------------------------------*/
     @Test.
-    method public void testDirectFacade ( ):
-        define variable oFacade as Spark.Core.DirectFacade no-undo.
-        assign oFacade = new Spark.Core.DirectFacade().
-        OpenEdge.Core.Assert:IsTrue(valid-object(oFacade)).
+    method public void testSessionManager ( ):
+        OpenEdge.Core.Assert:IsTrue(valid-object(Ccs.Common.Application:SessionManager)).
     end method.
 
     /*------------------------------------------------------------------------------
@@ -109,6 +106,64 @@ class tests.ParameterTests inherits tests.SparkUnit:
         hCPO:seal("{&domain_passkey}").
 
         OpenEdge.Core.Assert:IsTrue(hCPO:validate-seal("{&domain_passkey}")).
+    end method.
+
+    /*------------------------------------------------------------------------------
+        Purpose: Confirm a request can be performed against the service facade.
+        Notes:
+    ------------------------------------------------------------------------------*/
+    @Test.
+    method public void testFacadeService ( ):
+        define variable oServiceClass as Progress.Lang.Class  no-undo.
+        define variable oServiceImpl  as Progress.Lang.Object no-undo.
+        define variable dtzTestDate   as datetime-tz          no-undo.
+        define variable inString      as character            no-undo initial "Hello World".
+        define variable inDecimal     as decimal              no-undo initial 3.1415.
+        define variable inInteger     as integer              no-undo initial 12345.
+        define variable outString     as character            no-undo.
+        define variable outDecimal    as decimal              no-undo.
+        define variable outInteger    as integer              no-undo.
+        define variable outDate       as date                 no-undo.
+        define variable outDTime      as datetime             no-undo.
+        define variable outDTimeTZ    as datetime-tz          no-undo.
+
+        assign oServiceClass = Progress.Lang.Class:GetClass("Business.UnitTest.Params").
+        if valid-object(oServiceClass) then
+            assign oServiceImpl = Ccs.Common.Application:ServiceManager:getService(oServiceClass).
+
+        if valid-object(oServiceImpl) then do on error undo, leave:
+            /* Establish identity of test user using CPO. */
+            Ccs.Common.Application:SessionManager:establishRequestEnvironment(hCPO).
+
+            assign dtzTestDate = now. /* Set a consistent date for tests. */
+            cast(oServiceImpl, Business.UnitTest.Params):testPrimitives( input  inString,
+                                                                         input  inDecimal,
+                                                                         input  inInteger,
+                                                                         input  date(dtzTestDate),
+                                                                         input  datetime(date(dtzTestDate), mtime(dtzTestDate)),
+                                                                         input  dtzTestDate,
+                                                                         output outString,
+                                                                         output outDecimal,
+                                                                         output outInteger,
+                                                                         output outDate,
+                                                                         output outDTime,
+                                                                         output outDTimeTZ).
+
+            OpenEdge.Core.Assert:Equals(inString, outString).
+            OpenEdge.Core.Assert:Equals(inDecimal, outDecimal).
+            OpenEdge.Core.Assert:Equals(inInteger, outInteger).
+            OpenEdge.Core.Assert:Equals(date(dtzTestDate), outDate).
+            OpenEdge.Core.Assert:Equals(datetime(date(dtzTestDate), mtime(dtzTestDate)), outDTime).
+            OpenEdge.Core.Assert:Equals(dtzTestDate, outDTimeTZ).
+
+            finally:
+                Ccs.Common.Application:SessionManager:endRequestEnvironment(). /* Downgrade identity. */
+                Ccs.Common.Application:ServiceManager:stopServices(Spark.Core.Manager.ServiceLifeCycleEnum:request).
+
+                delete object oServiceClass no-error.
+                delete object oServiceImpl no-error.
+            end finally.
+        end. /* valid-object */
     end method.
 
 end class.

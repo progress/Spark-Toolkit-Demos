@@ -188,7 +188,7 @@ class tests.UtilityTests inherits tests.SparkUnit:
     @Test.
     method public void testHMAC ( ):
         define variable cHash as character no-undo.
-        
+
         /* Should reuse the hex value from testBase32Hex, and a known timestamp as 16-digit padded hex. */
         assign cHash = Spark.Core.Security.HMAC:GenHash("SHA-1", "48656c6c6f21deadbeef", "0000000002ff7d1e").
 
@@ -204,7 +204,7 @@ class tests.UtilityTests inherits tests.SparkUnit:
     method public void testHMACTruncation ( ):
         define variable iTrunc as int64     no-undo.
         define variable cTrunc as character no-undo.
-        
+
         /* Should reuse hash from testHMAC, testing only the truncation to an integer. */
         assign iTrunc = Spark.Core.Security.HMAC:TruncateHMAC("5b56f711bf9e0c4b77850caaafe34e89b5ec55c8").
 

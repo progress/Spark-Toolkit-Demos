@@ -64,7 +64,7 @@ class tests.StartupTests inherits tests.SparkUnit:
     @Test.
     method public void testApplication ( ):
         define variable oApp as Progress.Lang.Class no-undo.
-        assign oApp = Progress.Lang.Class:GetClass("Ccs.Common.Application") no-error.       
+        assign oApp = Progress.Lang.Class:GetClass("Ccs.Common.Application") no-error.
         OpenEdge.Core.Assert:IsTrue(valid-object(oApp)).
     end method.
 
