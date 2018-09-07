@@ -1,8 +1,5 @@
 {
     "Config": {
-        "General": [{
-            "Timeout": 20
-        }],
         "ManagerMapping": [{
             "Manager": "Spark.Core.Manager.IServiceManager",
             "Implementation": "Spark.Core.Manager.ServiceManager"
