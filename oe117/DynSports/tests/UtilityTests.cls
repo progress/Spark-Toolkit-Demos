@@ -43,7 +43,6 @@ class tests.UtilityTests inherits tests.SparkUnit:
         end finally.
     end method.
 
-
     /*------------------------------------------------------------------------------
         Purpose:
         Notes:
