@@ -7,6 +7,9 @@
             "Manager": "Spark.Core.Manager.ISessionManager",
             "Implementation": "Spark.Core.Manager.SessionManager"
         }, {
+            "Manager": "Spark.Core.Manager.ILoggingManager",
+            "Implementation": "Spark.Core.Manager.LoggingManager"
+        }, {
             "Manager": "Spark.Core.Manager.IConnectionManager",
             "Implementation": "Spark.Core.Manager.ConnectionManager"
         }, {
@@ -15,9 +18,6 @@
         }, {
             "Manager": "Spark.Core.Manager.IStateManager",
             "Implementation": "Sports.Spark.Core.Manager.StateManager"
-        }, {
-            "Manager": "Spark.Core.Manager.IStatsManager",
-            "Implementation": "Spark.Core.Manager.StatsManager"
         }]
     }
 }

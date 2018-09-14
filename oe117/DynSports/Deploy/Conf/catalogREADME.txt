@@ -46,7 +46,8 @@ to be provided within the ServiceResource property. Alternatively, see the sampl
  "Config": {
   "General": [
     {
-      "ApiVersion": 4.2,
+      "ApiVersion": 4.3,
+      "CatalogService": "Spark.Core.Service.ICatalog",
       "BusinessRoot": "Business.pl",
       "EnableDebugs": false,
       "IdProperty": "id",

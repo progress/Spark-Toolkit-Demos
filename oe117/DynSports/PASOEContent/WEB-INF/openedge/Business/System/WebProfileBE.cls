@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
     File        : WebProfileBE.cls
     Author(s)   : Code Wizard
-    Created     : 05/09/17
+    Created     : 08/06/18
     Notes       : Customized BE instance with AFP features available.
   ----------------------------------------------------------------------*/
 
@@ -10,7 +10,7 @@ using Spark.Core.Util.FieldInfo from propath.
 
 block-level on error undo, throw.
 
-class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity:
+class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use-widget-pool:
 
     {Common/webprofile.i}
 
@@ -39,12 +39,14 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity:
         protected set.
 
     define public override property operations as character
-        initial "CRUD,Submit" no-undo get.
+        initial "ReadOnly,Submit" no-undo get.
         protected set.
 
 
     method public override void initialize ( ):
-        /* Describe any properties about invoke methods to be exposed. */
+        /* Describe any overrides to the operations to be exposed. */
+        Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadWebProfile").
+        Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitWebProfile").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
 
         /* Describe any properties to be added the entity tables. */
@@ -241,8 +243,15 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity:
     end method. /* postRowFill */
 
 
-    method public void getCount ( input filter as character, output numRecs as int64 ):
-        assign numRecs = filterData(filter).
-    end method. /* getCount */
+    method public void ReadWebProfile ( input  filter  as character,
+                                        output dataset dsWebProfile ):
+        define variable iNumRecs as int64 no-undo.
+        super:ReadData(filter, iNumRecs, output dataset dsWebProfile by-reference).
+    end method. /* ReadWebProfile */
+
+
+    method public void SubmitWebProfile ( input-output dataset dsWebProfile ):
+        super:SubmitData(input-output dataset dsWebProfile by-reference).
+    end method. /* SubmitWebProfile */
 
 end class.

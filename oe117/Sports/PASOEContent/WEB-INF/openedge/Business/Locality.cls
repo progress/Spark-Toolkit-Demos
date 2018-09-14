@@ -2,7 +2,7 @@
     File        : Locality
     Purpose     : Simple class for locality data
     Author(s)   : Dustin Grau (dugrau@progress.com)
-    Created     : Tue Jun 02 09:51:10 EDT 2015
+    Created     : 06/02/15
     Notes       :
   ----------------------------------------------------------------------*/
 

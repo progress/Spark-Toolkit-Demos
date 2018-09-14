@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Fri May 25 16:19:52 EDT 2018",
+  "lastModified": "Fri Aug 17 13:56:34 EDT 2018",
   "services": [
     {
       "name": "test",
@@ -21,6 +21,104 @@
               "params": [
                 {
                   "name": "completed",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "params",
+          "path": "\/params",
+          "autoSave": true,
+          "operations": [
+            {
+              "name": "primitives",
+              "path": "\/primitives",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "inString",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "inDecimal",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "inInteger",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "inDate",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "inDTime",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "inDTimeTZ",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "outString",
+                  "type": "RESPONSE_BODY"
+                },
+                {
+                  "name": "outDecimal",
+                  "type": "RESPONSE_BODY"
+                },
+                {
+                  "name": "outInteger",
+                  "type": "RESPONSE_BODY"
+                },
+                {
+                  "name": "outDate",
+                  "type": "RESPONSE_BODY"
+                },
+                {
+                  "name": "outDTime",
+                  "type": "RESPONSE_BODY"
+                },
+                {
+                  "name": "outDTimeTZ",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "table",
+              "path": "\/table",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "ttInParam",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "ttOutParam",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "dataset",
+              "path": "\/dataset",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "dsInParam",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "dsOutParam",
                   "type": "RESPONSE_BODY"
                 }
               ]

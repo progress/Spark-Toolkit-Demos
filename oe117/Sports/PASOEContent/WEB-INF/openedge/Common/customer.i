@@ -39,9 +39,9 @@ define temp-table ttCustomer no-undo before-table bttCustomer
     field Fax          as character label "Fax"
     field EmailAddress as character label "Email"
     index pkSeq        is primary unique seq
+    index idxCustNum   is unique  CustNum
     index idxComments             Comments
     index idxCountryPost          Country PostalCode
-    index idxCustNum   is unique  CustNum
     index idxName                 Name
     index idxSalesRep             SalesRep
     .

@@ -3,6 +3,7 @@
 <propathentry env="all" kind="src" path="@{ROOT}\PASOEContent\WEB-INF\openedge" platform="All"/>
 <propathentry env="all" kind="lib" path="@{ROOT}\AppServer\Ccs.pl" platform="All"/>
 <propathentry env="all" kind="lib" path="@{ROOT}\AppServer\Spark.pl" platform="All"/>
+<propathentry env="all" kind="lib" path="@{ROOT}\AppServer\OpenEdge.Net.pl" platform="All"/>
 <propathentry env="all" kind="src" path="@{ROOT}\AppServer" platform="All"/>
 <propathentry env="all" kind="dir" path="@{ROOT}\tools" platform="All"/>
 <propathentry env="all" excluding="@{ROOT}/PASOEContent/static¦@{ROOT}/Deploy" kind="src" path="@{ROOT}" platform="All"/>

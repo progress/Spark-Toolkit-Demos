@@ -1,9 +1,9 @@
 1 1 54 4.86 30 10 131.22 "Shipped"
 1 2 55 23.85 21 10 450.77 "Shipped"
-1 3 53 8.77 75 10 591.98 "Shipped"
-1 4 28 23 39 10 807.3 "Shipped"
+1 3 53 8.77 80 10 631.44 "Shipped"
+1 4 28 23 40 10 828 "Shipped"
 1 5 39 34 75 10 2295 "Shipped"
-1 6 26 4.99 28 10 125.75 "Shipped"
+1 6 26 4.99 30 10 134.73 "Shipped"
 2 1 19 2.75 48 25 99 "Shipped"
 2 2 49 6.78 14 25 71.19 "Shipped"
 2 3 13 10.99 79 25 651.16 "Shipped"
@@ -13973,10 +13973,10 @@ PSC
 filename=OrderLine
 records=0000000013970
 ldbname=sports2000
-timestamp=2014/04/01-11:51:11
+timestamp=2018/08/29-17:24:19
 numformat=44,46
 dateformat=mdy-1950
 map=NO-MAP
 cpstream=UTF-8
 .
-0000524766
+0000524764

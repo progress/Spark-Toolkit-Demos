@@ -309,8 +309,8 @@
                             // Create a method that can be called at-will to update data.
                             lookup.fetchData = function(params){
                                 return lookup._jsdo.invoke(fieldOptions.invokeMethod, (params || {}))
-                                    .done(function(jsdo, status, request){
-                                        var response = request.response || {};
+                                    .then(function(result){
+                                        var response = (result.request || {}).response || {};
                                         if (fieldOptions.invokeDataProperty) {
                                             // Data should be found within a specific response property.
                                             var data = response[fieldOptions.invokeDataProperty] || [];

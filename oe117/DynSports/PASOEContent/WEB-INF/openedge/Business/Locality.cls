@@ -2,7 +2,7 @@
     File        : Locality
     Purpose     : Simple class for locality data
     Author(s)   : Dustin Grau (dugrau@progress.com)
-    Created     : Tue Jun 02 09:51:10 EDT 2015
+    Created     : 08/06/18
     Notes       :
   ----------------------------------------------------------------------*/
 
@@ -15,7 +15,7 @@ block-level on error undo, throw.
 
 {Common/config.i}
 
-class Business.Locality inherits Spark.Core.Service.DynamicResource:
+class Business.Locality inherits Spark.Core.Service.DynamicResource use-widget-pool:
 
     {Common/state.i}
 
@@ -26,6 +26,7 @@ class Business.Locality inherits Spark.Core.Service.DynamicResource:
     define public override property resourceName as character
         initial "locality" no-undo get.
         protected set.
+
 
     method public override void initialize ( ):
         /* Describe any properties about invoke methods to be exposed. */
@@ -38,6 +39,8 @@ class Business.Locality inherits Spark.Core.Service.DynamicResource:
 
     method public void getStateProvince ( input  country as character,
                                           output table for states ):
+        if (country gt "") ne true then assign country = "usa".
+
         case country:
             when "can" or
             when "canada" then

@@ -37,6 +37,7 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
         field dDate    as date
         field dDTime   as datetime
         field dDTimeTZ as datetime-tz
+        index pkMain as primary cString
         .
     define dataset dsInParam for ttInParam.
 
@@ -47,6 +48,7 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
         field dDate    as date
         field dDTime   as datetime
         field dDTimeTZ as datetime-tz
+        index pkMain as primary cString
         .
     define dataset dsOutParam for ttOutParam.
 
@@ -99,11 +101,11 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
         if can-find(first ttInParam) then
             for each ttInParam:
                 create ttOutParam.
-                message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
+                if log-manager:logging-level ge 3 then
+                    message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:
-            this-object:oResponse:addError("Field", ErrorTypeEnum:warning, "No records available from input temp-table.").
             create ttOutParam.
             assign
                 ttOutParam.cString  = "OutString"
@@ -123,11 +125,11 @@ class Business.UnitTest.Params inherits Spark.Core.Service.DynamicResource:
         if can-find(first ttInParam) then
             for each ttInParam:
                 create ttOutParam.
-                message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
+                if log-manager:logging-level ge 3 then
+                    message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:
-            this-object:oResponse:addError("Field", ErrorTypeEnum:warning, "No records available from input dataset.").
             create ttOutParam.
             assign
                 ttOutParam.cString  = "OutString"

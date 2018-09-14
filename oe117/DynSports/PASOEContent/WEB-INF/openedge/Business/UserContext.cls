@@ -2,7 +2,7 @@
     File        : WebContext.cls
     Purpose     : Simple class for User context data
     Author(s)   : Dustin Grau (dugrau@progress.com)
-    Created     : Wed Feb 21 11:25:07 EST 2018
+    Created     : 02/21/18
     Notes       :
   ----------------------------------------------------------------------*/
 
@@ -11,7 +11,7 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class Business.UserContext inherits Spark.Core.Service.DynamicEntity:
+class Business.UserContext inherits Spark.Core.Service.DynamicEntity use-widget-pool:
 
     {Common/webcontext.i}
 
@@ -45,7 +45,9 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity:
 
 
     method public override void initialize ( ):
-        /* Describe any properties about invoke methods to be exposed. */
+        /* Describe any overrides to the operations to be exposed. */
+        Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadContext").
+        Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitContext").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "clearContext", "clear", "put").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getRoles", "roles", "put").
@@ -132,9 +134,8 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity:
     end method. /* validateData */
 
 
-    method public override void readData ( input  filter  as character,
-                                           output numRecs as int64,
-                                           output dataset-handle phDataSet ):
+    method public void ReadContext ( input  filter  as character,
+                                     output dataset dsWebContext ):
         define variable oFilterObj as JsonObject no-undo.
         define variable oFilter    as JsonObject no-undo.
         define variable oFilters   as JsonArray  no-undo.
@@ -207,14 +208,20 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity:
 
         /* Return altered filter from adjusted JSON object. */
         assign filter = oFilterObj:GetJsonText().
-        assign numRecs = filterData(filter).
-        phDataSet:copy-dataset(ProDataSet).
-    end method. /* readData */
+
+        define variable iNumRecs as int64 no-undo.
+        super:readData(filter, iNumRecs, output dataset dsWebContext by-reference).
+    end method. /* ReadContext */
+
+
+    method public void SubmitContext ( input-output dataset dsWebContext ):
+        super:submitData(input-output dataset dsWebContext by-reference).
+    end method. /* SubmitContext */
 
 
     method public void getCount ( input filter as character, output numRecs as int64 ):
-        assign numRecs = filterData(filter).
-    end method. /* count */
+        assign numRecs = this-object:filterData(filter).
+    end method. /* getCount */
 
 
     method public void clearContext ( input  contextType    as character,

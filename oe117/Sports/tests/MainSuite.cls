@@ -11,6 +11,7 @@ using Progress.Lang.* from propath.
 block-level on error undo, throw.
 
 @TestSuite(classes="tests.StartupTests").
+@TestSuite(classes="tests.ServiceTests").
 @TestSuite(classes="tests.ParameterTests").
 @TestSuite(classes="tests.UtilityTests").
 

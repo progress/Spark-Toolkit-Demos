@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
     File        : Access.cls
     Author(s)   : Dustin Grau
-    Created     : Wed Nov 29 15:10:04 EST 2017
+    Created     : 08/06/18
     Notes       :
   ----------------------------------------------------------------------*/
 
@@ -13,7 +13,7 @@ using Spark.Core.Util.OSTools from propath.
 
 block-level on error undo, throw.
 
-class Business.System.Access inherits Spark.Core.Service.DynamicResource:
+class Business.System.Access inherits Spark.Core.Service.DynamicResource use-widget-pool:
 
     define override public property serviceURI as character
         initial "/web/api/system" no-undo get.
@@ -30,14 +30,13 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
         index pkLine is primary unique lineNo
         .
 
-    define private temp-table rules
+    define private temp-table ttRules
         field ruleOrder     as integer
         field transportName as character
         field interceptURI  as character
         field httpMethod    as character
         field accessRule    as character
         . /* No index, use in the given order! */
-
 
     method private character getRulesFilename ( ):
         define variable cWebApp as character no-undo.
@@ -46,7 +45,6 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
         assign cWebApp = substitute("&1/webapps/&2", right-trim(OSTools:catalinaBase, "/"), "{&WEBAPP_NAME}").
         return substitute("&1/WEB-INF/oeablSecurity.csv", cWebApp).
     end method. /* getRulesFilename */
-
 
     method private void readInterceptRules ( ):
         define variable cLine as character no-undo.
@@ -84,13 +82,13 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
         if not can-do(oClientContext:clientPrincipal:roles, "ROLE_WebAdmin") then return false.
 
         /* Cannot output what we do not have. */
-        if not can-find(first rules) then return false.
+        if not can-find(first ttRules) then return false.
 
         /* Using the given order, apply a number to each rule. */
-        for each rules exclusive-lock:
+        for each ttRules exclusive-lock:
             assign iLine = iLine + 1.
-            assign rules.ruleOrder = iLine.
-        end. /* for each rules */
+            assign ttRules.ruleOrder = iLine.
+        end. /* for each ttRules */
 
         /* Ensure destination file is available. */
         file-info:file-name = this-object:getRulesFilename().
@@ -101,52 +99,52 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
             put unformatted '# "url-pattern","<method>","<spring-access-expression>"' skip. /* Define the file format. */
 
             /* Output the transport rules first. */
-            for each rules no-lock
-               where rules.transportName ne "default"
-                 and rules.transportName ne "static"
-               break by rules.transportName
-                     by rules.ruleOrder:
-                if first-of(rules.transportName) then do:
+            for each ttRules no-lock
+               where ttRules.transportName ne "default"
+                 and ttRules.transportName ne "static"
+               break by ttRules.transportName
+                     by ttRules.ruleOrder:
+                if first-of(ttRules.transportName) then do:
                     put unformatted skip(1). /* Skip a line and ouput a comment. */
-                    put unformatted substitute("############## Intercept-url definitions for the &1 transport URIs ###############", caps(rules.transportName)) skip.
+                    put unformatted substitute("############## Intercept-url definitions for the &1 transport URIs ###############", caps(ttRules.transportName)) skip.
                 end. /* first-of */
 
-                put unformatted substitute('"&1","&2","&3"', rules.interceptURI, caps(rules.httpMethod), rules.accessRule) skip.
-            end. /* for each rules */
+                put unformatted substitute('"&1","&2","&3"', ttRules.interceptURI, caps(ttRules.httpMethod), ttRules.accessRule) skip.
+            end. /* for each ttRules */
 
             put unformatted skip(1). /* Skip a line and ouput a comment. */
             put unformatted '############## Intercept-url definitions for the default URI space #################' skip.
 
             /* Output the static rules next. */
-            for each rules no-lock
-               where rules.transportName eq "static"
-                  by rules.ruleOrder:
-                put unformatted substitute('"&1","&2","&3"', rules.interceptURI, rules.httpMethod, rules.accessRule) skip.
-            end. /* for each rules */
+            for each ttRules no-lock
+               where ttRules.transportName eq "static"
+                  by ttRules.ruleOrder:
+                put unformatted substitute('"&1","&2","&3"', ttRules.interceptURI, ttRules.httpMethod, ttRules.accessRule) skip.
+            end. /* for each ttRules */
 
             put unformatted skip(1). /* Skip a line and ouput a comment. */
             put unformatted '# Best practice - deny anything not explicitly granted' skip.
 
             /* Must make sure at least 1 default rule exists for security. */
-            if not can-find(first rules no-lock
-                            where rules.transportName eq "default") then do:
+            if not can-find(first ttRules no-lock
+                            where ttRules.transportName eq "default") then do:
                 /* This rule denies all access. */
-                create rules.
+                create ttRules.
                 assign
-                    rules.transportName = "default"
-                    rules.interceptURI  = "/**"
-                    rules.httpMethod    = "*"
-                    rules.accessRule    = "denyAll()"
+                    ttRules.transportName = "default"
+                    ttRules.interceptURI  = "/**"
+                    ttRules.httpMethod    = "*"
+                    ttRules.accessRule    = "denyAll()"
                     .
-                release rules.
+                release ttRules.
             end. /* no default */
 
             /* Output any default rules last. */
-            for each rules no-lock
-               where rules.transportName eq "default"
-                  by rules.ruleOrder:
-                put unformatted substitute('"&1","&2","&3"', rules.interceptURI, rules.httpMethod, rules.accessRule) skip.
-            end. /* for each rules */
+            for each ttRules no-lock
+               where ttRules.transportName eq "default"
+                  by ttRules.ruleOrder:
+                put unformatted substitute('"&1","&2","&3"', ttRules.interceptURI, ttRules.httpMethod, ttRules.accessRule) skip.
+            end. /* for each ttRules */
 
             output close.
             return true.
@@ -160,26 +158,20 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
 
 
     method public override void initialize ( ):
-
-        define variable hTable as handle no-undo.
-        assign hTable = temp-table rules:handle.
-        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerTempTable(input hTable).
-        delete object hTable no-error.
-
         /* Describe any properties about invoke methods to be exposed. */
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getInterceptRules", "rules", "get").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "setInterceptRules", "apply", "put").
     end method. /* initialize */
 
 
-    method public void getInterceptRules ( output table for rules ):
+    method public void getInterceptRules ( output rules as Progress.Json.ObjectModel.JsonArray ):
         define variable cRule as character no-undo.
 
         /* Ignore request if user does not have the proper role. */
         if not can-do(oClientContext:clientPrincipal:roles, "ROLE_WebAdmin") then return.
 
         this-object:readInterceptRules().
-        empty temp-table rules.
+        empty temp-table ttRules.
 
         for each ttLine no-lock
            where ttLine.lineText gt ""
@@ -188,35 +180,45 @@ class Business.System.Access inherits Spark.Core.Service.DynamicResource:
             assign cRule = replace(ttLine.lineText, '","', "|").
 
             /* Create the rule record using the given line. */
-            create rules.
+            create ttRules.
             assign
-                rules.interceptURI = replace(entry(1, cRule, "|"), '"', "")
-                rules.httpMethod   = replace(entry(2, cRule, "|"), '"', "")
-                rules.accessRule   = replace(entry(3, cRule, "|"), '"', "")
+                ttRules.interceptURI = replace(entry(1, cRule, "|"), '"', "")
+                ttRules.httpMethod   = replace(entry(2, cRule, "|"), '"', "")
+                ttRules.accessRule   = replace(entry(3, cRule, "|"), '"', "")
                 .
 
             /* Determine the correct transport/namespace. */
             case true:
-                when rules.interceptURI begins "/apsv" then
-                    assign rules.transportName = "APSV".
-                when rules.interceptURI begins "/rest" then
-                    assign rules.transportName = "REST".
-                when rules.interceptURI begins "/soap" then
-                    assign rules.transportName = "SOAP".
-                when rules.interceptURI begins "/web" then
-                    assign rules.transportName = "WEB".
-                when rules.interceptURI eq "/**" then
-                    assign rules.transportName = "DEFAULT".
+                when ttRules.interceptURI begins "/apsv" then
+                    assign ttRules.transportName = "APSV".
+                when ttRules.interceptURI begins "/rest" then
+                    assign ttRules.transportName = "REST".
+                when ttRules.interceptURI begins "/soap" then
+                    assign ttRules.transportName = "SOAP".
+                when ttRules.interceptURI begins "/web" then
+                    assign ttRules.transportName = "WEB".
+                when ttRules.interceptURI eq "/**" then
+                    assign ttRules.transportName = "DEFAULT".
                 otherwise
-                    assign rules.transportName = "STATIC".
+                    assign ttRules.transportName = "STATIC".
             end case.
         end. /* for each ttLine */
+
+        /* Must output as a JsonArray to avoid an issue with nested temp-table names. */
+        define variable lcData as longchar no-undo.
+        temp-table ttRules:write-json("longchar", lcData, true, "UTF-8", false, true, false).
+        define variable oParse as Progress.Json.ObjectModel.ObjectModelParser no-undo.
+        assign oParse = new Progress.Json.ObjectModel.ObjectModelParser().
+        rules = cast(oParse:Parse(lcData), Progress.Json.ObjectModel.JsonArray).
+        assign lcData = ?.
     end method. /* getInterceptRules */
 
 
-    method public void setInterceptRules ( input  table for rules,
+    method public void setInterceptRules ( input  rules as Progress.Json.ObjectModel.JsonArray,
                                            output success as logical ):
         /* Write rules back to file (creates backup first). */
+        empty temp-table ttRules.
+        temp-table ttRules:read-json("JsonArray", rules, "empty").
         assign success = this-object:writeInterceptRules().
     end method. /* setInterceptRules */
 

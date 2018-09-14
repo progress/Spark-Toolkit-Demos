@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
     File        : WebRoleBE.cls
     Author(s)   : Code Wizard
-    Created     : 05/09/17
+    Created     : 08/06/18
     Notes       : Customized BE instance with AFP features available.
   ----------------------------------------------------------------------*/
 
@@ -9,7 +9,7 @@ using Progress.Lang.* from propath.
 
 block-level on error undo, throw.
 
-class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity:
+class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity use-widget-pool:
 
     {Common/webrole.i}
 
@@ -43,7 +43,8 @@ class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity:
 
 
     method public override void initialize ( ):
-        /* Describe any properties about invoke methods to be exposed. */
+        /* Describe any overrides to the operations to be exposed. */
+        Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadWebRole").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
     end method. /* initialize */
 
@@ -86,8 +87,10 @@ class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity:
     end method. /* postRowFill */
 
 
-    method public void getCount ( input filter as character, output numRecs as int64 ):
-        assign numRecs = filterData(filter).
-    end method. /* getCount */
+    method public void ReadWebRole ( input  filter  as character,
+                                     output dataset dsWebRole ):
+        define variable iNumRecs as int64 no-undo.
+        super:ReadData(filter, iNumRecs, output dataset dsWebRole by-reference).
+    end method. /* ReadWebRole */
 
 end class.

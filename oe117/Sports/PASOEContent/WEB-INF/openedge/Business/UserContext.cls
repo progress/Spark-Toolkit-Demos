@@ -2,7 +2,7 @@
     File        : WebContext.cls
     Purpose     : Simple class for User context data
     Author(s)   : Dustin Grau (dugrau@progress.com)
-    Created     : Wed Feb 21 11:25:07 EST 2018
+    Created     : 02/21/18
     Notes       :
   ----------------------------------------------------------------------*/
 
@@ -103,7 +103,8 @@ class Business.UserContext inherits Spark.Core.Service.SparkEntity use-widget-po
     @progress.service.resourceMapping(type="REST", operation="read", URI="?filter=~{filter~}", alias="", mediaType="application/json").
     @openapi.openedge.method.property(name="mappingType", value="AFP").
     @openapi.openedge.method.property(name="capabilities", value="filter,top,skip,id,sort,orderBy").
-    method public void ReadContext ( input filter as character, output dataset dsWebContext ):
+    method public void ReadContext ( input  filter  as character,
+                                     output dataset dsWebContext ):
         define variable oFilterObj as JsonObject no-undo.
         define variable oFilter    as JsonObject no-undo.
         define variable oFilters   as JsonArray  no-undo.
@@ -208,8 +209,7 @@ class Business.UserContext inherits Spark.Core.Service.SparkEntity use-widget-po
            where bContext.IdentityName eq oClientContext:userID
              and (contextType eq "" or bContext.ContextType eq contextType)
              and (contextViewID eq "" or bContext.ContextViewID eq contextViewID)
-             and (contextTitle eq "" or bContext.ContextTitle eq contextTitle)
-             and (contextSeqNo eq ? or bContext.ContextSeqNo eq contextSeqNo):
+             and (contextTitle eq "" or bContext.ContextTitle eq contextTitle):
             message substitute("Deleting context for &1 &2 &3 &4", contextType, contextViewID, contextTitle, contextSeqNo).
             delete bContext. /* Delete matching record. */
             assign clearedRecords = clearedRecords + 1.

@@ -1,7 +1,7 @@
 /*------------------------------------------------------------------------
     File        : FamilyBE.cls
     Author(s)   : Code Wizard
-    Created     : 11/27/17
+    Created     : 08/06/18
     Notes       : Customized BE instance with AFP features available.
   ----------------------------------------------------------------------*/
 
@@ -9,7 +9,7 @@ using Progress.Lang.* from propath.
 
 block-level on error undo, throw.
 
-class Business.Personnel.FamilyBE inherits Spark.Core.Service.DynamicEntity:
+class Business.Personnel.FamilyBE inherits Spark.Core.Service.DynamicEntity use-widget-pool:
 
     {Common/family.i}
 
@@ -38,12 +38,14 @@ class Business.Personnel.FamilyBE inherits Spark.Core.Service.DynamicEntity:
         protected set.
 
     define public override property operations as character
-        initial "CRUD,Submit" no-undo get.
+        initial "ReadOnly,Submit" no-undo get.
         protected set.
 
 
     method public override void initialize ( ):
-        /* Describe any properties about invoke methods to be exposed. */
+        /* Describe any overrides to the operations to be exposed. */
+        Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadFamily").
+        Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitFamily").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
     end method. /* initialize */
 
@@ -65,8 +67,15 @@ class Business.Personnel.FamilyBE inherits Spark.Core.Service.DynamicEntity:
     end constructor.
 
 
-    method public void getCount ( input filter as character, output numRecs as int64 ):
-        assign numRecs = filterData(filter).
-    end method. /* getCount */
+    method public void ReadFamily ( input  filter  as character,
+                                    output dataset dsFamily ):
+        define variable iNumRecs as int64 no-undo.
+        super:ReadData(filter, iNumRecs, output dataset dsFamily by-reference).
+    end method. /* ReadFamily */
+
+
+    method public void SubmitFamily ( input-output dataset dsFamily ):
+        super:SubmitData(input-output dataset dsFamily by-reference).
+    end method. /* SubmitFamily */
 
 end class.

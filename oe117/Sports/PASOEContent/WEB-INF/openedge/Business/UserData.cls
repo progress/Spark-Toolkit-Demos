@@ -2,7 +2,7 @@
     File        : UserData
     Purpose     : Simple class for direct User data
     Author(s)   : Dustin Grau (dugrau@progress.com)
-    Created     : Wed May 13 15:21:07 EST 2015
+    Created     : 05/13/15
     Notes       :
   ----------------------------------------------------------------------*/
 
@@ -311,14 +311,14 @@ class Business.UserData inherits Spark.Core.Service.SparkEntity use-widget-pool:
                                         output emailAddr        as character ):
         if valid-object(oClientContext) then do:
             assign
-                anonymous        = can-do(oClientContext:clientPrincipal:roles, "ROLE_ANONYMOUS")
-                                       or oClientContext:clientPrincipal:roles eq ""
-                                       or oClientContext:userID begins "anonymous"
-                serverTime       = now
-                expires          = oClientContext:loginExpiration
-                domainName       = oClientContext:userDomain
-                sessionID        = oClientContext:contextID
-                username         = oClientContext:userID
+                anonymous  = can-do(oClientContext:clientPrincipal:roles, "ROLE_ANONYMOUS")
+                                 or oClientContext:clientPrincipal:roles eq ""
+                                 or oClientContext:userID begins "anonymous"
+                serverTime = now
+                expires    = oClientContext:loginExpiration
+                domainName = oClientContext:userDomain
+                sessionID  = oClientContext:contextID
+                username   = oClientContext:userID
                 no-error.
             if error-status:error then
                 message substitute("Notice[1]: &1", error-status:get-message(1)).

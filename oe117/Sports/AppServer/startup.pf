@@ -5,4 +5,5 @@
 -mmax 8192
 -D 1000
 -lkwtmo 10
+-tmpbsize 4
 -errorstack

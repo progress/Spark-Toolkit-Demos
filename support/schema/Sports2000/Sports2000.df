@@ -2,6 +2,7 @@ ADD SEQUENCE "NextCustNum"
   INITIAL 1000
   INCREMENT 5
   CYCLE-ON-LIMIT no
+  MIN-VAL 1000
 
 ADD SEQUENCE "NextInvNum"
   INITIAL 1000
@@ -80,7 +81,7 @@ ADD TABLE "Benefits"
   DESCRIPTION "The benefits table contains employee benefits."
   DUMP-NAME "benefits"
 
-ADD FIELD "EmpNum" OF "Benefits" AS integer 
+ADD FIELD "EmpNum" OF "Benefits" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Emp No"
@@ -90,7 +91,7 @@ ADD FIELD "EmpNum" OF "Benefits" AS integer
   HELP "Please enter the Emp Number"
   ORDER 10
 
-ADD FIELD "HealthCare" OF "Benefits" AS character 
+ADD FIELD "HealthCare" OF "Benefits" AS character
   FORMAT "x(8)"
   INITIAL ""
   LABEL "Health Care"
@@ -99,7 +100,7 @@ ADD FIELD "HealthCare" OF "Benefits" AS character
   LENGTH 0
   ORDER 20
 
-ADD FIELD "LifeInsurance" OF "Benefits" AS integer 
+ADD FIELD "LifeInsurance" OF "Benefits" AS integer
   FORMAT "$>>,>>>,>>>"
   INITIAL "0"
   LABEL "Life Insurance"
@@ -107,7 +108,7 @@ ADD FIELD "LifeInsurance" OF "Benefits" AS integer
   HELP "Please enter the Life Insurance field."
   ORDER 30
 
-ADD FIELD "Pension401K" OF "Benefits" AS integer 
+ADD FIELD "Pension401K" OF "Benefits" AS integer
   FORMAT ">>,>>9"
   INITIAL "0"
   LABEL "Pension401K"
@@ -115,7 +116,7 @@ ADD FIELD "Pension401K" OF "Benefits" AS integer
   HELP "Please enter the 401K field."
   ORDER 40
 
-ADD FIELD "StockPurchase" OF "Benefits" AS integer 
+ADD FIELD "StockPurchase" OF "Benefits" AS integer
   FORMAT ">>,>>9"
   INITIAL "0"
   LABEL "Stock Purchase"
@@ -123,7 +124,7 @@ ADD FIELD "StockPurchase" OF "Benefits" AS integer
   HELP "Please enter the Stock Purchase field."
   ORDER 50
 
-ADD FIELD "MedicalSpending" OF "Benefits" AS integer 
+ADD FIELD "MedicalSpending" OF "Benefits" AS integer
   FORMAT ">>,>>9"
   INITIAL "0"
   LABEL "Medical Spending"
@@ -131,7 +132,7 @@ ADD FIELD "MedicalSpending" OF "Benefits" AS integer
   HELP "Please enter the Medical Spending field."
   ORDER 60
 
-ADD FIELD "DependentCare" OF "Benefits" AS integer 
+ADD FIELD "DependentCare" OF "Benefits" AS integer
   FORMAT ">>,>>9"
   INITIAL "0"
   LABEL "Dependent Care"
@@ -139,18 +140,18 @@ ADD FIELD "DependentCare" OF "Benefits" AS integer
   HELP "Please enter the dependent care field."
   ORDER 70
 
-ADD INDEX "EmpNo" ON "Benefits" 
+ADD INDEX "EmpNo" ON "Benefits"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "EmpNum" ASCENDING 
+  INDEX-FIELD "EmpNum" ASCENDING
 
 ADD TABLE "BillTo"
   AREA "Data Area"
   DESCRIPTION "The billto table contains bill to address information for an order. "
   DUMP-NAME "billto"
 
-ADD FIELD "CustNum" OF "BillTo" AS integer 
+ADD FIELD "CustNum" OF "BillTo" AS integer
   FORMAT ">>>>9"
   INITIAL "0"
   LABEL "Cust Num"
@@ -160,7 +161,7 @@ ADD FIELD "CustNum" OF "BillTo" AS integer
   HELP "Please enter the customer number."
   ORDER 10
 
-ADD FIELD "BillToID" OF "BillTo" AS integer 
+ADD FIELD "BillToID" OF "BillTo" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "BillToID"
@@ -168,7 +169,7 @@ ADD FIELD "BillToID" OF "BillTo" AS integer
   HELP "Please enter the BillTo ID"
   ORDER 20
 
-ADD FIELD "Name" OF "BillTo" AS character 
+ADD FIELD "Name" OF "BillTo" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Name"
@@ -176,7 +177,7 @@ ADD FIELD "Name" OF "BillTo" AS character
   HELP "Please enter the name."
   ORDER 30
 
-ADD FIELD "Address" OF "BillTo" AS character 
+ADD FIELD "Address" OF "BillTo" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address"
@@ -184,7 +185,7 @@ ADD FIELD "Address" OF "BillTo" AS character
   HELP "Please enter the address."
   ORDER 40
 
-ADD FIELD "Address2" OF "BillTo" AS character 
+ADD FIELD "Address2" OF "BillTo" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address2"
@@ -192,7 +193,7 @@ ADD FIELD "Address2" OF "BillTo" AS character
   HELP "Please enter the address2."
   ORDER 50
 
-ADD FIELD "City" OF "BillTo" AS character 
+ADD FIELD "City" OF "BillTo" AS character
   FORMAT "x(25)"
   INITIAL ""
   LABEL "City"
@@ -200,7 +201,7 @@ ADD FIELD "City" OF "BillTo" AS character
   HELP "Please enter the city"
   ORDER 60
 
-ADD FIELD "State" OF "BillTo" AS character 
+ADD FIELD "State" OF "BillTo" AS character
   DESCRIPTION "Label/Valexp/Valmsg/Help are set based on value of NON-US field!"
   FORMAT "x(20)"
   INITIAL ""
@@ -209,7 +210,7 @@ ADD FIELD "State" OF "BillTo" AS character
   HELP "Please enter standard state abbreviation."
   ORDER 70
 
-ADD FIELD "PostalCode" OF "BillTo" AS character 
+ADD FIELD "PostalCode" OF "BillTo" AS character
   DESCRIPTION "Format/Label/Help Message based on status of NON-US field."
   FORMAT "x(10)"
   INITIAL ""
@@ -218,7 +219,7 @@ ADD FIELD "PostalCode" OF "BillTo" AS character
   HELP "Please enter the appropriate postal code."
   ORDER 80
 
-ADD FIELD "Contact" OF "BillTo" AS character 
+ADD FIELD "Contact" OF "BillTo" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Contact"
@@ -226,7 +227,7 @@ ADD FIELD "Contact" OF "BillTo" AS character
   HELP "Please enter the contact."
   ORDER 90
 
-ADD FIELD "Phone" OF "BillTo" AS character 
+ADD FIELD "Phone" OF "BillTo" AS character
   DESCRIPTION "Format/Label/Help based on status of NON-US field."
   FORMAT "x(20)"
   INITIAL ""
@@ -235,20 +236,20 @@ ADD FIELD "Phone" OF "BillTo" AS character
   HELP "Please enter the phone number."
   ORDER 100
 
-ADD INDEX "custnumbillto" ON "BillTo" 
+ADD INDEX "custnumbillto" ON "BillTo"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "CustNum" ASCENDING 
-  INDEX-FIELD "BillToID" ASCENDING 
+  INDEX-FIELD "CustNum" ASCENDING
+  INDEX-FIELD "BillToID" ASCENDING
 
 ADD TABLE "Bin"
   AREA "Data Area"
   DESCRIPTION "The bin table is used to represent the bins in each warehouse that contain items."
   DUMP-NAME "bin"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crbin.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crbin.p" CRC "?"
 
-ADD FIELD "WarehouseNum" OF "Bin" AS integer 
+ADD FIELD "WarehouseNum" OF "Bin" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Warehouse Num"
@@ -258,7 +259,7 @@ ADD FIELD "WarehouseNum" OF "Bin" AS integer
   HELP "Please Enter the Warehouse Number."
   ORDER 10
 
-ADD FIELD "Itemnum" OF "Bin" AS integer 
+ADD FIELD "Itemnum" OF "Bin" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Item Num"
@@ -268,7 +269,7 @@ ADD FIELD "Itemnum" OF "Bin" AS integer
   HELP "Please enter an item number."
   ORDER 20
 
-ADD FIELD "Qty" OF "Bin" AS integer 
+ADD FIELD "Qty" OF "Bin" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "Qty"
@@ -276,7 +277,7 @@ ADD FIELD "Qty" OF "Bin" AS integer
   HELP "Please enter a quantity."
   ORDER 30
 
-ADD FIELD "BinNum" OF "Bin" AS integer 
+ADD FIELD "BinNum" OF "Bin" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Bin Num"
@@ -284,7 +285,7 @@ ADD FIELD "BinNum" OF "Bin" AS integer
   HELP "Please enter a bin number"
   ORDER 40
 
-ADD FIELD "BinName" OF "Bin" AS character 
+ADD FIELD "BinName" OF "Bin" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Bin Name"
@@ -292,29 +293,29 @@ ADD FIELD "BinName" OF "Bin" AS character
   HELP "Please enter a bin name"
   ORDER 50
 
-ADD INDEX "BinNum" ON "Bin" 
+ADD INDEX "BinNum" ON "Bin"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "BinNum" ASCENDING 
+  INDEX-FIELD "BinNum" ASCENDING
 
-ADD INDEX "ItemNum" ON "Bin" 
+ADD INDEX "ItemNum" ON "Bin"
   AREA "Index Area"
-  INDEX-FIELD "Itemnum" ASCENDING 
+  INDEX-FIELD "Itemnum" ASCENDING
 
-ADD INDEX "WarehouseNumItemNum" ON "Bin" 
+ADD INDEX "WarehouseNumItemNum" ON "Bin"
   AREA "Index Area"
-  INDEX-FIELD "WarehouseNum" ASCENDING 
-  INDEX-FIELD "Itemnum" ASCENDING 
+  INDEX-FIELD "WarehouseNum" ASCENDING
+  INDEX-FIELD "Itemnum" ASCENDING
 
 ADD TABLE "Customer"
   AREA "Data Area"
   DESCRIPTION "The customer table contains customer  information including  balance and address."
   DUMP-NAME "customer"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crcust.p" CRC "?" 
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delcust.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crcust.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delcust.p" CRC "?"
 
-ADD FIELD "CustNum" OF "Customer" AS integer 
+ADD FIELD "CustNum" OF "Customer" AS integer
   FORMAT ">>>>9"
   INITIAL "0"
   LABEL "Cust Num"
@@ -324,7 +325,7 @@ ADD FIELD "CustNum" OF "Customer" AS integer
   HELP "Please enter a customer number."
   ORDER 10
 
-ADD FIELD "Name" OF "Customer" AS character 
+ADD FIELD "Name" OF "Customer" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Name"
@@ -332,7 +333,7 @@ ADD FIELD "Name" OF "Customer" AS character
   HELP "Please enter a name."
   ORDER 30
 
-ADD FIELD "Address" OF "Customer" AS character 
+ADD FIELD "Address" OF "Customer" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address"
@@ -340,7 +341,7 @@ ADD FIELD "Address" OF "Customer" AS character
   HELP "Please enter an address."
   ORDER 40
 
-ADD FIELD "Address2" OF "Customer" AS character 
+ADD FIELD "Address2" OF "Customer" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address2"
@@ -348,7 +349,7 @@ ADD FIELD "Address2" OF "Customer" AS character
   HELP "Please enter an address."
   ORDER 50
 
-ADD FIELD "City" OF "Customer" AS character 
+ADD FIELD "City" OF "Customer" AS character
   FORMAT "x(25)"
   INITIAL ""
   LABEL "City"
@@ -356,7 +357,7 @@ ADD FIELD "City" OF "Customer" AS character
   HELP "Please enter a city."
   ORDER 60
 
-ADD FIELD "State" OF "Customer" AS character 
+ADD FIELD "State" OF "Customer" AS character
   DESCRIPTION "Label/Valexp/Valmsg/Help are set based on value of NON-US field!"
   FORMAT "x(20)"
   INITIAL ""
@@ -365,7 +366,7 @@ ADD FIELD "State" OF "Customer" AS character
   HELP "Please enter standard state abbreviation."
   ORDER 70
 
-ADD FIELD "Country" OF "Customer" AS character 
+ADD FIELD "Country" OF "Customer" AS character
   FORMAT "x(20)"
   INITIAL "USA"
   LABEL "Country"
@@ -373,7 +374,7 @@ ADD FIELD "Country" OF "Customer" AS character
   HELP "Please enter a country."
   ORDER 15
 
-ADD FIELD "Phone" OF "Customer" AS character 
+ADD FIELD "Phone" OF "Customer" AS character
   DESCRIPTION "Format/Label/Help based on status of NON-US field."
   FORMAT "x(20)"
   INITIAL ""
@@ -382,7 +383,7 @@ ADD FIELD "Phone" OF "Customer" AS character
   HELP "Please enter a phone number"
   ORDER 115
 
-ADD FIELD "Contact" OF "Customer" AS character 
+ADD FIELD "Contact" OF "Customer" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Contact"
@@ -390,7 +391,7 @@ ADD FIELD "Contact" OF "Customer" AS character
   HELP "Please enter a contact."
   ORDER 110
 
-ADD FIELD "SalesRep" OF "Customer" AS character 
+ADD FIELD "SalesRep" OF "Customer" AS character
   FORMAT "x(4)"
   INITIAL ""
   LABEL "Sales Rep"
@@ -400,7 +401,7 @@ ADD FIELD "SalesRep" OF "Customer" AS character
   HELP "Please Enter a Sales Rep."
   ORDER 125
 
-ADD FIELD "Comments" OF "Customer" AS character 
+ADD FIELD "Comments" OF "Customer" AS character
   FORMAT "x(80)"
   INITIAL ""
   LABEL "Comments"
@@ -408,7 +409,7 @@ ADD FIELD "Comments" OF "Customer" AS character
   HELP "Please enter comments."
   ORDER 180
 
-ADD FIELD "CreditLimit" OF "Customer" AS decimal 
+ADD FIELD "CreditLimit" OF "Customer" AS decimal
   DESCRIPTION "Maximum credit"
   FORMAT "->,>>>,>>9"
   INITIAL "1500"
@@ -420,7 +421,7 @@ ADD FIELD "CreditLimit" OF "Customer" AS decimal
   DECIMALS 2
   ORDER 130
 
-ADD FIELD "Balance" OF "Customer" AS decimal 
+ADD FIELD "Balance" OF "Customer" AS decimal
   FORMAT "->,>>>,>>9.99"
   INITIAL "0"
   LABEL "Balance"
@@ -429,7 +430,7 @@ ADD FIELD "Balance" OF "Customer" AS decimal
   DECIMALS 2
   ORDER 140
 
-ADD FIELD "Terms" OF "Customer" AS character 
+ADD FIELD "Terms" OF "Customer" AS character
   FORMAT "x(20)"
   INITIAL "Net30"
   LABEL "Terms"
@@ -437,7 +438,7 @@ ADD FIELD "Terms" OF "Customer" AS character
   HELP "Please enter terms"
   ORDER 150
 
-ADD FIELD "Discount" OF "Customer" AS integer 
+ADD FIELD "Discount" OF "Customer" AS integer
   FORMAT ">>9%"
   INITIAL "0"
   LABEL "Discount"
@@ -447,7 +448,7 @@ ADD FIELD "Discount" OF "Customer" AS integer
   HELP "Please enter a percentage from 0 to 100."
   ORDER 170
 
-ADD FIELD "PostalCode" OF "Customer" AS character 
+ADD FIELD "PostalCode" OF "Customer" AS character
   DESCRIPTION "Format/Label/Help Message based on status of NON-US field."
   FORMAT "x(10)"
   INITIAL ""
@@ -456,7 +457,7 @@ ADD FIELD "PostalCode" OF "Customer" AS character
   HELP "Please enter the appropriate Postal Code."
   ORDER 80
 
-ADD FIELD "Fax" OF "Customer" AS character 
+ADD FIELD "Fax" OF "Customer" AS character
   DESCRIPTION "Format/Label/Help based on status of NON-US field."
   FORMAT "x(20)"
   INITIAL ""
@@ -465,7 +466,7 @@ ADD FIELD "Fax" OF "Customer" AS character
   HELP "Please enter a fax number."
   ORDER 190
 
-ADD FIELD "EmailAddress" OF "Customer" AS character 
+ADD FIELD "EmailAddress" OF "Customer" AS character
   FORMAT "x(50)"
   INITIAL ""
   LABEL "Email"
@@ -474,36 +475,36 @@ ADD FIELD "EmailAddress" OF "Customer" AS character
   LENGTH 0
   ORDER 200
 
-ADD INDEX "CustNum" ON "Customer" 
+ADD INDEX "CustNum" ON "Customer"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "CustNum" ASCENDING 
+  INDEX-FIELD "CustNum" ASCENDING
 
-ADD INDEX "Comments" ON "Customer" 
+ADD INDEX "Comments" ON "Customer"
   AREA "Index Area"
   WORD
-  INDEX-FIELD "Comments" ASCENDING 
+  INDEX-FIELD "Comments" ASCENDING
 
-ADD INDEX "CountryPost" ON "Customer" 
+ADD INDEX "CountryPost" ON "Customer"
   AREA "Index Area"
-  INDEX-FIELD "Country" ASCENDING 
-  INDEX-FIELD "PostalCode" ASCENDING 
+  INDEX-FIELD "Country" ASCENDING
+  INDEX-FIELD "PostalCode" ASCENDING
 
-ADD INDEX "Name" ON "Customer" 
+ADD INDEX "Name" ON "Customer"
   AREA "Index Area"
-  INDEX-FIELD "Name" ASCENDING 
+  INDEX-FIELD "Name" ASCENDING
 
-ADD INDEX "SalesRep" ON "Customer" 
+ADD INDEX "SalesRep" ON "Customer"
   AREA "Index Area"
-  INDEX-FIELD "SalesRep" ASCENDING 
+  INDEX-FIELD "SalesRep" ASCENDING
 
 ADD TABLE "Department"
   AREA "Data Area"
   DESCRIPTION "The department contains a master listing of departments."
   DUMP-NAME "departme"
 
-ADD FIELD "DeptCode" OF "Department" AS character 
+ADD FIELD "DeptCode" OF "Department" AS character
   FORMAT "x(3)"
   INITIAL ""
   LABEL "Dept Code"
@@ -512,7 +513,7 @@ ADD FIELD "DeptCode" OF "Department" AS character
   LENGTH 0
   ORDER 10
 
-ADD FIELD "DeptName" OF "Department" AS character 
+ADD FIELD "DeptName" OF "Department" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "Dept Name"
@@ -521,19 +522,19 @@ ADD FIELD "DeptName" OF "Department" AS character
   LENGTH 0
   ORDER 20
 
-ADD INDEX "DeptCode" ON "Department" 
+ADD INDEX "DeptCode" ON "Department"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "DeptCode" ASCENDING 
+  INDEX-FIELD "DeptCode" ASCENDING
 
 ADD TABLE "Employee"
   AREA "Data Area"
   DESCRIPTION "The employee table stores employee information including name and address"
   DUMP-NAME "employee"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/cremp.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/cremp.p" CRC "?"
 
-ADD FIELD "LastName" OF "Employee" AS character 
+ADD FIELD "LastName" OF "Employee" AS character
   FORMAT "x(25)"
   INITIAL ""
   LABEL "Last Name"
@@ -542,7 +543,7 @@ ADD FIELD "LastName" OF "Employee" AS character
   LENGTH 0
   ORDER 10
 
-ADD FIELD "FirstName" OF "Employee" AS character 
+ADD FIELD "FirstName" OF "Employee" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "First Name"
@@ -551,7 +552,7 @@ ADD FIELD "FirstName" OF "Employee" AS character
   LENGTH 0
   ORDER 20
 
-ADD FIELD "Address" OF "Employee" AS character 
+ADD FIELD "Address" OF "Employee" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address"
@@ -560,7 +561,7 @@ ADD FIELD "Address" OF "Employee" AS character
   LENGTH 0
   ORDER 30
 
-ADD FIELD "Address2" OF "Employee" AS character 
+ADD FIELD "Address2" OF "Employee" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address2"
@@ -569,7 +570,7 @@ ADD FIELD "Address2" OF "Employee" AS character
   LENGTH 0
   ORDER 40
 
-ADD FIELD "City" OF "Employee" AS character 
+ADD FIELD "City" OF "Employee" AS character
   FORMAT "x(25)"
   INITIAL ""
   LABEL "City"
@@ -578,7 +579,7 @@ ADD FIELD "City" OF "Employee" AS character
   LENGTH 0
   ORDER 50
 
-ADD FIELD "State" OF "Employee" AS character 
+ADD FIELD "State" OF "Employee" AS character
   FORMAT "x(20)"
   INITIAL ""
   LABEL "State"
@@ -587,7 +588,7 @@ ADD FIELD "State" OF "Employee" AS character
   LENGTH 0
   ORDER 60
 
-ADD FIELD "PostalCode" OF "Employee" AS character 
+ADD FIELD "PostalCode" OF "Employee" AS character
   FORMAT "x(10)"
   INITIAL ""
   LABEL "Postal Code"
@@ -596,7 +597,7 @@ ADD FIELD "PostalCode" OF "Employee" AS character
   LENGTH 0
   ORDER 70
 
-ADD FIELD "DeptCode" OF "Employee" AS character 
+ADD FIELD "DeptCode" OF "Employee" AS character
   FORMAT "x(3)"
   INITIAL ""
   LABEL "Dept Code"
@@ -607,7 +608,7 @@ ADD FIELD "DeptCode" OF "Employee" AS character
   LENGTH 0
   ORDER 80
 
-ADD FIELD "Position" OF "Employee" AS character 
+ADD FIELD "Position" OF "Employee" AS character
   FORMAT "x(20)"
   INITIAL ""
   LABEL "Position"
@@ -616,7 +617,7 @@ ADD FIELD "Position" OF "Employee" AS character
   LENGTH 0
   ORDER 90
 
-ADD FIELD "HomePhone" OF "Employee" AS character 
+ADD FIELD "HomePhone" OF "Employee" AS character
   FORMAT "x(20)"
   INITIAL ""
   LABEL "Home Phone"
@@ -625,7 +626,7 @@ ADD FIELD "HomePhone" OF "Employee" AS character
   LENGTH 0
   ORDER 75
 
-ADD FIELD "WorkPhone" OF "Employee" AS character 
+ADD FIELD "WorkPhone" OF "Employee" AS character
   FORMAT "x(20)"
   INITIAL ""
   LABEL "Work Phone"
@@ -634,7 +635,7 @@ ADD FIELD "WorkPhone" OF "Employee" AS character
   LENGTH 0
   ORDER 76
 
-ADD FIELD "VacationDaysLeft" OF "Employee" AS integer 
+ADD FIELD "VacationDaysLeft" OF "Employee" AS integer
   FORMAT ">>9"
   INITIAL "0"
   LABEL "Vacation Days Left"
@@ -642,7 +643,7 @@ ADD FIELD "VacationDaysLeft" OF "Employee" AS integer
   HELP "Please enter Vacation Days Left."
   ORDER 100
 
-ADD FIELD "SickDaysLeft" OF "Employee" AS integer 
+ADD FIELD "SickDaysLeft" OF "Employee" AS integer
   FORMAT ">>9"
   INITIAL "0"
   LABEL "Sick Days Left"
@@ -650,7 +651,7 @@ ADD FIELD "SickDaysLeft" OF "Employee" AS integer
   HELP "Please enter Sick Days Left."
   ORDER 110
 
-ADD FIELD "EmpNum" OF "Employee" AS integer 
+ADD FIELD "EmpNum" OF "Employee" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Emp No"
@@ -658,7 +659,7 @@ ADD FIELD "EmpNum" OF "Employee" AS integer
   HELP "Please enter the Emp Num"
   ORDER 5
 
-ADD FIELD "StartDate" OF "Employee" AS date 
+ADD FIELD "StartDate" OF "Employee" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Start Date"
@@ -666,7 +667,7 @@ ADD FIELD "StartDate" OF "Employee" AS date
   HELP "Please enter a Start Date"
   ORDER 98
 
-ADD FIELD "Birthdate" OF "Employee" AS date 
+ADD FIELD "Birthdate" OF "Employee" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Birthdate"
@@ -674,28 +675,28 @@ ADD FIELD "Birthdate" OF "Employee" AS date
   HELP "Please enter the birth date."
   ORDER 97
 
-ADD INDEX "EmpNo" ON "Employee" 
+ADD INDEX "EmpNo" ON "Employee"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "EmpNum" ASCENDING 
+  INDEX-FIELD "EmpNum" ASCENDING
 
-ADD INDEX "DeptCode" ON "Employee" 
+ADD INDEX "DeptCode" ON "Employee"
   AREA "Index Area"
-  INDEX-FIELD "DeptCode" ASCENDING 
+  INDEX-FIELD "DeptCode" ASCENDING
 
-ADD INDEX "Name" ON "Employee" 
+ADD INDEX "Name" ON "Employee"
   AREA "Index Area"
   UNIQUE
-  INDEX-FIELD "LastName" ASCENDING 
-  INDEX-FIELD "FirstName" ASCENDING 
+  INDEX-FIELD "LastName" ASCENDING
+  INDEX-FIELD "FirstName" ASCENDING
 
 ADD TABLE "Family"
   AREA "Data Area"
   DESCRIPTION "The family table tracks an employee's family"
   DUMP-NAME "family"
 
-ADD FIELD "RelativeName" OF "Family" AS character 
+ADD FIELD "RelativeName" OF "Family" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "Relative Name"
@@ -704,7 +705,7 @@ ADD FIELD "RelativeName" OF "Family" AS character
   LENGTH 0
   ORDER 10
 
-ADD FIELD "Relation" OF "Family" AS character 
+ADD FIELD "Relation" OF "Family" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "Relation"
@@ -713,7 +714,7 @@ ADD FIELD "Relation" OF "Family" AS character
   LENGTH 0
   ORDER 20
 
-ADD FIELD "Birthdate" OF "Family" AS date 
+ADD FIELD "Birthdate" OF "Family" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Birthdate"
@@ -721,7 +722,7 @@ ADD FIELD "Birthdate" OF "Family" AS date
   HELP "Please enter a Birthdate"
   ORDER 30
 
-ADD FIELD "BenefitDate" OF "Family" AS date 
+ADD FIELD "BenefitDate" OF "Family" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Benefit Date"
@@ -729,7 +730,7 @@ ADD FIELD "BenefitDate" OF "Family" AS date
   HELP "Please enter the Date relative added to benefits."
   ORDER 40
 
-ADD FIELD "CoveredOnBenefits" OF "Family" AS logical 
+ADD FIELD "CoveredOnBenefits" OF "Family" AS logical
   FORMAT "yes/no"
   INITIAL "no"
   LABEL "Covered On Benefits"
@@ -737,7 +738,7 @@ ADD FIELD "CoveredOnBenefits" OF "Family" AS logical
   HELP "Please enter the Covered on Benefits field."
   ORDER 35
 
-ADD FIELD "EmpNum" OF "Family" AS integer 
+ADD FIELD "EmpNum" OF "Family" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Emp No"
@@ -747,19 +748,19 @@ ADD FIELD "EmpNum" OF "Family" AS integer
   HELP "Please enter the Emp Num."
   ORDER 5
 
-ADD INDEX "EmpNoRelativeName" ON "Family" 
+ADD INDEX "EmpNoRelativeName" ON "Family"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "EmpNum" ASCENDING 
-  INDEX-FIELD "RelativeName" ASCENDING 
+  INDEX-FIELD "EmpNum" ASCENDING
+  INDEX-FIELD "RelativeName" ASCENDING
 
 ADD TABLE "Feedback"
   AREA "Data Area"
   DESCRIPTION "The feedback table allows customers to provide feedback about what they like and don't like."
   DUMP-NAME "feedback"
 
-ADD FIELD "Contact" OF "Feedback" AS character 
+ADD FIELD "Contact" OF "Feedback" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Contact Name"
@@ -768,7 +769,7 @@ ADD FIELD "Contact" OF "Feedback" AS character
   LENGTH 0
   ORDER 10
 
-ADD FIELD "Company" OF "Feedback" AS character 
+ADD FIELD "Company" OF "Feedback" AS character
   FORMAT "x(20)"
   INITIAL ""
   LABEL "Company"
@@ -777,7 +778,7 @@ ADD FIELD "Company" OF "Feedback" AS character
   LENGTH 0
   ORDER 20
 
-ADD FIELD "EmailAddress" OF "Feedback" AS character 
+ADD FIELD "EmailAddress" OF "Feedback" AS character
   FORMAT "x(50)"
   INITIAL ""
   LABEL "Email"
@@ -786,7 +787,7 @@ ADD FIELD "EmailAddress" OF "Feedback" AS character
   LENGTH 0
   ORDER 30
 
-ADD FIELD "Phone" OF "Feedback" AS character 
+ADD FIELD "Phone" OF "Feedback" AS character
   DESCRIPTION "Format/Label/Help based on status of NON-US field."
   FORMAT "x(20)"
   INITIAL ""
@@ -796,7 +797,7 @@ ADD FIELD "Phone" OF "Feedback" AS character
   LENGTH 0
   ORDER 40
 
-ADD FIELD "Fax" OF "Feedback" AS character 
+ADD FIELD "Fax" OF "Feedback" AS character
   DESCRIPTION "Format/Label/Help based on status of NON-US field."
   FORMAT "x(20)"
   INITIAL ""
@@ -806,7 +807,7 @@ ADD FIELD "Fax" OF "Feedback" AS character
   LENGTH 0
   ORDER 50
 
-ADD FIELD "Comments" OF "Feedback" AS character 
+ADD FIELD "Comments" OF "Feedback" AS character
   FORMAT "x(80)"
   INITIAL ""
   LABEL "Comments"
@@ -816,7 +817,7 @@ ADD FIELD "Comments" OF "Feedback" AS character
   LENGTH 0
   ORDER 60
 
-ADD FIELD "Department" OF "Feedback" AS character 
+ADD FIELD "Department" OF "Feedback" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "Department"
@@ -825,7 +826,7 @@ ADD FIELD "Department" OF "Feedback" AS character
   LENGTH 0
   ORDER 70
 
-ADD FIELD "Rating" OF "Feedback" AS integer 
+ADD FIELD "Rating" OF "Feedback" AS integer
   FORMAT "9"
   INITIAL "0"
   LABEL "Rating"
@@ -835,37 +836,37 @@ ADD FIELD "Rating" OF "Feedback" AS integer
   HELP "Please enter the rating"
   ORDER 80
 
-ADD INDEX "Department" ON "Feedback" 
+ADD INDEX "Department" ON "Feedback"
   AREA "Index Area"
   PRIMARY
-  INDEX-FIELD "Department" ASCENDING 
+  INDEX-FIELD "Department" ASCENDING
 
-ADD INDEX "Comments" ON "Feedback" 
+ADD INDEX "Comments" ON "Feedback"
   AREA "Index Area"
   WORD
-  INDEX-FIELD "Comments" ASCENDING 
+  INDEX-FIELD "Comments" ASCENDING
 
-ADD INDEX "Company" ON "Feedback" 
+ADD INDEX "Company" ON "Feedback"
   AREA "Index Area"
   WORD
-  INDEX-FIELD "Company" ASCENDING 
+  INDEX-FIELD "Company" ASCENDING
 
-ADD INDEX "Contact" ON "Feedback" 
+ADD INDEX "Contact" ON "Feedback"
   AREA "Index Area"
   WORD
-  INDEX-FIELD "Contact" ASCENDING 
+  INDEX-FIELD "Contact" ASCENDING
 
-ADD INDEX "Rating" ON "Feedback" 
+ADD INDEX "Rating" ON "Feedback"
   AREA "Index Area"
-  INDEX-FIELD "Rating" ASCENDING 
+  INDEX-FIELD "Rating" ASCENDING
 
 ADD TABLE "InventoryTrans"
   AREA "Data Area"
   DESCRIPTION "The inventorytrans table contains information about the movement of inventory."
   DUMP-NAME "inventor"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crintr.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crintr.p" CRC "?"
 
-ADD FIELD "InvTransNum" OF "InventoryTrans" AS integer 
+ADD FIELD "InvTransNum" OF "InventoryTrans" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Inventory Trans Num"
@@ -873,7 +874,7 @@ ADD FIELD "InvTransNum" OF "InventoryTrans" AS integer
   HELP "Please enter an inventory trans number"
   ORDER 10
 
-ADD FIELD "WarehouseNum" OF "InventoryTrans" AS integer 
+ADD FIELD "WarehouseNum" OF "InventoryTrans" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Warehouse Num"
@@ -881,7 +882,7 @@ ADD FIELD "WarehouseNum" OF "InventoryTrans" AS integer
   HELP "Please enter the Warehouse Number."
   ORDER 20
 
-ADD FIELD "BinNum" OF "InventoryTrans" AS integer 
+ADD FIELD "BinNum" OF "InventoryTrans" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Bin Num"
@@ -889,7 +890,7 @@ ADD FIELD "BinNum" OF "InventoryTrans" AS integer
   HELP "Please enter a bin number."
   ORDER 30
 
-ADD FIELD "Qty" OF "InventoryTrans" AS integer 
+ADD FIELD "Qty" OF "InventoryTrans" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "Qty"
@@ -897,7 +898,7 @@ ADD FIELD "Qty" OF "InventoryTrans" AS integer
   HELP "Please enter the quantity."
   ORDER 40
 
-ADD FIELD "Itemnum" OF "InventoryTrans" AS integer 
+ADD FIELD "Itemnum" OF "InventoryTrans" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Item Num"
@@ -907,7 +908,7 @@ ADD FIELD "Itemnum" OF "InventoryTrans" AS integer
   HELP "Please enter an item number"
   ORDER 50
 
-ADD FIELD "TransDate" OF "InventoryTrans" AS date 
+ADD FIELD "TransDate" OF "InventoryTrans" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Trans Date"
@@ -915,7 +916,7 @@ ADD FIELD "TransDate" OF "InventoryTrans" AS date
   HELP "Please enter the trans date."
   ORDER 60
 
-ADD FIELD "InvType" OF "InventoryTrans" AS character 
+ADD FIELD "InvType" OF "InventoryTrans" AS character
   FORMAT "X(12)"
   INITIAL ""
   LABEL "Type"
@@ -923,7 +924,7 @@ ADD FIELD "InvType" OF "InventoryTrans" AS character
   HELP "Please enter the type."
   ORDER 70
 
-ADD FIELD "PONum" OF "InventoryTrans" AS integer 
+ADD FIELD "PONum" OF "InventoryTrans" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "PO Num"
@@ -931,7 +932,7 @@ ADD FIELD "PONum" OF "InventoryTrans" AS integer
   HELP "Please enter a PO Number."
   ORDER 80
 
-ADD FIELD "Ordernum" OF "InventoryTrans" AS integer 
+ADD FIELD "Ordernum" OF "InventoryTrans" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Order Num"
@@ -939,26 +940,26 @@ ADD FIELD "Ordernum" OF "InventoryTrans" AS integer
   HELP "Please Enter an Order Number"
   ORDER 90
 
-ADD FIELD "Transtime" OF "InventoryTrans" AS character 
+ADD FIELD "Transtime" OF "InventoryTrans" AS character
   FORMAT "X(5)"
   INITIAL ""
   LABEL "Trans Time"
   MAX-WIDTH 10
   ORDER 100
 
-ADD INDEX "InvTransNum" ON "InventoryTrans" 
+ADD INDEX "InvTransNum" ON "InventoryTrans"
   AREA "Index Area"
   PRIMARY
-  INDEX-FIELD "InvTransNum" ASCENDING 
+  INDEX-FIELD "InvTransNum" ASCENDING
 
 ADD TABLE "Invoice"
   AREA "Data Area"
   DESCRIPTION "The invoice table contains transactions for the receivable module."
   DUMP-NAME "invoice"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crinv.p" CRC "?" 
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delinv.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crinv.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delinv.p" CRC "?"
 
-ADD FIELD "Invoicenum" OF "Invoice" AS integer 
+ADD FIELD "Invoicenum" OF "Invoice" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Invoice Num"
@@ -968,7 +969,7 @@ ADD FIELD "Invoicenum" OF "Invoice" AS integer
   HELP "Please enter an Invoice Number"
   ORDER 10
 
-ADD FIELD "CustNum" OF "Invoice" AS integer 
+ADD FIELD "CustNum" OF "Invoice" AS integer
   FORMAT ">>>>9"
   INITIAL "0"
   LABEL "Cust Num"
@@ -978,7 +979,7 @@ ADD FIELD "CustNum" OF "Invoice" AS integer
   HELP "Please enter a customer number."
   ORDER 20
 
-ADD FIELD "InvoiceDate" OF "Invoice" AS date 
+ADD FIELD "InvoiceDate" OF "Invoice" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Invoice Date"
@@ -986,7 +987,7 @@ ADD FIELD "InvoiceDate" OF "Invoice" AS date
   HELP "Please enter an invoice date"
   ORDER 30
 
-ADD FIELD "Amount" OF "Invoice" AS decimal 
+ADD FIELD "Amount" OF "Invoice" AS decimal
   FORMAT "->>,>>9.99"
   INITIAL "0"
   LABEL "Amount"
@@ -995,7 +996,7 @@ ADD FIELD "Amount" OF "Invoice" AS decimal
   DECIMALS 2
   ORDER 40
 
-ADD FIELD "TotalPaid" OF "Invoice" AS decimal 
+ADD FIELD "TotalPaid" OF "Invoice" AS decimal
   FORMAT "->>,>>9.99"
   INITIAL "0"
   LABEL "Total Paid"
@@ -1004,7 +1005,7 @@ ADD FIELD "TotalPaid" OF "Invoice" AS decimal
   DECIMALS 2
   ORDER 50
 
-ADD FIELD "Adjustment" OF "Invoice" AS decimal 
+ADD FIELD "Adjustment" OF "Invoice" AS decimal
   FORMAT "->>,>>9.99"
   INITIAL "0"
   LABEL "Adjustment"
@@ -1013,7 +1014,7 @@ ADD FIELD "Adjustment" OF "Invoice" AS decimal
   DECIMALS 2
   ORDER 60
 
-ADD FIELD "OrderNum" OF "Invoice" AS integer 
+ADD FIELD "OrderNum" OF "Invoice" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Order Num"
@@ -1022,7 +1023,7 @@ ADD FIELD "OrderNum" OF "Invoice" AS integer
   HELP "Please enter an order number."
   ORDER 80
 
-ADD FIELD "ShipCharge" OF "Invoice" AS decimal 
+ADD FIELD "ShipCharge" OF "Invoice" AS decimal
   FORMAT "->>,>>9.99"
   INITIAL "0"
   LABEL "Ship Charge"
@@ -1031,23 +1032,23 @@ ADD FIELD "ShipCharge" OF "Invoice" AS decimal
   DECIMALS 2
   ORDER 120
 
-ADD INDEX "InvoiceNum" ON "Invoice" 
+ADD INDEX "InvoiceNum" ON "Invoice"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "Invoicenum" ASCENDING 
+  INDEX-FIELD "Invoicenum" ASCENDING
 
-ADD INDEX "CustNum" ON "Invoice" 
+ADD INDEX "CustNum" ON "Invoice"
   AREA "Index Area"
-  INDEX-FIELD "CustNum" ASCENDING 
+  INDEX-FIELD "CustNum" ASCENDING
 
-ADD INDEX "InvoiceDate" ON "Invoice" 
+ADD INDEX "InvoiceDate" ON "Invoice"
   AREA "Index Area"
-  INDEX-FIELD "InvoiceDate" ASCENDING 
+  INDEX-FIELD "InvoiceDate" ASCENDING
 
-ADD INDEX "OrderNum" ON "Invoice" 
+ADD INDEX "OrderNum" ON "Invoice"
   AREA "Index Area"
-  INDEX-FIELD "OrderNum" ASCENDING 
+  INDEX-FIELD "OrderNum" ASCENDING
 
 ADD TABLE "Item"
   AREA "Data Area"
@@ -1055,11 +1056,11 @@ ADD TABLE "Item"
   VALEXP "NOT (CAN-FIND(FIRST orderline OF item))"
   VALMSG "Cannot delete Item, order-line records exist with this item"
   DUMP-NAME "item"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/critem.p" CRC "?" 
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delitem.p" CRC "?" 
-  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2000trgs/writem.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/critem.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delitem.p" CRC "?"
+  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2000trgs/writem.p" CRC "?"
 
-ADD FIELD "Itemnum" OF "Item" AS integer 
+ADD FIELD "Itemnum" OF "Item" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Item Num"
@@ -1069,7 +1070,7 @@ ADD FIELD "Itemnum" OF "Item" AS integer
   HELP "Please enter the item  number ."
   ORDER 10
 
-ADD FIELD "ItemName" OF "Item" AS character 
+ADD FIELD "ItemName" OF "Item" AS character
   FORMAT "x(25)"
   INITIAL ""
   LABEL "Item Name"
@@ -1077,7 +1078,7 @@ ADD FIELD "ItemName" OF "Item" AS character
   HELP "Please enter an item name."
   ORDER 20
 
-ADD FIELD "CatPage" OF "Item" AS integer 
+ADD FIELD "CatPage" OF "Item" AS integer
   FORMAT ">>9"
   INITIAL "0"
   LABEL "Cat Page"
@@ -1085,7 +1086,7 @@ ADD FIELD "CatPage" OF "Item" AS integer
   HELP "Please enter a catalog page"
   ORDER 100
 
-ADD FIELD "Price" OF "Item" AS decimal 
+ADD FIELD "Price" OF "Item" AS decimal
   FORMAT "->,>>>,>>9.99"
   INITIAL "0"
   LABEL "Price"
@@ -1094,7 +1095,7 @@ ADD FIELD "Price" OF "Item" AS decimal
   DECIMALS 2
   ORDER 22
 
-ADD FIELD "CatDescription" OF "Item" AS character 
+ADD FIELD "CatDescription" OF "Item" AS character
   FORMAT "X(200)"
   INITIAL ""
   LABEL "Cat-Description"
@@ -1103,7 +1104,7 @@ ADD FIELD "CatDescription" OF "Item" AS character
   HELP "Please enter a description."
   ORDER 110
 
-ADD FIELD "Onhand" OF "Item" AS integer 
+ADD FIELD "Onhand" OF "Item" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "On Hand"
@@ -1111,7 +1112,7 @@ ADD FIELD "Onhand" OF "Item" AS integer
   HELP "Please enter On Hand Qty"
   ORDER 50
 
-ADD FIELD "Allocated" OF "Item" AS integer 
+ADD FIELD "Allocated" OF "Item" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "Allocated"
@@ -1119,7 +1120,7 @@ ADD FIELD "Allocated" OF "Item" AS integer
   HELP "Please enter allocated"
   ORDER 60
 
-ADD FIELD "ReOrder" OF "Item" AS integer 
+ADD FIELD "ReOrder" OF "Item" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "Re Order"
@@ -1127,7 +1128,7 @@ ADD FIELD "ReOrder" OF "Item" AS integer
   HELP "Please enter reorder qty"
   ORDER 80
 
-ADD FIELD "OnOrder" OF "Item" AS integer 
+ADD FIELD "OnOrder" OF "Item" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "On Order"
@@ -1135,7 +1136,7 @@ ADD FIELD "OnOrder" OF "Item" AS integer
   HELP "Please enter On Order Qty"
   ORDER 90
 
-ADD FIELD "Category1" OF "Item" AS character 
+ADD FIELD "Category1" OF "Item" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Category1"
@@ -1144,7 +1145,7 @@ ADD FIELD "Category1" OF "Item" AS character
   LENGTH 0
   ORDER 120
 
-ADD FIELD "Category2" OF "Item" AS character 
+ADD FIELD "Category2" OF "Item" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Category2"
@@ -1153,7 +1154,7 @@ ADD FIELD "Category2" OF "Item" AS character
   LENGTH 0
   ORDER 130
 
-ADD FIELD "Special" OF "Item" AS character 
+ADD FIELD "Special" OF "Item" AS character
   FORMAT "x(8)"
   INITIAL ""
   LABEL "Special"
@@ -1162,7 +1163,7 @@ ADD FIELD "Special" OF "Item" AS character
   LENGTH 0
   ORDER 140
 
-ADD FIELD "Weight" OF "Item" AS decimal 
+ADD FIELD "Weight" OF "Item" AS decimal
   FORMAT "->>,>>9.99"
   INITIAL "0"
   LABEL "Weight"
@@ -1171,7 +1172,7 @@ ADD FIELD "Weight" OF "Item" AS decimal
   DECIMALS 2
   ORDER 150
 
-ADD FIELD "Minqty" OF "Item" AS integer 
+ADD FIELD "Minqty" OF "Item" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "Min Qty"
@@ -1179,42 +1180,42 @@ ADD FIELD "Minqty" OF "Item" AS integer
   HELP "Please enter a min qty"
   ORDER 160
 
-ADD INDEX "ItemNum" ON "Item" 
+ADD INDEX "ItemNum" ON "Item"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "Itemnum" ASCENDING 
+  INDEX-FIELD "Itemnum" ASCENDING
 
-ADD INDEX "CatDescription" ON "Item" 
+ADD INDEX "CatDescription" ON "Item"
   AREA "Index Area"
   WORD
-  INDEX-FIELD "CatDescription" ASCENDING 
+  INDEX-FIELD "CatDescription" ASCENDING
 
-ADD INDEX "Category2ItemName" ON "Item" 
+ADD INDEX "Category2ItemName" ON "Item"
   AREA "Index Area"
-  INDEX-FIELD "Category2" ASCENDING 
-  INDEX-FIELD "ItemName" ASCENDING 
+  INDEX-FIELD "Category2" ASCENDING
+  INDEX-FIELD "ItemName" ASCENDING
 
-ADD INDEX "CategoryItemName" ON "Item" 
+ADD INDEX "CategoryItemName" ON "Item"
   AREA "Index Area"
-  INDEX-FIELD "Category1" ASCENDING 
-  INDEX-FIELD "ItemName" ASCENDING 
+  INDEX-FIELD "Category1" ASCENDING
+  INDEX-FIELD "ItemName" ASCENDING
 
-ADD INDEX "ItemName" ON "Item" 
+ADD INDEX "ItemName" ON "Item"
   AREA "Index Area"
   WORD
-  INDEX-FIELD "ItemName" ASCENDING 
+  INDEX-FIELD "ItemName" ASCENDING
 
 ADD TABLE "LocalDefault"
   AREA "Data Area"
   DESCRIPTION "The local default table contains default information for the application."
-  VALEXP "NOT (CAN-FIND(FIRST Customer WHERE Customer.Country = 
+  VALEXP "NOT (CAN-FIND(FIRST Customer WHERE Customer.Country =
    LocalDefault.Country))"
   VALMSG "This record cannot be deleted if used in at least one Customer record."
   DUMP-NAME "localdef"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crlocdef.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crlocdef.p" CRC "?"
 
-ADD FIELD "Country" OF "LocalDefault" AS character 
+ADD FIELD "Country" OF "LocalDefault" AS character
   FORMAT "x(20)"
   INITIAL ""
   LABEL "Country"
@@ -1222,7 +1223,7 @@ ADD FIELD "Country" OF "LocalDefault" AS character
   HELP "Please enter the Country."
   ORDER 10
 
-ADD FIELD "Region1Label" OF "LocalDefault" AS character 
+ADD FIELD "Region1Label" OF "LocalDefault" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "Region1 Label"
@@ -1230,7 +1231,7 @@ ADD FIELD "Region1Label" OF "LocalDefault" AS character
   HELP "Please enter region one label"
   ORDER 20
 
-ADD FIELD "Region2Label" OF "LocalDefault" AS character 
+ADD FIELD "Region2Label" OF "LocalDefault" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "Region2 Label"
@@ -1238,7 +1239,7 @@ ADD FIELD "Region2Label" OF "LocalDefault" AS character
   HELP "Please enter region two label."
   ORDER 30
 
-ADD FIELD "PostalLabel" OF "LocalDefault" AS character 
+ADD FIELD "PostalLabel" OF "LocalDefault" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "Postal Label"
@@ -1246,7 +1247,7 @@ ADD FIELD "PostalLabel" OF "LocalDefault" AS character
   HELP "Please enter the Postal Label"
   ORDER 40
 
-ADD FIELD "PostalFormat" OF "LocalDefault" AS character 
+ADD FIELD "PostalFormat" OF "LocalDefault" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "Postal Format"
@@ -1254,7 +1255,7 @@ ADD FIELD "PostalFormat" OF "LocalDefault" AS character
   HELP "Please enter the Postal Format"
   ORDER 50
 
-ADD FIELD "TelFormat" OF "LocalDefault" AS character 
+ADD FIELD "TelFormat" OF "LocalDefault" AS character
   FORMAT "x(15)"
   INITIAL ""
   LABEL "Tel Format"
@@ -1262,7 +1263,7 @@ ADD FIELD "TelFormat" OF "LocalDefault" AS character
   HELP "Please enter telephone format."
   ORDER 60
 
-ADD FIELD "DateFormat" OF "LocalDefault" AS character 
+ADD FIELD "DateFormat" OF "LocalDefault" AS character
   FORMAT "x(8)"
   INITIAL "MDY"
   LABEL "Date Format"
@@ -1270,7 +1271,7 @@ ADD FIELD "DateFormat" OF "LocalDefault" AS character
   HELP "Please enter the date format."
   ORDER 80
 
-ADD FIELD "CurrencySymbol" OF "LocalDefault" AS character 
+ADD FIELD "CurrencySymbol" OF "LocalDefault" AS character
   FORMAT "x(6)"
   INITIAL ""
   LABEL "Currency Symbol"
@@ -1278,7 +1279,7 @@ ADD FIELD "CurrencySymbol" OF "LocalDefault" AS character
   HELP "Please enter the currency symbol"
   ORDER 70
 
-ADD FIELD "LocalDefNum" OF "LocalDefault" AS integer 
+ADD FIELD "LocalDefNum" OF "LocalDefault" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Local Default Num"
@@ -1286,20 +1287,20 @@ ADD FIELD "LocalDefNum" OF "LocalDefault" AS integer
   HELP "Please enter the Local Default Number."
   ORDER 90
 
-ADD INDEX "localdefnum" ON "LocalDefault" 
+ADD INDEX "localdefnum" ON "LocalDefault"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "LocalDefNum" ASCENDING 
+  INDEX-FIELD "LocalDefNum" ASCENDING
 
 ADD TABLE "Order"
   AREA "Data Area"
   DESCRIPTION "The order table contains order header information."
   VALEXP "1 = 1"
   DUMP-NAME "order"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crord.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crord.p" CRC "?"
 
-ADD FIELD "Ordernum" OF "Order" AS integer 
+ADD FIELD "Ordernum" OF "Order" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Order Num"
@@ -1309,7 +1310,7 @@ ADD FIELD "Ordernum" OF "Order" AS integer
   HELP "Please enter an order number."
   ORDER 10
 
-ADD FIELD "CustNum" OF "Order" AS integer 
+ADD FIELD "CustNum" OF "Order" AS integer
   DESCRIPTION "Customer Number"
   FORMAT ">>>>9"
   INITIAL "0"
@@ -1320,7 +1321,7 @@ ADD FIELD "CustNum" OF "Order" AS integer
   HELP "Please enter an existing customer number."
   ORDER 20
 
-ADD FIELD "OrderDate" OF "Order" AS date 
+ADD FIELD "OrderDate" OF "Order" AS date
   FORMAT "99/99/99"
   INITIAL "TODAY"
   LABEL "Ordered"
@@ -1328,7 +1329,7 @@ ADD FIELD "OrderDate" OF "Order" AS date
   HELP "Please enter the date of order."
   ORDER 90
 
-ADD FIELD "ShipDate" OF "Order" AS date 
+ADD FIELD "ShipDate" OF "Order" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Shipped"
@@ -1336,7 +1337,7 @@ ADD FIELD "ShipDate" OF "Order" AS date
   HELP "Please enter the ship date."
   ORDER 100
 
-ADD FIELD "PromiseDate" OF "Order" AS date 
+ADD FIELD "PromiseDate" OF "Order" AS date
   FORMAT "99/99/99"
   INITIAL ?
   LABEL "Promised"
@@ -1344,7 +1345,7 @@ ADD FIELD "PromiseDate" OF "Order" AS date
   HELP "Please enter the Promise Date."
   ORDER 110
 
-ADD FIELD "Carrier" OF "Order" AS character 
+ADD FIELD "Carrier" OF "Order" AS character
   DESCRIPTION "Should lookup valid carriers."
   FORMAT "x(25)"
   INITIAL ""
@@ -1353,7 +1354,7 @@ ADD FIELD "Carrier" OF "Order" AS character
   HELP "Please enter the carrier."
   ORDER 120
 
-ADD FIELD "Instructions" OF "Order" AS character 
+ADD FIELD "Instructions" OF "Order" AS character
   FORMAT "x(50)"
   INITIAL ""
   LABEL "Instructions"
@@ -1361,7 +1362,7 @@ ADD FIELD "Instructions" OF "Order" AS character
   HELP "Please enter Instructions"
   ORDER 130
 
-ADD FIELD "PO" OF "Order" AS character 
+ADD FIELD "PO" OF "Order" AS character
   FORMAT "x(20)"
   INITIAL ""
   LABEL "PO"
@@ -1369,7 +1370,7 @@ ADD FIELD "PO" OF "Order" AS character
   HELP "Please enter the PO."
   ORDER 140
 
-ADD FIELD "Terms" OF "Order" AS character 
+ADD FIELD "Terms" OF "Order" AS character
   DESCRIPTION "This should default to the TERMS specified by the CUSTOMER record."
   FORMAT "x(20)"
   INITIAL "Net30"
@@ -1378,7 +1379,7 @@ ADD FIELD "Terms" OF "Order" AS character
   HELP "Please enter the terms."
   ORDER 150
 
-ADD FIELD "SalesRep" OF "Order" AS character 
+ADD FIELD "SalesRep" OF "Order" AS character
   FORMAT "x(4)"
   INITIAL ""
   LABEL "Sales Rep"
@@ -1386,7 +1387,7 @@ ADD FIELD "SalesRep" OF "Order" AS character
   HELP "Please enter the Sales Rep."
   ORDER 160
 
-ADD FIELD "BillToID" OF "Order" AS integer 
+ADD FIELD "BillToID" OF "Order" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Bill To ID"
@@ -1394,7 +1395,7 @@ ADD FIELD "BillToID" OF "Order" AS integer
   HELP "Please enter the BillTo ID."
   ORDER 170
 
-ADD FIELD "ShipToID" OF "Order" AS integer 
+ADD FIELD "ShipToID" OF "Order" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Ship To ID"
@@ -1402,20 +1403,20 @@ ADD FIELD "ShipToID" OF "Order" AS integer
   HELP "Please enter the ShipToID."
   ORDER 180
 
-ADD FIELD "OrderStatus" OF "Order" AS character 
+ADD FIELD "OrderStatus" OF "Order" AS character
   FORMAT "x(20)"
   INITIAL "Ordered"
   LABEL "Order Status"
   MAX-WIDTH 40
   VIEW-AS "VIEW-AS COMBO-BOX
   LIST-ITEMS ""Ordered"",""Back Ordered"", ""Partially Shipped"", ""Shipped""
-   
-  
+
+
   "
   HELP "Please enter the Order Status."
   ORDER 190
 
-ADD FIELD "WarehouseNum" OF "Order" AS integer 
+ADD FIELD "WarehouseNum" OF "Order" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Warehouse Num"
@@ -1425,7 +1426,7 @@ ADD FIELD "WarehouseNum" OF "Order" AS integer
   HELP "Please enter the Warehouse Number."
   ORDER 200
 
-ADD FIELD "Creditcard" OF "Order" AS character 
+ADD FIELD "Creditcard" OF "Order" AS character
   FORMAT "x(20)"
   INITIAL "Visa"
   LABEL "Credit Card"
@@ -1436,39 +1437,39 @@ ADD FIELD "Creditcard" OF "Order" AS character
   HELP "Please enter the credit card."
   ORDER 210
 
-ADD INDEX "OrderNum" ON "Order" 
+ADD INDEX "OrderNum" ON "Order"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "Ordernum" ASCENDING 
+  INDEX-FIELD "Ordernum" ASCENDING
 
-ADD INDEX "CustOrder" ON "Order" 
+ADD INDEX "CustOrder" ON "Order"
   AREA "Index Area"
   UNIQUE
-  INDEX-FIELD "CustNum" ASCENDING 
-  INDEX-FIELD "Ordernum" ASCENDING 
+  INDEX-FIELD "CustNum" ASCENDING
+  INDEX-FIELD "Ordernum" ASCENDING
 
-ADD INDEX "OrderDate" ON "Order" 
+ADD INDEX "OrderDate" ON "Order"
   AREA "Index Area"
-  INDEX-FIELD "OrderDate" ASCENDING 
+  INDEX-FIELD "OrderDate" ASCENDING
 
-ADD INDEX "OrderStatus" ON "Order" 
+ADD INDEX "OrderStatus" ON "Order"
   AREA "Index Area"
-  INDEX-FIELD "OrderStatus" ASCENDING 
+  INDEX-FIELD "OrderStatus" ASCENDING
 
-ADD INDEX "SalesRep" ON "Order" 
+ADD INDEX "SalesRep" ON "Order"
   AREA "Index Area"
-  INDEX-FIELD "SalesRep" ASCENDING 
+  INDEX-FIELD "SalesRep" ASCENDING
 
 ADD TABLE "OrderLine"
   AREA "Data Area"
   DESCRIPTION "The orderline table contains order detail information including item number and quantity ordered."
   DUMP-NAME "orderlin"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crordl.p" CRC "?" 
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delordl.p" CRC "?" 
-  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2000trgs/wrordl.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crordl.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delordl.p" CRC "?"
+  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2000trgs/wrordl.p" CRC "?"
 
-ADD FIELD "Ordernum" OF "OrderLine" AS integer 
+ADD FIELD "Ordernum" OF "OrderLine" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Order Num"
@@ -1478,7 +1479,7 @@ ADD FIELD "Ordernum" OF "OrderLine" AS integer
   HELP "Please enter and Order Number for this order line."
   ORDER 10
 
-ADD FIELD "Linenum" OF "OrderLine" AS integer 
+ADD FIELD "Linenum" OF "OrderLine" AS integer
   DESCRIPTION "To be generated automatically by key value generator!"
   FORMAT ">>9"
   INITIAL "0"
@@ -1487,7 +1488,7 @@ ADD FIELD "Linenum" OF "OrderLine" AS integer
   HELP "Please enter the line number"
   ORDER 20
 
-ADD FIELD "Itemnum" OF "OrderLine" AS integer 
+ADD FIELD "Itemnum" OF "OrderLine" AS integer
   DESCRIPTION "                                                      Help:Idesc"
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
@@ -1498,7 +1499,7 @@ ADD FIELD "Itemnum" OF "OrderLine" AS integer
   HELP "Please enter an item number."
   ORDER 30
 
-ADD FIELD "Price" OF "OrderLine" AS decimal 
+ADD FIELD "Price" OF "OrderLine" AS decimal
   DESCRIPTION "This field should get its default from the ITEM file's price field."
   FORMAT "->,>>>,>>9.99"
   INITIAL "0"
@@ -1508,7 +1509,7 @@ ADD FIELD "Price" OF "OrderLine" AS decimal
   DECIMALS 2
   ORDER 40
 
-ADD FIELD "Qty" OF "OrderLine" AS integer 
+ADD FIELD "Qty" OF "OrderLine" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "Qty"
@@ -1516,7 +1517,7 @@ ADD FIELD "Qty" OF "OrderLine" AS integer
   HELP "Please enter the quantity."
   ORDER 50
 
-ADD FIELD "Discount" OF "OrderLine" AS integer 
+ADD FIELD "Discount" OF "OrderLine" AS integer
   FORMAT ">>9%"
   INITIAL "0"
   LABEL "Discount"
@@ -1524,7 +1525,7 @@ ADD FIELD "Discount" OF "OrderLine" AS integer
   HELP "Please enter a discount."
   ORDER 70
 
-ADD FIELD "ExtendedPrice" OF "OrderLine" AS decimal 
+ADD FIELD "ExtendedPrice" OF "OrderLine" AS decimal
   FORMAT "->>>,>>9.99"
   INITIAL "0"
   LABEL "Extended Price"
@@ -1533,40 +1534,40 @@ ADD FIELD "ExtendedPrice" OF "OrderLine" AS decimal
   DECIMALS 2
   ORDER 80
 
-ADD FIELD "OrderLineStatus" OF "OrderLine" AS character 
+ADD FIELD "OrderLineStatus" OF "OrderLine" AS character
   FORMAT "x(20)"
   INITIAL "Ordered"
   LABEL "Order Line Status"
   MAX-WIDTH 40
   VIEW-AS "VIEW-AS COMBO-BOX
   LIST-ITEMS ""Ordered"",""Back Ordered"",""Shipped""
-   
-  
+
+
   "
   HELP "Please enter the order line status."
   ORDER 110
 
-ADD INDEX "orderline" ON "OrderLine" 
+ADD INDEX "orderline" ON "OrderLine"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "Ordernum" ASCENDING 
-  INDEX-FIELD "Linenum" ASCENDING 
+  INDEX-FIELD "Ordernum" ASCENDING
+  INDEX-FIELD "Linenum" ASCENDING
 
-ADD INDEX "itemnum" ON "OrderLine" 
+ADD INDEX "itemnum" ON "OrderLine"
   AREA "Index Area"
-  INDEX-FIELD "Itemnum" ASCENDING 
+  INDEX-FIELD "Itemnum" ASCENDING
 
-ADD INDEX "OrderLineStatus" ON "OrderLine" 
+ADD INDEX "OrderLineStatus" ON "OrderLine"
   AREA "Index Area"
-  INDEX-FIELD "OrderLineStatus" ASCENDING 
+  INDEX-FIELD "OrderLineStatus" ASCENDING
 
 ADD TABLE "POLine"
   AREA "Data Area"
   DESCRIPTION "The poline table contains the PO detail information including the item and quantity on the PO."
   DUMP-NAME "poline"
 
-ADD FIELD "Linenum" OF "POLine" AS integer 
+ADD FIELD "Linenum" OF "POLine" AS integer
   DESCRIPTION "To be generated automatically by key value generator!"
   FORMAT ">>9"
   INITIAL "0"
@@ -1575,7 +1576,7 @@ ADD FIELD "Linenum" OF "POLine" AS integer
   HELP "Please enter the Line Number"
   ORDER 20
 
-ADD FIELD "Itemnum" OF "POLine" AS integer 
+ADD FIELD "Itemnum" OF "POLine" AS integer
   DESCRIPTION "                                                      Help:Idesc"
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
@@ -1586,7 +1587,7 @@ ADD FIELD "Itemnum" OF "POLine" AS integer
   HELP "Please enter an item number."
   ORDER 30
 
-ADD FIELD "Price" OF "POLine" AS decimal 
+ADD FIELD "Price" OF "POLine" AS decimal
   DESCRIPTION "This field should get its default from the ITEM file's price field."
   FORMAT "->,>>>,>>9.99"
   INITIAL "0"
@@ -1596,7 +1597,7 @@ ADD FIELD "Price" OF "POLine" AS decimal
   DECIMALS 2
   ORDER 40
 
-ADD FIELD "Qty" OF "POLine" AS integer 
+ADD FIELD "Qty" OF "POLine" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "Qty"
@@ -1604,7 +1605,7 @@ ADD FIELD "Qty" OF "POLine" AS integer
   HELP "Please enter the quantity."
   ORDER 50
 
-ADD FIELD "Discount" OF "POLine" AS integer 
+ADD FIELD "Discount" OF "POLine" AS integer
   FORMAT ">>9%"
   INITIAL "0"
   LABEL "Discount"
@@ -1612,7 +1613,7 @@ ADD FIELD "Discount" OF "POLine" AS integer
   HELP "Please enter the discount."
   ORDER 70
 
-ADD FIELD "ExtendedPrice" OF "POLine" AS decimal 
+ADD FIELD "ExtendedPrice" OF "POLine" AS decimal
   FORMAT "->>,>>9.99"
   INITIAL "0"
   LABEL "Extended Price"
@@ -1621,7 +1622,7 @@ ADD FIELD "ExtendedPrice" OF "POLine" AS decimal
   DECIMALS 2
   ORDER 80
 
-ADD FIELD "PONum" OF "POLine" AS integer 
+ADD FIELD "PONum" OF "POLine" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Order Num"
@@ -1631,33 +1632,33 @@ ADD FIELD "PONum" OF "POLine" AS integer
   HELP "Please enter an order number."
   ORDER 90
 
-ADD FIELD "POLineStatus" OF "POLine" AS character 
+ADD FIELD "POLineStatus" OF "POLine" AS character
   FORMAT "x(20)"
   INITIAL "Ordered"
   LABEL "PO Line Status"
   MAX-WIDTH 40
   VIEW-AS "VIEW-AS COMBO-BOX
   LIST-ITEMS ""Ordered"", ""Shipped"", ""Received""
-   
-  
+
+
   "
   HELP "Please enter the PO status."
   ORDER 100
 
-ADD INDEX "PONumLinenum" ON "POLine" 
+ADD INDEX "PONumLinenum" ON "POLine"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "PONum" ASCENDING 
-  INDEX-FIELD "Linenum" ASCENDING 
+  INDEX-FIELD "PONum" ASCENDING
+  INDEX-FIELD "Linenum" ASCENDING
 
 ADD TABLE "PurchaseOrder"
   AREA "Data Area"
   DESCRIPTION "The purchaseorder table contains information pertaining to the purchase order including: PO number and status."
   DUMP-NAME "purchase"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crpo.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crpo.p" CRC "?"
 
-ADD FIELD "PONum" OF "PurchaseOrder" AS integer 
+ADD FIELD "PONum" OF "PurchaseOrder" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "PO Num"
@@ -1667,7 +1668,7 @@ ADD FIELD "PONum" OF "PurchaseOrder" AS integer
   HELP "Please Enter a PO Number."
   ORDER 10
 
-ADD FIELD "DateEntered" OF "PurchaseOrder" AS date 
+ADD FIELD "DateEntered" OF "PurchaseOrder" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Date Entered"
@@ -1675,7 +1676,7 @@ ADD FIELD "DateEntered" OF "PurchaseOrder" AS date
   HELP "Please enter today's date."
   ORDER 20
 
-ADD FIELD "SupplierIDNum" OF "PurchaseOrder" AS integer 
+ADD FIELD "SupplierIDNum" OF "PurchaseOrder" AS integer
   DESCRIPTION "Supplier ID number"
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
@@ -1687,7 +1688,7 @@ ADD FIELD "SupplierIDNum" OF "PurchaseOrder" AS integer
   HELP "Please enter a  Supplier ID"
   ORDER 30
 
-ADD FIELD "ReceiveDate" OF "PurchaseOrder" AS date 
+ADD FIELD "ReceiveDate" OF "PurchaseOrder" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Date Received"
@@ -1695,32 +1696,32 @@ ADD FIELD "ReceiveDate" OF "PurchaseOrder" AS date
   HELP "Please enter the Receive Date"
   ORDER 40
 
-ADD FIELD "POStatus" OF "PurchaseOrder" AS character 
+ADD FIELD "POStatus" OF "PurchaseOrder" AS character
   FORMAT "x(20)"
   INITIAL "Ordered"
   LABEL "PO Status"
   MAX-WIDTH 40
   VIEW-AS "VIEW-AS COMBO-BOX
   LIST-ITEMS ""Ordered"", ""Shipped"", ""Partially Received"", ""Received""
-   
-  
+
+
   "
   HELP "Please enter the PO status."
   ORDER 50
 
-ADD INDEX "PONum" ON "PurchaseOrder" 
+ADD INDEX "PONum" ON "PurchaseOrder"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "PONum" ASCENDING 
+  INDEX-FIELD "PONum" ASCENDING
 
 ADD TABLE "RefCall"
   AREA "Data Area"
   DESCRIPTION "The refcall table contains information about a sale."
   DUMP-NAME "refcall"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/ref_call.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/ref_call.p" CRC "?"
 
-ADD FIELD "CallNum" OF "RefCall" AS character 
+ADD FIELD "CallNum" OF "RefCall" AS character
   FORMAT "x(6)"
   INITIAL ""
   LABEL "Call Num"
@@ -1728,7 +1729,7 @@ ADD FIELD "CallNum" OF "RefCall" AS character
   HELP "Please enter the call number."
   ORDER 10
 
-ADD FIELD "CustNum" OF "RefCall" AS integer 
+ADD FIELD "CustNum" OF "RefCall" AS integer
   FORMAT ">>>>9"
   INITIAL "0"
   LABEL "Cust Num"
@@ -1738,7 +1739,7 @@ ADD FIELD "CustNum" OF "RefCall" AS integer
   HELP "Please enter the customer number."
   ORDER 20
 
-ADD FIELD "CallDate" OF "RefCall" AS date 
+ADD FIELD "CallDate" OF "RefCall" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Call Date"
@@ -1746,7 +1747,7 @@ ADD FIELD "CallDate" OF "RefCall" AS date
   HELP "Please enter the call date."
   ORDER 30
 
-ADD FIELD "SalesRep" OF "RefCall" AS character 
+ADD FIELD "SalesRep" OF "RefCall" AS character
   FORMAT "x(4)"
   INITIAL ""
   LABEL "Sales Rep"
@@ -1754,7 +1755,7 @@ ADD FIELD "SalesRep" OF "RefCall" AS character
   HELP "Please enter the sales rep."
   ORDER 40
 
-ADD FIELD "Parent" OF "RefCall" AS character 
+ADD FIELD "Parent" OF "RefCall" AS character
   FORMAT "x(6)"
   INITIAL ""
   LABEL "Parent"
@@ -1762,7 +1763,7 @@ ADD FIELD "Parent" OF "RefCall" AS character
   HELP "Please enter the parent."
   ORDER 50
 
-ADD FIELD "Txt" OF "RefCall" AS character 
+ADD FIELD "Txt" OF "RefCall" AS character
   FORMAT "x(300)"
   INITIAL ""
   LABEL "Txt"
@@ -1774,28 +1775,28 @@ ADD FIELD "Txt" OF "RefCall" AS character
   HELP "Please enter text"
   ORDER 60
 
-ADD INDEX "CallNum" ON "RefCall" 
+ADD INDEX "CallNum" ON "RefCall"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "CallNum" ASCENDING 
+  INDEX-FIELD "CallNum" ASCENDING
 
-ADD INDEX "CustNum" ON "RefCall" 
+ADD INDEX "CustNum" ON "RefCall"
   AREA "Index Area"
   UNIQUE
-  INDEX-FIELD "CustNum" ASCENDING 
-  INDEX-FIELD "CallNum" ASCENDING 
+  INDEX-FIELD "CustNum" ASCENDING
+  INDEX-FIELD "CallNum" ASCENDING
 
-ADD INDEX "Sibling" ON "RefCall" 
+ADD INDEX "Sibling" ON "RefCall"
   AREA "Index Area"
   UNIQUE
-  INDEX-FIELD "Parent" ASCENDING 
-  INDEX-FIELD "CallNum" ASCENDING ABBREVIATED 
+  INDEX-FIELD "Parent" ASCENDING
+  INDEX-FIELD "CallNum" ASCENDING ABBREVIATED
 
-ADD INDEX "Txt" ON "RefCall" 
+ADD INDEX "Txt" ON "RefCall"
   AREA "Index Area"
   WORD
-  INDEX-FIELD "Txt" ASCENDING 
+  INDEX-FIELD "Txt" ASCENDING
 
 ADD TABLE "Salesrep"
   AREA "Data Area"
@@ -1804,7 +1805,7 @@ ADD TABLE "Salesrep"
   VALMSG "Cannot delete if used in one or more customer records."
   DUMP-NAME "salesrep"
 
-ADD FIELD "RepName" OF "Salesrep" AS character 
+ADD FIELD "RepName" OF "Salesrep" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Rep Name"
@@ -1812,7 +1813,7 @@ ADD FIELD "RepName" OF "Salesrep" AS character
   HELP "Please enter the Name of the Salesperson."
   ORDER 20
 
-ADD FIELD "Region" OF "Salesrep" AS character 
+ADD FIELD "Region" OF "Salesrep" AS character
   FORMAT "x(8)"
   INITIAL ""
   LABEL "Region"
@@ -1820,7 +1821,7 @@ ADD FIELD "Region" OF "Salesrep" AS character
   HELP "Please enter the Sales Region covered by this salesman."
   ORDER 30
 
-ADD FIELD "SalesRep" OF "Salesrep" AS character 
+ADD FIELD "SalesRep" OF "Salesrep" AS character
   FORMAT "x(4)"
   INITIAL ""
   LABEL "Sales Rep"
@@ -1828,7 +1829,7 @@ ADD FIELD "SalesRep" OF "Salesrep" AS character
   HELP "Please enter the Sales Rep."
   ORDER 1
 
-ADD FIELD "MonthQuota" OF "Salesrep" AS integer 
+ADD FIELD "MonthQuota" OF "Salesrep" AS integer
   FORMAT "->,>>>,>>9"
   INITIAL "0"
   LABEL "Month Quota"
@@ -1837,18 +1838,18 @@ ADD FIELD "MonthQuota" OF "Salesrep" AS integer
   EXTENT 12
   ORDER 40
 
-ADD INDEX "SalesRep" ON "Salesrep" 
+ADD INDEX "SalesRep" ON "Salesrep"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "SalesRep" ASCENDING 
+  INDEX-FIELD "SalesRep" ASCENDING
 
 ADD TABLE "ShipTo"
   AREA "Data Area"
   DESCRIPTION "The shipto table contains the ship to address information for an order."
   DUMP-NAME "shipto"
 
-ADD FIELD "CustNum" OF "ShipTo" AS integer 
+ADD FIELD "CustNum" OF "ShipTo" AS integer
   FORMAT ">>>>9"
   INITIAL "0"
   LABEL "Cust Num"
@@ -1858,7 +1859,7 @@ ADD FIELD "CustNum" OF "ShipTo" AS integer
   HELP "Please enter the customer number."
   ORDER 10
 
-ADD FIELD "ShipToID" OF "ShipTo" AS integer 
+ADD FIELD "ShipToID" OF "ShipTo" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Ship To ID"
@@ -1866,7 +1867,7 @@ ADD FIELD "ShipToID" OF "ShipTo" AS integer
   HELP "Please enter the Shipto ID"
   ORDER 20
 
-ADD FIELD "Contact" OF "ShipTo" AS character 
+ADD FIELD "Contact" OF "ShipTo" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Contact"
@@ -1874,7 +1875,7 @@ ADD FIELD "Contact" OF "ShipTo" AS character
   HELP "Please enter the contact."
   ORDER 30
 
-ADD FIELD "Address" OF "ShipTo" AS character 
+ADD FIELD "Address" OF "ShipTo" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address"
@@ -1882,7 +1883,7 @@ ADD FIELD "Address" OF "ShipTo" AS character
   HELP "Please enter the address."
   ORDER 40
 
-ADD FIELD "Address2" OF "ShipTo" AS character 
+ADD FIELD "Address2" OF "ShipTo" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address2"
@@ -1890,7 +1891,7 @@ ADD FIELD "Address2" OF "ShipTo" AS character
   HELP "Please enter the address."
   ORDER 50
 
-ADD FIELD "City" OF "ShipTo" AS character 
+ADD FIELD "City" OF "ShipTo" AS character
   FORMAT "x(25)"
   INITIAL ""
   LABEL "City"
@@ -1898,7 +1899,7 @@ ADD FIELD "City" OF "ShipTo" AS character
   HELP "Please enter the city"
   ORDER 60
 
-ADD FIELD "State" OF "ShipTo" AS character 
+ADD FIELD "State" OF "ShipTo" AS character
   DESCRIPTION "Label/Valexp/Valmsg/Help are set based on value of NON-US field!"
   FORMAT "x(20)"
   INITIAL ""
@@ -1907,7 +1908,7 @@ ADD FIELD "State" OF "ShipTo" AS character
   HELP "Please enter standard state abbreviation."
   ORDER 70
 
-ADD FIELD "PostalCode" OF "ShipTo" AS character 
+ADD FIELD "PostalCode" OF "ShipTo" AS character
   DESCRIPTION "Format/Label/Help Message based on status of NON-US field."
   FORMAT "x(10)"
   INITIAL ""
@@ -1916,7 +1917,7 @@ ADD FIELD "PostalCode" OF "ShipTo" AS character
   HELP "Please enter the appropriate postal code."
   ORDER 80
 
-ADD FIELD "Phone" OF "ShipTo" AS character 
+ADD FIELD "Phone" OF "ShipTo" AS character
   DESCRIPTION "Format/Label/Help based on status of NON-US field."
   FORMAT "x(20)"
   INITIAL ""
@@ -1925,7 +1926,7 @@ ADD FIELD "Phone" OF "ShipTo" AS character
   HELP "Please enter the phone number"
   ORDER 90
 
-ADD FIELD "Comments" OF "ShipTo" AS character 
+ADD FIELD "Comments" OF "ShipTo" AS character
   FORMAT "x(80)"
   INITIAL ""
   LABEL "Comments"
@@ -1933,7 +1934,7 @@ ADD FIELD "Comments" OF "ShipTo" AS character
   HELP "Please enter the comments."
   ORDER 100
 
-ADD FIELD "Name" OF "ShipTo" AS character 
+ADD FIELD "Name" OF "ShipTo" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Name"
@@ -1941,12 +1942,12 @@ ADD FIELD "Name" OF "ShipTo" AS character
   HELP "Please enter the name"
   ORDER 110
 
-ADD INDEX "custnumshipto" ON "ShipTo" 
+ADD INDEX "custnumshipto" ON "ShipTo"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "CustNum" ASCENDING 
-  INDEX-FIELD "ShipToID" ASCENDING 
+  INDEX-FIELD "CustNum" ASCENDING
+  INDEX-FIELD "ShipToID" ASCENDING
 
 ADD TABLE "State"
   AREA "Data Area"
@@ -1955,7 +1956,7 @@ ADD TABLE "State"
   VALMSG "This state record is used by at least one Customer record."
   DUMP-NAME "state"
 
-ADD FIELD "State" OF "State" AS character 
+ADD FIELD "State" OF "State" AS character
   FORMAT "x(20)"
   INITIAL ""
   LABEL "State"
@@ -1963,7 +1964,7 @@ ADD FIELD "State" OF "State" AS character
   HELP "Please enter the state abbreviation."
   ORDER 10
 
-ADD FIELD "StateName" OF "State" AS character 
+ADD FIELD "StateName" OF "State" AS character
   FORMAT "x(20)"
   INITIAL ""
   LABEL "State Name"
@@ -1971,7 +1972,7 @@ ADD FIELD "StateName" OF "State" AS character
   HELP "Please enter the full state name."
   ORDER 20
 
-ADD FIELD "Region" OF "State" AS character 
+ADD FIELD "Region" OF "State" AS character
   FORMAT "x(8)"
   INITIAL ""
   LABEL "Region"
@@ -1979,21 +1980,21 @@ ADD FIELD "Region" OF "State" AS character
   HELP "Please enter the sales region for state."
   ORDER 30
 
-ADD INDEX "State" ON "State" 
+ADD INDEX "State" ON "State"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "State" ASCENDING 
+  INDEX-FIELD "State" ASCENDING
 
 ADD TABLE "Supplier"
   AREA "Data Area"
   DESCRIPTION "The supplier table contains a supplier's name, address and
 additional information pertaining to the supplier."
   DUMP-NAME "supplier"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crsuppl.p" CRC "?" 
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delsup.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crsuppl.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delsup.p" CRC "?"
 
-ADD FIELD "SupplierIDNum" OF "Supplier" AS integer 
+ADD FIELD "SupplierIDNum" OF "Supplier" AS integer
   DESCRIPTION "Supplier ID number"
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
@@ -2005,7 +2006,7 @@ ADD FIELD "SupplierIDNum" OF "Supplier" AS integer
   HELP "Please enter a Supplier ID Number."
   ORDER 10
 
-ADD FIELD "Name" OF "Supplier" AS character 
+ADD FIELD "Name" OF "Supplier" AS character
   DESCRIPTION "Enter Supplier Name"
   FORMAT "x(30)"
   INITIAL ""
@@ -2016,7 +2017,7 @@ ADD FIELD "Name" OF "Supplier" AS character
   LENGTH 0
   ORDER 11
 
-ADD FIELD "Address" OF "Supplier" AS character 
+ADD FIELD "Address" OF "Supplier" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address"
@@ -2026,7 +2027,7 @@ ADD FIELD "Address" OF "Supplier" AS character
   LENGTH 0
   ORDER 12
 
-ADD FIELD "Address2" OF "Supplier" AS character 
+ADD FIELD "Address2" OF "Supplier" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address2"
@@ -2036,7 +2037,7 @@ ADD FIELD "Address2" OF "Supplier" AS character
   LENGTH 0
   ORDER 13
 
-ADD FIELD "City" OF "Supplier" AS character 
+ADD FIELD "City" OF "Supplier" AS character
   FORMAT "x(25)"
   INITIAL ""
   LABEL "City"
@@ -2046,7 +2047,7 @@ ADD FIELD "City" OF "Supplier" AS character
   LENGTH 0
   ORDER 14
 
-ADD FIELD "State" OF "Supplier" AS character 
+ADD FIELD "State" OF "Supplier" AS character
   DESCRIPTION "Label/Valexp/Valmsg/Help are set based on value of NON-US field!"
   FORMAT "x(20)"
   INITIAL ""
@@ -2057,7 +2058,7 @@ ADD FIELD "State" OF "Supplier" AS character
   LENGTH 0
   ORDER 15
 
-ADD FIELD "Country" OF "Supplier" AS character 
+ADD FIELD "Country" OF "Supplier" AS character
   FORMAT "x(20)"
   INITIAL "USA"
   LABEL "Country"
@@ -2067,7 +2068,7 @@ ADD FIELD "Country" OF "Supplier" AS character
   LENGTH 0
   ORDER 18
 
-ADD FIELD "Phone" OF "Supplier" AS character 
+ADD FIELD "Phone" OF "Supplier" AS character
   DESCRIPTION "Format/Label/Help based on status of NON-US field."
   FORMAT "x(20)"
   INITIAL ""
@@ -2078,7 +2079,7 @@ ADD FIELD "Phone" OF "Supplier" AS character
   LENGTH 0
   ORDER 115
 
-ADD FIELD "Password" OF "Supplier" AS character 
+ADD FIELD "Password" OF "Supplier" AS character
   DESCRIPTION "Password for Supplier"
   FORMAT "x(8)"
   INITIAL ""
@@ -2091,7 +2092,7 @@ ADD FIELD "Password" OF "Supplier" AS character
   MANDATORY
   CASE-SENSITIVE
 
-ADD FIELD "LoginDate" OF "Supplier" AS date 
+ADD FIELD "LoginDate" OF "Supplier" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Login Date"
@@ -2100,7 +2101,7 @@ ADD FIELD "LoginDate" OF "Supplier" AS date
   HELP "Please enter the Last Login Date."
   ORDER 200
 
-ADD FIELD "Comments" OF "Supplier" AS character 
+ADD FIELD "Comments" OF "Supplier" AS character
   FORMAT "x(80)"
   INITIAL ""
   LABEL "Comments"
@@ -2110,7 +2111,7 @@ ADD FIELD "Comments" OF "Supplier" AS character
   LENGTH 0
   ORDER 180
 
-ADD FIELD "ShipAmount" OF "Supplier" AS integer 
+ADD FIELD "ShipAmount" OF "Supplier" AS integer
   FORMAT ">>>>9"
   INITIAL "100"
   LABEL "Ship Amount"
@@ -2119,7 +2120,7 @@ ADD FIELD "ShipAmount" OF "Supplier" AS integer
   HELP "Please enter the Amount to Ship."
   ORDER 210
 
-ADD FIELD "PostalCode" OF "Supplier" AS character 
+ADD FIELD "PostalCode" OF "Supplier" AS character
   DESCRIPTION "Format/Label/Help Message based on status of NON-US field."
   FORMAT "x(10)"
   INITIAL ""
@@ -2130,7 +2131,7 @@ ADD FIELD "PostalCode" OF "Supplier" AS character
   LENGTH 0
   ORDER 17
 
-ADD FIELD "Discount" OF "Supplier" AS integer 
+ADD FIELD "Discount" OF "Supplier" AS integer
   FORMAT ">>9%"
   INITIAL "0"
   LABEL "Discount"
@@ -2140,18 +2141,18 @@ ADD FIELD "Discount" OF "Supplier" AS integer
   HELP "Please enter a percentage from 0 to 100."
   ORDER 230
 
-ADD INDEX "SupplierID" ON "Supplier" 
+ADD INDEX "SupplierID" ON "Supplier"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "SupplierIDNum" ASCENDING 
+  INDEX-FIELD "SupplierIDNum" ASCENDING
 
 ADD TABLE "SupplierItemXref"
   AREA "Data Area"
   DESCRIPTION "The supplieritemxref lists all of the items that are supplied by a particlar supplier."
   DUMP-NAME "suppitem"
 
-ADD FIELD "SupplierIDNum" OF "SupplierItemXref" AS integer 
+ADD FIELD "SupplierIDNum" OF "SupplierItemXref" AS integer
   DESCRIPTION "Supplier ID number"
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
@@ -2163,7 +2164,7 @@ ADD FIELD "SupplierIDNum" OF "SupplierItemXref" AS integer
   HELP "Please enter a Supplier ID"
   ORDER 10
 
-ADD FIELD "Itemnum" OF "SupplierItemXref" AS integer 
+ADD FIELD "Itemnum" OF "SupplierItemXref" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Item #"
@@ -2174,25 +2175,25 @@ ADD FIELD "Itemnum" OF "SupplierItemXref" AS integer
   HELP "Please enter an Item Number"
   ORDER 20
 
-ADD INDEX "SupplieridItemNum" ON "SupplierItemXref" 
+ADD INDEX "SupplieridItemNum" ON "SupplierItemXref"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "SupplierIDNum" ASCENDING 
-  INDEX-FIELD "Itemnum" ASCENDING 
+  INDEX-FIELD "SupplierIDNum" ASCENDING
+  INDEX-FIELD "Itemnum" ASCENDING
 
-ADD INDEX "ItemNumSupplierID" ON "SupplierItemXref" 
+ADD INDEX "ItemNumSupplierID" ON "SupplierItemXref"
   AREA "Index Area"
   UNIQUE
-  INDEX-FIELD "Itemnum" ASCENDING 
-  INDEX-FIELD "SupplierIDNum" ASCENDING 
+  INDEX-FIELD "Itemnum" ASCENDING
+  INDEX-FIELD "SupplierIDNum" ASCENDING
 
 ADD TABLE "TimeSheet"
   AREA "Data Area"
   DESCRIPTION "The timesheet table records time in and out, hours worked, and overtime."
   DUMP-NAME "timeshee"
 
-ADD FIELD "EmpNum" OF "TimeSheet" AS integer 
+ADD FIELD "EmpNum" OF "TimeSheet" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Emp No"
@@ -2202,7 +2203,7 @@ ADD FIELD "EmpNum" OF "TimeSheet" AS integer
   HELP "Please enter the emp number"
   ORDER 10
 
-ADD FIELD "DayRecorded" OF "TimeSheet" AS date 
+ADD FIELD "DayRecorded" OF "TimeSheet" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Day Recorded"
@@ -2210,7 +2211,7 @@ ADD FIELD "DayRecorded" OF "TimeSheet" AS date
   HELP "Please enter the day recorded"
   ORDER 20
 
-ADD FIELD "TypeRecorded" OF "TimeSheet" AS character 
+ADD FIELD "TypeRecorded" OF "TimeSheet" AS character
   FORMAT "x(8)"
   INITIAL ""
   LABEL "Type Recorded"
@@ -2219,7 +2220,7 @@ ADD FIELD "TypeRecorded" OF "TimeSheet" AS character
   LENGTH 0
   ORDER 30
 
-ADD FIELD "AMTimeIn" OF "TimeSheet" AS character 
+ADD FIELD "AMTimeIn" OF "TimeSheet" AS character
   FORMAT "xx:xx"
   INITIAL ""
   LABEL "AM Time In"
@@ -2228,7 +2229,7 @@ ADD FIELD "AMTimeIn" OF "TimeSheet" AS character
   LENGTH 0
   ORDER 40
 
-ADD FIELD "AMTimeOut" OF "TimeSheet" AS character 
+ADD FIELD "AMTimeOut" OF "TimeSheet" AS character
   FORMAT "xx:xx"
   INITIAL ""
   LABEL "AM Time Out"
@@ -2237,7 +2238,7 @@ ADD FIELD "AMTimeOut" OF "TimeSheet" AS character
   LENGTH 0
   ORDER 50
 
-ADD FIELD "PMTimeIn" OF "TimeSheet" AS character 
+ADD FIELD "PMTimeIn" OF "TimeSheet" AS character
   FORMAT "xx:xx"
   INITIAL ""
   LABEL "PM Time In"
@@ -2246,7 +2247,7 @@ ADD FIELD "PMTimeIn" OF "TimeSheet" AS character
   LENGTH 0
   ORDER 60
 
-ADD FIELD "PMTimeOut" OF "TimeSheet" AS character 
+ADD FIELD "PMTimeOut" OF "TimeSheet" AS character
   FORMAT "xx:xx"
   INITIAL ""
   LABEL "PM Time Out"
@@ -2255,7 +2256,7 @@ ADD FIELD "PMTimeOut" OF "TimeSheet" AS character
   LENGTH 0
   ORDER 70
 
-ADD FIELD "RegularHours" OF "TimeSheet" AS decimal 
+ADD FIELD "RegularHours" OF "TimeSheet" AS decimal
   FORMAT ">>9.<<"
   INITIAL "0"
   LABEL "Regular Hours"
@@ -2264,7 +2265,7 @@ ADD FIELD "RegularHours" OF "TimeSheet" AS decimal
   DECIMALS 2
   ORDER 80
 
-ADD FIELD "OvertimeHours" OF "TimeSheet" AS decimal 
+ADD FIELD "OvertimeHours" OF "TimeSheet" AS decimal
   FORMAT ">>9.<<"
   INITIAL "0"
   LABEL "Overtime Hours"
@@ -2273,19 +2274,19 @@ ADD FIELD "OvertimeHours" OF "TimeSheet" AS decimal
   DECIMALS 2
   ORDER 90
 
-ADD INDEX "EmpNoDayRecorded" ON "TimeSheet" 
+ADD INDEX "EmpNoDayRecorded" ON "TimeSheet"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "EmpNum" ASCENDING 
-  INDEX-FIELD "DayRecorded" ASCENDING 
+  INDEX-FIELD "EmpNum" ASCENDING
+  INDEX-FIELD "DayRecorded" ASCENDING
 
 ADD TABLE "Vacation"
   AREA "Data Area"
   DESCRIPTION "The vacation table keeps track of employee vacation time."
   DUMP-NAME "vacation"
 
-ADD FIELD "EmpNum" OF "Vacation" AS integer 
+ADD FIELD "EmpNum" OF "Vacation" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Emp No"
@@ -2295,7 +2296,7 @@ ADD FIELD "EmpNum" OF "Vacation" AS integer
   HELP "Please enter the Emp Num."
   ORDER 5
 
-ADD FIELD "StartDate" OF "Vacation" AS date 
+ADD FIELD "StartDate" OF "Vacation" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Start Date"
@@ -2303,7 +2304,7 @@ ADD FIELD "StartDate" OF "Vacation" AS date
   HELP "Please enter the Start Date."
   ORDER 15
 
-ADD FIELD "EndDate" OF "Vacation" AS date 
+ADD FIELD "EndDate" OF "Vacation" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "End Date"
@@ -2311,20 +2312,20 @@ ADD FIELD "EndDate" OF "Vacation" AS date
   HELP "Please enter the End Date."
   ORDER 25
 
-ADD INDEX "EmpNoStartDate" ON "Vacation" 
+ADD INDEX "EmpNoStartDate" ON "Vacation"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "EmpNum" ASCENDING 
-  INDEX-FIELD "StartDate" ASCENDING 
+  INDEX-FIELD "EmpNum" ASCENDING
+  INDEX-FIELD "StartDate" ASCENDING
 
 ADD TABLE "Warehouse"
   AREA "Data Area"
   DESCRIPTION "The warehouse table contains warehouse information including warehouse name and address."
   DUMP-NAME "warehous"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crware.p" CRC "?" 
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crware.p" CRC "?"
 
-ADD FIELD "WarehouseNum" OF "Warehouse" AS integer 
+ADD FIELD "WarehouseNum" OF "Warehouse" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Warehouse Num"
@@ -2334,7 +2335,7 @@ ADD FIELD "WarehouseNum" OF "Warehouse" AS integer
   HELP "Please enter the Warehouse Number."
   ORDER 10
 
-ADD FIELD "WarehouseName" OF "Warehouse" AS character 
+ADD FIELD "WarehouseName" OF "Warehouse" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Warehouse Name"
@@ -2342,7 +2343,7 @@ ADD FIELD "WarehouseName" OF "Warehouse" AS character
   HELP "Please enter a warehouse name."
   ORDER 20
 
-ADD FIELD "Country" OF "Warehouse" AS character 
+ADD FIELD "Country" OF "Warehouse" AS character
   FORMAT "x(20)"
   INITIAL "USA"
   LABEL "Country"
@@ -2350,7 +2351,7 @@ ADD FIELD "Country" OF "Warehouse" AS character
   HELP "Please enter a country."
   ORDER 30
 
-ADD FIELD "Address" OF "Warehouse" AS character 
+ADD FIELD "Address" OF "Warehouse" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address"
@@ -2358,7 +2359,7 @@ ADD FIELD "Address" OF "Warehouse" AS character
   HELP "Please enter an address."
   ORDER 40
 
-ADD FIELD "Address2" OF "Warehouse" AS character 
+ADD FIELD "Address2" OF "Warehouse" AS character
   FORMAT "x(35)"
   INITIAL ""
   LABEL "Address2"
@@ -2366,7 +2367,7 @@ ADD FIELD "Address2" OF "Warehouse" AS character
   HELP "Please enter an address."
   ORDER 50
 
-ADD FIELD "City" OF "Warehouse" AS character 
+ADD FIELD "City" OF "Warehouse" AS character
   FORMAT "x(25)"
   INITIAL ""
   LABEL "City"
@@ -2374,7 +2375,7 @@ ADD FIELD "City" OF "Warehouse" AS character
   HELP "Please enter a city."
   ORDER 60
 
-ADD FIELD "State" OF "Warehouse" AS character 
+ADD FIELD "State" OF "Warehouse" AS character
   DESCRIPTION "Label/Valexp/Valmsg/Help are set based on value of NON-US field!"
   FORMAT "x(20)"
   INITIAL ""
@@ -2383,7 +2384,7 @@ ADD FIELD "State" OF "Warehouse" AS character
   HELP "Please enter standard state abbreviation."
   ORDER 70
 
-ADD FIELD "PostalCode" OF "Warehouse" AS character 
+ADD FIELD "PostalCode" OF "Warehouse" AS character
   DESCRIPTION "Format/Label/Help Message based on status of NON-US field."
   FORMAT "x(10)"
   INITIAL ""
@@ -2392,7 +2393,7 @@ ADD FIELD "PostalCode" OF "Warehouse" AS character
   HELP "Please enter the appropriate Postal Code."
   ORDER 80
 
-ADD FIELD "Phone" OF "Warehouse" AS character 
+ADD FIELD "Phone" OF "Warehouse" AS character
   DESCRIPTION "Format/Label/Help based on status of NON-US field."
   FORMAT "x(20)"
   INITIAL ""
@@ -2401,15 +2402,15 @@ ADD FIELD "Phone" OF "Warehouse" AS character
   HELP "Please enter a phone."
   ORDER 90
 
-ADD INDEX "warehousenum" ON "Warehouse" 
+ADD INDEX "warehousenum" ON "Warehouse"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "WarehouseNum" ASCENDING 
+  INDEX-FIELD "WarehouseNum" ASCENDING
 
-ADD INDEX "warehousename" ON "Warehouse" 
+ADD INDEX "warehousename" ON "Warehouse"
   AREA "Index Area"
-  INDEX-FIELD "WarehouseName" ASCENDING 
+  INDEX-FIELD "WarehouseName" ASCENDING
 
 .
 PSC
