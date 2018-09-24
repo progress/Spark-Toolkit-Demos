@@ -16,6 +16,7 @@
 ############## Intercept-url definitions for the WEB transport URIs ###############
 "/web/api","GET","permitAll()"
 "/web/api/*","GET","permitAll()"
+"/web/api/common/services/*","GET","permitAll()"
 "/web/api/common/tfa/*","PUT","permitAll()"
 "/web/api/common/user/*","*","permitAll()"
 "/web/api/system/access/*","*","hasAnyRole('ROLE_WebAdmin')"
