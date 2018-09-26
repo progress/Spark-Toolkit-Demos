@@ -32,7 +32,7 @@ class Business.Services inherits Spark.Core.Service.DynamicResource:
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getMappings", "mapping", "get").
     end method. /* initialize */
 
-    method public void getDescription ( output services as JsonObject ):
+    method public void getDescription ( output bodyOutput as JsonObject ):
         define variable oServiceWriter as DataObjectServiceWriter no-undo.
 
         assign oServiceWriter = new OpenAPI30ServiceWriter().
@@ -41,17 +41,17 @@ class Business.Services inherits Spark.Core.Service.DynamicResource:
             oServiceWriter:write(ServiceRegistry:GetServices()).
             oServiceWriter:close().
 
-            assign services = cast(oServiceWriter:Value, JsonObject).
+            assign bodyOutput = cast(oServiceWriter:Value, JsonObject).
         end.
         else
-            assign services = new JsonObject(). /* Create default object for response. */
+            assign bodyOutput = new JsonObject(). /* Create default object for response. */
 
         finally:
             delete object oServiceWriter no-error.
         end finally.
     end method. /* getDescription */
 
-    method public void getMappings ( output services as JsonObject ):
+    method public void getMappings ( output bodyOutput as JsonObject ):
         define variable oServiceWriter as MappingFileServiceWriter no-undo.
 
         assign oServiceWriter = new MappingFileServiceWriter().
@@ -60,12 +60,10 @@ class Business.Services inherits Spark.Core.Service.DynamicResource:
             oServiceWriter:write(ServiceRegistry:GetServices()).
             oServiceWriter:close().
 
-            assign services = cast(oServiceWriter:Value, JsonObject).
-            if services:Has("services") then
-                assign services = services:GetJsonObject("services").
+            assign bodyOutput = cast(oServiceWriter:Value, JsonObject).
         end.
         else
-            assign services = new JsonObject(). /* Create default object for response. */
+            assign bodyOutput = new JsonObject(). /* Create default object for response. */
 
         finally:
             delete object oServiceWriter no-error.
