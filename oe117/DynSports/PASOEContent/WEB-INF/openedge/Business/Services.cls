@@ -9,6 +9,7 @@
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
+using OpenEdge.Net.URI from propath.
 using OpenEdge.Net.HTTP.MethodEnum from propath.
 using OpenEdge.Web.DataObject.* from propath.
 using OpenEdge.Web.DataObject.Writer.* from propath.
@@ -33,12 +34,13 @@ class Business.Services inherits Spark.Core.Service.DynamicResource:
     end method. /* initialize */
 
     method public void getDescription ( output bodyOutput as JsonObject ):
-        define variable oServiceWriter as DataObjectServiceWriter no-undo.
+        define variable oServiceWriter as OpenAPI30ServiceWriter no-undo.
 
         assign oServiceWriter = new OpenAPI30ServiceWriter().
         if valid-object(oServiceWriter) then do:
             oServiceWriter:open().
             oServiceWriter:write(ServiceRegistry:GetServices()).
+/*            oServiceWriter:write(URI:Parse("http://localhost:8820/sports/web/api")).*/
             oServiceWriter:close().
 
             assign bodyOutput = cast(oServiceWriter:Value, JsonObject).
