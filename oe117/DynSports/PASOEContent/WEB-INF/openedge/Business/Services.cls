@@ -29,18 +29,64 @@ class Business.Services inherits Spark.Core.Service.DynamicResource:
 
     method public override void initialize ( ):
         /* Describe any properties about invoke methods to be exposed. */
-        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getDescription", "describe", "get").
+        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCatalog", "catalog", "get").
+        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getOpenAPI", "openapi", "get").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getMappings", "mapping", "get").
     end method. /* initialize */
 
-    method public void getDescription ( output bodyOutput as JsonObject ):
+    method public void getCatalog ( output bodyOutput as JsonObject ):
+        define variable oServices  as DataObjectService no-undo extent.
+        define variable oOperation as MappedOperation   no-undo.
+        define variable oSvcArray  as JsonArray         no-undo.
+        define variable cFilename  as character         no-undo.
+        define variable iX         as integer           no-undo.
+
+        /* Create a new catalog object with empty services array. */
+        assign bodyOutput = new JsonObject().
+        bodyOutput:Add("version", 1.5).
+        bodyOutput:Add("lastModified", now).
+        assign oSvcArray = new JsonArray().
+
+        /* Obtain catalog from each registered service. */
+        assign oServices = ServiceRegistry:GetServices().
+        do iX = 1 to extent(oServices):
+            if not valid-object(oServices[iX]:Catalog) then do:
+                assign oOperation = oServices[iX]:GetOperation("/", MethodEnum:Get).
+                if valid-object(oOperation) and oOperation:TargetName matches "*.json" then do:
+                    assign
+                        cFilename = replace(oOperation:TargetName, "$CATALINA_BASE", os-getenv("CATALINA_BASE"))
+                        cFilename = replace(cFilename, "$oepas-webapp", trim(web-context:get-cgi-value("env", "CONTEXT_PATH"), "/"))
+                        .
+                    file-info:file-name = cFilename.
+                    if file-info:full-pathname ne ? then do:
+                        define variable oParser as ObjectModelParser no-undo.
+                        define variable oTemp   as JsonObject        no-undo.
+
+                        assign oParser = new ObjectModelParser().
+                        assign oTemp = cast(oParser:ParseFile(file-info:full-pathname), JsonObject).
+                        if oTemp:Has("services") then
+                            oSvcArray:Add(oTemp:GetJsonArray("services"):GetJsonObject(1)).
+
+                        delete object oParser no-error.
+                    end. /* File Exists */
+                end. /* Operation Not Available */
+            end. /* No Catalog */
+            else if oServices[iX]:Catalog:Has("services") then
+                oSvcArray:Add(oServices[iX]:Catalog:GetJsonArray("services"):GetJsonObject(1)).
+        end. /* do ix */
+
+        /* Add services to new catalog output. */
+        bodyOutput:Add("services", oSvcArray).
+    end method. /* getCatalog */
+
+    method public void getOpenAPI ( output bodyOutput as JsonObject ):
         define variable oServiceWriter as OpenAPI30ServiceWriter no-undo.
 
         assign oServiceWriter = new OpenAPI30ServiceWriter().
         if valid-object(oServiceWriter) then do:
             oServiceWriter:open().
             oServiceWriter:write(ServiceRegistry:GetServices()).
-/*            oServiceWriter:write(URI:Parse("http://localhost:8820/sports/web/api")).*/
+            oServiceWriter:write(URI:Parse("http://localhost:8820/sports/web/api")).
             oServiceWriter:close().
 
             assign bodyOutput = cast(oServiceWriter:Value, JsonObject).
@@ -51,7 +97,7 @@ class Business.Services inherits Spark.Core.Service.DynamicResource:
         finally:
             delete object oServiceWriter no-error.
         end finally.
-    end method. /* getDescription */
+    end method. /* getOpenAPI */
 
     method public void getMappings ( output bodyOutput as JsonObject ):
         define variable oServiceWriter as MappingFileServiceWriter no-undo.
