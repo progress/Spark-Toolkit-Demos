@@ -11,27 +11,27 @@
             "EnableDebugs": false
         }],
         "ServiceSource": [{
-            "ServiceName": "Common",
+            "ServiceName": "common",
             "ServiceURI": "/web/api/common",
             "ClassPath": "Business",
             "UseRequest": false
         }, {
-            "ServiceName": "Ordering",
+            "ServiceName": "ordering",
             "ServiceURI": "/web/api/ordering",
             "ClassPath": "Business.Ordering",
             "UseRequest": false
         }, {
-            "ServiceName": "Personnel",
+            "ServiceName": "personnel",
             "ServiceURI": "/web/api/personnel",
             "ClassPath": "Business.Personnel",
             "UseRequest": false
         }, {
-            "ServiceName": "System",
+            "ServiceName": "system",
             "ServiceURI": "/web/api/system",
             "ClassPath": "Business.System",
             "UseRequest": false
         }, {
-            "ServiceName": "Tests",
+            "ServiceName": "tests",
             "ServiceURI": "/web/api/tests",
             "ClassPath": "Business.UnitTest",
             "UseRequest": false
