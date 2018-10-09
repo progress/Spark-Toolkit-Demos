@@ -48,12 +48,12 @@
     <target name="create" depends="_init_env,_init_unix,_init_windows">
 		<taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
-<!--
+
 		<antcall target="_create_sports"/>
--->
 		<antcall target="_create_webstate"/>
 
 		<antcall target="add_domain"/>
+		<antcall target="refresh_dates"/>
 	</target>
 
 	<target name="_create_sports">
@@ -84,11 +84,6 @@
             <Option name="-d" value="mdy"/>
 		    <DBConnection dbName="Sports2020" dbDir="${path}/Sports2020" singleUser="true"/>
 		</PCTLoadData>
-
-		<!-- Update any date values for this database as of today's date. -->
-		<PCTRun dlcHome="${dlcHome}" procedure="Sports2020/refreshDates.p" cpInternal="utf-8" cpStream="utf-8">
-		    <DBConnection dbName="Sports2020" dbDir="${path}/Sports2020" singleUser="true"/>
-		</PCTRun>
 	</target>
 
 	<target name="_create_webstate">
@@ -123,12 +118,24 @@
 	</target>
 
     <target name="add_domain" depends="_init_env,_init_unix,_init_windows">
-		<taskdef resource="PCT.properties" classpath="${basedir}/PCT.jar"/>
+		<taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
 
 		<PCTRun dlcHome="${dlcHome}" procedure="createDomain.p" cpInternal="utf-8" cpStream="utf-8">
 		    <DBConnection dbName="Sports2020" dbDir="${path}/Sports2020" singleUser="true"/>
 		    <DBConnection dbName="WebState" dbDir="${path}/WebState" singleUser="true"/>
+		</PCTRun>
+	</target>
+	
+    <target name="refresh_dates" depends="_init_env,_init_unix,_init_windows">
+		<taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+		<!-- Update any date values for this database as of today's date. -->
+		<PCTRun dlcHome="${dlcHome}" procedure="Sports2020/refreshDates.p"
+            cpInternal="utf-8" cpStream="utf-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
+		    <Option name="-d" value="mdy"/>
+			<DBConnection dbName="Sports2020" dbDir="${path}/Sports2020" singleUser="true"/>
 		</PCTRun>
 	</target>
 
