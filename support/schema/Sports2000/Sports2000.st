@@ -1,7 +1,7 @@
 #
 b .
 #
-d "Schema Area":6,64;1 .
+d "Schema Area":6,32;1 .
 #
 d "Data Area":10,256;512 .
 #

@@ -1118,11 +1118,10 @@ This is a ""test"".
 2104 "USA" "Alaska Par T Golf Pro Shop" "1307 E 74TH AVE" "" "Anchorage" "AK" "99518" "Shih Liu" "(907) 344-5717" "GPE" 7300 1901.51 "Net30" 10 "" "" ""
 2105 "USA" "All Weather wear" "4001 GEIST RD Suite 12" "" "Fairbanks" "GA" "99709" "George Romano" "(907) 474-8184" "DOS" 2200 0 "Net30" 10 "" "" ""
 2106 "USA" "Apocalypse Design Inc" "101 COLLEGE RD" "" "Fairbanks" "AK" "99701" "A Rockwell" "(907) 451-7555" "SLS" 10300 0 "Net30" 5 "" "" ""
-2107 "USA" "Test Customer" "123 Main St." "" "Denver" "CO" "80015" "" "" "DOS" 0 0 "" 0 "" "" ""
 .
 PSC
 filename=Customer
-records=0000000001117
+records=0000000001116
 ldbname=sports2020
 timestamp=2018/08/29-17:24:18
 numformat=44,46
