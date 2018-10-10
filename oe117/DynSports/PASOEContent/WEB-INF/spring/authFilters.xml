@@ -112,7 +112,7 @@
          according to the HTTP request's accept header. -->
     <b:bean id="OEFormEntryPoint"
             class="com.progress.appserv.services.security.OEFormAuthnEntryPointHandler">
-            <b:constructor-arg value="/static/login.html" />
+            <b:constructor-arg value="/static/auth/login.html" />
 
         <!-- OE SSO token manager used to support OpenEdge SSO tokens -->
         <b:property name="tokenManager" ref="OESSOTokenManager" />
