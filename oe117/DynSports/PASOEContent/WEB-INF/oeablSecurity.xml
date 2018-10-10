@@ -36,7 +36,7 @@
      <!-- Define any OpenEdge defined local properties and values that will 
          override those loaded by the 'properties-loader.xml' configuration. 
          DO NOT EDIT THIS WITH WEB APPLICATION PROPERTIES -->
-	<b:bean id="localProperties"
+    <b:bean id="localProperties"
             class="org.springframework.beans.factory.config.PropertiesFactoryBean">
         <b:property name="properties" >
             <b:props>

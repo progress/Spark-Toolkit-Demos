@@ -15,15 +15,15 @@
     <script type="text/javascript" src="https://kendo.cdn.telerik.com/2018.3.911/js/kendo.web.min.js"></script>
     <!-- Application Libraries -->
     <script type="text/javascript">
-	    $.extend({
-		    distinct: function(anArray){
-		       var result = [];
-		       $.each(anArray, function(i,v){
-		           if ($.inArray(v, result) == -1) result.push(v);
-		       });
-		       return result;
-		    }
-		});
+        $.extend({
+            distinct: function(anArray){
+               var result = [];
+               $.each(anArray, function(i,v){
+                   if ($.inArray(v, result) == -1) result.push(v);
+               });
+               return result;
+            }
+        });
 
         $(document).ready(function(){
             var protocol = (window.location.protocol === "file:") ? "https:" : window.location.protocol;
@@ -145,11 +145,11 @@
             function setCatalog(){
                 $.each(catalogTest, function(i, catalogURI){
                     // Using the found catalog data, take the most preferred (in order).
-	                if (catalogData[catalogURI] && $("#catalogURL").val() == "") {
-	                    $("#catalogURL").val(catalogURI);
-	                    Catalog.setData(catalogData[catalogURI]);
-	                }
-	            });
+                    if (catalogData[catalogURI] && $("#catalogURL").val() == "") {
+                        $("#catalogURL").val(catalogURI);
+                        Catalog.setData(catalogData[catalogURI]);
+                    }
+                });
             };
 
             function loadCatalog(url){
@@ -180,29 +180,29 @@
                 var year = (new Date()).getFullYear();
 
                 if (type && typeof type === "string") {
-	                switch(type.toLowerCase()){
-	                    case "character":
-	                        sample = "String";
-	                        break;
-	                    case "date":
-	                        sample = year + "-03-14";
-	                        break;
-	                    case "datetime":
-	                        sample = year + "-03-14T01:20:30+00:00";
-	                        break;
-	                    case "datetime-tz":
-	                        sample = year + "-03-14T01:20:30-04:00";
-	                        break;
-	                    case "decimal":
-	                        sample = 3.1415;
-	                        break;
-	                    case "integer":
-	                        sample = 12345;
-	                        break;
-	                    case "boolean":
-	                        sample = true;
-	                        break;
-	                }
+                    switch(type.toLowerCase()){
+                        case "character":
+                            sample = "String";
+                            break;
+                        case "date":
+                            sample = year + "-03-14";
+                            break;
+                        case "datetime":
+                            sample = year + "-03-14T01:20:30+00:00";
+                            break;
+                        case "datetime-tz":
+                            sample = year + "-03-14T01:20:30-04:00";
+                            break;
+                        case "decimal":
+                            sample = 3.1415;
+                            break;
+                        case "integer":
+                            sample = 12345;
+                            break;
+                        case "boolean":
+                            sample = true;
+                            break;
+                    }
                 }
 
                 return sample;
@@ -218,97 +218,97 @@
 
                 $.each(operation.params, function(i, param){
                     var dataType = param.ablType || param.xType;
-	                if (resource.schema) {
-		                // Obtain any standard/entity schema data for this parameter.
-		                schemaObj = resource.schema.properties[param.name] || null;
-		                if (!schemaObj && resource.dataDefinitions) {
-		                    // Search the dataDefinitions object for alternative schema.
-		                    schemaObj = resource.dataDefinitions[param.name] || null;
-		                }
+                    if (resource.schema) {
+                        // Obtain any standard/entity schema data for this parameter.
+                        schemaObj = resource.schema.properties[param.name] || null;
+                        if (!schemaObj && resource.dataDefinitions) {
+                            // Search the dataDefinitions object for alternative schema.
+                            schemaObj = resource.dataDefinitions[param.name] || null;
+                        }
 
-		                if (schemaObj) {
-		                    // Start with the name of the param, whether dataset or temp-table.
-		                    data.schemaInfo += '<ul style="list-style-type:none;">';
-		                    data.schemaInfo += "<li><b>" + param.name + "</b></li>";
-		                    var exclude = "ablType,default,title,type";
-		                    if (schemaObj.properties) {
-		                        // Presence of properties indicates param is a dataset.
-		                        data.sampleData[param.name] = {};
-		                        $.each(schemaObj.properties, function(tableName, tableDef){
-		                            // Parse through the tables of this dataset.
-		                            var sampleRecord = {};
-		                            data.schemaInfo += "<li>&nbsp;<b>" + tableName + "</b></li>";
-		                            data.primaryKey = $.merge($.merge([], data.primaryKey), tableDef.primaryKey || []);
-		                            data.foreignKey = $.merge($.merge([], data.foreignKey), tableDef.foreignKeys || []);
-		                            var properties = tableDef.items ? (tableDef.items.properties || []) : (tableDef.properties || []);
-		                            $.each(properties, function(fieldName, fieldDef){
-		                                if (!fieldName.startsWith("_")) {
-		                                    data.schemaInfo += "<li>&nbsp;&nbsp;" + fieldName + " as '" + (fieldDef.title || fieldName) + "' [" + (fieldDef.ablType || fieldDef.type) + "]";
+                        if (schemaObj) {
+                            // Start with the name of the param, whether dataset or temp-table.
+                            data.schemaInfo += '<ul style="list-style-type:none;">';
+                            data.schemaInfo += "<li><b>" + param.name + "</b></li>";
+                            var exclude = "ablType,default,title,type";
+                            if (schemaObj.properties) {
+                                // Presence of properties indicates param is a dataset.
+                                data.sampleData[param.name] = {};
+                                $.each(schemaObj.properties, function(tableName, tableDef){
+                                    // Parse through the tables of this dataset.
+                                    var sampleRecord = {};
+                                    data.schemaInfo += "<li>&nbsp;<b>" + tableName + "</b></li>";
+                                    data.primaryKey = $.merge($.merge([], data.primaryKey), tableDef.primaryKey || []);
+                                    data.foreignKey = $.merge($.merge([], data.foreignKey), tableDef.foreignKeys || []);
+                                    var properties = tableDef.items ? (tableDef.items.properties || []) : (tableDef.properties || []);
+                                    $.each(properties, function(fieldName, fieldDef){
+                                        if (!fieldName.startsWith("_")) {
+                                            data.schemaInfo += "<li>&nbsp;&nbsp;" + fieldName + " as '" + (fieldDef.title || fieldName) + "' [" + (fieldDef.ablType || fieldDef.type) + "]";
 
                                             if (fieldDef.ablType) {
-	                                            if (fieldDef.type === "array") {
-	                                                // Extent field of given datatype.
-	                                                var sample = getSampleValue(fieldDef.ablType);
-	                                                sampleRecord[fieldName] = [];
-	                                                var i = null;
-	                                                for (i=0; i<fieldDef.maxItems; i++) {
-	                                                    sampleRecord[fieldName][i] = sample;
-	                                                }
-	                                            } else {
-	                                                // Single value of a given datatype.
-	                                                sampleRecord[fieldName] = getSampleValue(fieldDef.ablType);
-	                                            }
+                                                if (fieldDef.type === "array") {
+                                                    // Extent field of given datatype.
+                                                    var sample = getSampleValue(fieldDef.ablType);
+                                                    sampleRecord[fieldName] = [];
+                                                    var i = null;
+                                                    for (i=0; i<fieldDef.maxItems; i++) {
+                                                        sampleRecord[fieldName][i] = sample;
+                                                    }
+                                                } else {
+                                                    // Single value of a given datatype.
+                                                    sampleRecord[fieldName] = getSampleValue(fieldDef.ablType);
+                                                }
                                             }
 
-		                                    $.each(fieldDef, function(propName, propValue){
-		                                        if (exclude.indexOf(propName) === -1) {
-		                                            if (propValue === null || propValue === undefined) { propValue = "null"; }
-		                                            data.schemaInfo += " " + propName + ": " + ((typeof propValue === "string") ? propValue : JSON.stringify(propValue));
-		                                        }
-		                                    });
-		                                    data.schemaInfo += "</li>";
-		                                }
-		                            });
-		                            data.sampleData[param.name][tableName] = [sampleRecord];
-		                        });
-		                    } else if (dataType.toLowerCase() == "table") {
-		                        var sampleRecord = {};
-		                        data.primaryKey = $.merge($.merge([], data.primaryKey), schemaObj.primaryKey || []);
-		                        data.foreignKey = $.merge($.merge([], data.foreignKey), schemaObj.foreignKeys || []);
-		                        $.each(schemaObj.items.properties, function(fieldName, fieldDef){
-		                            // Parameter schema is explicitly a temp-table.
-		                            if (!fieldName.startsWith("_")) {
-		                                data.schemaInfo += "<li>&nbsp;" + fieldName + " as '" + (fieldDef.title || fieldName) + "' [" + (fieldDef.ablType || fieldDef.type) + "]";
+                                            $.each(fieldDef, function(propName, propValue){
+                                                if (exclude.indexOf(propName) === -1) {
+                                                    if (propValue === null || propValue === undefined) { propValue = "null"; }
+                                                    data.schemaInfo += " " + propName + ": " + ((typeof propValue === "string") ? propValue : JSON.stringify(propValue));
+                                                }
+                                            });
+                                            data.schemaInfo += "</li>";
+                                        }
+                                    });
+                                    data.sampleData[param.name][tableName] = [sampleRecord];
+                                });
+                            } else if (dataType.toLowerCase() == "table") {
+                                var sampleRecord = {};
+                                data.primaryKey = $.merge($.merge([], data.primaryKey), schemaObj.primaryKey || []);
+                                data.foreignKey = $.merge($.merge([], data.foreignKey), schemaObj.foreignKeys || []);
+                                $.each(schemaObj.items.properties, function(fieldName, fieldDef){
+                                    // Parameter schema is explicitly a temp-table.
+                                    if (!fieldName.startsWith("_")) {
+                                        data.schemaInfo += "<li>&nbsp;" + fieldName + " as '" + (fieldDef.title || fieldName) + "' [" + (fieldDef.ablType || fieldDef.type) + "]";
 
-		                                if (fieldDef.ablType) {
-			                                if (fieldDef.type === "array") {
-	                                            // Extent field of given datatype.
-	                                            var sample = getSampleValue(fieldDef.ablType);
-	                                            sampleRecord[fieldName] = [];
-	                                            var i = null;
-	                                            for (i=0; i<fieldDef.maxItems; i++) {
-	                                                sampleRecord[fieldName][i] = sample;
-	                                            }
-	                                        } else {
-	                                            // Single value of a given datatype.
-	                                            sampleRecord[fieldName] = getSampleValue(fieldDef.ablType);
-	                                        }
+                                        if (fieldDef.ablType) {
+                                            if (fieldDef.type === "array") {
+                                                // Extent field of given datatype.
+                                                var sample = getSampleValue(fieldDef.ablType);
+                                                sampleRecord[fieldName] = [];
+                                                var i = null;
+                                                for (i=0; i<fieldDef.maxItems; i++) {
+                                                    sampleRecord[fieldName][i] = sample;
+                                                }
+                                            } else {
+                                                // Single value of a given datatype.
+                                                sampleRecord[fieldName] = getSampleValue(fieldDef.ablType);
+                                            }
                                         }
 
-		                                $.each(fieldDef, function(propName, propValue){
-		                                    if (exclude.indexOf(propName) === -1) {
-		                                        if (propValue === null || propValue === undefined) { propValue = "null"; }
-		                                        data.schemaInfo += " " + propName + ": " + ((typeof propValue === "string") ? propValue : JSON.stringify(propValue));
-		                                    }
-		                                });
-		                                data.schemaInfo += "</li>";
-		                            }
-		                        });
-		                        data.sampleData[param.name] = [sampleRecord];
-		                    }
+                                        $.each(fieldDef, function(propName, propValue){
+                                            if (exclude.indexOf(propName) === -1) {
+                                                if (propValue === null || propValue === undefined) { propValue = "null"; }
+                                                data.schemaInfo += " " + propName + ": " + ((typeof propValue === "string") ? propValue : JSON.stringify(propValue));
+                                            }
+                                        });
+                                        data.schemaInfo += "</li>";
+                                    }
+                                });
+                                data.sampleData[param.name] = [sampleRecord];
+                            }
                             data.schemaInfo += "</ul><br/>";
-		                }
-		            }
+                        }
+                    }
                 });
 
                 if (data.primaryKey.length > 0) {
@@ -328,8 +328,8 @@
                         // Provide a proper sample object for the AFP plugin, based on server-side capabilities.
                         var capabilities = (operationObj.capabilities || "").replace(/\s/g, "").split(",");
 
-		                // Obtain schema for this resource/operation.
-		                var schemaData = getSchema(resourceObj, operationObj);
+                        // Obtain schema for this resource/operation.
+                        var schemaData = getSchema(resourceObj, operationObj);
 
                         // Create a standard sample for the read operations, based on mapping type (if available).
                         if (operationObj.mappingType && operationObj.mappingType.toUpperCase() === "AFP") {
@@ -435,8 +435,8 @@
 
                                 // Prepare a proper sample given the type of operation being executed.
                                 if (operationObj.type === "read" || operationObj.type === "count") {
-			                        // Obtain standard read sample for resource, if available.
-			                        sample = getReadSample(resourceObj);
+                                    // Obtain standard read sample for resource, if available.
+                                    sample = getReadSample(resourceObj);
                                 } else {
                                     // Just provide a blank string for the query (assumes JFP mapping).
                                     sample[param.name] = "";
@@ -445,19 +445,19 @@
                                 // Place the sample into a request parameter by the same name.
                                 sampleRequest[param.name] = sample;
                             } else if (param.type.indexOf("BODY") > -1) {
-	                            if (param.type.indexOf("REQUEST") > -1) {
+                                if (param.type.indexOf("REQUEST") > -1) {
                                     requestParams += "<li>" + param.name + (dataType ? " [" + dataType + "]" : "") + "</li>";
-	                                if (schemaData.sampleData[param.name]) {
-	                                    // Use generated sample from schema if present.
-	                                    sampleRequest[param.name] = schemaData.sampleData[param.name];
-	                                } else {
-	                                    // Otherwise get a primitive sample value.
-	                                    sampleRequest[param.name] = getSampleValue(dataType);
-	                                }
-	                            }
-	                            if (param.type.indexOf("RESPONSE") > -1) {
-	                                responseParams += "<li>" + param.name + (dataType ? " [" + dataType + "]" : "") + "</li>";
-	                            }
+                                    if (schemaData.sampleData[param.name]) {
+                                        // Use generated sample from schema if present.
+                                        sampleRequest[param.name] = schemaData.sampleData[param.name];
+                                    } else {
+                                        // Otherwise get a primitive sample value.
+                                        sampleRequest[param.name] = getSampleValue(dataType);
+                                    }
+                                }
+                                if (param.type.indexOf("RESPONSE") > -1) {
+                                    responseParams += "<li>" + param.name + (dataType ? " [" + dataType + "]" : "") + "</li>";
+                                }
                             } else {
                                 paramInfo += "<li>" + param.name + (dataType ? " [" + dataType + "] (" : " (") + param.type + ")</li>";
                             }
@@ -679,21 +679,21 @@
             $.each(catalogTest, function(i, catalogURI){
                 // Test all possible catalog locations to find suitable matches.
                 testCatalog(catalogURI)
-	                .done(function(data){
+                    .done(function(data){
                         catalogData[catalogURI] = data;
-	                    console.log("Catalog found at", catalogURI);
-	                    responses++; // Track this as a response given.
-	                    if (catalogTest.length === responses) {
-	                       setCatalog();
-	                    }
-	                })
-	                .fail(function(){
+                        console.log("Catalog found at", catalogURI);
+                        responses++; // Track this as a response given.
+                        if (catalogTest.length === responses) {
+                           setCatalog();
+                        }
+                    })
+                    .fail(function(){
                         console.log("Catalog not found at", catalogURI);
                         responses++; // Track this as a response given.
                         if (catalogTest.length === responses) {
                            setCatalog();
                         }
-	                });
+                    });
             });
 
             // Hide certain elements by default.

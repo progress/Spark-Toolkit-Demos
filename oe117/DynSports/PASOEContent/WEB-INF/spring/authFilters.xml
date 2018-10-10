@@ -306,6 +306,7 @@
              <b:property name="accntinfo" value="${OEClientPrincipalFilter.accntinfo}" />
              <b:property name="domainRoleFilter" value="${OEClientPrincipalFilter.domainRoleFilter}" />
              <b:property name="loadAccntAttrList" value="${OEClientPrincipalFilter.loadAccntAttrList:}" />
+             <b:property name="forwardToken" value="${OEClientPrincipalFilter.forwardToken:false}" />
              <b:property name="properties" >
                 <b:map>
                      <b:entry key="${OEClientPrincipalFilter.properties.1.key}"
@@ -333,6 +334,15 @@
              <b:property name="ccid" value="${OEClientPrincipalFilter.ccid}" />
              <b:property name="anonymous" value="${OEClientPrincipalFilter.anonymous}" />
              <b:property name="appName" value="${OEClientPrincipalFilter.appName}" />
+             <b:property name="mdcFilter" >
+                 <b:bean id="oecpMdcFilter"
+                        name="default"
+                        class="com.progress.appserv.services.security.OEMdcFilter" >
+                     <b:property name="reqIDFactory" ref="RequestsIDGenerator" />
+                     <b:property name="logReqStartStop" value="false" />
+                     <b:property name="updateUIDPolicy" value="2" />
+                </b:bean>
+             </b:property>
     </b:bean>
 
     <!-- The security filter that implements the CORS standard for controlling
@@ -578,5 +588,28 @@
     <b:bean id="authorizationLoggerSink"
         class="com.progress.appserv.services.security.OEAuthorizationLogger" />
 
+    <b:bean id="RequestsIDGenerator"
+        class="com.progress.appserv.services.security.OERequestIDFactory" />
+
+    <!-- updateUIDPolicy values
+            0   Initialize request-id and default user-id only
+            1   Never update userid
+            2   Update userid only if it has not been previously set
+            3   Always update the user-id with the current value
+    -->
+    <b:bean id="MDCPrimaryFilter"
+        class="com.progress.appserv.services.security.OEMdcFilter" >
+        <b:property name="reqIDFactory" ref="RequestsIDGenerator" />
+        <b:property name="logReqStartStop" value="true" />
+        <b:property name="updateUIDPolicy" value="0" />
+        <b:property name="headerList" value="${MDC.filter.headerList:}" />
+    </b:bean>
+
+    <b:bean id="MDCSecondaryFilter"
+        class="com.progress.appserv.services.security.OEMdcFilter" >
+        <b:property name="reqIDFactory" ref="RequestsIDGenerator" />
+        <b:property name="logReqStartStop" value="false" />
+        <b:property name="updateUIDPolicy" value="2" />
+    </b:bean>
 
 </b:beans>

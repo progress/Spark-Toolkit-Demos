@@ -383,6 +383,7 @@
         <b:property name="tlsCipherSuites" value="${sts.UserDetails.tlsCipherSuites}" />
         <b:property name="tlsProtocols" value="${sts.UserDetails.tlsProtocols}" />
         <b:property name="userAgent" value="${sts.UserDetails.userAgent}" />
+        <b:property name="sniHost" value="${sts.UserDetails.sniHost:defaultHost}" />
     </b:bean>
 
 </b:beans>
