@@ -69,6 +69,14 @@
         <expression-handler ref="oauth2WebExpressionHandler" />
         <access-denied-handler ref="oauth2ResSvcAccessDeniedHandler" />
 
+        <!-- OpenEdge MDC primary filter  -->
+        <custom-filter before="CHANNEL_FILTER"
+                       ref="MDCPrimaryFilter" />
+
+        <!-- OpenEdge MDC secondary filter  -->
+        <custom-filter after="SESSION_MANAGEMENT_FILTER"
+                       ref="MDCSecondaryFilter" />
+
         <!-- Spring OAuth2 resource server authorization header
              filter -->
         <custom-filter before="PRE_AUTH_FILTER"
@@ -127,6 +135,14 @@
              URL authorization evaluation and access denied -->
         <expression-handler ref="oauth2WebExpressionHandler" />
         <access-denied-handler ref="oauth2ResSvcAccessDeniedHandler" />
+
+        <!-- OpenEdge MDC primary filter  -->
+        <custom-filter before="CHANNEL_FILTER"
+                       ref="MDCPrimaryFilter" />
+
+        <!-- OpenEdge MDC secondary filter  -->
+        <custom-filter after="SESSION_MANAGEMENT_FILTER"
+                       ref="MDCSecondaryFilter" />
 
         <!-- Spring OAuth2 resource server authorization header
              filter -->
@@ -188,6 +204,14 @@
              URL authorization evaluation and access denied -->
         <expression-handler ref="oauth2WebExpressionHandler" />
         <access-denied-handler ref="oauth2ResSvcAccessDeniedHandler" />
+
+        <!-- OpenEdge MDC primary filter  -->
+        <custom-filter before="CHANNEL_FILTER"
+                       ref="MDCPrimaryFilter" />
+
+        <!-- OpenEdge MDC secondary filter  -->
+        <custom-filter after="SESSION_MANAGEMENT_FILTER"
+                       ref="MDCSecondaryFilter" />
 
         <!-- Spring OAuth2 resource server authorization header
              filter -->

@@ -45,11 +45,13 @@ bin/openedge_setenv.bat (add below other JAVA_OPTS options):
     rem set network to ipv4 only
     set _oeopts=%_oeopts% -Djava.net.preferIPv4Stack=true
 
+
 conf/catalina.properties (adjust list of compressible file types):
 
-    psc.as.compress.min=256
+    psc.as.compress.min=128
     psc.as.compress.types=text/html,text/xml,text/javascript,text/css,application/json,application/javascript
 
-conf/catalina.properties (output access timestamp as ISO8601 format):
 
-    psc.as.accesslog.pattern=%h %u [%{yyyy-MM-dd'T'HH:mm:ss.SSSZ}t] "%r" %s %b %D %I %S
+conf/catalina.properties (support enhanced MDC logging):
+
+    psc.as.accesslog.pattern=%h %{OEReq.userId}r [%{yyyy-MM-dd'T'HH:mm:ss.SSSZ}t] “%r” %s %b %D %I %S %{OEReq.requestId}r

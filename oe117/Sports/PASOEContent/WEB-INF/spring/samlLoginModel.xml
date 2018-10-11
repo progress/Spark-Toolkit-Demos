@@ -21,7 +21,7 @@
          MAKE ALL CONFIGURATION EDITS IN THE oeablSecurity.properties FILE.
          ********************************************************************* -->
 
-    <b:import resource="${saml.security.enable}SamlSecurity.xml"/> 
+    <b:import resource="enableSamlSecurity.xml"/> 
 
     <!-- Add in all of the SAML handling beans used to validate tokens for and URL access -->
     <b:import resource="samlFilters.xml"/> 

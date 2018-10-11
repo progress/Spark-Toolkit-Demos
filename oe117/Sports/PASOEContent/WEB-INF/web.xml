@@ -258,22 +258,24 @@
      and the transports. -->
 
     <!-- USER EDIT: uncomment the <session-config> element below to
-         control these HTTP session run-time attributes.
+         control these HTTP session run-time attributes. PASOE does
+         not support a tracking-mode of URL as this is considered
+         a security vulnerability.
 
         <http-only> {true|false} Block cookie access to JavaScript
         <secure>    {true|false} Require HTTPS for transmitting cookie
-        <tracking-mode> {COOKIE|URL|SSL} How session id communicated to client
+        <tracking-mode> {COOKIE|SSL} How session id is communicated to client
         <session-timeout> {minutes}  How many minutes for a session to be
                     idle before deletion
     -->
     <!--
     <session-config>
+        <session-timeout>30</session-timeout>
         <cookie-config>
             <http-only>true</http-only>
             <secure>false</secure>
-            <tracking-mode>URL</tracking-mode>
         </cookie-config>
-        <session-timeout>30</session-timeout>
+        <tracking-mode>COOKIE</tracking-mode>
     </session-config>
     -->
 
@@ -342,8 +344,8 @@
       <servlet-name>apsv</servlet-name>
       <servlet-class>com.progress.appserv.adapters.aia.Aia</servlet-class>
       <init-param>
-	    <param-name>instanceName</param-name>
-	    <param-value>Aia1</param-value>
+        <param-name>instanceName</param-name>
+        <param-value>Aia1</param-value>
       </init-param>
       <load-on-startup>2</load-on-startup>
     </servlet>
@@ -388,7 +390,7 @@
       <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 
-	   <!-- Define the OEWeb transport that supplies HTTP client access
+       <!-- Define the OEWeb transport that supplies HTTP client access
             to classic WebSpeed application code and the expanded support
             supplied by the Web Handlers of PASOE.  -->
     <servlet>
@@ -418,15 +420,15 @@
            <param-name>OEWebHandlerClass</param-name>
            <param-value>Progress.Web.InternalWebHandler</param-value>
        </init-param>
-	   <load-on-startup>4</load-on-startup>
+       <load-on-startup>4</load-on-startup>
     </servlet>
 
-	<!-- The context parameter and URL mapping must be consistent if
+    <!-- The context parameter and URL mapping must be consistent if
          you are looking to modify the URL space -->
     <context-param>
         <param-name>OEWebURL</param-name>
         <param-value>/web</param-value>
-	</context-param>
+    </context-param>
     <servlet-mapping>
       <servlet-name>OEWebServlet</servlet-name>
       <url-pattern>/web/*</url-pattern>
@@ -439,8 +441,8 @@
       <servlet-name>wsa</servlet-name>
       <servlet-class>com.progress.appserv.adapters.soap.WsaServlet</servlet-class>
       <init-param>
-	    <param-name>instanceName</param-name>
-	    <param-value>wsa1</param-value>
+        <param-name>instanceName</param-name>
+        <param-value>wsa1</param-value>
       </init-param>
       <load-on-startup>5</load-on-startup>
     </servlet>
