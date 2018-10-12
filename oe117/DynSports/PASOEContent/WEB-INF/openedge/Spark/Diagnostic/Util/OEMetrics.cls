@@ -425,7 +425,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         if not lIsTracking then do:
             /* Turn on tracking if not already enabled, and record the latest result. */
-            assign lIsTracking = oRemoteMetrics:TrackABLObjects(piAgentID, true).            
+            assign lIsTracking = oRemoteMetrics:TrackABLObjects(piAgentID, true).
 
             /* Remember whether objects are being tracked for this agent. */
             if lIsTracking then do:

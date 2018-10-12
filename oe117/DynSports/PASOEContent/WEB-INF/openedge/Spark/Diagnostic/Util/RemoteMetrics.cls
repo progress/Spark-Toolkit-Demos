@@ -191,7 +191,7 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
 
     method private JsonObject InvokeAPI ( input pcRequestURI as character ):
         /* Request the necessary information via GET by default. */
-        this-object:InvokeAPI(pcRequestURI, MethodEnum:GET, ?).
+        return this-object:InvokeAPI(pcRequestURI, MethodEnum:GET, ?).
     end method. /* InvokeAPI */
 
 
@@ -252,7 +252,8 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
             delete object oHttpReq no-error.
             delete object oHttpResp no-error.
         end finally.
-    end method.  /* InvokeAPI */
+    end method. /* InvokeAPI */
+
 
     method private character InvokeJMX ( input pcQueryPath as character ):
         /**
