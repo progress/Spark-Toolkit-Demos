@@ -59,10 +59,9 @@ PSC
 filename=SupplierItemXref
 records=0000000000056
 ldbname=sports2020
-timestamp=2018/08/29-17:24:21
+timestamp=2018/10/18-13:36:24
 numformat=44,46
 dateformat=mdy-1950
-map=NO-MAP
 cpstream=UTF-8
 .
 0000000343

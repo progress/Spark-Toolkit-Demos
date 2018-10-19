@@ -6,17 +6,16 @@
 "France" "Ville" "Region" "Code postal" "99999" "9 99-99-99-99" "Fr" "DMY" 6
 "Nederland" "Plaats" "Regio" "Postkode" "9999 !!" "" "Hfl" "DMY" 7
 "Sverige" "Postadress" "" "Postnr" "999 99" "x(16)" "SEK" "YMD" 8
-"United Kingdom" "Town/City" "County" "Post Code" "x(8)" "x(12)" "P" "DMY" 9
-"USA" "City" "State" "Zip Code" "99999-9999" "(999) 999-9999" "$" "MDY" 10
+"United Kingdom" "Town/City" "County" "Post Code" "x(8)" "x(12)" "GBP" "DMY" 9
+"USA" "City" "State" "Zip Code" "99999-9999" "(999) 999-9999" "USD" "MDY" 10
 .
 PSC
 filename=LocalDefault
 records=0000000000010
 ldbname=sports2020
-timestamp=2018/08/29-17:24:19
+timestamp=2018/10/18-13:36:24
 numformat=44,46
 dateformat=mdy-1950
-map=NO-MAP
 cpstream=UTF-8
 .
-0000000738
+0000000742

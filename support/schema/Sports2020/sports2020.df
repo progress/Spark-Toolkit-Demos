@@ -1,80 +1,76 @@
+UPDATE DATABASE "?"
+
+ADD SEQUENCE "NextBinNum"
+  INITIAL 1000
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 1000
+
 ADD SEQUENCE "NextCustNum"
   INITIAL 1000
   INCREMENT 5
   CYCLE-ON-LIMIT no
   MIN-VAL 1000
 
-ADD SEQUENCE "NextInvNum"
-  INITIAL 1000
+ADD SEQUENCE "NextEmpNum"
+  INITIAL 10
   INCREMENT 1
   CYCLE-ON-LIMIT no
-  MIN-VAL 1000
+  MIN-VAL 10
+
+ADD SEQUENCE "NextItemNum"
+  INITIAL 10
+  INCREMENT 10
+  CYCLE-ON-LIMIT no
+  MIN-VAL 10
+
+ADD SEQUENCE "NextInvNum"
+  INITIAL 100
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 100
+
+ADD SEQUENCE "NextInvTransNum"
+  INITIAL 100
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 10
+
+ADD SEQUENCE "NextLocalDefNum"
+  INITIAL 10
+  INCREMENT 1
+  CYCLE-ON-LIMIT no
+  MIN-VAL 10
 
 ADD SEQUENCE "NextOrdNum"
-  INITIAL 1000
+  INITIAL 10000
   INCREMENT 5
   CYCLE-ON-LIMIT no
   MIN-VAL 1000
 
-ADD SEQUENCE "NextItemNum"
-  INITIAL 100
-  INCREMENT 10
-  CYCLE-ON-LIMIT no
-  MIN-VAL 100
-
-ADD SEQUENCE "NextRefNum"
-  INITIAL 1
-  INCREMENT 1
-  CYCLE-ON-LIMIT no
-  MIN-VAL 1
-
-ADD SEQUENCE "NextVisitor"
-  INITIAL 1000
+ADD SEQUENCE "NextPONum"
+  INITIAL 10000
   INCREMENT 1
   CYCLE-ON-LIMIT no
   MIN-VAL 1000
 
-ADD SEQUENCE "NextSupplNum"
-  INITIAL 0
+ADD SEQUENCE "NextRefNum"
+  INITIAL 10
   INCREMENT 1
   CYCLE-ON-LIMIT no
-  MIN-VAL 0
+  MIN-VAL 10
 
-ADD SEQUENCE "NextLocalDefNum"
-  INITIAL 0
+ADD SEQUENCE "NextSupplNum"
+  INITIAL 10
   INCREMENT 1
   CYCLE-ON-LIMIT no
-  MIN-VAL 0
+  MIN-VAL 10
 
 ADD SEQUENCE "NextWareNum"
-  INITIAL 0
+  INITIAL 10
   INCREMENT 1
   CYCLE-ON-LIMIT no
-  MIN-VAL 0
-
-ADD SEQUENCE "NextBinNum"
-  INITIAL 0
-  INCREMENT 1
-  CYCLE-ON-LIMIT no
-  MIN-VAL 0
-
-ADD SEQUENCE "NextPONum"
-  INITIAL 0
-  INCREMENT 1
-  CYCLE-ON-LIMIT no
-  MIN-VAL 0
-
-ADD SEQUENCE "NextEmpNum"
-  INITIAL 0
-  INCREMENT 1
-  CYCLE-ON-LIMIT no
-  MIN-VAL 0
-
-ADD SEQUENCE "NextInvTransNum"
-  INITIAL 0
-  INCREMENT 1
-  CYCLE-ON-LIMIT no
-  MIN-VAL 0
+  MIN-VAL 10
 
 ADD TABLE "Benefits"
   AREA "Data Area"
@@ -148,7 +144,7 @@ ADD INDEX "EmpNo" ON "Benefits"
 
 ADD TABLE "BillTo"
   AREA "Data Area"
-  DESCRIPTION "The billto table contains bill to address information for an order. "
+  DESCRIPTION "The billto table contains bill to address information for an order."
   DUMP-NAME "billto"
 
 ADD FIELD "CustNum" OF "BillTo" AS integer
@@ -236,7 +232,7 @@ ADD FIELD "Phone" OF "BillTo" AS character
   HELP "Please enter the phone number."
   ORDER 100
 
-ADD INDEX "custnumbillto" ON "BillTo"
+ADD INDEX "CustNumBillTo" ON "BillTo"
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -247,7 +243,7 @@ ADD TABLE "Bin"
   AREA "Data Area"
   DESCRIPTION "The bin table is used to represent the bins in each warehouse that contain items."
   DUMP-NAME "bin"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crbin.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crbin.p" CRC "?"
 
 ADD FIELD "WarehouseNum" OF "Bin" AS integer
   FORMAT "zzzzzzzzz9"
@@ -259,7 +255,7 @@ ADD FIELD "WarehouseNum" OF "Bin" AS integer
   HELP "Please Enter the Warehouse Number."
   ORDER 10
 
-ADD FIELD "Itemnum" OF "Bin" AS integer
+ADD FIELD "ItemNum" OF "Bin" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Item Num"
@@ -301,19 +297,20 @@ ADD INDEX "BinNum" ON "Bin"
 
 ADD INDEX "ItemNum" ON "Bin"
   AREA "Index Area"
-  INDEX-FIELD "Itemnum" ASCENDING
+  INDEX-FIELD "ItemNum" ASCENDING
 
 ADD INDEX "WarehouseNumItemNum" ON "Bin"
   AREA "Index Area"
   INDEX-FIELD "WarehouseNum" ASCENDING
-  INDEX-FIELD "Itemnum" ASCENDING
+  INDEX-FIELD "ItemNum" ASCENDING
 
 ADD TABLE "Customer"
   AREA "Data Area"
   DESCRIPTION "The customer table contains customer  information including  balance and address."
   DUMP-NAME "customer"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crcust.p" CRC "?"
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delcust.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crcust.p" CRC "?"
+  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2020trgs/wrcust.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2020trgs/delcust.p" CRC "?"
 
 ADD FIELD "CustNum" OF "Customer" AS integer
   FORMAT ">>>>9"
@@ -397,7 +394,7 @@ ADD FIELD "SalesRep" OF "Customer" AS character
   LABEL "Sales Rep"
   MAX-WIDTH 8
   VALEXP "CAN-FIND(Salesrep OF Customer)"
-  VALMSG "The Sales Rep's name you've entered must exist in the Salesrep table."
+  VALMSG "The Sales Rep's name you've entered must exist in the SalesRep table."
   HELP "Please Enter a Sales Rep."
   ORDER 125
 
@@ -532,7 +529,8 @@ ADD TABLE "Employee"
   AREA "Data Area"
   DESCRIPTION "The employee table stores employee information including name and address"
   DUMP-NAME "employee"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/cremp.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/cremp.p" CRC "?"
+  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2020trgs/wremp.p" CRC "?"
 
 ADD FIELD "LastName" OF "Employee" AS character
   FORMAT "x(25)"
@@ -667,7 +665,7 @@ ADD FIELD "StartDate" OF "Employee" AS date
   HELP "Please enter a Start Date"
   ORDER 98
 
-ADD FIELD "Birthdate" OF "Employee" AS date
+ADD FIELD "BirthDate" OF "Employee" AS date
   FORMAT "99/99/9999"
   INITIAL ?
   LABEL "Birthdate"
@@ -714,12 +712,12 @@ ADD FIELD "Relation" OF "Family" AS character
   LENGTH 0
   ORDER 20
 
-ADD FIELD "Birthdate" OF "Family" AS date
+ADD FIELD "BirthDate" OF "Family" AS date
   FORMAT "99/99/9999"
   INITIAL ?
-  LABEL "Birthdate"
+  LABEL "BirthDate"
   MAX-WIDTH 4
-  HELP "Please enter a Birthdate"
+  HELP "Please enter a BirthDate"
   ORDER 30
 
 ADD FIELD "BenefitDate" OF "Family" AS date
@@ -864,7 +862,7 @@ ADD TABLE "InventoryTrans"
   AREA "Data Area"
   DESCRIPTION "The inventorytrans table contains information about the movement of inventory."
   DUMP-NAME "inventor"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crintr.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crinvtx.p" CRC "?"
 
 ADD FIELD "InvTransNum" OF "InventoryTrans" AS integer
   FORMAT "zzzzzzzzz9"
@@ -898,7 +896,7 @@ ADD FIELD "Qty" OF "InventoryTrans" AS integer
   HELP "Please enter the quantity."
   ORDER 40
 
-ADD FIELD "Itemnum" OF "InventoryTrans" AS integer
+ADD FIELD "ItemNum" OF "InventoryTrans" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Item Num"
@@ -932,7 +930,7 @@ ADD FIELD "PONum" OF "InventoryTrans" AS integer
   HELP "Please enter a PO Number."
   ORDER 80
 
-ADD FIELD "Ordernum" OF "InventoryTrans" AS integer
+ADD FIELD "OrderNum" OF "InventoryTrans" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Order Num"
@@ -940,7 +938,7 @@ ADD FIELD "Ordernum" OF "InventoryTrans" AS integer
   HELP "Please Enter an Order Number"
   ORDER 90
 
-ADD FIELD "Transtime" OF "InventoryTrans" AS character
+ADD FIELD "TransTime" OF "InventoryTrans" AS character
   FORMAT "X(5)"
   INITIAL ""
   LABEL "Trans Time"
@@ -956,8 +954,8 @@ ADD TABLE "Invoice"
   AREA "Data Area"
   DESCRIPTION "The invoice table contains transactions for the receivable module."
   DUMP-NAME "invoice"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crinv.p" CRC "?"
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delinv.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crinv.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2020trgs/delinv.p" CRC "?"
 
 ADD FIELD "Invoicenum" OF "Invoice" AS integer
   FORMAT "zzzzzzzzz9"
@@ -1036,7 +1034,7 @@ ADD INDEX "InvoiceNum" ON "Invoice"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "Invoicenum" ASCENDING
+  INDEX-FIELD "InvoiceNum" ASCENDING
 
 ADD INDEX "CustNum" ON "Invoice"
   AREA "Index Area"
@@ -1056,11 +1054,11 @@ ADD TABLE "Item"
   VALEXP "NOT (CAN-FIND(FIRST orderline OF item))"
   VALMSG "Cannot delete Item, order-line records exist with this item"
   DUMP-NAME "item"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/critem.p" CRC "?"
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delitem.p" CRC "?"
-  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2000trgs/writem.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/critem.p" CRC "?"
+  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2020trgs/writem.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2020trgs/delitem.p" CRC "?"
 
-ADD FIELD "Itemnum" OF "Item" AS integer
+ADD FIELD "ItemNum" OF "Item" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Item Num"
@@ -1104,7 +1102,7 @@ ADD FIELD "CatDescription" OF "Item" AS character
   HELP "Please enter a description."
   ORDER 110
 
-ADD FIELD "Onhand" OF "Item" AS integer
+ADD FIELD "OnHand" OF "Item" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "On Hand"
@@ -1172,7 +1170,7 @@ ADD FIELD "Weight" OF "Item" AS decimal
   DECIMALS 2
   ORDER 150
 
-ADD FIELD "Minqty" OF "Item" AS integer
+ADD FIELD "MinQty" OF "Item" AS integer
   FORMAT "->>>>9"
   INITIAL "0"
   LABEL "Min Qty"
@@ -1184,7 +1182,7 @@ ADD INDEX "ItemNum" ON "Item"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "Itemnum" ASCENDING
+  INDEX-FIELD "ItemNum" ASCENDING
 
 ADD INDEX "CatDescription" ON "Item"
   AREA "Index Area"
@@ -1213,7 +1211,7 @@ ADD TABLE "LocalDefault"
    LocalDefault.Country))"
   VALMSG "This record cannot be deleted if used in at least one Customer record."
   DUMP-NAME "localdef"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crlocdef.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crlocdef.p" CRC "?"
 
 ADD FIELD "Country" OF "LocalDefault" AS character
   FORMAT "x(20)"
@@ -1287,7 +1285,7 @@ ADD FIELD "LocalDefNum" OF "LocalDefault" AS integer
   HELP "Please enter the Local Default Number."
   ORDER 90
 
-ADD INDEX "localdefnum" ON "LocalDefault"
+ADD INDEX "LocalDefNum" ON "LocalDefault"
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1298,9 +1296,10 @@ ADD TABLE "Order"
   DESCRIPTION "The order table contains order header information."
   VALEXP "1 = 1"
   DUMP-NAME "order"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crord.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crord.p" CRC "?"
+  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2020trgs/wrord.p" CRC "?"
 
-ADD FIELD "Ordernum" OF "Order" AS integer
+ADD FIELD "OrderNum" OF "Order" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Order Num"
@@ -1408,11 +1407,7 @@ ADD FIELD "OrderStatus" OF "Order" AS character
   INITIAL "Ordered"
   LABEL "Order Status"
   MAX-WIDTH 40
-  VIEW-AS "VIEW-AS COMBO-BOX
-  LIST-ITEMS ""Ordered"",""Back Ordered"", ""Partially Shipped"", ""Shipped""
-
-
-  "
+  VIEW-AS "VIEW-AS COMBO-BOX LIST-ITEMS ""Ordered"", ""Back Ordered"", ""Partially Shipped"", ""Shipped"""
   HELP "Please enter the Order Status."
   ORDER 190
 
@@ -1422,18 +1417,16 @@ ADD FIELD "WarehouseNum" OF "Order" AS integer
   LABEL "Warehouse Num"
   MAX-WIDTH 4
   VALEXP "(warehousenum = 0) or can-find(warehouse of order)"
-  VALMSG "Entrer a number greater than zero"
+  VALMSG "Enter a number greater than zero"
   HELP "Please enter the Warehouse Number."
   ORDER 200
 
-ADD FIELD "Creditcard" OF "Order" AS character
+ADD FIELD "CreditCard" OF "Order" AS character
   FORMAT "x(20)"
   INITIAL "Visa"
   LABEL "Credit Card"
   MAX-WIDTH 40
-  VIEW-AS "VIEW-AS COMBO-BOX
-  LIST-ITEMS ""Visa"",""American Express"", ""Master Card""
-   "
+  VIEW-AS "VIEW-AS COMBO-BOX LIST-ITEMS ""Visa"", ""American Express"", ""Master Card"""
   HELP "Please enter the credit card."
   ORDER 210
 
@@ -1441,13 +1434,13 @@ ADD INDEX "OrderNum" ON "Order"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "Ordernum" ASCENDING
+  INDEX-FIELD "OrderNum" ASCENDING
 
 ADD INDEX "CustOrder" ON "Order"
   AREA "Index Area"
   UNIQUE
   INDEX-FIELD "CustNum" ASCENDING
-  INDEX-FIELD "Ordernum" ASCENDING
+  INDEX-FIELD "OrderNum" ASCENDING
 
 ADD INDEX "OrderDate" ON "Order"
   AREA "Index Area"
@@ -1465,11 +1458,11 @@ ADD TABLE "OrderLine"
   AREA "Data Area"
   DESCRIPTION "The orderline table contains order detail information including item number and quantity ordered."
   DUMP-NAME "orderlin"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crordl.p" CRC "?"
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delordl.p" CRC "?"
-  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2000trgs/wrordl.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crordl.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2020trgs/delordl.p" CRC "?"
+  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2020trgs/wrordl.p" CRC "?"
 
-ADD FIELD "Ordernum" OF "OrderLine" AS integer
+ADD FIELD "OrderNum" OF "OrderLine" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Order Num"
@@ -1479,7 +1472,7 @@ ADD FIELD "Ordernum" OF "OrderLine" AS integer
   HELP "Please enter and Order Number for this order line."
   ORDER 10
 
-ADD FIELD "Linenum" OF "OrderLine" AS integer
+ADD FIELD "LineNum" OF "OrderLine" AS integer
   DESCRIPTION "To be generated automatically by key value generator!"
   FORMAT ">>9"
   INITIAL "0"
@@ -1488,7 +1481,7 @@ ADD FIELD "Linenum" OF "OrderLine" AS integer
   HELP "Please enter the line number"
   ORDER 20
 
-ADD FIELD "Itemnum" OF "OrderLine" AS integer
+ADD FIELD "ItemNum" OF "OrderLine" AS integer
   DESCRIPTION "                                                      Help:Idesc"
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
@@ -1539,24 +1532,20 @@ ADD FIELD "OrderLineStatus" OF "OrderLine" AS character
   INITIAL "Ordered"
   LABEL "Order Line Status"
   MAX-WIDTH 40
-  VIEW-AS "VIEW-AS COMBO-BOX
-  LIST-ITEMS ""Ordered"",""Back Ordered"",""Shipped""
-
-
-  "
+  VIEW-AS "VIEW-AS COMBO-BOX LIST-ITEMS ""Ordered"",""Back Ordered"",""Shipped"""
   HELP "Please enter the order line status."
   ORDER 110
 
-ADD INDEX "orderline" ON "OrderLine"
+ADD INDEX "OrderLine" ON "OrderLine"
   AREA "Index Area"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "Ordernum" ASCENDING
-  INDEX-FIELD "Linenum" ASCENDING
+  INDEX-FIELD "OrderNum" ASCENDING
+  INDEX-FIELD "LineNum" ASCENDING
 
-ADD INDEX "itemnum" ON "OrderLine"
+ADD INDEX "ItemNum" ON "OrderLine"
   AREA "Index Area"
-  INDEX-FIELD "Itemnum" ASCENDING
+  INDEX-FIELD "ItemNum" ASCENDING
 
 ADD INDEX "OrderLineStatus" ON "OrderLine"
   AREA "Index Area"
@@ -1567,7 +1556,7 @@ ADD TABLE "POLine"
   DESCRIPTION "The poline table contains the PO detail information including the item and quantity on the PO."
   DUMP-NAME "poline"
 
-ADD FIELD "Linenum" OF "POLine" AS integer
+ADD FIELD "LineNum" OF "POLine" AS integer
   DESCRIPTION "To be generated automatically by key value generator!"
   FORMAT ">>9"
   INITIAL "0"
@@ -1576,7 +1565,7 @@ ADD FIELD "Linenum" OF "POLine" AS integer
   HELP "Please enter the Line Number"
   ORDER 20
 
-ADD FIELD "Itemnum" OF "POLine" AS integer
+ADD FIELD "ItemNum" OF "POLine" AS integer
   DESCRIPTION "                                                      Help:Idesc"
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
@@ -1637,26 +1626,22 @@ ADD FIELD "POLineStatus" OF "POLine" AS character
   INITIAL "Ordered"
   LABEL "PO Line Status"
   MAX-WIDTH 40
-  VIEW-AS "VIEW-AS COMBO-BOX
-  LIST-ITEMS ""Ordered"", ""Shipped"", ""Received""
-
-
-  "
+  VIEW-AS "VIEW-AS COMBO-BOX LIST-ITEMS ""Ordered"", ""Shipped"", ""Received"""
   HELP "Please enter the PO status."
   ORDER 100
 
-ADD INDEX "PONumLinenum" ON "POLine"
+ADD INDEX "PONumLineNum" ON "POLine"
   AREA "Index Area"
   UNIQUE
   PRIMARY
   INDEX-FIELD "PONum" ASCENDING
-  INDEX-FIELD "Linenum" ASCENDING
+  INDEX-FIELD "LineNum" ASCENDING
 
 ADD TABLE "PurchaseOrder"
   AREA "Data Area"
   DESCRIPTION "The purchaseorder table contains information pertaining to the purchase order including: PO number and status."
   DUMP-NAME "purchase"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crpo.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crpo.p" CRC "?"
 
 ADD FIELD "PONum" OF "PurchaseOrder" AS integer
   FORMAT "zzzzzzzzz9"
@@ -1701,11 +1686,7 @@ ADD FIELD "POStatus" OF "PurchaseOrder" AS character
   INITIAL "Ordered"
   LABEL "PO Status"
   MAX-WIDTH 40
-  VIEW-AS "VIEW-AS COMBO-BOX
-  LIST-ITEMS ""Ordered"", ""Shipped"", ""Partially Received"", ""Received""
-
-
-  "
+  VIEW-AS "VIEW-AS COMBO-BOX LIST-ITEMS ""Ordered"", ""Shipped"", ""Partially Received"", ""Received"""
   HELP "Please enter the PO status."
   ORDER 50
 
@@ -1719,7 +1700,7 @@ ADD TABLE "RefCall"
   AREA "Data Area"
   DESCRIPTION "The refcall table contains information about a sale."
   DUMP-NAME "refcall"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/ref_call.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crref.p" CRC "?"
 
 ADD FIELD "CallNum" OF "RefCall" AS character
   FORMAT "x(6)"
@@ -1768,10 +1749,7 @@ ADD FIELD "Txt" OF "RefCall" AS character
   INITIAL ""
   LABEL "Txt"
   MAX-WIDTH 600
-  VIEW-AS "VIEW-AS EDITOR
-  SCROLLBAR-HORIZONTAL SCROLLBAR-VERTICAL
-  SIZE 60 BY 5
-"
+  VIEW-AS "VIEW-AS EDITOR SCROLLBAR-HORIZONTAL SCROLLBAR-VERTICAL SIZE 60 BY 5"
   HELP "Please enter text"
   ORDER 60
 
@@ -1798,14 +1776,14 @@ ADD INDEX "Txt" ON "RefCall"
   WORD
   INDEX-FIELD "Txt" ASCENDING
 
-ADD TABLE "Salesrep"
+ADD TABLE "SalesRep"
   AREA "Data Area"
-  DESCRIPTION "The salesrep table contains sales representative information"
-  VALEXP "NOT CAN-FIND(FIRST Customer Of Salesrep)"
+  DESCRIPTION "The SalesRep table contains sales representative information"
+  VALEXP "NOT CAN-FIND(FIRST Customer Of SalesRep)"
   VALMSG "Cannot delete if used in one or more customer records."
   DUMP-NAME "salesrep"
 
-ADD FIELD "RepName" OF "Salesrep" AS character
+ADD FIELD "RepName" OF "SalesRep" AS character
   FORMAT "x(30)"
   INITIAL ""
   LABEL "Rep Name"
@@ -1813,7 +1791,7 @@ ADD FIELD "RepName" OF "Salesrep" AS character
   HELP "Please enter the Name of the Salesperson."
   ORDER 20
 
-ADD FIELD "Region" OF "Salesrep" AS character
+ADD FIELD "Region" OF "SalesRep" AS character
   FORMAT "x(8)"
   INITIAL ""
   LABEL "Region"
@@ -1821,7 +1799,7 @@ ADD FIELD "Region" OF "Salesrep" AS character
   HELP "Please enter the Sales Region covered by this salesman."
   ORDER 30
 
-ADD FIELD "SalesRep" OF "Salesrep" AS character
+ADD FIELD "SalesRep" OF "SalesRep" AS character
   FORMAT "x(4)"
   INITIAL ""
   LABEL "Sales Rep"
@@ -1829,7 +1807,7 @@ ADD FIELD "SalesRep" OF "Salesrep" AS character
   HELP "Please enter the Sales Rep."
   ORDER 1
 
-ADD FIELD "MonthQuota" OF "Salesrep" AS integer
+ADD FIELD "MonthQuota" OF "SalesRep" AS integer
   FORMAT "->,>>>,>>9"
   INITIAL "0"
   LABEL "Month Quota"
@@ -1838,7 +1816,7 @@ ADD FIELD "MonthQuota" OF "Salesrep" AS integer
   EXTENT 12
   ORDER 40
 
-ADD INDEX "SalesRep" ON "Salesrep"
+ADD INDEX "SalesRep" ON "SalesRep"
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1942,7 +1920,7 @@ ADD FIELD "Name" OF "ShipTo" AS character
   HELP "Please enter the name"
   ORDER 110
 
-ADD INDEX "custnumshipto" ON "ShipTo"
+ADD INDEX "CustNumShipTo" ON "ShipTo"
   AREA "Index Area"
   UNIQUE
   PRIMARY
@@ -1988,11 +1966,10 @@ ADD INDEX "State" ON "State"
 
 ADD TABLE "Supplier"
   AREA "Data Area"
-  DESCRIPTION "The supplier table contains a supplier's name, address and
-additional information pertaining to the supplier."
+  DESCRIPTION "The supplier table contains a supplier's name, address and additional information pertaining to the supplier."
   DUMP-NAME "supplier"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crsuppl.p" CRC "?"
-  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2000trgs/delsup.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crsuppl.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2020trgs/delsuppl.p" CRC "?"
 
 ADD FIELD "SupplierIDNum" OF "Supplier" AS integer
   DESCRIPTION "Supplier ID number"
@@ -2164,7 +2141,7 @@ ADD FIELD "SupplierIDNum" OF "SupplierItemXref" AS integer
   HELP "Please enter a Supplier ID"
   ORDER 10
 
-ADD FIELD "Itemnum" OF "SupplierItemXref" AS integer
+ADD FIELD "ItemNum" OF "SupplierItemXref" AS integer
   FORMAT "zzzzzzzzz9"
   INITIAL "0"
   LABEL "Item #"
@@ -2180,12 +2157,12 @@ ADD INDEX "SupplieridItemNum" ON "SupplierItemXref"
   UNIQUE
   PRIMARY
   INDEX-FIELD "SupplierIDNum" ASCENDING
-  INDEX-FIELD "Itemnum" ASCENDING
+  INDEX-FIELD "ItemNum" ASCENDING
 
 ADD INDEX "ItemNumSupplierID" ON "SupplierItemXref"
   AREA "Index Area"
   UNIQUE
-  INDEX-FIELD "Itemnum" ASCENDING
+  INDEX-FIELD "ItemNum" ASCENDING
   INDEX-FIELD "SupplierIDNum" ASCENDING
 
 ADD TABLE "TimeSheet"
@@ -2323,7 +2300,8 @@ ADD TABLE "Warehouse"
   AREA "Data Area"
   DESCRIPTION "The warehouse table contains warehouse information including warehouse name and address."
   DUMP-NAME "warehous"
-  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2000trgs/crware.p" CRC "?"
+  TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crware.p" CRC "?"
+  TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2020trgs/wrware.p" CRC "?"
 
 ADD FIELD "WarehouseNum" OF "Warehouse" AS integer
   FORMAT "zzzzzzzzz9"
@@ -2402,13 +2380,13 @@ ADD FIELD "Phone" OF "Warehouse" AS character
   HELP "Please enter a phone."
   ORDER 90
 
-ADD INDEX "warehousenum" ON "Warehouse"
+ADD INDEX "WarehouseNum" ON "Warehouse"
   AREA "Index Area"
   UNIQUE
   PRIMARY
   INDEX-FIELD "WarehouseNum" ASCENDING
 
-ADD INDEX "warehousename" ON "Warehouse"
+ADD INDEX "WarehouseName" ON "Warehouse"
   AREA "Index Area"
   INDEX-FIELD "WarehouseName" ASCENDING
 

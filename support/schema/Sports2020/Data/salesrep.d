@@ -1,5 +1,4 @@
 "BBB" "Brawn , Bubba B." "East" 1600 1648 1697 1748 1800 1854 1910 1967 2026 2087 2150 2215
-"DAG" "Grau, Dustin A." "East" 1 2 3 4 5 6 7 8 9 0 0 0
 "DKP" "Pitt , Dirk K." "Central" 1800 1854 1910 1967 2026 2087 2150 2215 2281 2349 2419 2492
 "DOS" "Donna Swindall" "Southern" 3800 3914 4031 4152 4277 4405 4537 4673 4813 4957 5106 5259
 "GPE" "Gilles Ehrer" "Bretagne" 1600 1648 1697 1748 1800 1854 1910 1967 2026 2087 2150 2215
@@ -10,13 +9,12 @@
 "SLS" "Smith , Spike Louise" "West" 3000 3090 3183 3278 3376 3477 3581 3688 3799 3913 4030 4151
 .
 PSC
-filename=Salesrep
-records=0000000000010
+filename=SalesRep
+records=0000000000009
 ldbname=sports2020
-timestamp=2018/08/29-17:24:21
+timestamp=2018/10/18-13:36:24
 numformat=44,46
 dateformat=mdy-1950
-map=NO-MAP
 cpstream=UTF-8
 .
-0000000904
+0000000848

@@ -29,9 +29,9 @@
 		<taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
 
-		<PCTCreateBase dbName="Sports2020" destDir="${basedir}" dlcHome="${dlcHome}"
-		               blockSize="4" cpInternal="utf-8" largeFiles="false"
-					   structFile="${basedir}/Sports2020.st" schemaFile="${basedir}/Sports2020.df">
+		<PCTCreateBase dbName="sports2020" destDir="${basedir}" dlcHome="${dlcHome}"
+		               blockSize="4" cpInternal="UTF-8" largeFiles="false"
+					   structFile="${basedir}/sports2020.st" schemaFile="${basedir}/sports2020.df">
 		</PCTCreateBase>
 
 		<!--
@@ -45,14 +45,21 @@
 		<PCTLoadData srcDir="${basedir}/Data" dlcHome="${dlcHome}"
             cpStream="UTF-8" cpInternal="UTF-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
             <Option name="-d" value="mdy"/>
-		    <DBConnection dbName="Sports2020" dbDir="${basedir}" singleUser="true"/>
+		    <DBConnection dbName="sports2020" dbDir="${basedir}" singleUser="true"/>
 		</PCTLoadData>
 
-		<!-- Update any date values for this database as of today's date. -->
-		<PCTRun dlcHome="${dlcHome}" procedure="refreshDates.p"
-            cpInternal="utf-8" cpStream="utf-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
+		<!-- Set the current sequence values based on records loaded. -->
+		<PCTRun dlcHome="${dlcHome}" procedure="fixseqs.p"
+            cpInternal="utf-8" cpStream="UTF-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
 		    <Option name="-d" value="mdy"/>
-			<DBConnection dbName="Sports2020" dbDir="${basedir}" singleUser="true"/>
+			<DBConnection dbName="sports2020" dbDir="${basedir}" singleUser="true"/>
+		</PCTRun>
+
+		<!-- Update any date values for this database as of today's date. -->
+		<PCTRun dlcHome="${dlcHome}" procedure="refreshdates.p"
+            cpInternal="utf-8" cpStream="UTF-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
+		    <Option name="-d" value="mdy"/>
+			<DBConnection dbName="sports2020" dbDir="${basedir}" singleUser="true"/>
 		</PCTRun>
 	</target>
 

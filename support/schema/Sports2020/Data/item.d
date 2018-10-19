@@ -3,7 +3,7 @@
 3 "Golf Umbrella" 16.55 12906 10582 59 654 3 "Keep your cool with this Progress golf umbrella." "Golf" "Equipment" "3" .25 50
 4 "Cycle Helmet" 75 12977 10548 41 546 4 "ANSI, ASCII, VHS, TCP/IP approved Cycle Helmets.  You'll be styling around town in no time.  Safety First with the official Cycle Helmet of the Iowa Racing Team." "Biking" "Equipment" "1" 7 10
 5 "Leotard - Black" 19.95 12798 9730 30 631 5 "The sports unitard is one piece in cotton/Lycra spandex.  Scooped tank front and racer back.   " "Aerobics" "Clothing" "2" 2 25
-6 "Ski Poles" 27.5 12730 10107 5 327 6 "Graphite ski poles. A great addition to your ski arsenal.  Priced to sell!" "Skiing" "Equipment" "3" 3 11
+6 "Ski Poles" 27.5 12730 10107 5 327 6 "Graphite ski poles. A great addition to your ski arsenal.  Priced to sell!" "Skiing" "Equipment" "3" 3 10
 7 "Buoyancy Vest" 125 12877 10876 15 479 7 "Stay afloat with your own helium buoyancy vest.  " "Diving" "Equipment" "1" 8 30
 8 "Runner's Vest" 19.85 13035 10788 19 427 30 "Whether it's a quick jog or a long run, this vest is a must." "Running" "Equipment" "2" 2 25
 9 "Swim Goggles" 18 13024 11500 4 275 9 "Now where did I put those?  These goggles will never get lost.  They come with their own strap." "Diving" "Equipment" "3" .75 15
@@ -59,10 +59,9 @@ PSC
 filename=Item
 records=0000000000055
 ldbname=sports2020
-timestamp=2018/08/29-17:24:19
+timestamp=2018/10/18-13:36:24
 numformat=44,46
 dateformat=mdy-1950
-map=NO-MAP
 cpstream=UTF-8
 .
 0000008025
