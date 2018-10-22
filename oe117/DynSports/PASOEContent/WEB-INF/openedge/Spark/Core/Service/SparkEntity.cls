@@ -17,7 +17,6 @@ using Ccs.BusinessLogic.* from propath.
 using Spark.Core.Manager.IClientContext from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
 using Spark.Core.Manager.ILoggingManager from propath.
-using Spark.Core.Manager.IMessageManager from propath.
 using Spark.Core.Message.IRequest from propath.
 using Spark.Core.Message.IResponse from propath.
 using Spark.Core.Service.ISparkEntity from propath.
@@ -59,19 +58,6 @@ class Spark.Core.Service.SparkEntity inherits BusinessEntity implements ISparkEn
                     assign oCatalogManager = cast(oManager, ICatalogManager).
             end.
             return oCatalogManager.
-        end get.
-        set.
-
-    define protected property oMessageManager as IMessageManager no-undo
-        get:
-            if not valid-object(oMessageManager) then do:
-                /* Manager may be optionally created, so check for existence before using. */
-                define variable oManager as Ccs.Common.IManager no-undo.
-                assign oManager = Ccs.Common.Application:StartupManager:getManager(get-class(IMessageManager)).
-                if valid-object(oManager) then
-                    assign oMessageManager = cast(oManager, IMessageManager).
-            end.
-            return oMessageManager.
         end get.
         set.
 
@@ -522,18 +508,13 @@ class Spark.Core.Service.SparkEntity inherits BusinessEntity implements ISparkEn
 
     method public void submitData ( input-output dataset-handle phDataSet ):
         validateData(input "Submit", input-output dataset-handle phDataSet by-reference).
-        if phDataSet:error then do:
-            if valid-object(oMessageManager) then
-                oMessageManager:setResponseCode(500). /* Trigger UI Error. */
-        end.
-        else do:
-            if valid-handle(phDataSet) then
-                assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
 
-            preCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
-            super:Submit(input-output dataset-handle phDataSet by-reference).
-            postCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
-        end.
+        if valid-handle(phDataSet) then
+            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
+
+        preCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
+        super:Submit(input-output dataset-handle phDataSet by-reference).
+        postCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
 
         finally:
             delete object phDataSet no-error.

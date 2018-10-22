@@ -43,24 +43,9 @@ class Business.UnitTest.Messages inherits Spark.Core.Service.DynamicResource:
                     undo, throw new AppError("This is an AppError", -500).
                 when "ApplicationError" then
                     undo, throw new ApplicationError("This is an ApplicationError", -500).
-                when "info" then do:
-                    this-object:oResponse:addError("Field", ErrorTypeEnum:information, "This is information 1").
-                    this-object:oResponse:addError("Field", ErrorTypeEnum:information, "This is information 2").
-                end.
-                when "success" then
-                    this-object:oResponse:addError("Field", ErrorTypeEnum:success, "This was successful").
-                when "warn" then
-                    this-object:oResponse:addError("Field", ErrorTypeEnum:warning, "This is a warning").
-                when "error" then
-                    this-object:oResponse:addError("Field", ErrorTypeEnum:error, "This is an error").
-                when "fatal" then
-                    this-object:oResponse:addError("Field", ErrorTypeEnum:fatal, "This is a fatal error").
                 when "internal" then
                     this-object:oLoggingManager:logMessage("This is an internal message", "INTERNAL", 0).
             end case.
-
-            if this-object:oResponse:hasErrors() then
-                this-object:oResponse:logErrors().
         end.
     end method.
 
