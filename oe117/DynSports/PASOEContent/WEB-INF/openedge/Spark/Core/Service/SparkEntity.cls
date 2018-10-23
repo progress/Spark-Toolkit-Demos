@@ -11,21 +11,17 @@
         https://documentation.progress.com/output/pdo/#page/pdo%2Fgeterrors(-)-method.html
   ----------------------------------------------------------------------*/
 
-using OpenEdge.BusinessLogic.BusinessEntity from propath.
 using Progress.Json.ObjectModel.* from propath.
 using Ccs.BusinessLogic.* from propath.
 using Spark.Core.Manager.IClientContext from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
 using Spark.Core.Manager.ILoggingManager from propath.
-using Spark.Core.Message.IRequest from propath.
-using Spark.Core.Message.IResponse from propath.
-using Spark.Core.Service.ISparkEntity from propath.
 using Spark.Core.Util.* from propath.
 
 block-level on error undo, throw.
 &GLOBAL-DEFINE THROW ON ERROR UNDO, THROW
 
-class Spark.Core.Service.SparkEntity inherits BusinessEntity implements ISparkEntity use-widget-pool abstract:
+class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEntity implements Spark.Core.Service.ISparkEntity use-widget-pool abstract:
 
     /**
      * Defined in OpenEdge.BusinessLogic.BusinessEntity as handle to DataSet in context:
@@ -335,11 +331,19 @@ class Spark.Core.Service.SparkEntity inherits BusinessEntity implements ISparkEn
     end method. /* getDataset */
 
     method public IGetDataResponse getData ( poRequest as IGetDataRequest,
-                                             output dataset-handle phDataset ):
+                                             output dataset-handle phDataSet ):
     end method. /* getData */
 
     method public IGetResultCountResponse getResultCount ( poRequest as IGetDataRequest ):
     end method. /* getResultCount */
+
+    method public Progress.Lang.Object updateData ( input-output dataset-handle phDataSet,
+                                                    poUpdateDataRequest as IUpdateDataRequest ):
+        /**
+         * Should act like the "submit" operation with CUD mode
+         * being determined by the dataset before/after data.
+         */
+    end method. /* updateData */
 
     method protected int64 getRecCount ( input pcRawFilter as character ):
         define variable hDBBuffer  as handle    no-undo extent.
@@ -400,18 +404,18 @@ class Spark.Core.Service.SparkEntity inherits BusinessEntity implements ISparkEn
     end method. /* getRecCount */
 
     method protected void preCommitLogic ( input pcAction as character,
-                                           input-output dataset-handle phDataset ):
+                                           input-output dataset-handle phDataSet ):
     end method. /* preCommitLogic */
 
     method protected void postCommitLogic ( input pcAction as character,
-                                            input-output dataset-handle phDataset ):
+                                            input-output dataset-handle phDataSet ):
     end method. /* postCommitLogic */
 
     method protected void postFetchRecord ( ):
     end method. /* postFetchRecord */
 
     method protected character validateData ( input pcAction as character,
-                                              input-output dataset-handle phDataSet):
+                                              input-output dataset-handle phDataSet ):
     end method. /* validateData */
 
     /******* Public *******/

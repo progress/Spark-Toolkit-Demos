@@ -40,8 +40,7 @@ class Spark.Core.Security.HMAC use-widget-pool final:
         define variable rRawDataSHA    as raw       no-undo.
         define variable cHMACSHA       as character no-undo.
 
-        /* Basic Formula: Hash(Key XOR opad, Hash(Key XOR ipad, text)) */
-
+        /* If possible, return an HMAC-SHA-* digest value as available in 11.7.4+ */
         if {&MIN_VERSION_11_7_4} then do:
             case pcSHA:
                 when "SHA1" then
@@ -56,6 +55,8 @@ class Spark.Core.Security.HMAC use-widget-pool final:
                     return string(hex-encode(message-digest("HMAC-SHA-1", hex-decode(pcHexData), hex-decode(pcHexKey)))).
             end case.
         end.
+
+        /* Basic Formula: Hash(Key XOR opad, Hash(Key XOR ipad, text)) */
 
         &SCOPED-DEFINE xiBlockSize 64
 
