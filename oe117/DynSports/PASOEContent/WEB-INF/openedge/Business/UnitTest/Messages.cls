@@ -45,7 +45,7 @@ class Business.UnitTest.Messages inherits Spark.Core.Service.DynamicResource:
                 when "Stop" then
                     stop.
                 when "Internal" then
-                    this-object:oLoggingManager:logMessage("This is an internal message", "INTERNAL", 0).
+                    this-object:oLoggingManager:logMessage("This is an internal message", "INTERNAL", 1).
             end case.
         end.
     end method.
