@@ -9,7 +9,6 @@
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
-using Spark.Core.Message.ErrorTypeEnum from propath.
 using Spark.Core.Util.ApplicationError from propath.
 
 block-level on error undo, throw.
@@ -43,7 +42,9 @@ class Business.UnitTest.Messages inherits Spark.Core.Service.DynamicResource:
                     undo, throw new AppError("This is an AppError", -500).
                 when "ApplicationError" then
                     undo, throw new ApplicationError("This is an ApplicationError", -500).
-                when "internal" then
+                when "Stop" then
+                    stop.
+                when "Internal" then
                     this-object:oLoggingManager:logMessage("This is an internal message", "INTERNAL", 0).
             end case.
         end.

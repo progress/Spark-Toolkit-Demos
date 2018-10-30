@@ -8,7 +8,6 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
-using Spark.Core.Message.ErrorTypeEnum from propath.
 
 block-level on error undo, throw.
 

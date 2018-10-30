@@ -9,7 +9,6 @@
 using Progress.Lang.* from propath.
 using OpenEdge.Core.Collections.* from propath.
 using Spark.Core.Manager.ISchemaManager from propath.
-using Spark.Core.Util.ApplicationError from propath.
 
 block-level on error undo, throw.
 
