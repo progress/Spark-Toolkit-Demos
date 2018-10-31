@@ -17,7 +17,7 @@ block-level on error undo, throw.
 /* ***************************  Main Block  *************************** */
 
 define variable hServer  as handle    no-undo.
-define variable hFacade  as handle    no-undo.
+define variable hProc    as handle    no-undo.
 define variable cConnect as character no-undo.
 define variable lReturn  as logical   no-undo.
 
@@ -25,7 +25,6 @@ create server hServer.
 
 /*assign cConnect = substitute("http://&1:&2@&3:&4/apsv", "apsvuser", "secret", "localhost", "8830").*/
 assign cConnect = substitute("http://&1:&2/sports/apsv", "localhost", "8820").
-/*assign cConnect = substitute("http://&1:&2/sports/apsv", "54.173.59.64", "8820").*/
 
 assign lReturn = hServer:connect(substitute("-URL &1 -sessionModel Session-free", cConnect)) no-error.
 if error-status:error then
@@ -35,17 +34,8 @@ if not lReturn then
     message "Failed to connect to AppServer." view-as alert-box.
 
 if hServer:connected() then do:
-    define variable pcResourceName as character         no-undo.
-    define variable pcMethodName   as character         no-undo.
-    define variable pcHttpMethod   as character         no-undo.
-    define variable pcServiceObj   as character         no-undo.
-    define variable pcJsonRequest  as longchar          no-undo.
-    define variable fElapsedTime   as decimal           no-undo.
-    define variable iResponseCode  as integer           no-undo.
-    define variable cHeadResponse  as longchar          no-undo.
-    define variable cJsonResponse  as longchar          no-undo.
-    define variable hCPO           as handle            no-undo.
-    define variable oParser        as ObjectModelParser no-undo.
+    define variable cGreeting as character no-undo.
+    define variable hCPO      as handle    no-undo.
 
     message "Connected to AppServer!" view-as alert-box.
 
@@ -59,32 +49,22 @@ if hServer:connected() then do:
     hServer:request-info:SetClientPrincipal(hCPO).
 
     do stop-after 20 on stop undo, leave:
-        run Spark/Core/ApsvFacade.p on server hServer single-run set hFacade no-error.
+        run Business/HelloProc.p on server hServer single-run set hProc no-error.
         if error-status:error then
             message "Error, Return-Value:" return-value view-as alert-box.
 
-        if valid-handle(hFacade) then
-            run runService in hFacade ( input  "all",
-                                        input  "getCatalog",
-                                        input  "get",
-                                        input  "",
-                                        input  "",
-                                        output fElapsedTime,
-                                        output iResponseCode,
-                                        output cHeadResponse,
-                                        output cJsonResponse ).
+        if valid-handle(hProc) then
+            run sayHello in hProc ( input  "World",
+                                    output cGreeting ).
 
-        assign oParser = new ObjectModelParser().
-        if (cJsonResponse gt "") eq true then
-            cast(oParser:parse(cJsonResponse), JsonObject):WriteFile("output1.json", true).
-        message "Length:" length(cJsonResponse, "raw") view-as alert-box.
+        message "Greeting:" cGreeting view-as alert-box.
     end. /* do */
 
     delete object hCPO no-error.
 end. /* connected */
 
 finally:
-    delete object hFacade no-error.
+    delete object hProc no-error.
     hServer:disconnect().
     delete object hServer no-error.
 end.

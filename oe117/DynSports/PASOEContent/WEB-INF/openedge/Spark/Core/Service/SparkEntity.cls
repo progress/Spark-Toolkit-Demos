@@ -78,14 +78,6 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
     /***** Protected *****/
 
-    method protected character appendMessage ( input pcExisting   as character,
-                                               input pcNewMessage as character ):
-        if (pcExisting gt "") eq true then
-            return trim(trim(substitute("&1, &2", pcExisting, pcNewMessage), ",")).
-
-        return pcNewMessage.
-    end method. /* appendMessage */
-
     method protected int64 filterData ( input pcFilter as character ):
         define variable hQuery         as handle    no-undo.
         define variable hDBBuffer      as handle    no-undo extent.
@@ -360,14 +352,14 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             assign hDBBuffer[ix] = ProDataSource[ix]:get-source-buffer(1) no-error.
         end. /* ProDataSource */
 
-        getFilterParams( input  getFilter(pcRawFilter),
-                         output cFilter,
-                         output cSortBy,
-                         output cRecID,
-                         output iStartRow,
-                         output iMaxRows ).
+        this-object:getFilterParams( input  this-object:getFilter(pcRawFilter),
+                                     output cFilter,
+                                     output cSortBy,
+                                     output cRecID,
+                                     output iStartRow,
+                                     output iMaxRows ).
 
-        return getRecCount(cFilter, hDBBuffer[1]).
+        return this-object:getRecCount(cFilter, hDBBuffer[1]).
 
         finally:
             do ix = 1 to extent(hDBBuffer):
@@ -445,7 +437,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
     end method. /* postRowFill */
 
     method protected override void readData ( input pcRawFilter as character ):
-        assign LastCount = this-object:filterData(pcRawFilter).
+        this-object:LastCount = this-object:filterData(pcRawFilter).
     end method. /* readData */
 
     method public void readData ( input  filter  as character,
@@ -455,8 +447,8 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
 
         /* Custom readData that uses filter and returns record count with dataset. */
-        assign LastCount = this-object:filterData(filter).
-        assign numRecs = LastCount. /* Get record count */
+        this-object:LastCount = this-object:filterData(filter).
+        assign numRecs = this-object:LastCount. /* Get record count */
         postFetchRecord(). /* Extra fetch logic. */
 
         /* If handles are different, copy the internal dataset back to the param. */

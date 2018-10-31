@@ -144,6 +144,9 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
 
     method private void InitializeRegistries ( ):
+        define variable dStart as datetime-tz no-undo.
+        assign dStart = now. /* Mark start time. */
+
         /* Inform the DOH of what portion of the URL is to be ignored. */
         if valid-object(oCatalogManager) then
             DataObjectHandler:HANDLER_PREFIX = oCatalogManager:ServicePrefix.
@@ -186,7 +189,9 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
             OpenEdge.Web.DataObject.ServiceRegistry:RegisterAllFromFolder(cServiceMapPath).
         end. /* cServiceMapPath */
 
-        oLoggingManager:logMessage("Finshed Loading Resource Metadata", "SPARK-STRT", 3).
+        /* Log the end of the initialization process with an elapsed time. */
+        oLoggingManager:logMessage(substitute("Finshed Loading Resource Metadata in &1ms",
+                                              interval(now, dStart, string(DateTimeAddIntervalEnum:Milliseconds))), "SPARK-STRT", 2).
     end method. /* InitializeRegistries */
 
 
