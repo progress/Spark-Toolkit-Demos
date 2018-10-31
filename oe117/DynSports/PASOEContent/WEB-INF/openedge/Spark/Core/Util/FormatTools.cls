@@ -1,4 +1,3 @@
-using Spark.Core.Manager.IMessageManager from propath.
 using Spark.Core.Manager.ITranslationManager from propath.
 
 block-level on error undo, throw.

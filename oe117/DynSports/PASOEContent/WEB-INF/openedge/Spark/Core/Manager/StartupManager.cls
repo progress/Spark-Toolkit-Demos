@@ -218,8 +218,6 @@ class Spark.Core.Manager.StartupManager inherits Spark.Core.Manager.Manager impl
     method public void stopManagers ( ):
         stopManager(get-class(Spark.Core.Manager.ICatalogManager):TypeName).
         stopManager(get-class(Spark.Core.Manager.IConnectionManager):TypeName).
-        stopManager(get-class(Spark.Core.Manager.IMessageManager):TypeName).
-        stopManager(get-class(Spark.Core.Manager.IRouteManager):TypeName).
         stopManager(get-class(Spark.Core.Manager.ISchemaManager):TypeName).
         stopManager(get-class(Spark.Core.Manager.IStateManager):TypeName).
         stopManager(get-class(Spark.Core.Manager.ITranslationManager):TypeName).

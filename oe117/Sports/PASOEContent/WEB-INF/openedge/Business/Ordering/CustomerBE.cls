@@ -84,14 +84,14 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.SparkEntity use-w
                         if bhTopTable:buffer-field(iy):name eq "Name" and
                            (bhTopTable:buffer-field(iy):buffer-value() gt "") ne true then do:
                             bhTopTable:error = true.
-                            bhTopTable:error-string = appendMessage(bhTopTable:error-string, "No customer name provided").
+                            bhTopTable:error-string = Strings:appendWithComma(bhTopTable:error-string, "No customer name provided").
                             bhTopTable:rejected = true.
                             phDataset:error = true.
                         end. /* Name */
                         if bhTopTable:buffer-field(iy):name eq "SalesRep" and
                            (bhTopTable:buffer-field(iy):buffer-value() gt "") ne true then do:
                             bhTopTable:error = true.
-                            bhTopTable:error-string = appendMessage(bhTopTable:error-string, "No sales rep provided").
+                            bhTopTable:error-string = Strings:appendWithComma(bhTopTable:error-string, "No sales rep provided").
                             bhTopTable:rejected = true.
                             phDataset:error = true.
                         end. /* SalesRep */
