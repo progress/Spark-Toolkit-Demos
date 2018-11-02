@@ -5,28 +5,22 @@
 
         <echo message="${line.separator}Usage Instructions:"/>
         <echo message="${line.separator}ant create - Build a new PAS instance with Spark"/>
-        <echo message="    -Dhttp=[HTTP_PORT] = port for HTTP connections (Default: 8830)"/>
-        <echo message="    -Dhttps=[HTTPS_PORT] = port for HTTPS connections (Default: 8831)"/>
-        <echo message="    -Dajp=[AJP13_PORT] = port for AJP13 connections (Default: 8832)"/>
-        <echo message="    -Dshut=[SHUTDOWN_PORT] = Tomcat shutdown port (Default: 8833)"/>
+        <echo message="    -Dhttp=[HTTP_PORT] = port for HTTP connections (Default: ${http})"/>
+        <echo message="    -Dhttps=[HTTPS_PORT] = port for HTTPS connections (Default: ${https})"/>
+        <echo message="    -Dajp=[AJP13_PORT] = port for AJP13 connections (Default: ${ajp})"/>
+        <echo message="    -Dshut=[SHUTDOWN_PORT] = Tomcat shutdown port (Default: ${shut})"/>
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
         <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: ${path})"/>
         <echo message="    -Dablapp=[INSTANCE_NAME] = default ABL App name (Default: {alias})"/>
         <echo message="${line.separator}ant upgrade - Upgrade a PAS instance with Spark"/>
-        <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: SportsDemo)"/>
+        <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
         <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: ${path})"/>
         <echo message="${line.separator}ant enable_oerealm - Enable use of OERealm by copying config files"/>
-        <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: SportsDemo)"/>
+        <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
     </target>
 
     <target name="create">
     	<init_env/>
-
-        <!-- Prepare defaults for any properties that are not set. -->
-        <property name="http" value="8830"/>
-        <property name="https" value="8831"/>
-        <property name="ajp" value="8832"/>
-        <property name="shut" value="8833"/>
 
         <!-- Begin by creating an instance. -->
         <antcall target="_create_instance"/>
@@ -57,6 +51,10 @@
 
             <!-- Define distinct variables for this environment. -->
             <property name="alias" value="SportsDemo"/>
+            <property name="http" value="8830"/>
+            <property name="https" value="8831"/>
+            <property name="ajp" value="8832"/>
+            <property name="shut" value="8833"/>
 
             <!-- Determine current operating system in use. -->
             <echo message="OS Arch: ${os.arch}"/>

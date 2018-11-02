@@ -1,86 +1,118 @@
 <project name="ServerCreation" basedir="." default="usage">
 
-    <target name="usage" description="Usage Instructions" depends="_init_env,_init_unix,_init_windows">
-        <echo message="Usage Instructions:"/>
-        <echo message="ant create - Build a new PAS instance with Spark"/>
-        <echo message="    -Dhttp=[HTTP_PORT] = port for HTTP connections (Default: 8820)"/>
-        <echo message="    -Dhttps=[HTTPS_PORT] = port for HTTPS connections (Default: 8821)"/>
-        <echo message="    -Dajp=[AJP13_PORT] = port for AJP13 connections (Default: 8822)"/>
-        <echo message="    -Dshut=[SHUTDOWN_PORT] = Tomcat shutdown port (Default: 8823)"/>
-        <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: SportsPASOE)"/>
+    <target name="usage" description="Usage Instructions">
+    	<init_env/>
+
+        <echo message="${line.separator}Usage Instructions:"/>
+        <echo message="${line.separator}ant create - Build a new PAS instance with Spark"/>
+        <echo message="    -Dhttp=[HTTP_PORT] = port for HTTP connections (Default: ${http})"/>
+        <echo message="    -Dhttps=[HTTPS_PORT] = port for HTTPS connections (Default: ${https})"/>
+        <echo message="    -Dajp=[AJP13_PORT] = port for AJP13 connections (Default: ${ajp})"/>
+        <echo message="    -Dshut=[SHUTDOWN_PORT] = Tomcat shutdown port (Default: ${shut})"/>
+        <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
         <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: ${path})"/>
         <echo message="    -Dablapp=[INSTANCE_NAME] = default ABL App name (Default: {alias})"/>
-        <echo message="ant enable_oerealm - Enable use of OERealm by copying config files"/>
-        <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: SportsPASOE)"/>
+        <echo message="${line.separator}ant enable_oerealm - Enable use of OERealm by copying config files"/>
+        <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
     </target>
 
-    <target name="create" depends="_init_env,_init_unix,_init_windows">
-        <!-- Prepare defaults for any properties that are not set. -->
-        <property name="http" value="8820"/>
-        <property name="https" value="8821"/>
-        <property name="ajp" value="8822"/>
-        <property name="shut" value="8823"/>
+    <target name="create">
+    	<init_env/>
 
         <!-- Begin by creating an instance. -->
         <antcall target="_create_instance"/>
     </target>
 
-    <target name="enable_oerealm" depends="_init_env,_dir_check" if="pas.exists">
+    <target name="enable_oerealm">
+    	<init_env/>
+
         <!-- Copy files for use with OERealm security. -->
         <mkdir dir="${pas.path}/conf/spark"/>
         <copy file="${deploy}/Realm/SparkRealm.cp" toDir="${pas.path}/common/lib"/>
         <copy file="${deploy}/Realm/SparkRealm.json" toDir="${pas.path}/conf/spark"/>
     </target>
 
-    <target name="_init_env">
-        <property environment="env"/>
+    <macrodef name="init_env">
+    	<sequential>
+            <property environment="env"/>
 
-        <!-- Check if DLC is set as an environment variable. -->
-        <fail message="$DLC path is not set">
-            <condition>
-                <and>
-                    <not><isset property="dlcHome"/></not>
-                    <not><isset property="env.DLC"/></not>
-                </and>
+            <!-- Define distinct variables for this environment. -->
+            <property name="alias" value="SportsPASOE"/>
+            <property name="http" value="8820"/>
+            <property name="https" value="8821"/>
+            <property name="ajp" value="8822"/>
+            <property name="shut" value="8823"/>
+
+            <!-- Determine current operating system in use. -->
+            <echo message="OS Arch: ${os.arch}"/>
+            <condition property="isWin64">
+                <os family="windows"/>
             </condition>
-        </fail>
-        <property name="dlcHome" value="${env.DLC}"/>
-        <property name="dlc.bin" value="${dlcHome}/bin"/>
-        <echo message="DLC Home: ${dlcHome}"/>
+            <condition property="isUnix">
+                <os family="unix"/>
+            </condition>
 
-        <!-- Define standard variables for this environment. -->
-        <property name="alias" value="SportsPASOE"/>
-        <property name="pas.conf.spark" value="sports"/>
-        <property name="ablapp" value="${alias}"/>
-        <property name="deploy" value="${basedir}/../Deploy/Conf"/>
+            <!-- Check if DLC is set as an environment variable. -->
+            <fail message="$DLC path is not set">
+                <condition>
+                    <and>
+                        <not><isset property="dlcHome"/></not>
+                        <not><isset property="env.DLC"/></not>
+                    </and>
+                </condition>
+            </fail>
+            <property name="dlcHome" value="${env.DLC}"/>
+            <property name="dlc.bin" value="${dlcHome}/bin"/>
+            <echo message="DLC Home: ${dlcHome}"/>
 
-        <!-- Determine current operating system in use. -->
-        <echo message="OS Arch: ${os.arch}"/>
-        <condition property="isWin64">
-            <os family="windows"/>
-        </condition>
-        <condition property="isUnix">
-            <os family="unix"/>
-        </condition>
-    </target>
+            <!-- Define standard variables for this environment. -->
+            <condition property="pas.exec" value="pasman" else="pasman.bat">
+            	<os family="unix"/>
+            </condition>
+            <condition property="path" value="/usr/pas" else="C:/PASOE">
+            	<os family="unix"/>
+            </condition>
+            <condition property="scriptSuffix" value=".sh" else=".bat">
+            	<os family="unix"/>
+            </condition>
+            <property name="ablapp" value="${alias}"/>
+            <property name="deploy" value="${basedir}/../Deploy/Conf"/>
+    		<property name="pas.root" value="${path}"/>
+	        <property name="pas.path" value="${pas.root}/${alias}"/>
+	        <property name="pas.bin" value="${pas.path}/bin"/>
+            <property name="pas.conf.spark" value="spark"/>
+    	</sequential>
+    </macrodef>
 
-    <target name="_init_unix" if="isUnix">
-        <property name="scriptSuffix" value=".sh"/>
-        <property name="path" value="/usr/pas"/>
-        <property name="pas.root" value="${path}"/>
-        <property name="pas.path" value="${pas.root}/${alias}"/>
-        <property name="pas.bin" value="${pas.path}/bin"/>
-        <property name="pas.exec" value="pasman"/>
-    </target>
+    <macrodef name="require">
+        <attribute name="file"/>
+        <attribute name="message" default="File @{file} not set or missing"/>
 
-    <target name="_init_windows" if="isWin64">
-        <property name="scriptSuffix" value=".bat"/>
-        <property name="path" value="C:/PASOE"/>
-        <property name="pas.root" value="${path}"/>
-        <property name="pas.path" value="${pas.root}/${alias}"/>
-        <property name="pas.bin" value="${pas.path}/bin"/>
-        <property name="pas.exec" value="pasman.bat"/>
-    </target>
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{file}" type="file"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="requireDir">
+        <attribute name="folder"/>
+        <attribute name="message" default="Directory @{folder} not set or missing"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{folder}" type="dir"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
 
     <target name="_create_instance">
         <!-- Create the PAS instance using the values (or defaults) provided. -->
@@ -107,26 +139,12 @@
         <antcall target="_merge_properties"/>
     </target>
 
-    <target name="_dir_check">
+    <target name="_tailor_instance">
         <!-- Check if deployment directory exists. -->
-        <condition property="deploy.exists">
-            <available file="${basedir}/../Deploy" type="dir"/>
-        </condition>
+        <requireDir folder="${basedir}/../Deploy"/>
 
-        <!-- Check if properties file exists. -->
-        <condition property="merge.exists">
-            <available file="${basedir}/merge.openedge.properties" type="file"/>
-        </condition>
-
-        <!-- Check if properties file exists. -->
-        <condition property="pas.exists">
-            <available file="${pas.path}/conf/openedge.properties" type="file"/>
-        </condition>
-    </target>
-
-    <target name="_tailor_instance" depends="_dir_check" if="deploy.exists">
         <!-- Copy the PL/PF files to the new PAS instance. -->
-        <copy toDir="${pas.path}/openedge">
+        <copy toDir="${pas.path}/openedge" verbose="true">
             <fileset dir="${basedir}">
                 <include name="*.pl"/>
                 <include name="*.pf"/>
@@ -137,7 +155,7 @@
         <!-- Copy initial configuration files to the PAS instance. -->
         <mkdir dir="${pas.path}/conf/${pas.conf.spark}"/>
         <mkdir dir="${pas.path}/conf/${pas.conf.spark}/signatures"/>
-        <copy toDir="${pas.path}/conf/${pas.conf.spark}">
+        <copy toDir="${pas.path}/conf/${pas.conf.spark}" verbose="true">
             <fileset dir="${deploy}">
                 <include name="*.cp"/>
                 <include name="*.json"/>
@@ -148,11 +166,24 @@
         <antcall target="enable_oerealm"/>
     </target>
 
-    <target name="_merge_properties" depends="_dir_check" if="merge.exists">
+    <target name="_merge_properties">
+        <!-- Check if MERGE properties file exists. -->
+        <require file="${basedir}/merge.openedge.properties"/>
+
+        <!-- Check if PAS properties file exists. -->
+        <require file="${pas.path}/conf/openedge.properties"/>
+
+        <!-- Make a copy of the default merge file, named for the instance. -->
+        <copy file="${basedir}/merge.openedge.properties" tofile="${basedir}/merge.openedge.properties.${alias}">
+            <filterset>
+                <filter token="APPNAME" value="${alias}"/>
+            </filterset>
+        </copy>
+
         <!-- Merge the intitial properties for the instance. -->
-        <echo message="Merging initial properties from 'merge.openedge.properties'."/>
+        <echo message="Merging initial properties from 'merge.openedge.properties.${alias}'."/>
         <exec executable="${pas.path}/bin/oeprop${scriptSuffix}" output="merge_${alias}.txt" failonerror="true">
-            <arg line="-f ${basedir}/merge.openedge.properties"/>
+            <arg line="-f ${basedir}/merge.openedge.properties.${alias}"/>
         </exec>
     </target>
 
