@@ -35,10 +35,10 @@
         </condition>
 
 		<!-- Determine script suffix and database location. -->
-        <condition property="scriptSuffix" value="sh" else "bat">
+        <condition property="scriptSuffix" value="sh" else="bat">
             <os family="unix"/>
         </condition>
-        <condition property="path" value="/usr/databases" else "C:\Databases">
+        <condition property="path" value="/usr/databases" else="C:\Databases">
             <os family="unix"/>
         </condition>
     </target>
