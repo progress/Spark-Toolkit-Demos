@@ -35,8 +35,7 @@
 35 "Volleyball" 12.79 10109 9969 10 142 35 "Light weight yet durable this volleyball will meet the challenge." "Volleyball" "Equipment" "2" 2.5 30
 36 "Soccer ball" 15.51 10863 10732 5 587 36 "This is the best soccer ball available. " "Soccer" "Equipment" "3" 2.5 20
 37 "Football" 12.5 9930 8582 22 185 37 "Made from genuine pigskin, this football is top of the line." "Football" "Equipment" "1" 5 30
-38 "Sailboat" 2500 9990 9494 6 144 0 "The boat has a fiberglass hull and multi colored sail.
-" "Boating" "Equipment" "2" 3 10
+38 "Sailboat" 2500 9990 9494 6 144 0 "The boat has a fiberglass hull and multi colored sail." "Boating" "Equipment" "2" 3 10
 39 "Baseball" 34 10799 10729 4 146 0 "Hit a home run with this baseball." "Baseball" "Equipment" "3" 10 5
 40 "Ice Skates" 61 9884 8633 4 171 61 "Ice Skates are available in sizes from 6 to 11." "Skating" "Footwear" "1" 8 10
 41 "Kayak" 1500 10478 10358 9 467 41 "Ride the rapids with this one person  Kayak.  " "Boating" "Equipment" "2" 4 15

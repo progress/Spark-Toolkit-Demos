@@ -1082,7 +1082,7 @@ ADD FIELD "CatPage" OF "Item" AS integer
   LABEL "Cat Page"
   MAX-WIDTH 4
   HELP "Please enter a catalog page"
-  ORDER 100
+  ORDER 80
 
 ADD FIELD "Price" OF "Item" AS decimal
   FORMAT "->,>>>,>>9.99"
@@ -1091,7 +1091,7 @@ ADD FIELD "Price" OF "Item" AS decimal
   MAX-WIDTH 17
   HELP "Please enter a Price."
   DECIMALS 2
-  ORDER 22
+  ORDER 30
 
 ADD FIELD "CatDescription" OF "Item" AS character
   FORMAT "X(200)"
@@ -1100,7 +1100,7 @@ ADD FIELD "CatDescription" OF "Item" AS character
   MAX-WIDTH 400
   VIEW-AS "VIEW-AS EDITOR SIZE 41 by 5 SCROLLBAR-VERTICAL "
   HELP "Please enter a description."
-  ORDER 110
+  ORDER 90
 
 ADD FIELD "OnHand" OF "Item" AS integer
   FORMAT "->>>>9"
@@ -1108,7 +1108,7 @@ ADD FIELD "OnHand" OF "Item" AS integer
   LABEL "On Hand"
   MAX-WIDTH 4
   HELP "Please enter On Hand Qty"
-  ORDER 50
+  ORDER 40
 
 ADD FIELD "Allocated" OF "Item" AS integer
   FORMAT "->>>>9"
@@ -1116,7 +1116,7 @@ ADD FIELD "Allocated" OF "Item" AS integer
   LABEL "Allocated"
   MAX-WIDTH 4
   HELP "Please enter allocated"
-  ORDER 60
+  ORDER 50
 
 ADD FIELD "ReOrder" OF "Item" AS integer
   FORMAT "->>>>9"
@@ -1124,7 +1124,7 @@ ADD FIELD "ReOrder" OF "Item" AS integer
   LABEL "Re Order"
   MAX-WIDTH 4
   HELP "Please enter reorder qty"
-  ORDER 80
+  ORDER 60
 
 ADD FIELD "OnOrder" OF "Item" AS integer
   FORMAT "->>>>9"
@@ -1132,7 +1132,7 @@ ADD FIELD "OnOrder" OF "Item" AS integer
   LABEL "On Order"
   MAX-WIDTH 4
   HELP "Please enter On Order Qty"
-  ORDER 90
+  ORDER 70
 
 ADD FIELD "Category1" OF "Item" AS character
   FORMAT "x(30)"
@@ -1141,7 +1141,7 @@ ADD FIELD "Category1" OF "Item" AS character
   MAX-WIDTH 60
   HELP "Please enter a category"
   LENGTH 0
-  ORDER 120
+  ORDER 100
 
 ADD FIELD "Category2" OF "Item" AS character
   FORMAT "x(30)"
@@ -1150,7 +1150,7 @@ ADD FIELD "Category2" OF "Item" AS character
   MAX-WIDTH 60
   HELP "Please enter a category"
   LENGTH 0
-  ORDER 130
+  ORDER 110
 
 ADD FIELD "Special" OF "Item" AS character
   FORMAT "x(8)"
@@ -1159,7 +1159,7 @@ ADD FIELD "Special" OF "Item" AS character
   MAX-WIDTH 16
   HELP "Please enter special information"
   LENGTH 0
-  ORDER 140
+  ORDER 120
 
 ADD FIELD "Weight" OF "Item" AS decimal
   FORMAT "->>,>>9.99"
@@ -1168,7 +1168,7 @@ ADD FIELD "Weight" OF "Item" AS decimal
   MAX-WIDTH 17
   HELP "Please enter weight."
   DECIMALS 2
-  ORDER 150
+  ORDER 130
 
 ADD FIELD "MinQty" OF "Item" AS integer
   FORMAT "->>>>9"
@@ -1176,7 +1176,15 @@ ADD FIELD "MinQty" OF "Item" AS integer
   LABEL "Min Qty"
   MAX-WIDTH 4
   HELP "Please enter a min qty"
-  ORDER 160
+  ORDER 140
+
+ADD FIELD "ItemImage" OF "Item" AS blob
+  FORMAT "x(8)"
+  INITIAL ?
+  LOB-AREA "LOB Area"
+  LOB-BYTES 10485760
+  LOB-SIZE 10M
+  ORDER 150
 
 ADD INDEX "ItemNum" ON "Item"
   AREA "Index Area"
