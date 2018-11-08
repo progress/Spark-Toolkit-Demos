@@ -8,7 +8,7 @@
 PSC
 filename=_sec-authentication-domain
 records=0000000000006
-ldbname=sports2000
+ldbname=sports2020
 timestamp=2016/01/15-14:15:18
 numformat=44,46
 dateformat=mdy-1950

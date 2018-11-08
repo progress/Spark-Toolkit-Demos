@@ -1,10 +1,23 @@
 #
+# Primary Recovery Area
 b .
 #
+# After-Image Area
+a .
+a .
+a .
+#
+# Schema Area (System Tables)
+# Use 32 for 1/2/4K DB Block Sizes
+#d "Schema Area":6,32;1 .
+# Use 64 for 8K DB Block Sizes
 d "Schema Area":6,64;1 .
 #
-d "Data Area":10,256;512 .
+# Default Data Area for Application
+d "Data Area":10,256;8 .
 #
-d "Index Area":20,1;64 .
+# Default Index Area for Application
+d "Index Area":20,32;8 .
 #
-d "LOB Area":30,1;512 .
+# Default LOB Area for Application
+d "LOB Area":30,32;8 .
