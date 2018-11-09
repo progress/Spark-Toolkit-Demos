@@ -1305,6 +1305,7 @@ ADD TABLE "Order"
   VALEXP "1 = 1"
   DUMP-NAME "order"
   TABLE-TRIGGER "CREATE" NO-OVERRIDE PROCEDURE "sports2020trgs/crord.p" CRC "?"
+  TABLE-TRIGGER "DELETE" NO-OVERRIDE PROCEDURE "sports2020trgs/delord.p" CRC "?"
   TABLE-TRIGGER "WRITE" NO-OVERRIDE PROCEDURE "sports2020trgs/wrord.p" CRC "?"
 
 ADD FIELD "OrderNum" OF "Order" AS integer
