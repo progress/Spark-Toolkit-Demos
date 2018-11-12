@@ -92,10 +92,9 @@ class tests.ParameterTests inherits tests.SparkUnit:
     ------------------------------------------------------------------------------*/
     @Test.
     method public void testCreateCPO ( ):
-        define variable oFacade  as Spark.Core.DirectFacade no-undo.
-        define variable cMessage as character               no-undo.
-        define variable lResult  as logical                 no-undo.
-        define variable rCP      as raw                     no-undo.
+        define variable cMessage as character no-undo.
+        define variable lResult  as logical   no-undo.
+        define variable rCP      as raw       no-undo.
 
         create client-principal hCPO.
         hCPO:initialize("{&test_username}").
