@@ -26,7 +26,8 @@ using OpenEdge.Web.SendExceptionError from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
 using Spark.Core.Manager.ILoggingManager from propath.
 using Spark.Core.Manager.ServiceLifeCycleEnum from propath.
-using Spark.Core.Service.ISparkEntity from propath.
+using Spark.Core.Service.DynamicEntity from propath.
+using Spark.Core.Service.DynamicResource from propath.
 
 class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
@@ -394,34 +395,68 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
      */
     method private void InvokedHandler ( input poSender    as Progress.Lang.Object,
                                          input poEventArgs as OperationInvocationEventArgs ):
-        /* If dealing with a READ operation from an ISparkEntity class, attempt to get
+        define variable oData    as JsonObject no-undo.
+        define variable lChanged as logical    no-undo initial false.
+
+        /* If dealing with a READ operation from an DynamicEntity class, attempt to get
          * the last-known number of records read and return as part of the response object.
          */
-        if poEventArgs:BusinessEntity:GetClass():IsA(get-class(ISparkEntity)) and
-           poEventArgs:Operation:Method eq OpenEdge.Net.HTTP.MethodEnum:get and
-           poEventArgs:Operation:TargetFunction matches "Read*" then do on error undo, throw:
-            define variable oData   as JsonObject   no-undo.
-            define variable oEntity as ISparkEntity no-undo.
+        if poEventArgs:BusinessEntity:GetClass():IsA(get-class(DynamicEntity)) then do on error undo, leave:
+           define variable oEntity as DynamicEntity no-undo.
+
+           /* Cast to JSON object if found to be of valid type. */
+           if valid-object(poEventArgs:Response:Entity) and
+              type-of(poEventArgs:Response:Entity, JsonObject) then do:
+               assign oData = cast(poEventArgs:Response:Entity, JsonObject).
+               assign oEntity = cast(poEventArgs:BusinessEntity, DynamicEntity).
+           end. /* Valid Entity */
+
+           if poEventArgs:Operation:Method eq OpenEdge.Net.HTTP.MethodEnum:get and
+              poEventArgs:Operation:TargetFunction matches "Read*" then do on error undo, leave:
+                /* Append a record count property to the outbound object. */
+                if valid-object(oEntity) and valid-object(oData) and not oData:Has("numRecs") then do:
+                    oData:Add("numRecs", oEntity:LastCount).
+                    assign lChanged = true.
+                end. /* Needs numRecs */
+            end. /* GET/READ */
+
+            /* Append any context messages to the output. */
+            if valid-object(oEntity) and valid-object(oData) and not oData:Has("numRecs") then do:
+                if oEntity:oContextMessage:hasAnyMessages() then do:
+                    oData:Add(oEntity:oContextMessage:ContextPropName, oEntity:oContextMessage:getMessageArray()).
+                    oData:Add(oEntity:oContextMessage:ReturnValueName, oEntity:oContextMessage:ReturnValue).
+                    assign lChanged = true.
+                end. /* Has Messages */
+            end. /* Valid JSON */
+
+            if valid-object(oData) and lChanged then
+                poEventArgs:Response:Entity = cast(oData:Clone(), JsonObject).
+        end. /* Read Operation */
+
+        /* If dealing with any dynamic resource, check for context messages to add to the response. */
+        if poEventArgs:BusinessEntity:GetClass():IsA(get-class(DynamicResource)) then do on error undo, leave:
+            define variable oResource as DynamicResource no-undo.
 
             /* Cast to JSON object if found to be of valid type. */
             if valid-object(poEventArgs:Response:Entity) and
                type-of(poEventArgs:Response:Entity, JsonObject) then do:
                 assign oData = cast(poEventArgs:Response:Entity, JsonObject).
-
-                /* Append a record count property to the outbound object. */
-                if valid-object(oData) and not oData:Has("numRecs") then do:
-                    assign oEntity = cast(poEventArgs:BusinessEntity, ISparkEntity).
-                    if valid-object(oEntity) then
-                        oData:Add("numRecs", oEntity:LastCount).
-                    poEventArgs:Response:Entity = cast(oData:Clone(), JsonObject).
-                end. /* Valid JSON */
+                assign oResource = cast(poEventArgs:BusinessEntity, DynamicResource).
             end. /* Valid Entity */
 
-            finally:
-                delete object oData no-error.
-                /* Note: Do not delete oEntity here, as that removes the cached BusinessEntity instance from the DOH. */
-            end finally.
-        end. /* Read Operation */
+            /* Append any context messages to the output. */
+            if valid-object(oResource) and valid-object(oData) and not oData:Has("numRecs") then do:
+                if oResource:oContextMessage:hasAnyMessages() then do:
+                    oData:Add(oResource:oContextMessage:ContextPropName, oResource:oContextMessage:getMessageArray()).
+                    if oResource:oContextMessage:ReturnValue ne ? then
+                        oData:Add(oResource:oContextMessage:ReturnValueName, oResource:oContextMessage:ReturnValue).
+                    assign lChanged = true.
+                end. /* Has Messages */
+            end. /* Valid JSON */
+
+            if valid-object(oData) and lChanged then
+                poEventArgs:Response:Entity = cast(oData:Clone(), JsonObject).
+        end. /* DynamicResource */
 
         define variable iElapsed as int64 no-undo initial 0.
         if dInvokeTime ne ? then do on error undo, leave:
@@ -464,6 +499,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
             oLogger:Error(substitute("INVOKED_ - &1: &2", poEventArgs:Operation:TargetName, err:GetMessage(1))).
         end catch.
         finally:
+            delete object oData no-error. /* Delete the temporary data object. */
             this-object:SessionCleanup(). /* Perform any necessary cleanup. */
         end finally.
     end method. /* InvokedHandler */

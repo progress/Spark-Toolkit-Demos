@@ -57,8 +57,6 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         end get.
         set.
 
-    define public property LastCount as int64 no-undo get. private set.
-
     define protected variable iSeq as integer no-undo.
 
     define protected variable cRowField as character no-undo initial "id".
@@ -66,6 +64,9 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
     define protected variable DataSourceArray as handle    no-undo extent.
     define protected variable SkipListArray   as character no-undo extent.
+
+    /* To be used by DOHEventHandler to supply record count on response object for READ. */
+    define public property LastCount as int64 no-undo get. private set.
 
     constructor public SparkEntity ( ):
         /* Implement constructor in each class instance to provide a handle to ProDataSet! */
