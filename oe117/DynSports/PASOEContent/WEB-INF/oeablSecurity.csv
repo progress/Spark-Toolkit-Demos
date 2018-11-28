@@ -14,6 +14,8 @@
 "/soap/**","POST","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the WEB transport URIs ###############
+"/web/catalog","GET","permitAll()"
+"/web/catalog/openapi","GET","permitAll()"
 "/web/api","GET","permitAll()"
 "/web/api/*","GET","permitAll()"
 "/web/api/common/tfa/*","PUT","permitAll()"
@@ -22,8 +24,7 @@
 "/web/status/all","GET","hasAnyRole('ROLE_PSCUser','ROLE_ANONYMOUS')"
 "/web/status/server","GET","hasAnyRole('ROLE_PSCUser','ROLE_ANONYMOUS')"
 "/web/status/login","GET","hasAnyRole('ROLE_PSCUser')"
-"/web/test/**","*","permitAll()"
-"/web/_oeping","*","permitAll()"
+"/web/_oeping","GET","permitAll()"
 "/web/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the default URI space #################

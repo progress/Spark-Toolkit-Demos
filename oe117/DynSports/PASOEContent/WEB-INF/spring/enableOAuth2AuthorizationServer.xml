@@ -137,7 +137,7 @@
         <authentication-provider>
             <user-service properties="${local.userservice.properties}" />
         </authentication-provider>
-	</authentication-manager>
+    </authentication-manager>
 
     <oauth:web-expression-handler id="oauthWebExpressionHandler"/>
 

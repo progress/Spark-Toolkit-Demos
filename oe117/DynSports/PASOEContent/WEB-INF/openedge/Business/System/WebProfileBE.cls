@@ -7,6 +7,7 @@
 
 using Progress.Lang.* from propath.
 using Spark.Core.Util.FieldInfo from propath.
+using Spark.Core.Util.Strings from propath.
 
 block-level on error undo, throw.
 
@@ -126,7 +127,7 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use
                         if bhTopTable:buffer-field(iy):name eq "Username" and
                            (bhTopTable:buffer-field(iy):buffer-value() gt "") ne true then do:
                             bhTopTable:error = true.
-                            bhTopTable:error-string = appendMessage(bhTopTable:error-string, "No username provided").
+                            bhTopTable:error-string = Strings:appendWithComma(bhTopTable:error-string, "No username provided").
                             bhTopTable:rejected = true.
                             phDataset:error = true.
                         end. /* Username */
@@ -134,7 +135,7 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use
                         if bhTopTable:buffer-field(iy):name eq "Password" and
                            (bhTopTable:buffer-field(iy):buffer-value() gt "") ne true then do:
                             bhTopTable:error = true.
-                            bhTopTable:error-string = appendMessage(bhTopTable:error-string, "No password provided").
+                            bhTopTable:error-string = Strings:appendWithComma(bhTopTable:error-string, "No password provided").
                             bhTopTable:rejected = true.
                             phDataset:error = true.
                         end. /* Password */
@@ -164,13 +165,13 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use
                         if bhTopTable:buffer-field(iy):name eq "UserNum" then do:
                             if (bhTopTable:buffer-field(iy):buffer-value() gt "") ne true then do:
                                 bhTopTable:error = true.
-                                bhTopTable:error-string = appendMessage(bhTopTable:error-string, "No user number provided").
+                                bhTopTable:error-string = Strings:appendWithComma(bhTopTable:error-string, "No user number provided").
                                 bhTopTable:rejected = true.
                                 phDataset:error = true.
                             end.
                             if bhBefore:buffer-field(iy):buffer-value() ne bhTopTable:buffer-field(iy):buffer-value() then do:
                                 bhTopTable:error = true.
-                                bhTopTable:error-string = appendMessage(bhTopTable:error-string, "Value for user number changed").
+                                bhTopTable:error-string = Strings:appendWithComma(bhTopTable:error-string, "Value for user number changed").
                                 bhTopTable:rejected = true.
                                 phDataset:error = true.
                             end.
@@ -179,7 +180,7 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use
                         if bhTopTable:buffer-field(iy):name eq "Username" and
                            (bhTopTable:buffer-field(iy):buffer-value() gt "") ne true then do:
                             bhTopTable:error = true.
-                            bhTopTable:error-string = appendMessage(bhTopTable:error-string, "No username provided").
+                            bhTopTable:error-string = Strings:appendWithComma(bhTopTable:error-string, "No username provided").
                             bhTopTable:rejected = true.
                             phDataset:error = true.
                         end. /* Username */
@@ -187,7 +188,7 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use
                         if bhTopTable:buffer-field(iy):name eq "Password" and
                            (bhTopTable:buffer-field(iy):buffer-value() gt "") ne true then do:
                             bhTopTable:error = true.
-                            bhTopTable:error-string = appendMessage(bhTopTable:error-string, "No password provided").
+                            bhTopTable:error-string = Strings:appendWithComma(bhTopTable:error-string, "No password provided").
                             bhTopTable:rejected = true.
                             phDataset:error = true.
                         end. /* Password */

@@ -8,10 +8,19 @@
                         "contentType": "application/json",
                         "statusCode": 200,
                         "entity": {
-                            "type": "self",
-                            "name": "OpenEdge.Web.DataObject.DataObjectHandler",
-                            "function": "ListServices",
-                            "arg": []
+                            "name": "Spark.Core.Service.Catalog",
+                            "function": "getCatalog",
+                            "typeof": "Progress.Lang.Object",
+                            "arg": [{
+                                "ablName": "catalog",
+                                "ablType": "class Progress.Json.ObjectModel.JsonObject",
+                                "ioMode": "Output",
+                                "msgElem": {
+                                    "type": "BODY",
+                                    "name": "catalog",
+                                    "ioMode": "Output"
+                                }
+                            }]
                         }
                     }
                 }

@@ -64,6 +64,14 @@
              URL authorization evaluation -->
         <expression-handler ref="DefaultWebExpressionHandler" />
 
+        <!-- OpenEdge MDC primary filter  -->
+        <custom-filter before="CHANNEL_FILTER" 
+                       ref="MDCPrimaryFilter" />
+
+        <!-- OpenEdge MDC secondary filter  -->
+        <custom-filter after="SESSION_MANAGEMENT_FILTER" 
+                       ref="MDCSecondaryFilter" />
+
         <!-- OpenEdge PRE AUTH Filter  -->
         <custom-filter position="PRE_AUTH_FILTER" 
                        ref="OEPreauthfilter" />
@@ -137,6 +145,14 @@
              URL authorization evaluation -->
         <expression-handler ref="DefaultWebExpressionHandler" />
 
+        <!-- OpenEdge MDC primary filter  -->
+        <custom-filter before="CHANNEL_FILTER" 
+                       ref="MDCPrimaryFilter" />
+
+        <!-- OpenEdge MDC secondary filter  -->
+        <custom-filter after="SESSION_MANAGEMENT_FILTER" 
+                       ref="MDCSecondaryFilter" />
+
         <!-- OpenEdge PRE AUTH Filter  -->
         <custom-filter position="PRE_AUTH_FILTER" 
                        ref="OEPreauthfilter" />
@@ -203,6 +219,14 @@
         <!-- Spring access expression handler for
              URL authorization evaluation -->
         <expression-handler ref="DefaultWebExpressionHandler" />
+
+        <!-- OpenEdge MDC primary filter  -->
+        <custom-filter before="CHANNEL_FILTER" 
+                       ref="MDCPrimaryFilter" />
+
+        <!-- OpenEdge MDC secondary filter  -->
+        <custom-filter after="SESSION_MANAGEMENT_FILTER" 
+                       ref="MDCSecondaryFilter" />
 
         <!-- OpenEdge CORS Filter -->
         <custom-filter before="SECURITY_CONTEXT_FILTER" 

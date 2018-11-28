@@ -11,7 +11,7 @@ WEB-INF/spring/authFilters.xml - Optionally adjust the entry point for logins (v
 WEB-INF/spring/authManagers.xml - Provide a missing property substitution for createCPAuthn.
 
     <b:property name="createCPAuthn" value="true" />
-	or
+    or
     <b:property name="createCPAuthn" value="${OERealm.AuthProvider.createCPAuthn}" />
 
 

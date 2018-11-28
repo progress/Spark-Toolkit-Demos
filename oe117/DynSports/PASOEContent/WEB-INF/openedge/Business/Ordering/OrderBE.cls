@@ -7,7 +7,6 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
-using Spark.Core.Message.ErrorTypeEnum from propath.
 using Spark.Core.Util.FieldInfo from propath.
 using Spark.Core.Util.ForeignKey from propath.
 

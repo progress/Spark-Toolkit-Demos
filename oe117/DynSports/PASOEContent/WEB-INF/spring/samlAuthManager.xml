@@ -22,13 +22,15 @@
 
     <!-- SAML Authentication Provider responsible for validating of received SAML messages -->
     <b:bean id="samlAuthenticationProvider" class="com.progress.appserv.services.security.OESamlAuthenticationProvider">
-        <b:property name="userDetails" ref="userDetails" />
+        <b:property name="userDetails" ref="samluserDetails" />
     </b:bean>
 
-    <b:bean id="userDetails" class="com.progress.appserv.services.security.OESamlUserDetailsService">
+    <b:bean id="samluserDetails" class="com.progress.appserv.services.security.OESamlUserDetailsService">
         <b:property name="roleAttrName" value="${samlToken.UserDetails.roleAttrName}"/>
         <b:property name="grantedAuthorities" value="${samlToken.UserDetails.defaultGrantedAuthorities}" />
         <b:property name="rolePrefix" value="${samlToken.UserDetails.rolePrefix}"/>
+        <b:property name="userDomain" value="${samlToken.UserDetails.userDomain}"/>
+        <b:property name="registryFile" value="${samlToken.UserDetails.registryFile}"/>
     </b:bean>
 
     <!-- Logger for SAML messages and events -->

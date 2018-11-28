@@ -37,6 +37,14 @@
         entry-point-ref="http403ForbiddenEntryPoint"
         realm="OpenEdge" >
 
+        <!-- OpenEdge MDC primary filter  -->
+        <custom-filter before="CHANNEL_FILTER"
+                       ref="MDCPrimaryFilter" />
+
+        <!-- OpenEdge MDC secondary filter  -->
+        <custom-filter after="SESSION_MANAGEMENT_FILTER"
+                       ref="MDCSecondaryFilter" />
+
         <!-- OpenEdge ClientPrincipal SSO Filter -->
         <custom-filter position="SWITCH_USER_FILTER"
                        ref="OEClientPrincipalFilter" />
@@ -51,9 +59,9 @@
                     access="permitAll()"/>
 
 
-	<!-- CGI pages -->
-       	<intercept-url pattern="/webspeed/cgi-bin/**" method="GET"
-       		access="permitAll()"/>
+    <!-- CGI pages -->
+           <intercept-url pattern="/webspeed/cgi-bin/**" method="GET"
+               access="permitAll()"/>
 
 
         <!-- Application public area example -->

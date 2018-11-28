@@ -14,6 +14,8 @@
 "/soap/**","POST","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the WEB transport URIs ###############
+"/web/catalog","GET","permitAll()"
+"/web/catalog/openapi","GET","permitAll()"
 "/web/pdo","GET","permitAll()"
 "/web/pdo/*","GET","permitAll()"
 "/web/pdo/common/tfa/*","PUT","permitAll()"

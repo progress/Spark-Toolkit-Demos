@@ -1,11 +1,11 @@
 <project name="DatabaseCreation" basedir="." default="usage">
 
-    <target name="usage" description="Usage Instructions" depends="_init_env,_init_unix,_init_windows">
-        <echo message="Usage Instructions:"/>
-        <echo message="ant create - Create new, default Sports2000 and WebState DB's"/>
+    <target name="usage" description="Usage Instructions" depends="_init_env">
+        <echo message="${line.separator}Usage Instructions:"/>
+        <echo message="${line.separator}ant create - Create new, default Sports2020 and WebState DB's"/>
         <echo message="    -Dpath=[PATH] = location for databases (Default: ${path})"/>
 		<echo message="                    Note: This will also run the add_domain task"/>
-        <echo message="ant add_domain - Add default 'spark' domain to available DB's"/>
+        <echo message="${line.separator}ant add_domain - Add default 'spark' domain to available DB's"/>
         <echo message="    -Dpath=[PATH] = location for databases (Default: ${path})"/>
 		<echo message="                    Note: Run again to update existing domain(s)"/>
     </target>
@@ -33,76 +33,114 @@
         <condition property="isUnix">
             <os family="unix"/>
         </condition>
+
+		<!-- Determine script suffix and database location. -->
+        <condition property="scriptSuffix" value="sh" else="bat">
+            <os family="unix"/>
+        </condition>
+        <condition property="path" value="/usr/databases" else="C:\Databases">
+            <os family="unix"/>
+        </condition>
     </target>
 
-    <target name="_init_unix" if="isUnix">
-        <property name="scriptSuffix" value="sh"/>
-		<property name="path" value="/usr/databases"/>
-    </target>
-
-    <target name="_init_windows" if="isWin64">
-        <property name="scriptSuffix" value="bat"/>
-		<property name="path" value="C:\Databases"/>
-    </target>
-
-    <target name="create" depends="_init_env,_init_unix,_init_windows">
+    <target name="create" depends="_init_env">
 		<taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
 
-		<mkdir dir="${path}"/>
-		<mkdir dir="${path}/Sports2000"/>
-		<mkdir dir="${path}/WebState"/>
+		<antcall target="_create_sports"/>
+		<antcall target="_create_webstate"/>
 
-		<copy toDir="${path}/Sports2000">
-            <fileset dir="${basedir}/Sports2000">
+		<antcall target="add_domain"/>
+		<antcall target="refresh_dates"/>
+	</target>
+
+	<target name="_create_sports">
+		<mkdir dir="${path}"/>
+		<mkdir dir="${path}/Sports2020"/>
+
+		<copy toDir="${path}/Sports2020">
+            <fileset dir="${basedir}/Sports2020">
                 <include name="*.st"/>
             </fileset>
         </copy>
+
+		<PCTCreateBase dbName="sports2020" destDir="${path}/Sports2020" dlcHome="${dlcHome}"
+		               blockSize="8" cpInternal="utf-8" largeFiles="false"
+					   structFile="${basedir}/Sports2020/sports2020.st" schemaFile="${basedir}/Sports2020/sports2020.df">
+		</PCTCreateBase>
+
+		<!--
+			Dumps were made using the following options:
+			numformat=44,46
+			dateformat=mdy-1950
+			map=NO-MAP
+			cpstream=UTF-8
+		-->
+
+		<PCTLoadData srcDir="${basedir}/Sports2020/Data" dlcHome="${dlcHome}"
+            cpStream="UTF-8" cpInternal="UTF-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
+            <Option name="-d" value="mdy"/>
+		    <DBConnection dbName="sports2020" dbDir="${path}/Sports2020" singleUser="true"/>
+		</PCTLoadData>
+
+		<!-- Set the current sequence values based on records loaded. -->
+		<PCTRun dlcHome="${dlcHome}" procedure="${basedir}/Sports2020/fixseqs.p"
+            cpInternal="utf-8" cpStream="UTF-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
+		    <Option name="-d" value="mdy"/>
+			<DBConnection dbName="sports2020" dbDir="${path}/Sports2020" singleUser="true"/>
+		</PCTRun>
+	</target>
+
+	<target name="_create_webstate">
+		<mkdir dir="${path}"/>
+		<mkdir dir="${path}/WebState"/>
 
 		<copy toDir="${path}/WebState">
             <fileset dir="${basedir}/WebState">
                 <include name="*.st"/>
             </fileset>
         </copy>
-
-		<PCTCreateBase dbName="Sports2000" destDir="${path}/Sports2000" dlcHome="${dlcHome}"
-		               blockSize="4" cpInternal="utf-8" largeFiles="false"
-					   structFile="${basedir}/Sports2000/Sports2000.st" schemaFile="${basedir}/Sports2000/Sports2000.df">
-		</PCTCreateBase>
-<!--
-Dumps are made using
-numformat=44,46
-dateformat=mdy-1950
-map=NO-MAP
-cpstream=UTF-8
--->
-		<PCTLoadData srcDir="${basedir}/Sports2000/Data" dlcHome="${dlcHome}"
-            cpStream="UTF-8" cpInternal="UTF-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
-            <Option name="-d" value="mdy" />
-		    <DBConnection dbName="Sports2000" dbDir="${path}/Sports2000" singleUser="true"/>
-		</PCTLoadData>
-
+		
 		<PCTCreateBase dbName="WebState" destDir="${path}/WebState" dlcHome="${dlcHome}"
-					   blockSize="4" cpInternal="utf-8" largeFiles="false"
+					   blockSize="8" cpInternal="utf-8" largeFiles="false"
 					   structFile="${basedir}/WebState/WebState.st" schemaFile="${basedir}/WebState/WebState.df">
 		</PCTCreateBase>
+
+		<!--
+			Dumps were made using the following options:
+			numformat=44,46
+			dateformat=mdy-1950
+			map=NO-MAP
+			cpstream=UTF-8
+		-->
+
 		<PCTLoadData srcDir="${basedir}/WebState/Data" dlcHome="${dlcHome}" 
             cpStream="UTF-8" cpInternal="UTF-8" NumSep="44" NumDec="46" centuryYearOffset="1950"
             tables="weblookup,webmenu,webprofile,webrole,webroleprofile,webroletask,websetting,webtask">
-            <Option name="-d" value="mdy" />
+            <Option name="-d" value="mdy"/>
 		    <DBConnection dbName="WebState" dbDir="${path}/WebState" singleUser="true"/>
 		</PCTLoadData>
-
-		<antcall target="add_domain"/>
 	</target>
 
-    <target name="add_domain" depends="_init_env,_init_unix,_init_windows">
-		<taskdef resource="PCT.properties" classpath="${basedir}/PCT.jar"/>
+    <target name="add_domain" depends="_init_env">
+		<taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
 
 		<PCTRun dlcHome="${dlcHome}" procedure="createDomain.p" cpInternal="utf-8" cpStream="utf-8">
-		    <DBConnection dbName="Sports2000" dbDir="${path}/Sports2000" singleUser="true"/>
+		    <DBConnection dbName="sports2020" dbDir="${path}/Sports2020" singleUser="true"/>
 		    <DBConnection dbName="WebState" dbDir="${path}/WebState" singleUser="true"/>
+		</PCTRun>
+	</target>
+
+    <target name="refresh_dates" depends="_init_env">
+		<taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+		<!-- Update any date values for this database as of today's date. -->
+		<PCTRun dlcHome="${dlcHome}" procedure="Sports2020/refreshDates.p"
+            cpInternal="utf-8" cpStream="utf-8" NumSep="44" NumDec="46" centuryYearOffset="1950">
+		    <Option name="-d" value="mdy"/>
+			<DBConnection dbName="sports2020" dbDir="${path}/Sports2020" singleUser="true"/>
 		</PCTRun>
 	</target>
 

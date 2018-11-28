@@ -5,26 +5,16 @@
         <meta charset="utf-8" />
         <meta name="description" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-        <link rel="stylesheet" type="text/css" href="vendor/kendo/styles/kendo.common.min.css"/>
-        <link rel="stylesheet" type="text/css" href="vendor/kendo/styles/kendo.common-bootstrap.min.css"/>
-        <link rel="stylesheet" type="text/css" href="vendor/kendo/styles/kendo.default.min.css"/>
-        <link rel="stylesheet" type="text/css" href="vendor/font-awesome/css/font-awesome.min.css"/>
-        <link rel="stylesheet" type="text/css" href="vendor/bootstrap/dist/css/bootstrap.min.css"/>
-        <link rel="stylesheet" type="text/css" href="vendor/animate-css/animate.min.css"/>
-        <link rel="stylesheet" type="text/css" href="assets/css/font.css"/>
-        <link rel="stylesheet" type="text/css" href="assets/css/app.css"/>
-        <link rel="stylesheet" type="text/css" href="assets/css/override.css"/>
-        <!-- Core Libraries -->
-        <script type="text/javascript" src="vendor/jquery/dist/jquery.min.js"></script>
-        <script type="text/javascript" src="vendor/bootstrap/dist/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="vendor/kendo/js/kendo.all.min.js"></script>
-        <script type="text/javascript" src="vendor/kendo/js/cultures/kendo.culture.en-US.min.js"></script>
-        <script type="text/javascript" src="vendor/kendo/js/messages/kendo.messages.en-US.min.js"></script>
-        <script type="text/javascript" src="vendor/jszip/dist/jszip.min.js"></script>
-        <!-- Library Extensions -->
-        <script type="text/javascript" src="vendor/psc/lib/progress.all.min.js"></script>
-        <script type="text/javascript" src="vendor/spark/lib/plugins.js"></script>
-        <script type="text/javascript" src="vendor/spark/lib/spark.min.js"></script>
+        <!-- Load Styles -->
+        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.3.911/styles/kendo.common.min.css"/>
+        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.3.911/styles/kendo.bootstrap.min.css"/>
+        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.3.911/styles/kendo.default.min.css"/>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="app.css"/>
+        <!-- Framework Libraries -->
+        <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="https://kendo.cdn.telerik.com/2018.3.911/js/kendo.web.min.js"></script>
         <script type="text/javascript">
             var app = (function(){
                 "use strict";
@@ -376,22 +366,6 @@
                 function getVersions(){
                     $("#versionJQ").html("v" + jQuery().jquery);
                     $("#versionKUI").html(kendo ? ("v" + kendo.version) : "UNAVAILABLE");
-                    $("#versionSpark").html(spark ? spark.version : "< v3.0.2");
-
-                    $.get("vendor/bootstrap/dist/css/bootstrap.min.css", function(data){
-                        var version = data.match(/v[.\d]+[.\d]/);
-                        $("#versionBS").html((version[0] || "UNAVAILABLE"));
-                    });
-
-                    $.get("vendor/font-awesome/css/font-awesome.min.css", function(data){
-                        var version = data.match(/Font Awesome [.\d]+[.\d]/);
-                        $("#versionFA").html((version[0] || "UNAVAILABLE").replace("Font Awesome ", "v"));
-                    });
-
-                    $.get("vendor/psc/lib/progress.all.js", function(data){
-                        var version = data.match(/Version: [.\d]+[.\d]\-[\d]/);
-                        $("#versionJSDO").html((version[0] || "UNAVAILABLE").replace("Version: ", "v"));
-                    });
                 }
 
                 $(document).ready(function(){
@@ -451,25 +425,21 @@
                             </div>
                             <div class="scrollable">
                                 <div class="text-center m-t none" id="thumbsUp">
-		                            <h1>
-		                                <span class="fa-stack fa-2x icon-muted">
-		                                    <i class="fa fa-file-o fa-stack-2x"></i>
-		                                    <i class="fa fa-thumbs-up fa-stack"></i>
-		                                </span>
-		                            </h1>
-		                        </div>
-		                        <div class="m-l-lg">
-		                            <h3 class="m-t-lg">The following libraries have been detected:</h3>
-		                            <ul>
-		                                <li>jQuery <span id="versionJQ"></span></li>
-		                                <li>KendoUI <span id="versionKUI"></span></li>
-		                                <li>Bootstrap <span id="versionBS"></span></li>
-		                                <li>FontAwesome <span id="versionFA"></span></li>
-		                                <li>JSDO <span id="versionJSDO"></span></li>
-		                                <li>Spark <span id="versionSpark"></span></li>
-		                                <li>OpenEdge <span id="versionOE"></span></li>
-		                            </ul>
-		                        </div>
+                                    <h1>
+                                        <span class="fa-stack fa-2x icon-muted">
+                                            <i class="fa fa-file-o fa-stack-2x"></i>
+                                            <i class="fa fa-thumbs-up fa-stack"></i>
+                                        </span>
+                                    </h1>
+                                </div>
+                                <div class="m-l-lg">
+                                    <h3 class="m-t-lg">The following libraries have been detected:</h3>
+                                    <ul>
+                                        <li>jQuery <span id="versionJQ"></span></li>
+                                        <li>KendoUI <span id="versionKUI"></span></li>
+                                        <li>OpenEdge <span id="versionOE"></span></li>
+                                    </ul>
+                                </div>
                             </div>
                         <div>
                     </section>

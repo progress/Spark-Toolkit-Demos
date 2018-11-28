@@ -1,19 +1,19 @@
-<%@ page language="java"
-         contentType="text/html;charset=UTF-8"
-         pageEncoding="UTF-8"
+<%@ page language="java" 
+         contentType="text/html;charset=UTF-8" 
+         pageEncoding="UTF-8" 
          session="false"
-         isErrorPage="true"
+         isErrorPage="true" 
          trimDirectiveWhitespaces="true"
          errorPage="/WEB-INF/jsp/exceptionPage.jsp"
          import="java.io.*"
          import="java.util.*"
          import="java.system.*" %>
-<%-- Java scriptlet to cleanup raw input properties and attributes used as
+<%-- Java scriptlet to cleanup raw input properties and attributes used as 
       psc.as.attr.xxxxx tokens by the HTML template found in this file. --%>
 <%-- Begin editable JSON reponse template: --%>
-<%@  include file="loadErrorData.jsp" %>{
+<%@  include file="loadErrorData.jsp" %>{ 
 "error_code": <%=request.getAttribute("psc.as.attr.errorCode")%>
-, "status_text": "<%=request.getAttribute("psc.as.attr.errorMessage")%>"
+, "status_txt": "<%=request.getAttribute("psc.as.attr.errorMessage")%>"
 , "error_details": {
   "remote_user": "<%=request.getRemoteUser()%>"
 , "user_principal": "<%=request.getUserPrincipal()%>"
@@ -21,7 +21,7 @@
 , "remote_addr": "<%=request.getRemoteAddr()%>"
 , "server_name": "<%=request.getServerName()%>"
 , "product_type": "<%=request.getAttribute("psc.as.attr.product")%>"
-, "http_status": <%=(Integer)request.getAttribute("javax.servlet.error.status_code")%>
+, "http_status": <%=(Integer)request.getAttribute("javax.servlet.error.status_code")%> 
 , "error_detail": "<%=request.getAttribute("psc.as.attr.errorDetail")%>"
 }
 , "debug_details": {

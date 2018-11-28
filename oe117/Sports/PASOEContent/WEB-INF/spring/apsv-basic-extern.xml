@@ -8,23 +8,27 @@
                         http://www.springframework.org/schema/security/spring-security-4.1.xsd">
 
     <!-- This HTTP security space represents the public APSV AppServer protocol
-         HTTP tunnel URI space controls the authentication/authorization process 
+         HTTP tunnel URI space controls the authentication/authorization process
          to its dynamic content.
      -->
-    <!-- USER EDIT: add attribute "entry-point-ref" 
+    <!-- USER EDIT: add attribute "entry-point-ref"
          when enable form SAML spring security mode -->
     <!-- entry-point-ref="OESamlFormEntryPoint" -->
     <http pattern="/apsv/**"
-        auto-config="true" 
-        use-expressions="true" 
-        create-session="stateless" 
-        disable-url-rewriting="true" 
-        authentication-manager-ref="${http.apsv.authmanager}" 
+        auto-config="true"
+        use-expressions="true"
+        create-session="stateless"
+        disable-url-rewriting="true"
+        authentication-manager-ref="${http.apsv.authmanager}"
         realm="${http.apsv.realm}" >
 
         <!-- Spring access expression handler for
              URL authorization evaluation -->
         <expression-handler ref="DefaultWebExpressionHandler" />
+
+        <!-- OpenEdge MDC primary filter  -->
+        <custom-filter before="CHANNEL_FILTER"
+                       ref="MDCPrimaryFilter" />
 
          <!-- OpenEdge SSO Authorization header Filter -->
         <custom-filter before="BASIC_AUTH_FILTER"
@@ -35,42 +39,47 @@
                        ref="customAuthorizationFilter" />
 
         <!-- OpenEdge PRE AUTH Filter  -->
-        <!-- USER EDIT: uncomment PRE_AUTH_FILTER filter 
+        <!-- USER EDIT: uncomment PRE_AUTH_FILTER filter
              to enable pre-auth-->
         <!--
-        <custom-filter position="PRE_AUTH_FILTER" 
+        <custom-filter position="PRE_AUTH_FILTER"
                       ref="OEPreauthfilter" />
         -->
+
+        <!-- OpenEdge MDC secondary filter  -->
+        <custom-filter after="SESSION_MANAGEMENT_FILTER"
+                       ref="MDCSecondaryFilter" />
+
         <!-- OpenEdge ClientPrincipal SSO Filter -->
-        <custom-filter position="SWITCH_USER_FILTER" 
+        <custom-filter position="SWITCH_USER_FILTER"
                        ref="OEClientPrincipalFilter" />
-                
+
         <!-- OpenEdge SAMLProcessing SSO Filter -->
 
         <!-- USER EDIT: Uncomment BASIC_AUTH_FILTER filter
              when enable basic SAML spring security mode -->
         <!--
-        <custom-filter before="BASIC_AUTH_FILTER" 
+        <custom-filter before="BASIC_AUTH_FILTER"
                        ref="samlProcessingFilter" />
         -->
 
         <!-- USER EDIT: Uncomment FORM_LOGIN_FILTER filter
              when enable form SAML spring security mode -->
         <!--
-        <custom-filter before="FORM_LOGIN_FILTER" 
+        <custom-filter before="FORM_LOGIN_FILTER"
                        ref="OESamlSSOProcessingFilter"  />
         -->
 
-        <!-- URL access controls 
+        <!-- URL access controls
              NOTE: this filter MUST occur BEFORE the
                    default security-interceptor inserted by the
                    <http auto-config> attribute -->
         <custom-filter ref="apsvFilterSecurityInterceptor"
                        before="FILTER_SECURITY_INTERCEPTOR" />
-        
+
         <!-- NOTE:  all XML <intercept-url> elements have been
              replaced by the 'apsvFilterSecurityInterceptor' and
-             oeablSecurity.csv configuration file. 
+             oeablSecurity.csv configuration file.
 
             <intercept-url pattern="/apsv/**" method="HEAD"
                            access="hasAnyRole('ROLE_PSCUser')"/>
@@ -83,19 +92,19 @@
         <!-- authentication models -->
 
         <!-- If you choose oeablSecurity-basic-oerealm.xml comment out the following line  -->
-        <http-basic  /> 
+        <http-basic  />
         <!-- If you choose oeablSecurity-basic-oerealm.xml uncomment out the following line -->
         <!--  <http-basic entry-point-ref="OEAuthenticationEntryPoint" /> -->
 
 
-        <!-- USER EDIT: uncomment mappable-roles 
+        <!-- USER EDIT: uncomment mappable-roles
              for container security -->
         <!--
         <jee mappable-roles="ROLE_PSCUser" />
         -->
 
-	<!-- Disable org.springframework.security.web.csrf.CsrfFilter -->
-	<csrf disabled="true"/>
+    <!-- Disable org.springframework.security.web.csrf.CsrfFilter -->
+    <csrf disabled="true"/>
 
     </http>
 
