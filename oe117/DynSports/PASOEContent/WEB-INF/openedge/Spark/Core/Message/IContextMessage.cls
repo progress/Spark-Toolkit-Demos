@@ -11,8 +11,8 @@ interface Spark.Core.Message.IContextMessage inherits IAbstractMessage:
     define public property ReturnValueName as character no-undo get.
     define public property ReturnValue     as logical   no-undo get.
 
-    method public void addMessage ( input poErrType as ErrorTypeEnum, input pcMessage as character ).
-    method public void addMessage ( input poErrType as ErrorTypeEnum, input pcMsgGroup as character, input piMsgNumber as integer ).
+    method public void addMessage ( input poMsgType as ErrorTypeEnum, input pcMessage as character ).
+    method public void addMessage ( input poMsgType as ErrorTypeEnum, input pcMsgGroup as character, input piMsgNumber as integer ).
 
     method public void setContextPropName ( input pcName as character ).
     method public void setReturnValueName ( input pcName as character ).
@@ -58,6 +58,6 @@ interface Spark.Core.Message.IContextMessage inherits IAbstractMessage:
     /**
      * Remove messages by type
      */
-    method public void removeMessages ( input poErrType as ErrorTypeEnum ).
+    method public void removeMessages ( input poMsgType as ErrorTypeEnum ).
 
 end interface.

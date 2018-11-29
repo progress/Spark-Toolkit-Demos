@@ -26,8 +26,8 @@ using OpenEdge.Web.SendExceptionError from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
 using Spark.Core.Manager.ILoggingManager from propath.
 using Spark.Core.Manager.ServiceLifeCycleEnum from propath.
-using Spark.Core.Service.DynamicEntity from propath.
-using Spark.Core.Service.DynamicResource from propath.
+using Spark.Core.Service.IDynamicResource from propath.
+using Spark.Core.Service.ISparkEntity from propath.
 
 class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
@@ -398,65 +398,64 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         define variable oData    as JsonObject no-undo.
         define variable lChanged as logical    no-undo initial false.
 
-        /* If dealing with a READ operation from an DynamicEntity class, attempt to get
-         * the last-known number of records read and return as part of the response object.
-         */
-        if poEventArgs:BusinessEntity:GetClass():IsA(get-class(DynamicEntity)) then do on error undo, leave:
-           define variable oEntity as DynamicEntity no-undo.
+        case true:
+            when poEventArgs:BusinessEntity:GetClass():IsA(get-class(ISparkEntity)) then do:
+                /* If dealing with a Spark Entity class performing a READ operation, attempt to get
+                 * the last-known number of records read and return as part of the response object.
+                 * Also output any messages queued for output as part of any executed class method.
+                 */
+                define variable oEntity as ISparkEntity no-undo.
 
-           /* Cast to JSON object if found to be of valid type. */
-           if valid-object(poEventArgs:Response:Entity) and
-              type-of(poEventArgs:Response:Entity, JsonObject) then do:
-               assign oData = cast(poEventArgs:Response:Entity, JsonObject).
-               assign oEntity = cast(poEventArgs:BusinessEntity, DynamicEntity).
-           end. /* Valid Entity */
+                /* Cast to JSON object if found to be of valid type. */
+                if valid-object(poEventArgs:Response:Entity) and
+                   type-of(poEventArgs:Response:Entity, JsonObject) then do:
+                    assign oData = cast(cast(poEventArgs:Response:Entity, JsonObject):Clone(), JsonObject).
+                    assign oEntity = cast(poEventArgs:BusinessEntity, ISparkEntity).
 
-           if poEventArgs:Operation:Method eq OpenEdge.Net.HTTP.MethodEnum:get and
-              poEventArgs:Operation:TargetFunction matches "Read*" then do on error undo, leave:
-                /* Append a record count property to the outbound object. */
-                if valid-object(oEntity) and valid-object(oData) and not oData:Has("numRecs") then do:
-                    oData:Add("numRecs", oEntity:LastCount).
-                    assign lChanged = true.
-                end. /* Needs numRecs */
-            end. /* GET/READ */
+                    if poEventArgs:Operation:Method eq OpenEdge.Net.HTTP.MethodEnum:get and
+                       poEventArgs:Operation:TargetFunction matches "Read*" then do on error undo, leave:
+                         /* Append a record count property to the outbound object. */
+                         if valid-object(oEntity) and valid-object(oData) and not oData:Has("numRecs") then do:
+                             oData:Add("numRecs", oEntity:LastCount).
+                             assign lChanged = true.
+                         end. /* Needs numRecs */
+                     end. /* GET/READ */
 
-            /* Append any context messages to the output. */
-            if valid-object(oEntity) and valid-object(oData) and not oData:Has("numRecs") then do:
-                if oEntity:oContextMessage:hasAnyMessages() then do:
-                    oData:Add(oEntity:oContextMessage:ContextPropName, oEntity:oContextMessage:getMessageArray()).
-                    oData:Add(oEntity:oContextMessage:ReturnValueName, oEntity:oContextMessage:ReturnValue).
-                    assign lChanged = true.
-                end. /* Has Messages */
-            end. /* Valid JSON */
+                     /* Append any context messages to the output. */
+                     if valid-object(oEntity) and valid-object(oData) and oEntity:oContextMessage:hasAnyMessages() then do:
+                         oData:Add(oEntity:oContextMessage:ContextPropName, oEntity:oContextMessage:getMessageArray()).
+                         oData:Add(oEntity:oContextMessage:ReturnValueName, oEntity:oContextMessage:ReturnValue).
+                         assign lChanged = true.
+                     end. /* Has Messages */
 
-            if valid-object(oData) and lChanged then
-                poEventArgs:Response:Entity = cast(oData:Clone(), JsonObject).
-        end. /* Read Operation */
+                     if valid-object(oData) and lChanged then
+                         poEventArgs:Response:Entity = cast(oData:Clone(), JsonObject).
+                end. /* Valid JSON Entity */
+            end. /* ISparkEntity */
 
-        /* If dealing with any dynamic resource, check for context messages to add to the response. */
-        if poEventArgs:BusinessEntity:GetClass():IsA(get-class(DynamicResource)) then do on error undo, leave:
-            define variable oResource as DynamicResource no-undo.
+            when poEventArgs:BusinessEntity:GetClass():IsA(get-class(IDynamicResource)) then do:
+                /* If dealing with any Dynamic Resource, check for context messages to add to the response. */
+                define variable oResource as IDynamicResource no-undo.
 
-            /* Cast to JSON object if found to be of valid type. */
-            if valid-object(poEventArgs:Response:Entity) and
-               type-of(poEventArgs:Response:Entity, JsonObject) then do:
-                assign oData = cast(poEventArgs:Response:Entity, JsonObject).
-                assign oResource = cast(poEventArgs:BusinessEntity, DynamicResource).
-            end. /* Valid Entity */
+                /* Cast to JSON object if found to be of valid type. */
+                if valid-object(poEventArgs:Response:Entity) and
+                   type-of(poEventArgs:Response:Entity, JsonObject) then do:
+                    assign oData = cast(cast(poEventArgs:Response:Entity, JsonObject):Clone(), JsonObject).
+                    assign oResource = cast(poEventArgs:BusinessEntity, IDynamicResource).
 
-            /* Append any context messages to the output. */
-            if valid-object(oResource) and valid-object(oData) and not oData:Has("numRecs") then do:
-                if oResource:oContextMessage:hasAnyMessages() then do:
-                    oData:Add(oResource:oContextMessage:ContextPropName, oResource:oContextMessage:getMessageArray()).
-                    if oResource:oContextMessage:ReturnValue ne ? then
-                        oData:Add(oResource:oContextMessage:ReturnValueName, oResource:oContextMessage:ReturnValue).
-                    assign lChanged = true.
-                end. /* Has Messages */
-            end. /* Valid JSON */
+                    /* Append any context messages to the output. */
+                    if valid-object(oResource) and valid-object(oData) and oResource:oContextMessage:hasAnyMessages() then do:
+                        oData:Add(oResource:oContextMessage:ContextPropName, oResource:oContextMessage:getMessageArray()).
+                        if oResource:oContextMessage:ReturnValue ne ? then
+                            oData:Add(oResource:oContextMessage:ReturnValueName, oResource:oContextMessage:ReturnValue).
+                        assign lChanged = true.
+                    end. /* Has Messages */
 
-            if valid-object(oData) and lChanged then
-                poEventArgs:Response:Entity = cast(oData:Clone(), JsonObject).
-        end. /* DynamicResource */
+                    if valid-object(oData) and lChanged then
+                        poEventArgs:Response:Entity = cast(oData:Clone(), JsonObject).
+                end. /* Valid JSON Entity */
+            end. /* IDynamicResource */
+        end case.
 
         define variable iElapsed as int64 no-undo initial 0.
         if dInvokeTime ne ? then do on error undo, leave:

@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "lastModified": "Fri Aug 17 13:56:34 EDT 2018",
+  "lastModified": "Thu Nov 29 08:53:10 EST 2018",
   "services": [
     {
       "name": "test",
@@ -119,6 +119,30 @@
                 },
                 {
                   "name": "dsOutParam",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "message",
+          "path": "\/message",
+          "autoSave": true,
+          "operations": [
+            {
+              "name": "test",
+              "path": "\/test",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "messageType",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "messageText",
                   "type": "RESPONSE_BODY"
                 }
               ]

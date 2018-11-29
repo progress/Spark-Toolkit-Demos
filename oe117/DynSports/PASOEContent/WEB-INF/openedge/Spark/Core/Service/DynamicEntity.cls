@@ -8,7 +8,6 @@
   ----------------------------------------------------------------------*/
 
 using Progress.Json.ObjectModel.* from propath.
-using Spark.Core.Message.IContextMessage from propath.
 using Spark.Core.Util.FormatTools from propath.
 
 /* Default options for class. */
@@ -60,15 +59,5 @@ class Spark.Core.Service.DynamicEntity inherits Spark.Core.Service.SparkEntity i
      */
     define public abstract property operations as character no-undo
         get. protected set.
-
-    /***** Public *****/ 
-
-    define public property oContextMessage as IContextMessage no-undo
-        get:
-            if not valid-object(oContextMessage) then
-                assign oContextMessage = new Spark.Core.Message.ContextMessage().
-            return oContextMessage.
-        end get.
-        private set.
 
 end class.

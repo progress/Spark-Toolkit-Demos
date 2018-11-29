@@ -18,16 +18,16 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
     define public property ReturnValueName as character no-undo initial "_retVal" get. private set.
     define public property ReturnValue as logical initial ? no-undo get. set.
 
-    define private variable miErrSeq   as integer no-undo initial 0.
+    define private variable mimsgSeq   as integer no-undo initial 0.
 
-    define protected temp-table ttError no-undo serialize-name "error"
-        field errSeq     as integer   serialize-hidden
-        field errType    as character serialize-name "type"
-        field errMsg     as character serialize-name "msg"
+    define protected temp-table ttMessage no-undo serialize-name "message"
+        field msgSeq     as integer   serialize-hidden
+        field msgType    as character serialize-name "type"
+        field msgTxt     as character serialize-name "msg"
         field errRow     as character serialize-name "id"
-        field origErrMsg as character serialize-hidden
-        index ix1 as primary errSeq
-        index ix2            errType
+        field origmsgTxt as character serialize-hidden
+        index ix1 as primary msgSeq
+        index ix2            msgType
         .
 
     constructor public ContextMessage ( ):
@@ -59,12 +59,12 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
      *
      * The Error message is translated during this function
      *
-     * @param poErrType The type of error (ERROR, WARNING, INFO, etc)
+     * @param poMsgType The type of error (ERROR, WARNING, INFO, etc)
      * @param pcMessage The Error Message
      */
-    method public void addMessage ( input poErrType as ErrorTypeEnum, input pcMessage as character ):
+    method public void addMessage ( input poMsgType as ErrorTypeEnum, input pcMessage as character ):
 
-        this-object:createError(poErrType:name, translateMessage(pcMessage), pcMessage).
+        this-object:createMessage(poMsgType:name, translateMessage(pcMessage), pcMessage).
 
     end method.
 
@@ -73,44 +73,44 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
      *
      * The Error message is translated during this function
      *
-     * @param poErrType The type of error (ERROR, WARNING, INFO, etc)
+     * @param poMsgType The type of error (ERROR, WARNING, INFO, etc)
      * @param poMsgGroup The group to associate with this message
      * @param pcMessage The Error Message
      */
-    method public void addMessage ( input poErrType as ErrorTypeEnum, input pcMsgGroup as character, input piMsgNumber as integer ):
+    method public void addMessage ( input poMsgType as ErrorTypeEnum, input pcMsgGroup as character, input piMsgNumber as integer ):
 
-        this-object:createError(poErrType:name, translateMessage(pcMsgGroup, piMsgNumber), pcMsgGroup, piMsgNumber).
+        this-object:createMessage(poMsgType:name, translateMessage(pcMsgGroup, piMsgNumber), pcMsgGroup, piMsgNumber).
 
     end method.
 
     /**
      * A private method used to create the Error Message Temp-Table
      *
-     * @param pcErrType The Error Type
+     * @param pcmsgType The Error Type
      * @param pcMessage The already translated Message
      */
-    method private void createError ( input pcErrType as character, input pcMessage as character, input pcOrigErrMsg as character ):
+    method private void createMessage ( input pcmsgType as character, input pcMessage as character, input pcOrigmsgTxt as character ):
 
-        find first ttError
-             where ttError.errType eq pcErrType
-               and ttError.errMsg eq pcMessage no-error.
-        if available ttError then
-            delete ttError.
+        find first ttMessage
+             where ttMessage.msgType eq pcmsgType
+               and ttMessage.msgTxt eq pcMessage no-error.
+        if available ttMessage then
+            delete ttMessage.
 
-        create ttError.
+        create ttMessage.
         assign
-            miErrSeq           = miErrSeq + 1
-            ttError.errSeq     = miErrSeq
-            ttError.errType    = pcErrType
-            ttError.errMsg     = pcMessage
-            ttError.origErrMsg = pcOrigErrMsg
+            mimsgSeq           = mimsgSeq + 1
+            ttMessage.msgSeq     = mimsgSeq
+            ttMessage.msgType    = pcmsgType
+            ttMessage.msgTxt     = pcMessage
+            ttMessage.origmsgTxt = pcOrigmsgTxt
             .
 
     end method.
 
-    method private void createError ( input pcErrType as character, input pcMessage as character, input pcMsgGroup as character, input piMsgNumber as integer ):
+    method private void createMessage ( input pcmsgType as character, input pcMessage as character, input pcMsgGroup as character, input piMsgNumber as integer ):
 
-        this-object:createError(pcErrType, pcMessage, substitute("&1:&2", pcMsgGroup, piMsgNumber)).
+        this-object:createMessage(pcmsgType, pcMessage, substitute("&1:&2", pcMsgGroup, piMsgNumber)).
 
     end method.
 
@@ -123,13 +123,13 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
         define variable oError as JsonObject no-undo.
 
         assign oArray = new JsonArray().
-        for each ttError:
+        for each ttMessage:
             assign oError = new JsonObject().
-            oError:Add("_errorNum", ttError.errSeq - 1). /* By default Progress uses zero-based numbers for error counting. */
-            oError:Add("_errorMsg", ttError.errMsg).
-            oError:Add("_errorType", ttError.errType).
-            if (ttError.errRow gt "") eq true then
-                oError:Add("_errorRow", ttError.errRow).
+            oError:Add("_errorNum", ttMessage.msgSeq - 1). /* By default Progress uses zero-based numbers for error counting. */
+            oError:Add("_errorMsg", ttMessage.msgTxt).
+            oError:Add("_errorType", ttMessage.msgType).
+            if (ttMessage.errRow gt "") eq true then
+                oError:Add("_errorRow", ttMessage.errRow).
             oArray:Add(oError).
         end.
         return oArray.
@@ -143,7 +143,7 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
      */
     method public logical hasAnyMessages ( ):
 
-        return can-find(first ttError).
+        return can-find(first ttMessage).
 
     end method.
 
@@ -154,7 +154,7 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
      */
     method public logical hasInformation ( ):
 
-        return can-find(first ttError where ttError.errType eq ErrorTypeEnum:information:name).
+        return can-find(first ttMessage where ttMessage.msgType eq ErrorTypeEnum:information:name).
 
     end method.
 
@@ -165,10 +165,10 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
      */
     method public logical hasWarnings ( ):
 
-        return can-find(first ttError
-            where (ttError.errType eq ErrorTypeEnum:warning:name or
-            ttError.errType eq ErrorTypeEnum:information:name)
-            and ttError.errMsg ne "").
+        return can-find(first ttMessage
+                        where ttMessage.msgTxt ne ""
+                          and (ttMessage.msgType eq ErrorTypeEnum:warning:name or
+                               ttMessage.msgType eq ErrorTypeEnum:information:name)).
 
     end method.
 
@@ -179,11 +179,11 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
      */
     method public logical hasErrors ( ):
 
-        return can-find(first ttError
-            where ttError.errMsg ne ""
-              and (ttError.errType eq ErrorTypeEnum:error:name or
-                   ttError.errType eq ErrorTypeEnum:fatal:name)).
-    /* A record with a blank errMsg is a valid record and is used to indicate
+        return can-find(first ttMessage
+            where ttMessage.msgTxt ne ""
+              and (ttMessage.msgType eq ErrorTypeEnum:error:name or
+                   ttMessage.msgType eq ErrorTypeEnum:fatal:name)).
+    /* A record with a blank msgTxt is a valid record and is used to indicate
        that a previous error message is no longer an error and can be cleared by the client
      */
     end method.
@@ -193,10 +193,10 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
      */
     method public void removeWarningMessages ( ):
 
-        for each ttError:
-            if ttError.errType eq ErrorTypeEnum:warning:name or
-               ttError.errType eq ErrorTypeEnum:information:name then
-                delete ttError.
+        for each ttMessage:
+            if ttMessage.msgType eq ErrorTypeEnum:warning:name or
+               ttMessage.msgType eq ErrorTypeEnum:information:name then
+                delete ttMessage.
         end.
 
     end method.
@@ -204,23 +204,25 @@ class Spark.Core.Message.ContextMessage inherits Spark.Core.Message.AbstractMess
     /**
      * Remove messages by type
      */
-    method public void removeMessages ( input poErrType as ErrorTypeEnum ):
+    method public void removeMessages ( input poMsgType as ErrorTypeEnum ):
 
-        for each ttError where ttError.errType eq poErrType:name:
-            delete ttError.
+        for each ttMessage where ttMessage.msgType eq poMsgType:name:
+            delete ttMessage.
         end.
 
     end method.
 
     method private character translateMessage ( input pcMessage as character ):
 
-        return cast(Ccs.Common.Application:StartupManager:getManager(get-class(ITranslationManager)), ITranslationManager):getTranslatedMessage(pcMessage).
+        return cast(Ccs.Common.Application:StartupManager
+                                          :getManager(get-class(ITranslationManager)), ITranslationManager):getTranslatedMessage(pcMessage).
 
     end method.
 
     method private character translateMessage ( input pcMsgGroup as character, input piMsgNumber as integer ):
 
-        return cast(Ccs.Common.Application:StartupManager:getManager(get-class(ITranslationManager)), ITranslationManager):getTranslatedMessage(pcMsgGroup, piMsgNumber).
+        return cast(Ccs.Common.Application:StartupManager
+                                          :getManager(get-class(ITranslationManager)), ITranslationManager):getTranslatedMessage(pcMsgGroup, piMsgNumber).
 
     end method.
 

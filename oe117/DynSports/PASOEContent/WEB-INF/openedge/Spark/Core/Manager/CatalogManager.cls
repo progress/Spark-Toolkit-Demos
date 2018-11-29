@@ -1082,7 +1082,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         if (cTableName gt "") eq true then
                             tableObj:Add(cTableName, schemaObj).
                         else
-                            oLoggingManager:logMessage("Empty table name, cannot add schema.", "SPARK-CTLG", 3).
+                            oLoggingManager:logMessage(substitute("Unresolved table name, cannot add schema [&1.&2].", entry(iX, cDatasetNames), entry(iZ, cTableList)), "SPARK-CTLG", 3).
                     end. /* Tables */
                     datasetObj:Add("properties", tableObj).
                     oProperty:Add(cDataSetName, datasetObj).
@@ -1108,7 +1108,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 if (cTableName gt "") eq true then
                     oProperty:Add(cTableName, schemaObj).
                 else
-                    oLoggingManager:logMessage("Empty table name, cannot add schema.", "SPARK-CTLG", 3).
+                    oLoggingManager:logMessage(substitute("Unresolved table name, cannot add schema [&1].", entry(iX, cTableNames)), "SPARK-CTLG", 3).
             end. /* Tables */
         end. /* Has Dataset(s) or Temp-Table(s) */
 
