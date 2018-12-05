@@ -161,19 +161,25 @@ class Spark.Core.Handler.FileUpload inherits OpenEdge.Web.WebHandler use-widget-
             iTime      = mtime /* Mark the current time for this upload attempt. */
             .
 
-        /* Make sure a main directory exists for uploads. */
-        assign cUploadDir = substitute("&1/&2", os-getenv("CATALINA_BASE"), {&UPLOAD_PARENT_DIR}).
+        /* First determine a valid location for upload via environment variable. */
+        if (os-getenv("UPLOAD_DIR") gt "") eq true then
+            assign cUploadDir = os-getenv("UPLOAD_DIR").
+        else /* Use default of CATALINA_BASE/upload */
+            assign cUploadDir = substitute("&1/&2", os-getenv("CATALINA_BASE"), {&UPLOAD_PARENT_DIR}).
+
+        /* Make sure the root directory exists for uploads. */
+        assign cUploadDir = replace(cUploadDir, "~\", "~/").
         file-info:file-name = cUploadDir.
         if file-info:full-pathname eq ? then
             os-create-dir value(cUploadDir).
 
-        /* Make sure a user directory exists for user. */
+        /* Make sure a user directory exists for user (eg: <upload>/<username>). */
         assign cUploadDir = substitute("&1/&2", cUploadDir, oPrincipal:Token:user-id)
         file-info:file-name = cUploadDir.
         if file-info:full-pathname eq ? then
             os-create-dir value(cUploadDir).
 
-        /* Make sure a directory exists for the time. */
+        /* Make sure a directory exists for the time (eg: <upload>/<username>/<time>). */
         assign cUploadDir = substitute("&1/&2", cUploadDir, iTime)
         file-info:file-name = cUploadDir.
         if file-info:full-pathname eq ? then
@@ -189,22 +195,41 @@ class Spark.Core.Handler.FileUpload inherits OpenEdge.Web.WebHandler use-widget-
                 if oPart:Headers:Has("Content-Disposition") then
                     assign oHeader = oPart:Headers:Get("Content-Disposition").
 
-                if valid-object(oHeader) then
-                    assign cFileName = replace(oHeader:GetParameterValue("filename"), '~"', "").
+                if valid-object(oHeader) then do:
+                    assign cFileName = oHeader:GetParameterValue("filename").
+                    assign cFileName = replace(cFileName, '~"', "").
+                    assign cFileName = replace(cFileName, "~\", "_").
+                    assign cFileName = replace(cFileName, "~/", "_").
+                end.
                 else
                     undo, throw new AppError("Unable to extract header information for file. ", 0).
 
                 /* Construct a unique destination for each file, by uploading user, by upload time. */
                 assign cOutFile = substitute("&1/&2", cUploadDir, cFileName).
+                assign cOutFile = replace(cOutFile, "~\", "~/").
 
                 /* Send all of the data to the output file. */
-                assign oMemptr = cast(oPart:Body, OpenEdge.Core.ByteBucket):GetBytes().
-                copy-lob from oMemptr:Value to file cOutFile no-convert no-error.
+                if oPart:Body:GetClass():IsA(get-class(OpenEdge.Core.ByteBucket)) then do:
+                    assign oMemptr = cast(oPart:Body, OpenEdge.Core.ByteBucket):GetBytes().
+                    copy-lob from oMemptr:Value to file cOutFile no-convert no-error.
 
-                /* Log reciept of this uploaded file by this user. */
-                oLoggingManager:logMessage(substitute("&1 bytes as &2 to &3",
-                                                      cast(oPart:Body, OpenEdge.Core.ByteBucket):Size,
-                                                      cFileType, cOutFile), "UPLOAD", {&MIN_LOGGING_LEVEL}).
+                    /* Log reciept of this uploaded file by this user. */
+                    oLoggingManager:logMessage(substitute("&1 bytes as &2 to &3",
+                                                          cast(oPart:Body, OpenEdge.Core.ByteBucket):Size,
+                                                          cFileType, cOutFile), "UPLOAD", {&MIN_LOGGING_LEVEL}).
+                end. /* Binary/ByteBucket */
+                else if oPart:Body:GetClass():IsA(get-class(OpenEdge.Core.String)) then do:
+                    copy-lob from cast(oPart:Body, OpenEdge.Core.String):Value to file cOutFile no-convert no-error.
+
+                    /* Log reciept of this uploaded file by this user. */
+                    oLoggingManager:logMessage(substitute("&1 bytes as &2 to &3",
+                                                          cast(oPart:Body, OpenEdge.Core.String):Size,
+                                                          cFileType, cOutFile), "UPLOAD", {&MIN_LOGGING_LEVEL}).
+                end. /* Text/String */
+                else do:
+                    assign cOutFile = substitute("Unsupported upload file entity type: &1", oPart:Body:GetClass():TypeName).
+                    os-delete value(cUploadDir). /* Remove the upload directory just created. */
+                end. /* Unsupported */
 
                 oUploadLog:Add(string(iPart), cOutFile). /* Add each uploaded file to response. */
             end. /* valid part */
