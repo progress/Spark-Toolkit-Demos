@@ -226,10 +226,16 @@ class Spark.Core.Handler.FileUpload inherits OpenEdge.Web.WebHandler use-widget-
                                                           cast(oPart:Body, OpenEdge.Core.String):Size,
                                                           cFileType, cOutFile), "UPLOAD", {&MIN_LOGGING_LEVEL}).
                 end. /* Text/String */
-                else do:
-                    assign cOutFile = substitute("Unsupported upload file entity type: &1", oPart:Body:GetClass():TypeName).
-                    os-delete value(cUploadDir). /* Remove the upload directory just created. */
-                end. /* Unsupported */
+                else if oPart:Body:GetClass():IsA(get-class(OpenEdge.Core.WidgetHandle)) then do:
+                    define variable hWidget as widget no-undo.
+                    assign hWidget = cast(oPart:Body, OpenEdge.Core.WidgetHandle):Value.
+                    if hWidget:type eq "X-Document" then
+                        hWidget:save("file", cOutFile).
+                    else
+                        undo, throw new AppError(substitute("Unsupported file widget type: &1", hWidget:type), 0).
+                end. /* Widget-Handle */
+                else
+                    undo, throw new AppError(substitute("Unsupported file entity class: &1", oPart:Body:GetClass():TypeName), 0).
 
                 oUploadLog:Add(string(iPart), cOutFile). /* Add each uploaded file to response. */
             end. /* valid part */
@@ -244,7 +250,9 @@ class Spark.Core.Handler.FileUpload inherits OpenEdge.Web.WebHandler use-widget-
         writeResponse(oResponse).
 
         catch err as Progress.Lang.Error:
-            /* Prepare error response with a simple string. */
+            os-delete value(cUploadDir). /* Remove the upload directory just created. */
+
+            /* Prepare error response with a simple string. */            
             assign oResponse = new OpenEdge.Web.WebResponse().
             oResponse:StatusCode = integer(StatusCodeEnum:InternalServerError).
             oResponse:StatusReason = StatusCodeHelper:GetMessage(StatusCodeEnum:InternalServerError).
