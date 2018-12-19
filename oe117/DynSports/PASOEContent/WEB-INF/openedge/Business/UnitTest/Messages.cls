@@ -38,6 +38,12 @@ class Business.UnitTest.Messages inherits Spark.Core.Service.DynamicResource:
             case messageType:
                 when "Teapot" then
                     undo, throw new AppError("I'm a teapot", -418).
+                when "Info" then
+                    this-object:oContextMessage:addMessage(Spark.Core.Util.ErrorTypeEnum:Information, "This is an info message.").
+                when "Warn" then
+                    this-object:oContextMessage:addMessage(Spark.Core.Util.ErrorTypeEnum:Warning, "This is a warning message.").
+                when "Error" then
+                    this-object:oContextMessage:addMessage(Spark.Core.Util.ErrorTypeEnum:Error, "This is an error message.").
                 when "AppError" then
                     undo, throw new AppError("This is an AppError", -500).
                 when "ApplicationError" then

@@ -24,8 +24,7 @@
 
   <!-- Include the PASOE instances core security audit event logging.  If the file does not
        exist, the security audit envent logging functionality is implicitly turned off -->
-  <include optional="true"
-           file="${catalina.base}/conf/logging-security.xml" />
+  <include optional="true" file="${catalina.base}/conf/logging-security.xml" />
 
 <!-- The oeabl web application employs the Java LogBack logging service.  The LogBack
      service allows you to control the logging based on:

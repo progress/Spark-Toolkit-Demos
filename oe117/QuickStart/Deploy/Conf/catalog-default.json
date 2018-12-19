@@ -1,7 +1,7 @@
 {
     "Config": {
         "General": [{
-            "ApiVersion": 4.3,
+            "ApiVersion": 4.4,
             "CatalogService": "Spark.Core.Service.ICatalog",
             "BusinessRoot": "Business",
             "IdProperty": "id",

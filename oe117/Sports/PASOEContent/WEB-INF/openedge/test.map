@@ -231,6 +231,42 @@
               ]
             }
           }
+        },
+        "\/message": {
+        },
+        "\/message\/test": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UnitTest.Messages",
+              "function": "testMessage",
+              "arg": [
+                {
+                  "ablName": "messageType",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "messageType"
+                  }
+                },
+                {
+                  "ablName": "messageText",
+                  "ablType": "CHARACTER",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "messageText"
+                  }
+                }
+              ]
+            }
+          }
         }
       },
       "schemas": {
