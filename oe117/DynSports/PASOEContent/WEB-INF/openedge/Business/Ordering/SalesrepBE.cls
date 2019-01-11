@@ -48,7 +48,6 @@ class Business.Ordering.SalesrepBE inherits Spark.Core.Service.DynamicEntity use
         /* Describe any overrides to the operations to be exposed. */
         Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadSalesrep").
         Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitSalesrep").
-        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
 
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.

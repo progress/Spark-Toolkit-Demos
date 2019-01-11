@@ -46,7 +46,6 @@ class Business.Personnel.FamilyBE inherits Spark.Core.Service.DynamicEntity use-
         /* Describe any overrides to the operations to be exposed. */
         Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadFamily").
         Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitFamily").
-        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
     end method. /* initialize */
 
 
