@@ -36,7 +36,8 @@ class Spark.Core.Util.JFPParse inherits ClientParse:
             extent(oSortList) = 1.
             oSortList[1] = new QuerySortEntry().
 
-            assign pcOrderBy = replace(pcOrderBy, ",", " by ").
+            /* @TODO: This needs to be tested more fully. */
+            assign pcOrderBy = this-object:buildSortPhrase(pcOrderBy).
             if index(pcOrderBy, " desc") gt 0 then
                 assign
                     oSortList[1]:FieldName = entry(1, pcOrderBy, " ")

@@ -197,11 +197,17 @@ class Spark.Core.Util.KendoParse inherits ClientParse:
         define variable iX        as integer               no-undo.
 
         if valid-object(poOptions) and poOptions:Length gt 0 then do:
+            /**
+             * An extent must be specified, even if some of the fields are not valid for sorting.
+             * Since we shouldn't have more sort entries than items in the array, use that count.
+             */
             extent(oSortList) = poOptions:length.
+
             do iX = 1 to poOptions:length:
                 assign oSortObj = poOptions:GetJsonObject(iX).
                 assign hField = getFieldBuffer(oSortObj:GetCharacter("field")).
                 if valid-handle(hField) then do:
+                    /* Add a new sort entry object with field and direction. */
                     oSortList[iX] = new QuerySortEntry().
                     oSortList[iX]:FieldName = hField:name.
                     oSortList[iX]:SortOrder = if oSortObj:GetCharacter("dir") eq "asc"

@@ -120,6 +120,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
                          output iStartRow,
                          output iMaxRows ).
 
+        /* Prepare data structures for use with CCS BE class methods. */
         do on error undo, throw:
             define variable oDataRequest   as GetDataRequest         no-undo.
             define variable oTableRequest  as GetDataTableRequest    no-undo.
@@ -161,7 +162,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             if valid-object(oCountResponse) then
                 return oCountResponse:ResultCounts[1]:NumResults.
             else
-                return ?. /* Return a null value to indicate no valid count. */
+                return 0.
 
             delete object oCountResponse no-error.
         end finally.
@@ -376,7 +377,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         phDataset = ProDataSet. /* Return current dataset handle. */
     end method. /* getDataset */
 
-    method public IGetDataResponse getData ( poRequest as IGetDataRequest,
+    method public IGetDataResponse getData ( input  poRequest as IGetDataRequest,
                                              output dataset-handle phDataSet ):
         define variable cSortBy   as character no-undo.
         define variable hQuery    as handle    no-undo.
@@ -468,12 +469,14 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         end finally.
     end method. /* getData */
 
-    method public IGetResultCountResponse getResultCount ( poRequest as IGetDataRequest ):
+    method public IGetResultCountResponse getResultCount ( input poRequest as IGetDataRequest ):
         define variable oCount    as GetTableResultCountResponse no-undo.
         define variable oResponse as GetResultCountResponse no-undo.
 
-        assign oCount = new GetTableResultCountResponse().
-        assign oResponse = new GetResultCountResponse().
+        assign
+            oCount    = new GetTableResultCountResponse()
+            oResponse = new GetResultCountResponse()
+            .
 
         /* @TODO: Make this work with more than just the primary table on the dataset. */
         oCount:NumResults = this-object:getRecCount(poRequest:TableRequests[1]:QueryString,
@@ -486,10 +489,10 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
     end method. /* getResultCount */
 
     method public Progress.Lang.Object updateData ( input-output dataset-handle phDataSet,
-                                                    poUpdateDataRequest as IUpdateDataRequest ):
+                                                    input        poUpdateDataRequest as IUpdateDataRequest ):
         /**
          * Should act like the "submit" operation with CUD mode
-         * being determined by the dataset before/after data.
+         * being determined by the dataset's before/after data.
          */
         super:Submit(input-output dataset-handle phDataSet by-reference).
 
@@ -674,15 +677,17 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
         preCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
         
-        define variable oResponse      as Progress.Lang.Object no-undo.
         define variable oUpdateRequest as UpdateDataRequest    no-undo.
+        define variable oResponse      as Progress.Lang.Object no-undo.
 
         /* Utilizes the method as expected by the CCS IUpdatableBusinessEntity interface. */
         assign oUpdateRequest = new UpdateDataRequest().
-        oResponse = this-object:updateData(input-output dataset-handle phDataSet by-reference, oUpdateRequest).
+        assign oResponse = this-object:updateData(input-output dataset-handle phDataSet by-reference, oUpdateRequest).
         postCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
 
         finally:
+            delete object oUpdateRequest no-error.
+            delete object oResponse no-error.
             delete object phDataSet no-error.
         end finally.
     end method. /* submitData */
