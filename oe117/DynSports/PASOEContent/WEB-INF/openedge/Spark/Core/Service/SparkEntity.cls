@@ -93,13 +93,14 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
     /***** Protected *****/
 
     method protected int64 filterData ( input pcFilter as character ):
-        define variable cFilter    as character no-undo initial "".
-        define variable cRecID     as character no-undo initial "".
-        define variable cSortBy    as character no-undo initial "".
-        define variable cTableName as character no-undo initial "".
-        define variable iMaxRows   as int64     no-undo initial ?.
-        define variable iStartRow  as int64     no-undo initial ?.
-        define variable hDataSet   as handle    no-undo.
+        define variable cFilter    as character             no-undo initial "".
+        define variable cRecID     as character             no-undo initial "".
+        define variable cSortBy    as character             no-undo initial "".
+        define variable cTableName as character             no-undo initial "".
+        define variable iMaxRows   as int64                 no-undo initial ?.
+        define variable iStartRow  as int64                 no-undo initial ?.
+        define variable hDataSet   as handle                no-undo.
+        define variable oSortList  as QuerySortEntry extent no-undo.
 
         if not valid-handle(ProDataSet) then
             undo, throw new Progress.Lang.AppError("Warning: ProDataSet handle is not available.", 0).
@@ -114,6 +115,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         getFilterParams( input  getFilter(pcFilter),
                          output cFilter,
                          output cSortBy,
+                         output oSortList,
                          output cRecID,
                          output iStartRow,
                          output iMaxRows ).
@@ -123,32 +125,18 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             define variable oTableRequest  as GetDataTableRequest    no-undo.
             define variable oDefinedQuery  as QueryDefinition        no-undo.
             define variable oQueryEntry    as QueryEntry             no-undo.
-            define variable oQuerySort     as QuerySortEntry         no-undo.
             define variable oCountResponse as GetResultCountResponse no-undo.
 
             assign oDataRequest = new GetDataRequest().
             assign oDefinedQuery = new QueryDefinition().
             assign oQueryEntry = new QueryEntry().
-            assign oQuerySort = new QuerySortEntry().
             assign oTableRequest = new GetDataTableRequest().
 
             assign oQueryEntry:Join = Ccs.BusinessLogic.JoinEnum:None.
             assign oDefinedQuery:QuerySelection = oQueryEntry.
 
-            /* @TODO: Rework this to create multiple QuerySort objects as there are sort fields. */
-            if index(cSortBy, " desc") gt 0 then
-                assign
-                    oQuerySort:FieldName = entry(1, cSortBy, " ")
-                    oQuerySort:SortOrder = Ccs.BusinessLogic.SortOrderEnum:Descending
-                    .
-            else
-                assign
-                    oQuerySort:FieldName = cSortBy
-                    oQuerySort:SortOrder = Ccs.BusinessLogic.SortOrderEnum:Ascending
-                    .
-
-            extent(oDefinedQuery:QuerySort) = 1.
-            assign oDefinedQuery:QuerySort[1] = oQuerySort.
+            extent(oDefinedQuery:QuerySort) = extent(oSortList).
+            assign oDefinedQuery:QuerySort = oSortList.
 
             assign
                 oTableRequest:QueryString     = cFilter
@@ -173,7 +161,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             if valid-object(oCountResponse) then
                 return oCountResponse:ResultCounts[1]:NumResults.
             else
-                return 0. /* @TODO: Better to return 0 or null here? */
+                return ?. /* Return a null value to indicate no valid count. */
 
             delete object oCountResponse no-error.
         end finally.
@@ -245,12 +233,71 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         end finally.
     end method. /* getCriteria */
 
+    method protected character getFilterOnly ( input poFilter as JsonObject ):
+        define variable cFilter as character no-undo.
+        assign cFilter = "".
+
+        if valid-object(poFilter) then do {&THROW}:
+            /* Utilizes a more open parser system, which can check the client
+             * type as reported by the request. This way we can support many
+             * UI criteria objects in a more dynamic way. This will also mean
+             * creation of a better structure for the parser classes.
+             */
+            define variable oParse as IClientParse no-undo.
+            if poFilter:Has("client") then do:
+                case poFilter:GetCharacter("client"):
+                    when "KendoUI" then
+                        /* Parse from KendoUI criteria object into a standard ABL "where" phrase. */
+                        assign oParse = new KendoParse(input ProDataSet).
+                end case.
+            end. /* Has Client */
+            else
+                /* Default to JavascriptFilterPattern, using a plain-text "where" phrase. */
+                assign oParse = new JFPParse(input ProDataSet).
+
+            /* Default name for Read Filter is just "filter" by JSDO specs. */
+            define variable cReadFilter as character no-undo initial "filter".
+            if valid-object(oCatalogManager) then
+                assign cReadFilter = oCatalogManager:ReadFilter.
+
+            /* Filter Criteria */
+            if poFilter:Has(cReadFilter) and not poFilter:IsNull(cReadFilter) and
+               poFilter:GetType(cReadFilter) eq JsonDataType:object /* Must be a JSON object! */ then
+                assign cFilter = oParse:buildWherePhrase(poFilter:GetJsonObject(cReadFilter)) no-error.
+            else if poFilter:Has("ablFilter") and not poFilter:IsNull("ablFilter") then
+                assign cFilter = poFilter:GetCharacter("ablFilter") no-error.
+
+            finally:
+                delete object oParse no-error.
+
+                return cFilter.
+            end finally.
+        end. /* valid-object */
+    end method. /* getFilterOnly */
+
     method protected void getFilterParams ( input  poFilter as JsonObject,
                                             output pcFilter as character,
                                             output pcSortBy as character,
                                             output pcRecID  as character,
                                             output piStart  as int64,
                                             output piMaxRow as int64 ):
+        define variable oSortList as QuerySortEntry extent no-undo.
+        this-object:getFilterParams( input  poFilter,
+                                     output pcFilter,
+                                     output pcSortBy,
+                                     output oSortList,
+                                     output pcRecID,
+                                     output piStart,
+                                     output piMaxRow ).
+    end method. /* getFilterParams */
+
+    method protected void getFilterParams ( input  poFilter   as JsonObject,
+                                            output pcFilter   as character,
+                                            output pcSortBy   as character,
+                                            output poSortList as QuerySortEntry extent,
+                                            output pcRecID    as character,
+                                            output piStart    as int64,
+                                            output piMaxRow   as int64 ):
         assign /* Defaults */
             pcFilter = ""
             pcSortBy = ""
@@ -298,14 +345,20 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
                 assign piStart = poFilter:GetInt64("skip") no-error.
 
             /* Sorting */
-            if poFilter:Has("sort") and not poFilter:IsNull("sort") then
+            if poFilter:Has("sort") and not poFilter:IsNull("sort") then do:
                 assign pcSortBy = oParse:buildSortPhrase(poFilter:GetJsonArray("sort")) no-error.
+                assign poSortList = oParse:buildSortEntries(poFilter:GetJsonArray("sort")) no-error.
+            end. /* sort */
             else if poFilter:Has("orderBy") and not poFilter:IsNull("orderBy") then do:
-                if poFilter:GetType("orderBy") eq JsonDataType:array then
+                if poFilter:GetType("orderBy") eq JsonDataType:array then do:
                     assign pcSortBy = oParse:buildSortPhrase(poFilter:GetJsonArray("orderBy")) no-error.
-                else
+                    assign poSortList = oParse:buildSortEntries(poFilter:GetJsonArray("orderBy")) no-error.
+                end.
+                else do:
                     assign pcSortBy = oParse:buildSortPhrase(poFilter:GetCharacter("orderBy")) no-error.
-            end.
+                    assign poSortList = oParse:buildSortEntries(poFilter:GetCharacter("orderBy")) no-error.
+                end.
+            end. /* orderBy */
 
             /* Results per Page */
             if poFilter:Has("top") and not poFilter:IsNull("top") then
@@ -314,7 +367,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             finally:
                 delete object oParse no-error.
             end finally.
-        end.
+        end. /* valid-object */
 
         if pcRecID eq "?" then assign pcRecID = "".
     end method. /* getFilterParams */
@@ -325,18 +378,28 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
     method public IGetDataResponse getData ( poRequest as IGetDataRequest,
                                              output dataset-handle phDataSet ):
-        define variable hQuery    as handle  no-undo.
-        define variable hDBBuffer as handle  no-undo extent.
-        define variable hTTBuffer as handle  no-undo extent.
-        define variable ix        as integer no-undo.
+        define variable cSortBy   as character no-undo.
+        define variable hQuery    as handle    no-undo.
+        define variable hDBBuffer as handle    no-undo extent.
+        define variable hTTBuffer as handle    no-undo extent.
+        define variable ix        as integer   no-undo.
 
         assign iSeq = 0. /* Reset record sequence on filter. */
 
         if (poRequest:TableRequests[1]:QueryString gt "") eq true then
             oLoggingManager:logMessage(substitute("Filter: &1", poRequest:TableRequests[1]:QueryString), "ENTITY-DBG", 3).
 
-        if (poRequest:TableRequests[1]:QueryDefinition:QuerySort[1]:FieldName gt "") eq true then
-            oLoggingManager:logMessage(substitute("Sort: &1", poRequest:TableRequests[1]:QueryDefinition:QuerySort[1]:FieldName), "ENTITY-DBG", 3).
+        define variable oSortList as QuerySortEntry extent no-undo.
+        assign oSortList = cast(poRequest:TableRequests[1]:QueryDefinition:QuerySort, QuerySortEntry).
+        do ix = 1 to extent(oSortList):
+            if valid-object(oSortList[ix]) then
+                assign cSortBy = trim(substitute("&1 by &2 &3", cSortBy, oSortList[ix]:FieldName,
+                                                 if oSortList[ix]:SortOrder eq Ccs.BusinessLogic.SortOrderEnum:Ascending
+                                                 then "" else oSortList[ix]:SortOrder:ToString())).
+        end. /* do ix */
+
+        if (cSortBy gt "") eq true then
+            oLoggingManager:logMessage(substitute("Sort: &1", cSortBy), "ENTITY-DBG", 3).
 
         ValidateDataSources().
         DataSetTools:emptyDataSet(ProDataSet).
@@ -369,12 +432,10 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         end. /* ProDataSource */
 
         /* Set where string for first buffer. */
-        ProDataSource[1]:fill-where-string = substitute("where &1 &2 &3",
+        ProDataSource[1]:fill-where-string = substitute("where &1 &2",
                                                         if (poRequest:TableRequests[1]:QueryString gt "") eq true
                                                         then poRequest:TableRequests[1]:QueryString else "true",
-                                                        poRequest:TableRequests[1]:QueryDefinition:QuerySort[1]:FieldName,
-                                                        if poRequest:TableRequests[1]:QueryDefinition:QuerySort[1]:SortOrder eq Ccs.BusinessLogic.SortOrderEnum:Descending
-                                                        then Ccs.BusinessLogic.SortOrderEnum:Descending:ToString() else "").
+                                                        cSortBy).
 
         /* Start fill operation at specified offset (by page or record). */
         if (poRequest:TableRequests[1]:Skip ne ? and poRequest:TableRequests[1]:Skip gt 0) then
@@ -447,12 +508,8 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         define variable iStartRow  as int64     no-undo initial ?.
         define variable ix         as integer   no-undo.
 
-        this-object:getFilterParams( input  this-object:getFilter(pcRawFilter),
-                                     output cFilter,
-                                     output cSortBy,
-                                     output cRecID,
-                                     output iStartRow,
-                                     output iMaxRows ).
+        /* For this query only the filter will be utilized to perform a query. */
+        assign cFilter = this-object:getFilterOnly(this-object:getFilter(pcRawFilter)).
 
         extent(hDBBuffer) = extent(ProDataSource).
         do ix = 1 to extent(ProDataSource):
