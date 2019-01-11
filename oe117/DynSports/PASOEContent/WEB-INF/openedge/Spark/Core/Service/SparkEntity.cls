@@ -105,12 +105,6 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         if not valid-handle(ProDataSet) then
             undo, throw new Progress.Lang.AppError("Warning: ProDataSet handle is not available.", 0).
 
-        /* Set row field value according to catalog manager property. */
-        if valid-object(oCatalogManager) and (oCatalogManager:IdProperty gt "") eq true then
-            assign cRowField = oCatalogManager:IdProperty.
-        else
-            assign cRowField = "id". /* Default per JSDO spec. */
-
         /* Handle parsing of the filter data into relevant variables. */
         getFilterParams( input  getFilter(pcFilter),
                          output cFilter,
@@ -122,11 +116,10 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
         /* Prepare data structures for use with CCS BE class methods. */
         do on error undo, throw:
-            define variable oDataRequest   as GetDataRequest         no-undo.
-            define variable oTableRequest  as GetDataTableRequest    no-undo.
-            define variable oDefinedQuery  as QueryDefinition        no-undo.
-            define variable oQueryEntry    as QueryEntry             no-undo.
-            define variable oCountResponse as GetResultCountResponse no-undo.
+            define variable oDataRequest  as GetDataRequest      no-undo.
+            define variable oTableRequest as GetDataTableRequest no-undo.
+            define variable oDefinedQuery as QueryDefinition     no-undo.
+            define variable oQueryEntry   as QueryEntry          no-undo.
 
             assign oDataRequest = new GetDataRequest().
             assign oDefinedQuery = new QueryDefinition().
@@ -148,23 +141,25 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
                 oTableRequest:TableName       = ProDataSet:get-buffer-handle(1):name
                 .
 
+            /* @TODO: Make this work with more than just a single table. */
             extent(oDataRequest:TableRequests) = 1.
             oDataRequest:TableRequests[1] = oTableRequest.
+        end. /* do */
 
-            /* Utilizes the method as expected by the CCS IBusinessEntity interface. */
+        /* Utilizes the method as expected by the CCS IBusinessEntity interface. */
+        if valid-object(oDataRequest) then
             this-object:getData(oDataRequest, output dataset-handle hDataSet).
 
-            /* Utilizes the method as expected by the CCS IBusinessEntity interface. */
-            assign oCountResponse = cast(this-object:getResultCount(oDataRequest), GetResultCountResponse).
-        end. /* do */
+        /* Utilizes the method as expected by the CCS IBusinessEntity interface. */
+        define variable oCountResponse as IGetResultCountResponse no-undo.
+        if valid-object(oDataRequest) then
+            assign oCountResponse = this-object:getResultCount(oDataRequest).
 
         finally:
             if valid-object(oCountResponse) then
                 return oCountResponse:ResultCounts[1]:NumResults.
             else
                 return 0.
-
-            delete object oCountResponse no-error.
         end finally.
     end method. /* filterData */
 
@@ -387,6 +382,15 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
         assign iSeq = 0. /* Reset record sequence on filter. */
 
+        if not valid-handle(ProDataSet) then
+            undo, throw new Progress.Lang.AppError("Warning: ProDataSet handle is not available.", 0).
+
+        /* Set row field value according to catalog manager property. */
+        if valid-object(oCatalogManager) and (oCatalogManager:IdProperty gt "") eq true then
+            assign cRowField = oCatalogManager:IdProperty.
+        else
+            assign cRowField = "id". /* Default per JSDO spec. */
+
         if (poRequest:TableRequests[1]:QueryString gt "") eq true then
             oLoggingManager:logMessage(substitute("Filter: &1", poRequest:TableRequests[1]:QueryString), "ENTITY-DBG", 3).
 
@@ -448,7 +452,9 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         hTTBuffer[1]:set-callback("after-row-fill", "postRowFill", this-object).
         ProDataSet:fill().
 
-        define variable oResponse as GetDataResponse no-undo.
+        this-object:postFetchRecord(). /* Perform any extra fetch logic. */
+
+        define variable oResponse as IGetDataResponse no-undo.
         assign oResponse = new GetDataResponse().
         return oResponse.
 
@@ -494,7 +500,9 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
          * Should act like the "submit" operation with CUD mode
          * being determined by the dataset's before/after data.
          */
+        preCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
         super:Submit(input-output dataset-handle phDataSet by-reference).
+        postCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
 
         define variable oResponse as Progress.Lang.Object no-undo.
         assign oResponse = new Progress.Lang.Object().
@@ -502,30 +510,13 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
     end method. /* updateData */
 
     method protected int64 getRecCount ( input pcRawFilter as character ):
-        define variable hDBBuffer  as handle    no-undo extent.
-        define variable cFilter    as character no-undo initial "".
-        define variable cRecID     as character no-undo initial "".
-        define variable cSortBy    as character no-undo initial "".
-        define variable cTableName as character no-undo initial "".
-        define variable iMaxRows   as int64     no-undo initial ?.
-        define variable iStartRow  as int64     no-undo initial ?.
-        define variable ix         as integer   no-undo.
+        define variable cFilter as character no-undo initial "".
 
-        /* For this query only the filter will be utilized to perform a query. */
+        /* Obtain a valid query phrase from the available filter data. */
         assign cFilter = this-object:getFilterOnly(this-object:getFilter(pcRawFilter)).
 
-        extent(hDBBuffer) = extent(ProDataSource).
-        do ix = 1 to extent(ProDataSource):
-            assign hDBBuffer[ix] = ProDataSource[ix]:get-source-buffer(1) no-error.
-        end. /* ProDataSource */
-
-        return this-object:getRecCount(cFilter, hDBBuffer[1]).
-
-        finally:
-            do ix = 1 to extent(hDBBuffer):
-                delete object hDBBuffer[ix] no-error.
-            end.
-        end finally.
+        /* Run the filter on the top table in the available datasource. */
+        return this-object:getRecCount(cFilter, ProDataSource[1]:get-source-buffer(1)).
     end method. /* getRecCount */
 
     method protected int64 getRecCount ( input pcFilter as character,
@@ -545,13 +536,15 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         hQuery:set-buffers(phTable).
         hQuery:query-prepare(substitute("preselect each &1 &2", phTable:name, pcFilter)).
         hQuery:query-open.
-        assign iCount = hQuery:num-results.
-        hQuery:query-close().
-
-        return iCount.
+        assign iCount = hQuery:num-results.        
 
         finally:
+            if valid-handle(hQuery) then
+                hQuery:query-close().
+
             delete object hQuery no-error.
+
+            return iCount.
         end finally.
     end method. /* getRecCount */
 
@@ -597,8 +590,8 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
     end method. /* postRowFill */
 
     method protected override void readData ( input pcRawFilter as character ):
-        /* Just pass the raw filter, and do not expect output data from this method. */
-        this-object:LastCount = this-object:filterData(pcRawFilter).
+        /* Just pass the raw filter and obtain a count from the resulting query. */
+        this-object:LastCount = this-object:getRecCount(pcRawFilter).
     end method. /* readData */
 
     method public void readData ( input  filter  as character,
@@ -608,16 +601,17 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
 
         /**
-         * Custom filterData method which expects the given filter data and returns record count with dataset.
-         * Here, the "filter" is a stringified JSON object which must be parsed to extract query/sort data.
+         * Custom filterData method which expects the given filter data and returns a record count with dataset.
+         * Here, the "filter" is a stringified JSON object which must be parsed to extract any query/sort data.
          */
         this-object:LastCount = this-object:filterData(filter).
-        assign numRecs = this-object:LastCount. /* Get record count */
-        postFetchRecord(). /* Extra fetch logic. */
+        assign numRecs = this-object:LastCount. /* Get record count. */
 
         /* If handles are different, copy the internal dataset back to the param. */
-        if phDataSet ne ProDataSet then
-            phDataSet:copy-dataset(ProDataSet).
+        if valid-handle(phDataSet) and valid-handle(ProDataSet) then do:
+            if phDataSet ne ProDataSet then
+                phDataSet:copy-dataset(ProDataSet).
+        end. /* valid-handle */
 
         finally:
             delete object phDataSet no-error.
@@ -675,19 +669,14 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         if valid-handle(phDataSet) then
             assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
 
-        preCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
-        
-        define variable oUpdateRequest as UpdateDataRequest    no-undo.
+        define variable oUpdateRequest as IUpdateDataRequest   no-undo.
         define variable oResponse      as Progress.Lang.Object no-undo.
 
         /* Utilizes the method as expected by the CCS IUpdatableBusinessEntity interface. */
         assign oUpdateRequest = new UpdateDataRequest().
         assign oResponse = this-object:updateData(input-output dataset-handle phDataSet by-reference, oUpdateRequest).
-        postCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
 
         finally:
-            delete object oUpdateRequest no-error.
-            delete object oResponse no-error.
             delete object phDataSet no-error.
         end finally.
     end method. /* submitData */
