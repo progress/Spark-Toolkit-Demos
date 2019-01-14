@@ -67,7 +67,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
     define protected variable DataSourceArray as handle    no-undo extent.
     define protected variable SkipListArray   as character no-undo extent.
 
-    /***** Public *****/
+    /***** Public | Properties, Constructor, Destructor *****/
 
     /* Hold non-fatal messages for output (as determined by interface for class access). */
     define public property oContextMessage as IContextMessage no-undo
@@ -368,9 +368,176 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         if pcRecID eq "?" then assign pcRecID = "".
     end method. /* getFilterParams */
 
+    method protected int64 getRecCount ( input pcRawFilter as character ):
+        define variable cFilter as character no-undo initial "".
+
+        /* Obtain a valid query phrase from the available filter data. */
+        assign cFilter = this-object:getFilterOnly(this-object:getFilter(pcRawFilter)).
+
+        /* Run the filter on the top table in the available datasource. */
+        return this-object:getRecCount(cFilter, ProDataSource[1]:get-source-buffer(1)).
+    end method. /* getRecCount */
+
+    method protected int64 getRecCount ( input pcFilter as character,
+                                         input phTable  as handle ):
+        define variable hQuery as handle no-undo.
+        define variable iCount as int64  no-undo initial 0.
+
+        if not valid-handle(phTable) then return 0.
+
+        if (pcFilter gt "") ne true then
+            assign pcFilter = "where true".
+
+        if not pcFilter begins "where" then
+            assign pcFilter = "where " + pcFilter.
+
+        create query hQuery.
+        hQuery:set-buffers(phTable).
+        hQuery:query-prepare(substitute("preselect each &1 &2", phTable:name, pcFilter)).
+        hQuery:query-open.
+        assign iCount = hQuery:num-results.        
+
+        finally:
+            if valid-handle(hQuery) then
+                hQuery:query-close().
+
+            delete object hQuery no-error.
+
+            return iCount.
+        end finally.
+    end method. /* getRecCount */
+
+    method protected void preCommitLogic ( input pcAction as character,
+                                           input-output dataset-handle phDataSet ):
+    end method. /* preCommitLogic */
+
+    method protected void postCommitLogic ( input pcAction as character,
+                                            input-output dataset-handle phDataSet ):
+    end method. /* postCommitLogic */
+
+    method protected void postFetchRecord ( ):
+    end method. /* postFetchRecord */
+
+    method protected character validateData ( input pcAction as character,
+                                              input-output dataset-handle phDataSet ):
+    end method. /* validateData */
+
+    method protected override void readData ( input pcRawFilter as character ):
+        /* Just pass the raw filter and obtain a count from the resulting query. */
+        this-object:LastCount = this-object:getRecCount(pcRawFilter).
+    end method. /* readData */
+
+    /******* Public | IService Methods *******/
+
+    method public void initialize ( ):
+    end method. /* initialize */
+
+    method public void dispose ( ):
+        define variable ix as integer no-undo.
+        do ix = 1 to extent(DataSourceArray):
+            delete object DataSourceArray[ix] no-error.
+        end.
+
+        delete object ProDataSet no-error.
+    end method. /* dispose */
+
+    /******* Public | Helper Methods *******/
+
     method public void getDataset ( output dataset-handle phDataset ):
         phDataset = ProDataSet. /* Return current dataset handle. */
     end method. /* getDataset */
+
+    method public void postRowFill ( input dataset-handle phDataset ):
+        /* By default, specify Sequence and ROWID on top table. */
+        define variable hTableBuffer as handle no-undo.
+        assign hTableBuffer = phDataset:get-buffer-handle(1).
+        if valid-handle(hTableBuffer) then do:
+            assign iSeq = iSeq + 1.
+            hTableBuffer:buffer-field(cSeqField):buffer-value = iSeq.
+            hTableBuffer:buffer-field(cRowField):buffer-value = string(hTableBuffer:rowid).
+        end. /* valid-handle */
+        delete object hTableBuffer no-error.
+    end method. /* postRowFill */
+
+    /******* Public | Legacy CRUD+Submit (Create, Read, Update, Delete, Submit) *******/
+
+    method public void readData ( input  filter  as character,
+                                  output numRecs as int64,
+                                  output dataset-handle phDataSet ):
+        /**
+         * Custom filterData method which expects the given filter data and returns a record count with dataset.
+         * Here, the "filter" is a stringified JSON object which must be parsed to extract any query/sort data.
+         */
+        this-object:LastCount = this-object:filterData(filter).
+        assign numRecs = this-object:LastCount. /* Get record count. */
+
+        /* If handles are different, copy the internal dataset back to the param. */
+        if valid-handle(phDataSet) and valid-handle(ProDataSet) then do:
+            if phDataSet ne ProDataSet then
+                phDataSet:copy-dataset(ProDataSet).
+        end. /* valid-handle */
+
+        finally:
+            delete object phDataSet no-error.
+        end finally.
+    end method. /* readData */
+
+    method public override void createData ( input-output dataset-handle phDataSet ):
+        if valid-handle(phDataSet) then
+            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
+
+        this-object:validateData(input "Create", input-output dataset-handle phDataSet by-reference).
+        this-object:preCommitLogic(input "Create", input-output dataset-handle phDataSet by-reference).
+        super:CreateData(input-output dataset-handle phDataSet by-reference).
+        this-object:postCommitLogic(input "Create", input-output dataset-handle phDataSet by-reference).
+
+        finally:
+            delete object phDataSet no-error.
+        end finally.
+    end method. /* createData */
+
+    method public override void updateData ( input-output dataset-handle phDataSet ):
+        if valid-handle(phDataSet) then
+            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
+
+        this-object:validateData(input "Update", input-output dataset-handle phDataSet by-reference).
+        this-object:preCommitLogic(input "Update", input-output dataset-handle phDataSet by-reference).
+        super:UpdateData(input-output dataset-handle phDataSet by-reference).
+        this-object:postCommitLogic(input "Update", input-output dataset-handle phDataSet by-reference).
+
+        finally:
+            delete object phDataSet no-error.
+        end finally.
+    end method. /* updateData */
+
+    method public override void deleteData ( input-output dataset-handle phDataSet ):
+        if valid-handle(phDataSet) then
+            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
+
+        this-object:validateData(input "Delete", input-output dataset-handle phDataSet by-reference).
+        this-object:preCommitLogic(input "Delete", input-output dataset-handle phDataSet by-reference).
+        super:DeleteData(input-output dataset-handle phDataSet by-reference).
+        this-object:postCommitLogic(input "Delete", input-output dataset-handle phDataSet by-reference).
+
+        finally:
+            delete object phDataSet no-error.
+        end finally.
+    end method. /* deleteData */
+
+    method public void submitData ( input-output dataset-handle phDataSet ):
+        define variable oRequest  as IUpdateDataRequest   no-undo.
+        define variable oResponse as Progress.Lang.Object no-undo.
+
+        /* Utilizes the method as expected by the CCS IUpdatableBusinessEntity interface. */
+        assign oRequest = new UpdateDataRequest(). /* Create new, empty request object. */
+        assign oResponse = this-object:updateData(input-output dataset-handle phDataSet, oRequest).
+
+        finally:
+            delete object phDataSet no-error.
+        end finally.
+    end method. /* submitData */
+
+    /******* Public | CCS-compliant Read, Count, and Update (aka. Submit) *******/
 
     method public IGetDataResponse getData ( input  poRequest as IGetDataRequest,
                                              output dataset-handle phDataSet ):
@@ -384,6 +551,9 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
         if not valid-handle(ProDataSet) then
             undo, throw new Progress.Lang.AppError("Warning: ProDataSet handle is not available.", 0).
+
+        if not valid-handle(ProDataSet) and valid-handle(phDataSet) then
+            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
 
         /* Set row field value according to catalog manager property. */
         if valid-object(oCatalogManager) and (oCatalogManager:IdProperty gt "") eq true then
@@ -406,7 +576,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         if (cSortBy gt "") eq true then
             oLoggingManager:logMessage(substitute("Sort: &1", cSortBy), "ENTITY-DBG", 3).
 
-        ValidateDataSources().
+        this-object:ValidateDataSources().
         DataSetTools:emptyDataSet(ProDataSet).
 
         extent(hTTBuffer) = ProDataSet:num-buffers.
@@ -477,17 +647,21 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
     method public IGetResultCountResponse getResultCount ( input poRequest as IGetDataRequest ):
         define variable oCount    as GetTableResultCountResponse no-undo.
-        define variable oResponse as GetResultCountResponse no-undo.
+        define variable oResponse as GetResultCountResponse      no-undo.
 
-        assign
-            oCount    = new GetTableResultCountResponse()
+        assign /* Create the main response, and the count object to be held within. */
             oResponse = new GetResultCountResponse()
+            oCount    = new GetTableResultCountResponse()
             .
 
-        /* @TODO: Make this work with more than just the primary table on the dataset. */
+        /**
+         * By default this call works only against the primary table on the dataset,
+         * as most elements which need a record count will be based on this structure.
+         */
         oCount:NumResults = this-object:getRecCount(poRequest:TableRequests[1]:QueryString,
                                                     ProDataSource[1]:get-source-buffer(1)).
 
+        /* Returns only the primary table count. */
         extent(oResponse:ResultCounts) = 1.
         assign oResponse:ResultCounts[1] = oCount.
 
@@ -496,6 +670,16 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
     method public Progress.Lang.Object updateData ( input-output dataset-handle phDataSet,
                                                     input        poUpdateDataRequest as IUpdateDataRequest ):
+        this-object:validateData(input "Submit", input-output dataset-handle phDataSet by-reference).
+
+        if valid-handle(phDataSet) then
+            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
+
+        /**
+         * Note: poUpdateDataRequest is currently ignored by this implementation.
+         * Override this method if you wish to utilize the object for processing.
+         */
+
         /**
          * Should act like the "submit" operation with CUD mode
          * being determined by the dataset's before/after data.
@@ -504,181 +688,11 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         super:Submit(input-output dataset-handle phDataSet by-reference).
         postCommitLogic(input "Submit", input-output dataset-handle phDataSet by-reference).
 
+        /* The return value may be any valid Progress object. */
         define variable oResponse as Progress.Lang.Object no-undo.
         assign oResponse = new Progress.Lang.Object().
+
         return oResponse.
     end method. /* updateData */
-
-    method protected int64 getRecCount ( input pcRawFilter as character ):
-        define variable cFilter as character no-undo initial "".
-
-        /* Obtain a valid query phrase from the available filter data. */
-        assign cFilter = this-object:getFilterOnly(this-object:getFilter(pcRawFilter)).
-
-        /* Run the filter on the top table in the available datasource. */
-        return this-object:getRecCount(cFilter, ProDataSource[1]:get-source-buffer(1)).
-    end method. /* getRecCount */
-
-    method protected int64 getRecCount ( input pcFilter as character,
-                                         input phTable  as handle ):
-        define variable hQuery as handle no-undo.
-        define variable iCount as int64  no-undo initial 0.
-
-        if not valid-handle(phTable) then return 0.
-
-        if (pcFilter gt "") ne true then
-            assign pcFilter = "where true".
-
-        if not pcFilter begins "where" then
-            assign pcFilter = "where " + pcFilter.
-
-        create query hQuery.
-        hQuery:set-buffers(phTable).
-        hQuery:query-prepare(substitute("preselect each &1 &2", phTable:name, pcFilter)).
-        hQuery:query-open.
-        assign iCount = hQuery:num-results.        
-
-        finally:
-            if valid-handle(hQuery) then
-                hQuery:query-close().
-
-            delete object hQuery no-error.
-
-            return iCount.
-        end finally.
-    end method. /* getRecCount */
-
-    method protected void preCommitLogic ( input pcAction as character,
-                                           input-output dataset-handle phDataSet ):
-    end method. /* preCommitLogic */
-
-    method protected void postCommitLogic ( input pcAction as character,
-                                            input-output dataset-handle phDataSet ):
-    end method. /* postCommitLogic */
-
-    method protected void postFetchRecord ( ):
-    end method. /* postFetchRecord */
-
-    method protected character validateData ( input pcAction as character,
-                                              input-output dataset-handle phDataSet ):
-    end method. /* validateData */
-
-    /******* Public *******/
-
-    method public void initialize ( ):
-    end method. /* initialize */
-
-    method public void dispose ( ):
-        define variable ix as integer no-undo.
-        do ix = 1 to extent(DataSourceArray):
-            delete object DataSourceArray[ix] no-error.
-        end.
-
-        delete object ProDataSet no-error.
-    end method. /* dispose */
-
-    method public void postRowFill ( input dataset-handle phDataset ):
-        /* By default, specify Sequence and ROWID on top table. */
-        define variable hTableBuffer as handle no-undo.
-        assign hTableBuffer = phDataset:get-buffer-handle(1).
-        if valid-handle(hTableBuffer) then do:
-            assign iSeq = iSeq + 1.
-            hTableBuffer:buffer-field(cSeqField):buffer-value = iSeq.
-            hTableBuffer:buffer-field(cRowField):buffer-value = string(hTableBuffer:rowid).
-        end. /* valid-handle */
-        delete object hTableBuffer no-error.
-    end method. /* postRowFill */
-
-    method protected override void readData ( input pcRawFilter as character ):
-        /* Just pass the raw filter and obtain a count from the resulting query. */
-        this-object:LastCount = this-object:getRecCount(pcRawFilter).
-    end method. /* readData */
-
-    method public void readData ( input  filter  as character,
-                                  output numRecs as int64,
-                                  output dataset-handle phDataSet ):
-        if not valid-handle(ProDataSet) and valid-handle(phDataSet) then
-            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
-
-        /**
-         * Custom filterData method which expects the given filter data and returns a record count with dataset.
-         * Here, the "filter" is a stringified JSON object which must be parsed to extract any query/sort data.
-         */
-        this-object:LastCount = this-object:filterData(filter).
-        assign numRecs = this-object:LastCount. /* Get record count. */
-
-        /* If handles are different, copy the internal dataset back to the param. */
-        if valid-handle(phDataSet) and valid-handle(ProDataSet) then do:
-            if phDataSet ne ProDataSet then
-                phDataSet:copy-dataset(ProDataSet).
-        end. /* valid-handle */
-
-        finally:
-            delete object phDataSet no-error.
-        end finally.
-    end method. /* readData */
-
-    method public override void createData ( input-output dataset-handle phDataSet ):
-        if valid-handle(phDataSet) then
-            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
-
-        validateData(input "Create", input-output dataset-handle phDataSet by-reference).
-        preCommitLogic(input "Create", input-output dataset-handle phDataSet by-reference).
-        /* Uses the original method as provided in the OE.BL.BusinessEntity class. */
-        super:CreateData(input-output dataset-handle phDataSet by-reference).
-        postCommitLogic(input "Create", input-output dataset-handle phDataSet by-reference).
-
-        finally:
-            delete object phDataSet no-error.
-        end finally.
-    end method. /* createData */
-
-    method public override void updateData ( input-output dataset-handle phDataSet ):
-        if valid-handle(phDataSet) then
-            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
-
-        validateData(input "Update", input-output dataset-handle phDataSet by-reference).
-        preCommitLogic(input "Update", input-output dataset-handle phDataSet by-reference).
-        /* Uses the original method as provided in the OE.BL.BusinessEntity class. */
-        super:UpdateData(input-output dataset-handle phDataSet by-reference).
-        postCommitLogic(input "Update", input-output dataset-handle phDataSet by-reference).
-
-        finally:
-            delete object phDataSet no-error.
-        end finally.
-    end method. /* updateData */
-
-    method public override void deleteData ( input-output dataset-handle phDataSet ):
-        if valid-handle(phDataSet) then
-            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
-
-        validateData(input "Delete", input-output dataset-handle phDataSet by-reference).
-        preCommitLogic(input "Delete", input-output dataset-handle phDataSet by-reference).
-        /* Uses the original method as provided in the OE.BL.BusinessEntity class. */
-        super:DeleteData(input-output dataset-handle phDataSet by-reference).
-        postCommitLogic(input "Delete", input-output dataset-handle phDataSet by-reference).
-
-        finally:
-            delete object phDataSet no-error.
-        end finally.
-    end method. /* deleteData */
-
-    method public void submitData ( input-output dataset-handle phDataSet ):
-        validateData(input "Submit", input-output dataset-handle phDataSet by-reference).
-
-        if valid-handle(phDataSet) then
-            assign ProDataSet = phDataSet. /* Ensure proper handle is set. */
-
-        define variable oUpdateRequest as IUpdateDataRequest   no-undo.
-        define variable oResponse      as Progress.Lang.Object no-undo.
-
-        /* Utilizes the method as expected by the CCS IUpdatableBusinessEntity interface. */
-        assign oUpdateRequest = new UpdateDataRequest().
-        assign oResponse = this-object:updateData(input-output dataset-handle phDataSet by-reference, oUpdateRequest).
-
-        finally:
-            delete object phDataSet no-error.
-        end finally.
-    end method. /* submitData */
 
 end class.
