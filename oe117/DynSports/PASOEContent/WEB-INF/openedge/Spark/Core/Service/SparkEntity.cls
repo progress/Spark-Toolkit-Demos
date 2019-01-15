@@ -13,6 +13,8 @@
 
 using Progress.Json.ObjectModel.* from propath.
 using Ccs.BusinessLogic.* from propath.
+using OpenEdge.BusinessLogic.Filter.FilterParser from propath.
+using OpenEdge.BusinessLogic.Filter.FilterParserBuilder from propath.
 using Spark.Core.BusinessLogic.* from propath.
 using Spark.Core.Manager.IClientContext from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
@@ -93,30 +95,50 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
     /***** Protected *****/
 
     method protected int64 filterData ( input pcFilter as character ):
-        define variable cFilter    as character             no-undo initial "".
-        define variable cRecID     as character             no-undo initial "".
-        define variable cSortBy    as character             no-undo initial "".
-        define variable cTableName as character             no-undo initial "".
-        define variable iMaxRows   as int64                 no-undo initial ?.
-        define variable iStartRow  as int64                 no-undo initial ?.
-        define variable hDataSet   as handle                no-undo.
-        define variable oSortList  as QuerySortEntry extent no-undo.
+        define variable oFilter       as JsonObject      no-undo.
+        define variable cFilter       as character       no-undo initial "".
+        define variable cRecID        as character       no-undo initial "".
+        define variable cSortBy       as character       no-undo initial "".
+        define variable cTableName    as character       no-undo initial "".
+        define variable iMaxRows      as int64           no-undo initial ?.
+        define variable iStartRow     as int64           no-undo initial ?.
+        define variable hDataSet      as handle          no-undo.
+        define variable oFilterParser as FilterParser    no-undo.
+        define variable oSortList     as QuerySortEntry  no-undo extent.
+        define variable oDataRequest  as GetDataRequest  no-undo.
 
         if not valid-handle(ProDataSet) then
             undo, throw new Progress.Lang.AppError("Warning: ProDataSet handle is not available.", 0).
 
         /* Handle parsing of the filter data into relevant variables. */
-        getFilterParams( input  getFilter(pcFilter),
-                         output cFilter,
-                         output cSortBy,
-                         output oSortList,
-                         output cRecID,
-                         output iStartRow,
-                         output iMaxRows ).
+        this-object:getFilterParams( input  oFilter,
+                                     output cFilter,
+                                     output cSortBy,
+                                     output oSortList,
+                                     output cRecID,
+                                     output iStartRow,
+                                     output iMaxRows ).
 
-        /* Prepare data structures for use with CCS BE class methods. */
+/* This will be the new way, once the FilterParser works as expected. */
+/*        assign oFilter = this-object:getFilter(pcFilter).                                                */
+/*        if oFilter:Has("mappingType") and oFilter:GetType("mappingType") eq JsonDataType:string then     */
+/*            assign oFilterParser = FilterParserBuilder:Build(oFilter:GetCharacter("mappingType")):Parser.*/
+/*        if oFilter:Has("client") and oFilter:GetType("client") eq JsonDataType:string then               */
+/*            case oFilter:GetCharacter("client"):                                                         */
+/*                when "Kendo" or                                                                          */
+/*                when "KendoUI" then                                                                      */
+/*                    /* Parse from KendoUI criteria object passed as filter data. */                      */
+/*                    assign oFilterParser = FilterParserBuilder:Build("KENDO"):Parser.                    */
+/*            end case.                                                                                    */
+/*        else                                                                                             */
+/*            assign oFilterParser = FilterParserBuilder:Build(oFilter):Parser.                            */
+
+/*        if valid-object(oFilterParser) then                                          */
+/*            assign oDataRequest = cast(oFilterParser:Parse(oFilter), GetDataRequest).*/
+
+        /* @TODO: Remove this once the FilterParser pattern is established and working. */
         do on error undo, throw:
-            define variable oDataRequest  as GetDataRequest      no-undo.
+            /* Prepare data structures for use with CCS BE class methods. */
             define variable oTableRequest as GetDataTableRequest no-undo.
             define variable oDefinedQuery as QueryDefinition     no-undo.
             define variable oQueryEntry   as QueryEntry          no-undo.
@@ -155,11 +177,20 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         if valid-object(oDataRequest) then
             assign oCountResponse = this-object:getResultCount(oDataRequest).
 
+        catch err as Progress.Lang.Error:
+            message substitute("Error Filtering Data: &1", err:GetMessage(1)).
+        end catch.
         finally:
+            define variable iCount as int64 no-undo initial 0.
+
             if valid-object(oCountResponse) then
-                return oCountResponse:ResultCounts[1]:NumResults.
-            else
-                return 0.
+                assign iCount = if valid-object(oCountResponse:ResultCounts[1])
+                                then oCountResponse:ResultCounts[1]:NumResults else 0.
+
+            delete object oCountResponse no-error.
+            delete object oFilter no-error.
+
+            return iCount.
         end finally.
     end method. /* filterData */
 
@@ -177,7 +208,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             assign pcRawFilter = FormatTools:convertToUTF8(pcRawFilter).
             assign oFilter = cast(oParser:Parse(pcRawFilter), jsonObject).
             return oFilter.
-        end.
+        end. /* non-empty string beginning with { */
 
         return ?.
 
@@ -534,6 +565,8 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
 
         finally:
             delete object phDataSet no-error.
+            delete object oRequest no-error.
+            delete object oResponse no-error.
         end finally.
     end method. /* submitData */
 
