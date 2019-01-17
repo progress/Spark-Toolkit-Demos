@@ -119,11 +119,11 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
                                      output iStartRow,
                                      output iMaxRows ).
 
-/* This will be the new way, once the FilterParser works as expected. */
+        /* This will be the new way, once the FilterParser works as expected. */
 /*        assign oFilter = this-object:getFilter(pcFilter).                                                */
 /*        if oFilter:Has("mappingType") and oFilter:GetType("mappingType") eq JsonDataType:string then     */
 /*            assign oFilterParser = FilterParserBuilder:Build(oFilter:GetCharacter("mappingType")):Parser.*/
-/*        if oFilter:Has("client") and oFilter:GetType("client") eq JsonDataType:string then               */
+/*        else if oFilter:Has("client") and oFilter:GetType("client") eq JsonDataType:string then          */
 /*            case oFilter:GetCharacter("client"):                                                         */
 /*                when "Kendo" or                                                                          */
 /*                when "KendoUI" then                                                                      */
