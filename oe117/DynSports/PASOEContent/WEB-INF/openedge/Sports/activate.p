@@ -45,7 +45,7 @@ do on error undo, leave:
     end finally.
 end. /* APSV */
 
-/* Optional: Startup the metrics from the diagnostic tools. */
+/* Optional: Activate the metrics from the diagnostic tools. */
 run Spark/Diagnostic/metrics_activate.
 
 catch err as Progress.Lang.Error:

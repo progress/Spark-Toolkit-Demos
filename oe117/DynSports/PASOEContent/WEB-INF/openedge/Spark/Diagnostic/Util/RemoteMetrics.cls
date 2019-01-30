@@ -596,7 +596,7 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
                                             input plEnable  as logical ):
         define variable lSuccess as logical no-undo initial false.
 
-        Assert:NonZero(piAgentID).
+        if piAgentID le 0 or piAgentID eq ? then return false.
 
         if this-object:MetricSource eq "oejmx" then
         do on error undo, throw:
@@ -669,7 +669,7 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
 
         /* Report the result of the previous request. */
         oLogger:Debug(substitute("trackABLObjects (&1): &2 = &3",
-                                piAgentID, trim(string(plEnable, "enabled/disabled")), lSuccess)).
+                                 piAgentID, trim(string(plEnable, "enabled/disabled")), lSuccess)).
 
         return lSuccess. /* Return the value from the tracking request. */
 
@@ -683,7 +683,7 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
     method public logical TrackingABLObjects ( input piAgentID as integer ):
         define variable lSuccess as logical no-undo initial false.
 
-        Assert:NonZero(piAgentID).
+        if piAgentID le 0 or piAgentID eq ? then return false.
 
         if this-object:MetricSource eq "oejmx" then
         do on error undo, throw:
@@ -759,7 +759,7 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
                                               output poRequests as JsonArray ):
         define variable oResult as JsonObject no-undo.
 
-        Assert:NonZero(piAgentID).
+        if piAgentID le 0 or piAgentID eq ? then return false.
 
         if this-object:MetricSource eq "oejmx" then
         do on error undo, throw:
@@ -844,7 +844,7 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
         define variable cSessionID  as character  no-undo.
         define variable ix          as integer    no-undo.
 
-        Assert:NonZero(piAgentID).
+        if piAgentID le 0 or piAgentID eq ? then return false.
 
         /* Leave a quick note about what is being built, and with any exceptions. */
         oLogger:Debug(substitute("Reporting ABLObjects for Agent #&1, excluding: &2", piAgentID, pcExclude)).
@@ -967,8 +967,8 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
         define variable oABLOutput  as JsonObject no-undo.
         define variable oABLObjects as JsonObject no-undo.
 
-        Assert:NonZero(piAgentID).
-        Assert:NonZero(piSessionID).
+        if piAgentID le 0 or piAgentID eq ? then return false.
+        if piSessionID le 0 or piSessionID eq ? then return false.
 
         /* Leave a quick note about what is being built, and with any exceptions. */
         oLogger:Debug(substitute("Reporting ABLObjects for Agent #&1, Session #&2, excluding: &3",

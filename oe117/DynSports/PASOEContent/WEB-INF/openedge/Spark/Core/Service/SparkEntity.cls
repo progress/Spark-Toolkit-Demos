@@ -110,6 +110,9 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         if not valid-handle(ProDataSet) then
             undo, throw new Progress.Lang.AppError("Warning: ProDataSet handle is not available.", 0).
 
+        /* Extract a JSON object from the incoming "filter" data. */
+        assign oFilter = this-object:getFilter(pcFilter).
+
         /* Handle parsing of the filter data into relevant variables. */
         this-object:getFilterParams( input  oFilter,
                                      output cFilter,
@@ -120,7 +123,6 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
                                      output iMaxRows ).
 
         /* This will be the new way, once the FilterParser works as expected. */
-/*        assign oFilter = this-object:getFilter(pcFilter).                                                */
 /*        if oFilter:Has("mappingType") and oFilter:GetType("mappingType") eq JsonDataType:string then     */
 /*            assign oFilterParser = FilterParserBuilder:Build(oFilter:GetCharacter("mappingType")):Parser.*/
 /*        else if oFilter:Has("client") and oFilter:GetType("client") eq JsonDataType:string then          */

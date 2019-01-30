@@ -73,6 +73,8 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     define public property ProfilerThreshold as integer no-undo initial 0 get. private set.
 
+    define public property ProfilerTrackBy as character no-undo initial "request" get. private set.
+
     define public property ClassesExcluded as character no-undo initial "" get. private set.
 
     define public property OutputInterval as integer no-undo initial 0 get. private set.
@@ -191,6 +193,9 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
                             if oSubObj:Has("threshold") and oSubObj:GetType("threshold") eq JsonDataType:Number then
                                 assign this-object:ProfilerThreshold = oSubObj:GetInteger("threshold").
+
+                            if oSubObj:Has("trackBy") and oSubObj:GetType("trackBy") eq JsonDataType:String then
+                                assign this-object:ProfilerTrackBy = oSubObj:GetCharacter("trackBy").
 
                             delete object oSubObj no-error.
                         end. /* has sub-object */

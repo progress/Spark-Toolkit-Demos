@@ -191,12 +191,32 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     method private integer GetAgentID ( ):
         define variable oRequestInfo as OERequestInfo no-undo.
+        define variable iPID         as int64         no-undo.
 
         assign oRequestInfo = this-object:GetRequestInfo().
         if valid-object(oRequestInfo) then
-            return oRequestInfo:AgentId.
+            assign iPID = oRequestInfo:AgentId.
 
-        return ?.
+        /* Fallback for getting current PID from OS. */
+        if iPID eq ? then do on error undo, leave:
+            define variable hProc as handle no-undo.
+
+            /* Run the appropriate internal procedure for the OS. */
+            run Spark/Diagnostic/Util/GetPID persistent set hProc.
+            if opsys eq "win32" then
+                run GetCurrentProcessId in hProc ( output iPID ).
+            else
+                run GetPID in hProc ( output iPID ).
+
+            finally:
+                delete object hProc no-error.
+            end finally.
+        end. /* Unknown PID Value */
+
+        /* Don't return an unknown PID. */
+        if iPID eq ? then assign iPID = 0.
+
+        return integer(iPID).
 
         finally:
             delete object oRequestInfo no-error.
@@ -206,12 +226,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     method private integer GetSessionID ( ):
         define variable oRequestInfo as OERequestInfo no-undo.
+        define variable iSessionID   as integer       no-undo.
 
         assign oRequestInfo = this-object:GetRequestInfo().
         if valid-object(oRequestInfo) then
-            return oRequestInfo:SessionId.
+            assign iSessionID = oRequestInfo:SessionId.
 
-        return ?.
+        /* Don't return an unknown PID. */
+        if iSessionID eq ? then assign iSessionID = 0.
+
+        return iSessionID.
 
         finally:
             delete object oRequestInfo no-error.
@@ -222,16 +246,17 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     /***** Public Methods *****/
 
 
-    method public logical StartProfiler ( ):
+    method public logical StartProfiler ( input pcTrackBy as character ):
         /* Start the profiler with any config-set filtering. */
         if (oConfig:ProfilerFilter gt "") eq true then
-            return this-object:StartProfiler(oConfig:ProfilerFilter).
+            return this-object:StartProfiler(pcTrackBy, oConfig:ProfilerFilter).
         else
-            return this-object:StartProfiler("*"). /* No filter. */
+            return this-object:StartProfiler(pcTrackBy, "*"). /* No filter. */
     end method. /* StartProfiler */
 
 
-    method public logical StartProfiler ( input pcFilter as character ):
+    method public logical StartProfiler ( input pcTrackBy as character,
+                                          input pcFilter  as character ):
         /**
          * Method is created as static to allow starting of a profiler session
          * without need for a class instance. This makes it useful for starting
@@ -244,13 +269,18 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if not oConfig:IsProfilerEnabled("StartProfiler") then return false.
         if not oConfig:OnValidSchedule() then return false.
 
+        /* Ignore start of profiler if not configured to track by stated type. */
+        if pcTrackBy ne oConfig:ProfilerTrackBy then return false.
+ 
         define variable lFilterMatch as logical   no-undo initial false.
         define variable cBasePath    as character no-undo.
         define variable cProcedure   as character no-undo.
         define variable cOutPath     as character no-undo.
         define variable ix           as integer   no-undo.
 
+        /* Get the current procedure, if available. */
         assign cProcedure = this-object:GetProcedureName().
+
         if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
             if this-object:InMatchList(cProcedure, oConfig:PollingIgnoreList) then do:
@@ -267,16 +297,24 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if (pcFilter gt "") ne true then assign pcFilter = "*".
 
         /* Check if requested procedure matches in the filter whitelist. */
-        if this-object:InMatchList(cProcedure, pcFilter) then do:
+        if cProcedure eq ? or this-object:InMatchList(cProcedure, pcFilter) then do:
             /* Create base path for output and create any needed directories. */
             assign cBasePath = substitute("&1/metrics/ProfilerData/&2",
                                           this-object:TemporaryDir, this-object:GetAgentID()).
             os-create-dir value(cBasePath).
 
             /* Determine correct output location for this profiler log. */
-            assign cOutPath = substitute("&1/&2.&3_R&4_A&5_S&6.prof",
-                                         cBasePath, iso-date(today), mtime, this-object:RequestCount,
-                                         this-object:GetAgentID(), this-object:GetSessionID()).
+            if oConfig:ProfilerTrackBy eq "session" then do:
+                define variable cUUID as character no-undo.
+                assign cUUID = base64-encode(generate-uuid).
+                assign cOutPath = substitute("&1/&2.&3_A&4_&5.prof",
+                                             cBasePath, iso-date(today), mtime,
+                                             this-object:GetAgentID(), encode(cUUID)).
+            end.
+            else
+                assign cOutPath = substitute("&1/&2.&3_R&4_A&5_S&6.prof",
+                                             cBasePath, iso-date(today), mtime, this-object:RequestCount,
+                                             this-object:GetAgentID(), this-object:GetSessionID()).
 
             assign /* Note: Order matters here, do not rearrange! */
                 profiler:enabled      = true
@@ -302,16 +340,17 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* StartProfiler */
 
 
-    method public logical WriteProfiler ( ):
+    method public logical WriteProfiler ( input pcTrackBy as character ):
         /* Start the profiler with any config-set filtering. */
         if oConfig:ProfilerThreshold gt 0 then
-            return this-object:WriteProfiler(oConfig:ProfilerThreshold).
+            return this-object:WriteProfiler(pcTrackBy, oConfig:ProfilerThreshold).
         else
-            return this-object:WriteProfiler(0). /* No threshold. */
+            return this-object:WriteProfiler(pcTrackBy, 0). /* No threshold. */
     end method. /* StartProfiler */
 
 
-    method public logical WriteProfiler ( input piExecThreshold as integer ):
+    method public logical WriteProfiler ( input pcTrackBy       as character,
+                                          input piExecThreshold as integer ):
         /**
          * Method is created as static to allow profiler output to be generated at
          * any time in the request lifecycle without dependency on a class instance.
@@ -321,6 +360,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
          * generating a standalone file, whether the profiler output has been made
          * available or not (eg. excution time may always be reported).
          */
+
+        /* Ignore ending of profiler if not configured to track by stated type. */
+        if pcTrackBy ne oConfig:ProfilerTrackBy then return false.
 
         if not oConfig:IsProfilerEnabled("WriteProfiler") then do:
             /* Even if profiling has been disabled, make sure we turn it off. */
@@ -333,30 +375,41 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             return false.
         end. /* not enabled */
 
-        /* Determine the time elapsed for this request. */
-        define variable iExecTime as integer no-undo initial 0.
-        if this-object:RequestStart ne ? and this-object:RequestStart lt now then
-            assign iExecTime = interval(now, this-object:RequestStart, "milliseconds" ).
-
         if profiler:enabled then do:
-            /* Turn off the profiler, if previously enabled. */
+            /* Always turn off the profiler, if previously enabled. */
             assign
                 profiler:profiling = false
                 profiler:enabled   = false
                 .
 
-            /* Only write the data out if execution time exceeds threshold. */
-            if piExecThreshold eq ? or piExecThreshold lt 0 then assign piExecThreshold = 0.
-            if iExecTime gt piExecThreshold then do:
-                /* Execution time threshold met, output the profiler data. */
-                oLogger:Debug(substitute("&1 | &2ms | R&3 | A&4 | S&5",
-                                         this-object:GetProcedureName(), iExecTime, this-object:RequestCount,
-                                         this-object:GetAgentID(), this-object:GetSessionID())).
-                profiler:write-data().
-            end. /* iExecTime gt piExecThreshold */
-            else
-                oLogger:Trace(substitute("&1 | &2ms | -Threshold Not Met; No Profiler Output-",
-                                         this-object:GetProcedureName(), iExecTime)).
+            if oConfig:ProfilerTrackBy eq "session" then do:
+                oLogger:Debug(substitute("&1 | A&2 | S&3",
+                                         this-object:GetProcedureName(),
+                                         this-object:GetAgentID(),
+                                         this-object:GetSessionID())).
+
+                profiler:write-data(). /* Always write profiler data. */
+            end. /* ProfilerTrackBy = Session */
+            else do:
+                /* Determine the time elapsed for this request. */
+                define variable iExecTime as integer no-undo initial 0.
+                if this-object:RequestStart ne ? and this-object:RequestStart lt now then
+                    assign iExecTime = interval(now, this-object:RequestStart, "milliseconds" ).
+
+                /* Only write the data out if execution time exceeds threshold. */
+                if piExecThreshold eq ? or piExecThreshold lt 0 then assign piExecThreshold = 0.
+                if iExecTime gt piExecThreshold then do:
+                    /* Execution time threshold met, output the profiler data. */
+                    oLogger:Debug(substitute("&1 | &2ms | R&3 | A&4 | S&5",
+                                             this-object:GetProcedureName(), iExecTime, this-object:RequestCount,
+                                             this-object:GetAgentID(), this-object:GetSessionID())).
+
+                    profiler:write-data(). /* Write profiler data when over threshold. */
+                end. /* iExecTime gt piExecThreshold */
+                else
+                    oLogger:Trace(substitute("&1 | &2ms | -Threshold Not Met; No Profiler Output-",
+                                         this-object:GetProcedureName(), iExecTime)).                
+            end. /* ProfilerTrackBy = Request */
 
             return true.
         end. /* profiler:enabled */
@@ -774,6 +827,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     method public void PrepareSessionReports ( input piAgentID   as integer,
                                                input piSessionID as integer ):
+        if piAgentID le 0 or piAgentID eq ? then return.
+        if piSessionID le 0 or piSessionID eq ? then return.
+
         /**
          * Send the request to obtain the report by JMX/OEM.
          */
