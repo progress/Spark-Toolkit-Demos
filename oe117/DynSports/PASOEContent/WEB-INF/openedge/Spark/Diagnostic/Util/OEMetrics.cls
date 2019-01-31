@@ -47,12 +47,26 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     define private property RequestStart as datetime-tz no-undo initial ? get. set.
 
+    define private property oMetricsLogger as ILogWriter no-undo
+        get():
+            /* Obtain the propper ILogWriter instance for this class. */
+            if session:current-request-info:AgentId eq ? then
+                return LoggerBuilder:GetLogger("SimpleOEMetrics").
+            else
+                return this-object:oLogger.
+        end get.
+        private set.
+
     define private property oConfig as Spark.Diagnostic.Util.OEMetricsConfig no-undo
         get():
             if oConfig eq ? or not valid-object(oConfig) then
-                assign oConfig = new Spark.Diagnostic.Util.OEMetricsConfig(oLogger).
+                assign oConfig = new Spark.Diagnostic.Util.OEMetricsConfig(oMetricsLogger).
+            else if valid-object(oConfig) then
+                oConfig:SetLogger(oMetricsLogger). /* Set the appropriate ILogWriter instance. */
+
             if not valid-object(oConfig) then
-                oLogger:Error("Unable to create OEMetricsConfig instance.").
+                oMetricsLogger:Error("Unable to create OEMetricsConfig instance.").
+
             return oConfig.
         end get.
         set.
@@ -191,22 +205,22 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     method private integer GetAgentID ( ):
         define variable oRequestInfo as OERequestInfo no-undo.
-        define variable iPID         as int64         no-undo.
+        define variable iAgentID     as int64         no-undo.
 
         assign oRequestInfo = this-object:GetRequestInfo().
         if valid-object(oRequestInfo) then
-            assign iPID = oRequestInfo:AgentId.
+            assign iAgentID = oRequestInfo:AgentId.
 
         /* Fallback for getting current PID from OS. */
-        if iPID eq ? then do on error undo, leave:
+        if iAgentID eq ? then do on error undo, leave:
             define variable hProc as handle no-undo.
 
             /* Run the appropriate internal procedure for the OS. */
             run Spark/Diagnostic/Util/GetPID persistent set hProc.
             if opsys eq "win32" then
-                run GetCurrentProcessId in hProc ( output iPID ).
+                run GetCurrentProcessId in hProc ( output iAgentID ).
             else
-                run GetPID in hProc ( output iPID ).
+                run GetPID in hProc ( output iAgentID ).
 
             finally:
                 delete object hProc no-error.
@@ -214,9 +228,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         end. /* Unknown PID Value */
 
         /* Don't return an unknown PID. */
-        if iPID eq ? then assign iPID = 0.
+        if iAgentID eq ? then assign iAgentID = 0.
 
-        return integer(iPID).
+        return integer(iAgentID).
 
         finally:
             delete object oRequestInfo no-error.
@@ -284,7 +298,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
             if this-object:InMatchList(cProcedure, oConfig:PollingIgnoreList) then do:
-                oLogger:Trace(substitute("[Profiler] Procedure Ignored: &1", cProcedure)).
+                oMetricsLogger:Trace(substitute("[Profiler] Procedure Ignored: &1", cProcedure)).
                 return false. /* Leave on first match of ignore list. */
             end. /* ignored */
         end. /* has ignore list */
@@ -334,7 +348,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         catch err as Progress.Lang.Error:
             /* Should fail silently, while delivering errors to the standard local. */
-            oLogger:Error(substitute("Error starting profiler: &1", err:GetMessage(1))).
+            oMetricsLogger:Error(substitute("Error starting profiler: &1", err:GetMessage(1))).
             return false.
         end catch.
     end method. /* StartProfiler */
@@ -383,10 +397,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 .
 
             if oConfig:ProfilerTrackBy eq "session" then do:
-                oLogger:Debug(substitute("&1 | A&2 | S&3",
-                                         this-object:GetProcedureName(),
-                                         this-object:GetAgentID(),
-                                         this-object:GetSessionID())).
+                oMetricsLogger:Debug(substitute("&1 | A&2 | S&3",
+                                                this-object:GetProcedureName(),
+                                                this-object:GetAgentID(),
+                                                this-object:GetSessionID())).
 
                 profiler:write-data(). /* Always write profiler data. */
             end. /* ProfilerTrackBy = Session */
@@ -400,28 +414,28 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 if piExecThreshold eq ? or piExecThreshold lt 0 then assign piExecThreshold = 0.
                 if iExecTime gt piExecThreshold then do:
                     /* Execution time threshold met, output the profiler data. */
-                    oLogger:Debug(substitute("&1 | &2ms | R&3 | A&4 | S&5",
-                                             this-object:GetProcedureName(), iExecTime, this-object:RequestCount,
-                                             this-object:GetAgentID(), this-object:GetSessionID())).
+                    oMetricsLogger:Debug(substitute("&1 | &2ms | R&3 | A&4 | S&5",
+                                                    this-object:GetProcedureName(), iExecTime, this-object:RequestCount,
+                                                    this-object:GetAgentID(), this-object:GetSessionID())).
 
                     profiler:write-data(). /* Write profiler data when over threshold. */
                 end. /* iExecTime gt piExecThreshold */
                 else
-                    oLogger:Trace(substitute("&1 | &2ms | -Threshold Not Met; No Profiler Output-",
-                                         this-object:GetProcedureName(), iExecTime)).                
+                    oMetricsLogger:Trace(substitute("&1 | &2ms | -Threshold Not Met; No Profiler Output-",
+                                                    this-object:GetProcedureName(), iExecTime)).                
             end. /* ProfilerTrackBy = Request */
 
             return true.
         end. /* profiler:enabled */
         else
-            oLogger:Trace(substitute("&1 | &2ms | -Profiler Not Enabled-",
-                                     this-object:GetProcedureName(), iExecTime)).
+            oMetricsLogger:Trace(substitute("&1 | &2ms | -Profiler Not Enabled-",
+                                            this-object:GetProcedureName(), iExecTime)).
 
         return false. /* Profiler not enabled. */
 
         catch err as Progress.Lang.Error:
             /* Should fail silently, while delivering errors to the standard local. */
-            oLogger:Error(substitute("Error writing profiler: &1", err:GetMessage(1))).
+            oMetricsLogger:Error(substitute("Error writing profiler: &1", err:GetMessage(1))).
             return false.
         end catch.
     end method. /* WriteProfiler */
@@ -463,7 +477,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
             if this-object:InMatchList(pcProcedure, oConfig:PollingIgnoreList) then do:
-                oLogger:Trace(substitute("[Tracking] Procedure Ignored: &1", pcProcedure)).
+                oMetricsLogger:Trace(substitute("[Tracking] Procedure Ignored: &1", pcProcedure)).
                 return false. /* Leave on first match of ignore list. */
             end. /* ignored */
         end. /* has ignore list */
@@ -473,7 +487,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         file-info:file-name = cTrackFlag.
         if file-info:full-pathname ne ? then do:
             assign lIsTracking = true. /* Flag exists, assume tracking is enabled. */
-            oLogger:Debug(substitute("Tracking Agent #&1: &2", piAgentID, lIsTracking)).
+            oMetricsLogger:Debug(substitute("Tracking Agent #&1: &2", piAgentID, lIsTracking)).
         end. /* file exists */
 
         if not lIsTracking then do:
@@ -547,7 +561,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
             if this-object:InMatchList(cProcedure, oConfig:PollingIgnoreList) then do:
-                oLogger:Trace(substitute("[Objects] Procedure Ignored: &1", cProcedure)).
+                oMetricsLogger:Trace(substitute("[Objects] Procedure Ignored: &1", cProcedure)).
                 return false. /* Leave on first match of ignore list. */
             end. /* ignored */
         end. /* has ignore list */
@@ -697,7 +711,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if (oConfig:PollingIgnoreList gt "") eq true then do:
             /* Do not proceed if current request procedure is on the ignore list. */
             if this-object:InMatchList(cProcedure, oConfig:PollingIgnoreList) then do:
-                oLogger:Trace(substitute("[Objects] Procedure Ignored: &1", cProcedure)).
+                oMetricsLogger:Trace(substitute("[Objects] Procedure Ignored: &1", cProcedure)).
                 return false. /* Leave on first match of ignore list. */
             end. /* ignored */
         end. /* has ignore list */
@@ -809,17 +823,17 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             /* Immediately update the timestamp to avoid this session requesting the report again. */
             assign dLastReportOutput = now.
 
-            oLogger:Debug(substitute("Requesting reports for Agent '&1', Session '&2'.",
-                                     this-object:GetAgentID(), this-object:GetSessionID())).
+            oMetricsLogger:Debug(substitute("Requesting reports for Agent '&1', Session '&2'.",
+                                            this-object:GetAgentID(), this-object:GetSessionID())).
             this-object:PrepareSessionReports(this-object:GetAgentID(), this-object:GetSessionID()).
         end. /* Do Output */
         else
-            oLogger:Debug(substitute("Time Until Next Report Interval: &1s",
-                                     interval(dNextReportOutput, now, "seconds"))).
+            oMetricsLogger:Debug(substitute("Time Until Next Report Interval: &1s",
+                                            interval(dNextReportOutput, now, "seconds"))).
 
         catch err as Progress.Lang.Error:
-            oLogger:Error(substitute("Unable to check last report output for Agent '&1', Session '&2': &3",
-                                     this-object:GetAgentID(), this-object:GetSessionID(), err:GetMessage(1))).
+            oMetricsLogger:Error(substitute("Unable to check last report output for Agent '&1', Session '&2': &3",
+                                            this-object:GetAgentID(), this-object:GetSessionID(), err:GetMessage(1))).
             undo, throw err.
         end catch.
     end method. /* PrepareSessionReports */
@@ -833,16 +847,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /**
          * Send the request to obtain the report by JMX/OEM.
          */
-        oLogger:Debug(substitute("Preparing reports for Agent '&1', Session '&2'",
-                                 piAgentID, piSessionID)).
+        oMetricsLogger:Debug(substitute("Preparing reports for Agent '&1', Session '&2'",
+                                        piAgentID, piSessionID)).
 
         /* Check if reporting is allowed, based scheduled time. */
         if not oConfig:OnValidSchedule() then return.
 
         /* Run the following reports for the given agent/session. */
         this-object:OutputTime = now. /* Synchronize output time. */
-        oLogger:Info(substitute("Running reports for Agent '&1', Session '&2' at &3",
-                                piAgentID, piSessionID, this-object:OutputTime)).
+        oMetricsLogger:Info(substitute("Running reports for Agent '&1', Session '&2' at &3",
+                                       piAgentID, piSessionID, this-object:OutputTime)).
 
         if oConfig:AreObjectsEnabled("PrepareSessionABLObjectReport") then
             this-object:GetSessionABLObjects(piAgentID, piSessionID). /* ABLObjects Report */
@@ -856,8 +870,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         this-object:OutputTime = ?. /* Reset output timestamp. */
 
         catch err as Progress.Lang.Error:
-            oLogger:Error(substitute("Unable to prepare reports for Agent '&1', Session '&2': &3",
-                                     piAgentID, piSessionID, err:GetMessage(1))).
+            oMetricsLogger:Error(substitute("Unable to prepare reports for Agent '&1', Session '&2': &3",
+                                            piAgentID, piSessionID, err:GetMessage(1))).
             undo, throw err.
         end catch.
     end method. /* PrepareSessionReports */

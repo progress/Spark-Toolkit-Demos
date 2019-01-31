@@ -218,6 +218,11 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
     /***** Public Methods *****/
 
 
+    method public void SetLogger ( input poLogger as ILogWriter ):
+        assign oLogger = poLogger.
+    end method. /* SetLogger */
+
+
     method public void RefreshConfig ( ):
         /* Cannot proceed if the configuration file is not present. */
         if (this-object:MetricsConfigPath gt "") ne true then return.
@@ -318,4 +323,5 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
         return true. /* Assuming polling active if no specific timestamps present. */
     end method. /* CheckSchedule */
+
 end class.
