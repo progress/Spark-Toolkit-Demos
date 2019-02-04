@@ -48,7 +48,6 @@ class Business.Personnel.EmployeeBE inherits Spark.Core.Service.DynamicEntity us
         /* Describe any overrides to the operations to be exposed. */
         Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadEmployee").
         Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitEmployee").
-        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
 
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.

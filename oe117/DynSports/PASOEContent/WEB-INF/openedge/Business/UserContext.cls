@@ -220,7 +220,7 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity use-widget-
 
 
     method public void getCount ( input filter as character, output numRecs as int64 ):
-        assign numRecs = this-object:filterData(filter).
+        assign numRecs = this-object:getRecCount(filter).
     end method. /* getCount */
 
 

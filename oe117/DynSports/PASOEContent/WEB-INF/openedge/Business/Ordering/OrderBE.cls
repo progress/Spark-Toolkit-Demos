@@ -69,7 +69,6 @@ class Business.Ordering.OrderBE inherits Spark.Core.Service.DynamicEntity use-wi
         /* Describe any overrides to the operations to be exposed. */
         Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadOrder").
         Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitOrder").
-        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
 
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.

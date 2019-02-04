@@ -45,7 +45,6 @@ class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity use-wi
     method public override void initialize ( ):
         /* Describe any overrides to the operations to be exposed. */
         Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadWebRole").
-        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
     end method. /* initialize */
 
 
