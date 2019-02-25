@@ -59,8 +59,10 @@ class tests.FilterTests:
 
     @Before.
     method public void before ( ):
+        /* Output location for the raw test results. */
         cLogFile = substitute("tests/filter_&1.log", mtime).
-
+        
+        /* Load an array with all of the potential test cases. */
         oABLFilter = new JsonArray().
         oABLFilter:Add("WHERE CustNum <>442").
         oABLFilter:Add("WHERE CustNum<> 442").
@@ -73,8 +75,8 @@ class tests.FilterTests:
 
         /* Create a JSON object for use with additional examples. */
         oFilterData = new JsonObject().
-        oFilterData:Add("ablFilter", oABLFilter:GetCharacter(3)).
-        oFilterData:Add("orderBy", "CustNum desc, SalesRep").
+        oFilterData:Add("ablFilter", oABLFilter:GetCharacter(3)). /* Use a specific query. */
+        oFilterData:Add("orderBy", "CustNum desc, SalesRep"). /* Set a custom sort order. */
         oFilterData:Add("top", iTop).
         oFilterData:Add("skip", iSkip).
         oFilterData:Add("id", "0xabc123").
@@ -90,6 +92,7 @@ class tests.FilterTests:
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(new String(oABLFilter:GetCharacter(3))).
 
+        /* Test with a simple "where" phrase and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "WHERE").
         this-object:showOutput("Option1a").
 
@@ -97,6 +100,7 @@ class tests.FilterTests:
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(new String(oABLFilter:GetCharacter(3))).
 
+        /* Test with just the "JFP" pattern and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "JFP").
         this-object:showOutput("Option1b").
     end method.
@@ -113,6 +117,7 @@ class tests.FilterTests:
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterList:GetJsonObject(1)).
 
+        /* Test with the "ablFilter" pattern and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
         this-object:showOutput("Option2").
     end method.
@@ -127,9 +132,11 @@ class tests.FilterTests:
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterData).
 
+        /* Test with the "ablFilter" pattern and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
         this-object:showOutput("Option3a").
 
+        /* Test with the "kendo" pattern and its output. */
         oParser = new ObjectModelParser().
         oFilterData = cast(oParser:Parse('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum","operator": "gte","value": "1"}]}, "sort": [~{"field": "CustNum","dir": "asc"}], "skip": 40, "top": 20}'), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).

@@ -434,7 +434,7 @@ end.
         hQuery:set-buffers(phTable).
         hQuery:query-prepare(substitute("preselect each &1 &2", phTable:name, pcFilter)).
         hQuery:query-open.
-        assign iCount = hQuery:num-results.        
+        assign iCount = hQuery:num-results.
 
         finally:
             if valid-handle(hQuery) then
