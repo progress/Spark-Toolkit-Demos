@@ -10,8 +10,7 @@
 /* ***************************  Definitions  ************************** */
 
 using Ccs.BusinessLogic.* from propath.
-using OpenEdge.BusinessLogic.Filter.FilterParser from propath.
-using OpenEdge.BusinessLogic.Filter.FilterParserBuilder from propath.
+using OpenEdge.BusinessLogic.Filter.* from propath.
 using OpenEdge.Core.String from propath.
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
@@ -19,6 +18,14 @@ using Progress.Json.ObjectModel.* from propath.
 block-level on error undo, throw.
 
 class tests.FilterTests:
+
+    /* Create a dummy dataset with temp-table as stand-in for actual schema. */
+    define temp-table ttCustomer
+        field CustNum  as integer
+        field Name     as character serialize-name "CustName"
+        field SalesRep as character
+        .
+    define dataset dsCustomer for ttCustomer.
 
     define private variable oFilterBuilder as FilterParserBuilder no-undo.
     define private variable oFilterParser  as FilterParser        no-undo.
@@ -29,6 +36,8 @@ class tests.FilterTests:
     define private variable oFilterData    as JsonObject          no-undo.
     define private variable oABLFilter     as JsonArray           no-undo.
     define private variable cLogFile       as character           no-undo.
+    define private variable cPattern       as character           no-undo format "x(32)".
+    define private variable cTable         as character           no-undo format "x(32)".
     define private variable cQuery         as character           no-undo format "x(200)".
     define private variable iSkip          as integer             no-undo initial 100.
     define private variable iTop           as integer             no-undo initial 25.
@@ -38,10 +47,13 @@ class tests.FilterTests:
     method private void showOutput ( input pcTestName as character ):
         output to value(cLogFile) append.
         put "Test: " pcTestName skip.
-        put "Pattern: " oFilterBuilder:FilterPattern skip.
+
+        cPattern = oFilterBuilder:FilterPattern.
+        put "Pattern: " cPattern skip.
 
         do iX = 1 to extent(oDataRequest:TableRequests[1]):
-            put "Table: " oDataRequest:TableRequests[iX]:TableName skip.
+            cTable = oDataRequest:TableRequests[iX]:TableName.
+            put "Table: " cTable skip.
             put "SkipRec: " oDataRequest:TableRequests[iX]:Skip skip.
             put "Records: " oDataRequest:TableRequests[iX]:NumRecords skip.
             put "Context: " oDataRequest:TableRequests[iX]:PagingContext skip.
@@ -136,11 +148,15 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
         this-object:showOutput("Option3a").
 
-        /* Test with the "kendo" pattern and its output. */
+        /* Test with the "kendo" pattern and its output (requires some additional setup). */
+        define variable cPayload as character no-undo.
+        assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "ne", "value": 442}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
         oParser = new ObjectModelParser().
-        oFilterData = cast(oParser:Parse('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum","operator": "gte","value": "1"}]}, "sort": [~{"field": "CustNum","dir": "asc"}], "skip": 40, "top": 20}'), JsonObject).
+        oFilterData = cast(oParser:Parse(cPayload), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).
+        oFilterBuilder:TableName("Customer"). /* Let the parser know the database table name if we know it. */
         oFilterParser = oFilterBuilder:Parser.
+        cast(oFilterParser, KendoFilterParser):ProDataSet = dataset dsCustomer:handle. /* Use this dataset for schema info. */
         oDataRequest = oFilterParser:Parse(oFilterData).
 
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
