@@ -19,14 +19,6 @@ block-level on error undo, throw.
 
 class tests.FilterTests:
 
-    /* Create a dummy dataset with temp-table as stand-in for actual schema. */
-    define temp-table ttCustomer
-        field CustNum  as integer
-        field Name     as character serialize-name "CustName"
-        field SalesRep as character
-        .
-    define dataset dsCustomer for ttCustomer.
-
     define private variable oFilterBuilder as FilterParserBuilder no-undo.
     define private variable oFilterParser  as FilterParser        no-undo.
     define private variable oDataRequest   as IGetDataRequest     no-undo.
@@ -71,6 +63,8 @@ class tests.FilterTests:
 
     @Before.
     method public void before ( ):
+        assign oParser = new ObjectModelParser().
+
         /* Output location for the raw test results. */
         cLogFile = substitute("tests/filter_&1.log", mtime).
         
@@ -148,19 +142,33 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
         this-object:showOutput("Option3a").
 
-        /* Test with the "kendo" pattern and its output (requires some additional setup). */
         define variable cPayload as character no-undo.
+
+        /* Test with the "kendo" pattern and its output (requires some additional setup). */        
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "ne", "value": 442}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
-        oParser = new ObjectModelParser().
         oFilterData = cast(oParser:Parse(cPayload), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).
         oFilterBuilder:TableName("Customer"). /* Let the parser know the database table name if we know it. */
         oFilterParser = oFilterBuilder:Parser.
-        cast(oFilterParser, KendoFilterParser):ProDataSet = dataset dsCustomer:handle. /* Use this dataset for schema info. */
         oDataRequest = oFilterParser:Parse(oFilterData).
 
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
         this-object:showOutput("Option3b").
+
+        /* Test with the "kendo" pattern and its output (requires some additional setup). */        
+        assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "gt", "value": 1}, ~{"field": "CustNum", "operator": "lt", "value": 10000}, ~{"logic": "or", "filters": [~{"field": "Name", "operator": "begins", "value": "A"}, ~{"field": "Name", "operator": "begins", "value": "B"}]}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
+        oFilterData = cast(oParser:Parse(cPayload), JsonObject).
+        oFilterBuilder = FilterParserBuilder:Build(oFilterData).
+        oFilterBuilder:TableName("Customer"). /* Let the parser know the database table name if we know it. */
+        oFilterParser = oFilterBuilder:Parser.
+        oDataRequest = oFilterParser:Parse(oFilterData).
+
+        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        this-object:showOutput("Option3c").
+
+        catch err as Progress.Lang.Error:
+            message err:GetMessage(1).
+        end catch.
     end method.
 
 end class.
