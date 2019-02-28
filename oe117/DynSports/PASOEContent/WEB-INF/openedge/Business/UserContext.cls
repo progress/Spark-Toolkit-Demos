@@ -169,7 +169,7 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity use-widget-
             /* Did not find filter criteria by field name, so create it. */
             assign oCriteria = new JsonObject().
             oCriteria:Add("field", "IdentityName").
-            oCriteria:Add("operator", "equals").
+            oCriteria:Add("operator", "eq").
             oCriteria:Add("value", oClientContext:userID).
 
             /* Create a filters array if it doesn't exist. */
