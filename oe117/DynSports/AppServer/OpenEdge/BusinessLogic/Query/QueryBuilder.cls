@@ -14,8 +14,10 @@ block-level on error undo, throw.
 
 using Ccs.BusinessLogic.IGetDataRequest.
 using Ccs.BusinessLogic.IQueryEntry.
-using OpenEdge.BusinessLogic.* from propath.
-using OpenEdge.BusinessLogic.Filter.* from propath.
+using Ccs.BusinessLogic.JoinEnum.
+using Ccs.BusinessLogic.QueryOperatorEnum.
+using OpenEdge.BusinessLogic.*.
+using OpenEdge.BusinessLogic.Filter.*.
 
 class OpenEdge.BusinessLogic.Query.QueryBuilder: 
 
@@ -46,42 +48,46 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         end finally.
     end method. /* getFieldBuffer */
 
-    method private character getMapping ( input pcOperator as character,
-                                          input pcDataType as character ):
+    method private character getMapping (input poJoinAs   as JoinEnum,
+                                         input poOperator as QueryOperatorEnum,
+                                         input pcDataType as character ):
         /* http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#configuration-filter.operator */
         define variable cTemplate as character no-undo.
 
-        case pcOperator:
-            when "eq" then
+        case poOperator:
+            when QueryOperatorEnum:Eq then
                 if pcDataType eq "character" then
                     assign cTemplate = '&1 eq "&2"'.
                 else
                     assign cTemplate = '&1 eq &2'.
-            when "neq" then
+            when QueryOperatorEnum:Ne then
                 if pcDataType eq "character" then
                     assign cTemplate = '&1 ne "&2"'.
                 else
                     assign cTemplate = '&1 ne &2'.
-            when "lt" then
+            when QueryOperatorEnum:Lt then
                 assign cTemplate = '&1 lt &2'.
-            when "lte" then
+            when QueryOperatorEnum:Le then
                 assign cTemplate = '&1 le &2'.
-            when "gt" then
+            when QueryOperatorEnum:Gt then
                 assign cTemplate = '&1 gt &2'.
-            when "gte" then
+            when QueryOperatorEnum:Ge then
                 assign cTemplate = '&1 ge &2'.
-            when "begins" or
-            when "startswith" then
+            when QueryOperatorEnum:Begins then
                 assign cTemplate = '&1 begins "&2"'.
-            when "contains" then
-                assign cTemplate = '&1 matches "*&2*"'.
-            when "doesnotcontain" then
-                assign cTemplate = 'not (&1 matches "*&2*")'.
-            when "endswith" then
-                assign cTemplate = '&1 matches "&2"'. /* Value should already be prepended with '*'. */
+            when QueryOperatorEnum:Matches then
+                assign cTemplate = '&1 matches "&2"'. /* Value should already be appended/prepended with '*'. */
+            when QueryOperatorEnum:Contains then
+                assign cTemplate = '&1 matches "&2"'. /* Value should already be appended/prepended with '*'. */
             otherwise
-                undo, throw new Progress.Lang.AppError(substitute("Unknown operator '&1' for filter.", pcOperator), 0).
-        end.
+                undo, throw new Progress.Lang.AppError(substitute("Unknown operator '&1' for filter.", poOperator:ToString()), 0).
+        end case.
+
+        case poJoinAs:
+            when JoinEnum:AndNot or
+            when JoinEnum:OrNot then
+                assign cTemplate = substitute("not (&1)", cTemplate).    
+        end case.
 
         return cTemplate.
     end method. /* getMapping */
@@ -95,10 +101,7 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         define variable cType    as character  no-undo.
 
         /* http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#configuration-filter.field */
-        assign
-            hField  = this-object:getFieldBuffer(phTable, poClause:FieldName)
-            cOper   = poClause:Operator:ToString()
-            no-error.
+        assign hField = this-object:getFieldBuffer(phTable, poClause:FieldName) no-error.
 
         if not valid-handle(hField) then return "".
 
@@ -110,25 +113,25 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         /* http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#configuration-filter.value */
         case cType:
             when "character" then
-                assign cClause = substitute(this-object:getMapping(cOper, cType),
+                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
                                             cField, string(poClause:Value)).
             when "date" then
-                assign cClause = substitute(this-object:getMapping(cOper, cType),
+                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
                                             cField, date(string(poClause:Value))).
             when "datetime" then
-                assign cClause = substitute(this-object:getMapping(cOper, cType),
+                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
                                             cField, datetime(string(poClause:Value))).
             when "datetime-tz" then
-                assign cClause = substitute(this-object:getMapping(cOper, cType),
+                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
                                             cField, datetime-tz(string(poClause:Value))).
             when "decimal" then
-                assign cClause = substitute(this-object:getMapping(cOper, cType),
+                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
                                             cField, decimal(poClause:Value)).
             when "integer" then
-                assign cClause = substitute(this-object:getMapping(cOper, cType),
+                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
                                             cField, integer(poClause:Value)).
             when "logical" then
-                assign cClause = substitute(this-object:getMapping(cOper, cType),
+                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
                                             cField, logical(poClause:Value)).
         end.
 
@@ -178,8 +181,6 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
             assign bhTable = pSchema:get-buffer-handle(1) no-error. /* Get the top table. */
         else
             undo, throw new Progress.Lang.AppError("Invalid or unset handle to ProDataSet.").
-message "DS:" pSchema:name.
-message "TT:" bhTable:name.
 
         assign oQueryDef = cast(pFilter:TableRequests[1]:QueryDefinition, QueryDefinition).
         assign oSortList = cast(oQueryDef:QuerySort, QuerySortEntry).
@@ -196,7 +197,6 @@ message "TT:" bhTable:name.
         else if type-of(oQueryDef:QuerySelection, QueryPredicate) then do:
             assign cQueryString = this-object:buildClause(bhTable, cast(oQueryDef:QuerySelection, QueryPredicate)).
         end.
-message "QueryString:" cQueryString.
 
         if extent(oSortList) ne ? then
         do iLoop = 1 to extent(oSortList):
