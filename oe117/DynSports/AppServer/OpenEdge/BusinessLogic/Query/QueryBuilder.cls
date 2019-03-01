@@ -48,9 +48,9 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         end finally.
     end method. /* getFieldBuffer */
 
-    method private character getMapping (input poJoinAs   as JoinEnum,
-                                         input poOperator as QueryOperatorEnum,
-                                         input pcDataType as character ):
+    method private character mapOperator (input poJoinAs   as JoinEnum,
+                                          input poOperator as QueryOperatorEnum,
+                                          input pcDataType as character ):
         /* http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#configuration-filter.operator */
         define variable cTemplate as character no-undo.
 
@@ -84,16 +84,57 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         end case.
 
         case poJoinAs:
+            when JoinEnum:Not or
             when JoinEnum:AndNot or
             when JoinEnum:OrNot then
-                assign cTemplate = substitute("not (&1)", cTemplate).    
+                assign cTemplate = substitute("not &1", cTemplate).    
         end case.
 
         return cTemplate.
-    end method. /* getMapping */
+    end method. /* mapOperator */
+
+    method private character mapJoin (input pcQuery  as character,
+                                      input pcClause as character,
+                                      input poJoinAs as JoinEnum):
+        case poJoinAs:
+            when JoinEnum:And or
+            when JoinEnum:AndNot then
+                assign pcQuery = substitute("&1 and (&2)", pcQuery, pcClause).
+            when JoinEnum:Or or
+            when JoinEnum:OrNot then
+                assign pcQuery = substitute("&1 or (&2)", pcQuery, pcClause).
+            when JoinEnum:None then
+                assign pcQuery = substitute("(&1)", pcClause).
+        end case.
+message pcClause ":" string(poJoinAs) ":" poJoinAs:ToString().
+message pcQuery.
+        return pcQuery.
+    end method. /* mapJoin */
+
+    method private character buildClauses (input phTable  as handle,
+                                           input poGroup as QueryGroup):
+        define variable cQueryString as character no-undo initial "".
+        define variable cClause      as character no-undo.
+        define variable iLoop        as integer   no-undo.
+
+        if extent(poGroup:Entries) ne ? and extent(poGroup:Entries) ge 1 then
+        do iLoop = 1 to extent(poGroup:Entries):
+            if type-of(poGroup:Entries[iLoop], QueryGroup) then
+                assign cClause = this-object:buildClauses(phTable, cast(poGroup:Entries[iLoop], QueryGroup)).
+            else
+                assign cClause = this-object:buildClause(phTable, cast(poGroup:Entries[iLoop], QueryPredicate)).
+
+            if cQueryString eq "" then /* No actual join, just use clause as the initial query string. */
+                assign cQueryString = this-object:mapJoin(cQueryString, cClause, JoinEnum:None).
+            else /* Join this clause to anything that came before it in the query string. */
+                assign cQueryString = this-object:mapJoin(cQueryString, cClause, poGroup:Join).
+        end. /* Looping Entries */
+
+        return cQueryString.
+    end method. /* buildClauses */
 
     method private character buildClause (input phTable  as handle,
-                                          input poClause as QueryPredicate ):
+                                          input poClause as QueryPredicate):
         define variable hField   as handle     no-undo.
         define variable cClause  as character  no-undo.
         define variable cField   as character  no-undo.
@@ -113,25 +154,25 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         /* http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#configuration-filter.value */
         case cType:
             when "character" then
-                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
                                             cField, string(poClause:Value)).
             when "date" then
-                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
                                             cField, date(string(poClause:Value))).
             when "datetime" then
-                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
                                             cField, datetime(string(poClause:Value))).
             when "datetime-tz" then
-                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
                                             cField, datetime-tz(string(poClause:Value))).
             when "decimal" then
-                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
                                             cField, decimal(poClause:Value)).
             when "integer" then
-                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
                                             cField, integer(poClause:Value)).
             when "logical" then
-                assign cClause = substitute(this-object:getMapping(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
                                             cField, logical(poClause:Value)).
         end.
 
@@ -169,12 +210,10 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
                                               input pSchema as handle):
         define variable oQueryDef     as QueryDefinition no-undo.
         define variable cQueryString  as character       no-undo initial "".
-        define variable oQueryEntries as IQueryEntry     no-undo extent.
         define variable oSortList     as QuerySortEntry  no-undo extent.
         define variable bhTable       as handle          no-undo.
         define variable bhField       as handle          no-undo.
         define variable iLoop         as integer         no-undo.
-        define variable cJoin         as character       no-undo.
         define variable cSortBy       as character       no-undo.
 
         if valid-handle(pSchema) then
@@ -185,18 +224,10 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         assign oQueryDef = cast(pFilter:TableRequests[1]:QueryDefinition, QueryDefinition).
         assign oSortList = cast(oQueryDef:QuerySort, QuerySortEntry).
 
-        if type-of(oQueryDef:QuerySelection, QueryGroup) then do:
-            assign oQueryEntries = cast(oQueryDef:QuerySelection, QueryGroup):Entries.
-            assign cJoin = cast(oQueryDef:QuerySelection, QueryGroup):join:ToString().
-
-            if extent(oQueryEntries) ne ? and extent(oQueryEntries) ge 1 then
-            do iLoop = 1 to extent(oQueryEntries):
-                assign cQueryString = this-object:buildClause(bhTable, cast(oQueryEntries[iLoop], QueryPredicate)).
-            end.
-        end.
-        else if type-of(oQueryDef:QuerySelection, QueryPredicate) then do:
+        if type-of(oQueryDef:QuerySelection, QueryGroup) then
+            assign cQueryString = this-object:buildClauses(bhTable, cast(oQueryDef:QuerySelection, QueryGroup)).
+        else if type-of(oQueryDef:QuerySelection, QueryPredicate) then
             assign cQueryString = this-object:buildClause(bhTable, cast(oQueryDef:QuerySelection, QueryPredicate)).
-        end.
 
         if extent(oSortList) ne ? then
         do iLoop = 1 to extent(oSortList):
