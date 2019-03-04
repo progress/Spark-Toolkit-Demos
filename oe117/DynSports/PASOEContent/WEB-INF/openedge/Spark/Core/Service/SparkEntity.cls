@@ -427,13 +427,6 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         else
             assign cRowField = "id". /* Default per JSDO spec. */
 
-        if valid-object(poRequest:TableRequests[1]) then do:
-            if (poRequest:TableRequests[1]:QueryString gt "") eq true then
-                oLoggingManager:logMessage(substitute("Filter: &1", poRequest:TableRequests[1]:QueryString), "ENTITY-DBG", 3).
-            if valid-object(poRequest:TableRequests[1]:QueryDefinition) then
-                oLoggingManager:logMessage(substitute("QueryDef: &1", poRequest:TableRequests[1]:QueryDefinition:ToString()), "ENTITY-DBG", 3).
-        end. /* Valid TableRequests */
-
         this-object:ValidateDataSources().
         DataSetTools:emptyDataSet(ProDataSet).
 
@@ -468,6 +461,9 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         define variable oQueryBuilder as QueryBuilder no-undo.
         assign oQueryBuilder = new QueryBuilder().
         ProDataSource[1]:fill-where-string = oQueryBuilder:BuildQueryString(poRequest, ProDataSet).
+
+        /* Echo the current query to the log if debugging is enabled. */
+        oLoggingManager:logMessage(substitute("Query: &1", ProDataSource[1]:fill-where-string), "ENTITY-DBG", 3).
 
         /* Start fill operation at specified offset (by page or record). */
         if (poRequest:TableRequests[1]:Skip ne ? and poRequest:TableRequests[1]:Skip gt 0) then
