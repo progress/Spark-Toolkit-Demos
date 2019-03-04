@@ -48,8 +48,7 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         end finally.
     end method. /* getFieldBuffer */
 
-    method private character mapOperator (input poJoinAs   as JoinEnum,
-                                          input poOperator as QueryOperatorEnum,
+    method private character mapOperator (input poOperator as QueryOperatorEnum,
                                           input pcDataType as character ):
         /* http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#configuration-filter.operator */
         define variable cTemplate as character no-undo.
@@ -75,19 +74,12 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
                 assign cTemplate = '&1 ge &2'.
             when QueryOperatorEnum:Begins then
                 assign cTemplate = '&1 begins "&2"'.
-            when QueryOperatorEnum:Matches then
-                assign cTemplate = '&1 matches "&2"'. /* Value should already be appended/prepended with '*'. */
             when QueryOperatorEnum:Contains then
+                assign cTemplate = '&1 matches "&2"'. /* Value should already be appended/prepended with '*'. */
+            when QueryOperatorEnum:Matches then
                 assign cTemplate = '&1 matches "&2"'. /* Value should already be appended/prepended with '*'. */
             otherwise
                 undo, throw new Progress.Lang.AppError(substitute("Unknown operator '&1' for filter.", poOperator:ToString()), 0).
-        end case.
-
-        case poJoinAs:
-            when JoinEnum:Not or
-            when JoinEnum:AndNot or
-            when JoinEnum:OrNot then
-                assign cTemplate = substitute("not &1", cTemplate).    
         end case.
 
         return cTemplate.
@@ -96,42 +88,70 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
     method private character mapJoin (input pcQuery  as character,
                                       input pcClause as character,
                                       input poJoinAs as JoinEnum):
-        case poJoinAs:
-            when JoinEnum:And or
-            when JoinEnum:AndNot then
-                assign pcQuery = substitute("&1 and (&2)", pcQuery, pcClause).
-            when JoinEnum:Or or
-            when JoinEnum:OrNot then
-                assign pcQuery = substitute("&1 or (&2)", pcQuery, pcClause).
-            when JoinEnum:None then
-                assign pcQuery = substitute("(&1)", pcClause).
-        end case.
-message pcClause ":" string(poJoinAs) ":" poJoinAs:ToString().
-message pcQuery.
+        if pcQuery eq "" then
+            /* When query string is blank, only provide negations as needed. */
+            case poJoinAs:
+                when JoinEnum:AndNot or
+                when JoinEnum:OrNot or
+                when JoinEnum:Not then
+                    assign pcQuery = substitute("(not &1)", pcClause).
+                otherwise
+                    assign pcQuery = substitute("(&1)", pcClause).
+            end case.
+        else
+            /* Otherwise join clause to query as described by join. */
+            case poJoinAs:
+                when JoinEnum:And then
+                    assign pcQuery = substitute("&1 and (&2)", pcQuery, pcClause).
+                when JoinEnum:AndNot then
+                    assign pcQuery = substitute("&1 and (not &2)", pcQuery, pcClause).
+                when JoinEnum:Or then
+                    assign pcQuery = substitute("&1 or (&2)", pcQuery, pcClause).
+                when JoinEnum:OrNot then
+                    assign pcQuery = substitute("&1 or (not &2)", pcQuery, pcClause).
+                when JoinEnum:None then
+                    assign pcQuery = substitute("(&1)", pcClause). /* No join operator. */
+                when JoinEnum:Not then
+                    assign pcQuery = substitute("(not &1)", pcClause). /* Negate only. */
+            end case.
+
         return pcQuery.
     end method. /* mapJoin */
 
-    method private character buildClauses (input phTable  as handle,
-                                           input poGroup as QueryGroup):
+    method private character buildGroup (input phTable  as handle,
+                                         input poGroup as QueryGroup):
         define variable cQueryString as character no-undo initial "".
         define variable cClause      as character no-undo.
         define variable iLoop        as integer   no-undo.
+        define variable oJoinAs      as JoinEnum  no-undo.
+
+        /**
+         * Note: This is a recursive method, as the provided group may consist of either only
+         * query predicates (field, operator, value) or an entire group (nested query). For the
+         * case of a group the object will be fed into another call to this method which will
+         * result in a nested (bracketed) query clause.
+         */
 
         if extent(poGroup:Entries) ne ? and extent(poGroup:Entries) ge 1 then
         do iLoop = 1 to extent(poGroup:Entries):
             if type-of(poGroup:Entries[iLoop], QueryGroup) then
-                assign cClause = this-object:buildClauses(phTable, cast(poGroup:Entries[iLoop], QueryGroup)).
+                /* Create a nested query from this child group. */
+                assign cClause = this-object:buildGroup(phTable, cast(poGroup:Entries[iLoop], QueryGroup))
+                       oJoinAs = poGroup:join /* Use the overall group join. */
+                       .
             else
-                assign cClause = this-object:buildClause(phTable, cast(poGroup:Entries[iLoop], QueryPredicate)).
+                /* Create a simple clause frmo the given predicate. */
+                assign cClause = this-object:buildClause(phTable, cast(poGroup:Entries[iLoop], QueryPredicate))
+                       oJoinAs = cast(poGroup:Entries[iLoop], QueryPredicate):Join
+                       .
 
-            if cQueryString eq "" then /* No actual join, just use clause as the initial query string. */
-                assign cQueryString = this-object:mapJoin(cQueryString, cClause, JoinEnum:None).
-            else /* Join this clause to anything that came before it in the query string. */
-                assign cQueryString = this-object:mapJoin(cQueryString, cClause, poGroup:Join).
+            /* Continue with joining the clause (single or nested) to the query if non-blank. */
+            if (cClause gt "") eq true then
+                assign cQueryString = this-object:mapJoin(cQueryString, cClause, oJoinAs).
         end. /* Looping Entries */
 
         return cQueryString.
-    end method. /* buildClauses */
+    end method. /* buildGroup */
 
     method private character buildClause (input phTable  as handle,
                                           input poClause as QueryPredicate):
@@ -141,7 +161,13 @@ message pcQuery.
         define variable cOper    as character  no-undo.
         define variable cType    as character  no-undo.
 
-        /* http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#configuration-filter.field */
+        /**
+         * This should be the raw (public) field as provided by the front-end and must be mapped to a
+         * valid internal temp-table field. This may be a serialized name, though the resulting field
+         * buffer should be used to extract the real field name. Additionally, it may be impossible to
+         * determine the correct datatype without assistance from the field buffer, so that too will be
+         * used to convert the value appropriately for the resulting query phrase. 
+         */
         assign hField = this-object:getFieldBuffer(phTable, poClause:FieldName) no-error.
 
         if not valid-handle(hField) then return "".
@@ -149,30 +175,30 @@ message pcQuery.
         assign
             cField = hField:name
             cType  = hField:data-type
-            no-error.
+            .
 
-        /* http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#configuration-filter.value */
+        /* Based on the datatype, convert the value and obtain a valid operation string. */
         case cType:
             when "character" then
-                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Operator, cType),
                                             cField, string(poClause:Value)).
             when "date" then
-                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Operator, cType),
                                             cField, date(string(poClause:Value))).
             when "datetime" then
-                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Operator, cType),
                                             cField, datetime(string(poClause:Value))).
             when "datetime-tz" then
-                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Operator, cType),
                                             cField, datetime-tz(string(poClause:Value))).
             when "decimal" then
-                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Operator, cType),
                                             cField, decimal(poClause:Value)).
             when "integer" then
-                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Operator, cType),
                                             cField, integer(poClause:Value)).
             when "logical" then
-                assign cClause = substitute(this-object:mapOperator(poClause:Join, poClause:Operator, cType),
+                assign cClause = substitute(this-object:mapOperator(poClause:Operator, cType),
                                             cField, logical(poClause:Value)).
         end.
 
@@ -224,14 +250,16 @@ message pcQuery.
         assign oQueryDef = cast(pFilter:TableRequests[1]:QueryDefinition, QueryDefinition).
         assign oSortList = cast(oQueryDef:QuerySort, QuerySortEntry).
 
+        /* Build either a nested query or a simple clause, depending on the object available. */
         if type-of(oQueryDef:QuerySelection, QueryGroup) then
-            assign cQueryString = this-object:buildClauses(bhTable, cast(oQueryDef:QuerySelection, QueryGroup)).
+            assign cQueryString = this-object:buildGroup(bhTable, cast(oQueryDef:QuerySelection, QueryGroup)).
         else if type-of(oQueryDef:QuerySelection, QueryPredicate) then
             assign cQueryString = this-object:buildClause(bhTable, cast(oQueryDef:QuerySelection, QueryPredicate)).
 
         if extent(oSortList) ne ? then
         do iLoop = 1 to extent(oSortList):
             if valid-object(oSortList[iLoop]) then do:
+                /* Create the sort clause based on the real field information. */
                 assign bhField = getFieldBuffer(bhTable, oSortList[iLoop]:FieldName).
                 if valid-object(bhField) then
                     assign cSortBy = trim(substitute("&1 by &2 &3", cSortBy, bhField:name,
@@ -247,7 +275,8 @@ message pcQuery.
             assign cQueryString = substitute("where &1", cQueryString).
 
         assign cQueryString = substitute("&1 &2", cQueryString, cSortBy).
-message "Query:" cQueryString.
+
+message "QueryString:" cQueryString.
 
         return trim(cQueryString).
     end method.
