@@ -78,6 +78,6 @@ class Business.UnitTest.CustomerBE inherits Spark.Core.Service.DynamicEntity:
 
     method public void getCount ( input filter as character, output numRecs as integer ):
         assign numRecs = integer(this-object:getRecCount(filter)).
-    end method. /* count */ 
+    end method. /* count */
 
 end class.
