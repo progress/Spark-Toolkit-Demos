@@ -11,6 +11,7 @@
 
 using Ccs.BusinessLogic.* from propath.
 using OpenEdge.BusinessLogic.Filter.* from propath.
+using OpenEdge.BusinessLogic.Query.* from propath.
 using OpenEdge.Core.String from propath.
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
@@ -18,6 +19,19 @@ using Progress.Json.ObjectModel.* from propath.
 block-level on error undo, throw.
 
 class tests.FilterTests:
+
+    /* Schema for testing of the QueryBuilder */
+
+    define temp-table ttCustomer no-undo before-table bttCustomer
+        field id      as character
+        field seq     as integer   initial ?
+        field CustNum as integer   label "Cust Num" initial 0
+        field Name    as character label "Name" serialize-name "CustName"
+        index pkSeq   is primary unique seq
+        .
+    define dataset dsCustomer for ttCustomer.
+
+    /* Common Variables */
 
     define private variable oFilterBuilder as FilterParserBuilder no-undo.
     define private variable oFilterParser  as FilterParser        no-undo.
@@ -30,7 +44,7 @@ class tests.FilterTests:
     define private variable cLogFile       as character           no-undo.
     define private variable cPattern       as character           no-undo format "x(32)".
     define private variable cTable         as character           no-undo format "x(32)".
-    define private variable cQuery         as character           no-undo format "x(200)".
+    define private variable cQuery         as character           no-undo format "x(250)".
     define private variable iSkip          as integer             no-undo initial 100.
     define private variable iTop           as integer             no-undo initial 25.
     define private variable iX             as integer             no-undo.
@@ -43,6 +57,7 @@ class tests.FilterTests:
         cPattern = oFilterBuilder:FilterPattern.
         put "Pattern: " cPattern skip.
 
+        QueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         do iX = 1 to extent(oDataRequest:TableRequests[1]):
             cTable = oDataRequest:TableRequests[iX]:TableName.
             put "Table: " cTable skip.
@@ -50,11 +65,13 @@ class tests.FilterTests:
             put "Records: " oDataRequest:TableRequests[iX]:NumRecords skip.
             put "Context: " oDataRequest:TableRequests[iX]:PagingContext skip.
 
-            if valid-object(oDataRequest:TableRequests[iX]:QueryDefinition) then
+            if valid-object(oDataRequest:TableRequests[iX]:QueryDefinition) then do:
                 cQuery = oDataRequest:TableRequests[iX]:QueryDefinition:ToString().
-            else
-                cQuery = oDataRequest:TableRequests[iX]:QueryString.
-            put cQuery skip.
+                put "QueryDef: " cQuery skip.
+            end.
+            
+            cQuery = oDataRequest:TableRequests[iX]:QueryString.
+            put "QueryStr: " cQuery skip.
         end.
 
         put skip(2).
@@ -73,11 +90,11 @@ class tests.FilterTests:
         oABLFilter:Add("WHERE CustNum <>442").
         oABLFilter:Add("WHERE CustNum<> 442").
         oABLFilter:Add("WHERE CustNum <> 442").
-        oABLFilter:Add('WHERE name begins "abc"').
-        oABLFilter:Add('WHERE name="abc"').
-        oABLFilter:Add('WHERE name="ab~'c"').
-        oABLFilter:Add("WHERE name='a~"bc'").
-        oABLFilter:Add("WHERE ((CustNum <> 442) and name ne ?))").
+        oABLFilter:Add('WHERE Name begins "abc"').
+        oABLFilter:Add('WHERE Name="abc"').
+        oABLFilter:Add('WHERE Name="ab~'c"').
+        oABLFilter:Add("WHERE Name='a~"bc'").
+        oABLFilter:Add("WHERE ((CustNum <> 442) and Name ne ?))").
 
         /* Create a JSON object for use with additional examples. */
         oFilterData = new JsonObject().
@@ -109,6 +126,10 @@ class tests.FilterTests:
         /* Test with just the "JFP" pattern and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "JFP").
         this-object:showOutput("Option1b").
+
+        catch err as Progress.Lang.Error:
+            message substitute("Error: &1", err:GetMessage(1)).
+        end catch.
     end method.
 
     /*------------------------------------------------------------------------------
@@ -126,6 +147,10 @@ class tests.FilterTests:
         /* Test with the "ablFilter" pattern and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
         this-object:showOutput("Option2").
+
+        catch err as Progress.Lang.Error:
+            message substitute("Error: &1", err:GetMessage(1)).
+        end catch.
     end method.
 
     /*------------------------------------------------------------------------------
@@ -167,7 +192,7 @@ class tests.FilterTests:
         this-object:showOutput("Option3c").
 
         catch err as Progress.Lang.Error:
-            message err:GetMessage(1).
+            message substitute("Error: &1", err:GetMessage(1)).
         end catch.
     end method.
 
