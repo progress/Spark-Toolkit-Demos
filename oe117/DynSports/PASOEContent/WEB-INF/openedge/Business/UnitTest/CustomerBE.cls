@@ -40,11 +40,13 @@ class Business.UnitTest.CustomerBE inherits Spark.Core.Service.DynamicEntity:
         protected set.
 
     define public override property operations as character
-        initial "CRUD,Submit" no-undo get.
+        initial "ReadOnly,Submit" no-undo get.
         protected set.
 
     method public override void initialize ( ):
-        /* Describe any properties about invoke methods to be exposed. */
+        /* Describe any overrides to the operations to be exposed. */
+        Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadCustomer").
+        Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitCustomer").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
 
         /* Describe any properties to be added the entity tables. */
@@ -75,6 +77,19 @@ class Business.UnitTest.CustomerBE inherits Spark.Core.Service.DynamicEntity:
         SkipListArray[1] = "".
         SkipList = SkipListArray.
     end constructor.
+
+
+    method public void ReadCustomer ( input  filter  as character,
+                                      output dataset dsCustomer ):
+        define variable iNumRecs as int64 no-undo.
+        super:ReadData(filter, iNumRecs, output dataset dsCustomer by-reference).
+    end method. /* ReadCustomer */
+
+
+    method public void SubmitCustomer ( input-output dataset dsCustomer ):
+        super:SubmitData(input-output dataset dsCustomer by-reference).
+    end method. /* SubmitCustomer */
+
 
     method public void getCount ( input filter as character, output numRecs as integer ):
         assign numRecs = integer(this-object:getRecCount(filter)).
