@@ -1,0 +1,43 @@
+<!-- Import this file is oeablSecurity-basic-*.xml to disable security for SOAP transport -->
+<b:beans xmlns="http://www.springframework.org/schema/security"
+    xmlns:b="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+                        http://www.springframework.org/schema/security
+                        http://www.springframework.org/schema/security/spring-security-4.2.xsd">
+
+
+    <!-- The SOAP transport security is defined here to replicate anonymousLoginModel, where
+         no user login is permitted, but we can insert the MDC filters to manage the request id
+     -->
+    <http pattern="/soap/**"
+        auto-config="false" 
+        use-expressions="true" 
+        create-session="stateless" 
+        disable-url-rewriting="true" 
+        authentication-manager-ref="nullApplicationAuth"
+        entry-point-ref="OEAuthenticationEntryPoint"
+        realm="${http.soap.realm}" >
+
+        <!-- OpenEdge MDC primary filter  -->
+        <custom-filter before="CHANNEL_FILTER" 
+                       ref="MDCPrimaryFilter" />
+
+        <!-- OpenEdge MDC secondary filter  -->
+        <custom-filter after="SESSION_MANAGEMENT_FILTER" 
+                       ref="MDCSecondaryFilter" />
+
+        <anonymous enabled="true" />
+
+        <intercept-url pattern="/soap/**" 
+                       access="permitAll()"/>
+
+	<!-- Disable org.springframework.security.web.csrf.CsrfFilter -->
+	<csrf disabled="true"/>
+
+    </http>
+
+
+
+</b:beans>

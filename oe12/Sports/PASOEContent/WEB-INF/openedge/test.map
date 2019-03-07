@@ -1,0 +1,276 @@
+{
+  "services": {
+    "test": {
+      "version": "1.0.0",
+      "operations": {
+        "\/": {
+          "GET": {
+            "contentType": "application\/json",
+            "statusCode": 200,
+            "file": "$CATALINA_BASE\/webapps\/$oepas-webapp\/static\/test.json",
+            "name": "dataservice.catalog"
+          }
+        },
+        "\/objects": {
+        },
+        "\/objects\/pollute": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UnitTest.BadObjects",
+              "function": "PolluteMemory",
+              "arg": [
+                {
+                  "ablName": "completed",
+                  "ablType": "LOGICAL",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "completed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/params": {
+        },
+        "\/params\/primitives": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UnitTest.Params",
+              "function": "testPrimitives",
+              "arg": [
+                {
+                  "ablName": "inString",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "inString"
+                  }
+                },
+                {
+                  "ablName": "inDecimal",
+                  "ablType": "DECIMAL",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "inDecimal"
+                  }
+                },
+                {
+                  "ablName": "inInteger",
+                  "ablType": "INTEGER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "inInteger"
+                  }
+                },
+                {
+                  "ablName": "inDate",
+                  "ablType": "DATE",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "inDate"
+                  }
+                },
+                {
+                  "ablName": "inDTime",
+                  "ablType": "DATETIME",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "inDTime"
+                  }
+                },
+                {
+                  "ablName": "inDTimeTZ",
+                  "ablType": "DATETIME-TZ",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "inDTimeTZ"
+                  }
+                },
+                {
+                  "ablName": "outString",
+                  "ablType": "CHARACTER",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "outString"
+                  }
+                },
+                {
+                  "ablName": "outDecimal",
+                  "ablType": "DECIMAL",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "outDecimal"
+                  }
+                },
+                {
+                  "ablName": "outInteger",
+                  "ablType": "INTEGER",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "outInteger"
+                  }
+                },
+                {
+                  "ablName": "outDate",
+                  "ablType": "DATE",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "outDate"
+                  }
+                },
+                {
+                  "ablName": "outDTime",
+                  "ablType": "DATETIME",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "outDTime"
+                  }
+                },
+                {
+                  "ablName": "outDTimeTZ",
+                  "ablType": "DATETIME-TZ",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "outDTimeTZ"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/params\/table": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UnitTest.Params",
+              "function": "testTable",
+              "arg": [
+                {
+                  "ablName": "ttInParam",
+                  "ablType": "TABLE",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "body",
+                    "name": "ttInParam"
+                  }
+                },
+                {
+                  "ablName": "ttOutParam",
+                  "ablType": "TABLE",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "body",
+                    "name": "ttOutParam"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/params\/dataset": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UnitTest.Params",
+              "function": "testDataset",
+              "arg": [
+                {
+                  "ablName": "dsInParam",
+                  "ablType": "DATASET",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "body",
+                    "name": "dsInParam"
+                  }
+                },
+                {
+                  "ablName": "dsOutParam",
+                  "ablType": "DATASET",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "body",
+                    "name": "dsOutParam"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/message": {
+        },
+        "\/message\/test": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UnitTest.Messages",
+              "function": "testMessage",
+              "arg": [
+                {
+                  "ablName": "messageType",
+                  "ablType": "CHARACTER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "messageType"
+                  }
+                },
+                {
+                  "ablName": "messageText",
+                  "ablType": "CHARACTER",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "messageText"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "schemas": {
+      }
+    }
+  }
+}

@@ -1,0 +1,76 @@
+Service-Level Logging
+
+As of 11.7.0 a new feature for logging at an individual service level was added,
+primarily for use with the DataObjectHandler class. Previously, any log messages
+would need to be output via the LOG-MANAGER handle and related methods. With the
+addition of the OpenEdge.Logging class package it is now possible to create a
+logger for a particular class/object and control the logging level, output, and
+various formats/filters for content. To enable this feature, a configuration file
+explicitly named "logging.config" must exist within the application's PROPATH.
+
+Note: Several enhancements have been made as of the 11.7.3 service pack, notably
+a fix that will check the timestamp of the logging.config file to dynamically
+reload options at runtime. Therefore it is highly suggested to begin using this
+feature as of that release. (Though a hotfix is available for use with 11.7.2).
+
+To begin controlling the output, a JSON object must be created with a "logger"
+property, set to another JSON object. Within this object you may add a unique
+property and options (also as JSON object) for each class you wish to control. 
+
+    {
+        "logger": {
+        }
+    }
+
+As an example, the following property would be added within the logger object
+as shown above. The name of the property may be a full or partial class path,
+where a partial path represents the prefix of all other classes below it (for
+example, setting to "OpenEdge" will cause all classes that utilize the new
+ILogWriter class to be output using the same options. Within the object is an
+overall logging level and a list of filters, where the latter can affect the
+format of the log messages as well as the naming and location of the output. 
+
+    "<full_or_partial_class_path": {
+        "logLevel": "TRACE",
+        "filters": [
+            "ABL_SUBSTITUTE_FORMAT",
+            "ERROR_FORMAT",
+            {
+                "name": "TOKEN_FORMAT",
+                "format": "[${t.now}] ${msg.logger} | ${msg.level} - ${msg}"
+            },
+            {
+                "name": "NAMED_FILE_WRITER",
+                "fileName": "${session.temp-dir}/output-${t.today}.log",
+                "appendTo": true
+            }
+        ]
+    }
+
+For the logLevel option, the following values are available in order of least
+to most output: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE (Default: WARN)
+
+Within your ABL code, the simplest means of implementing is in OO-ABL via a
+class property. First, create an OpenEdge.Logging.ILogWriter object. Via the
+OpenEdge.Logging.LoggerBuilder utility, use the GetLogger method to create the
+new logger instance using the current class name. Optionally, this method can
+also take a character value as input, which may be the full class path you wish
+to use with the logging.config options set above.
+
+    define protected property oLogger as OpenEdge.Logging.ILogWriter
+        get():
+            if not valid-object(this-object:oLogger) then
+                assign this-object:oLogger = OpenEdge.Logging.LoggerBuilder:GetLogger(this-object:getClass()).
+            return this-object:oLogger.
+        end get.
+        private set.
+
+Similar to the logLevel options, methods by the same name exist to allow for
+output at the specified logging level. For instance, the following will only
+be output when the logLevel is at INFO or any more verbose option:
+
+    oLogger:Info("Hello World!").
+
+The extent of docs present is large and highly detailed, though mostly internal
+at this time (May '18). The information above should be enough to get you started
+and somewhat familiar with the options currently available within this application.
