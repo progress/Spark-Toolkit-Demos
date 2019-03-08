@@ -14,7 +14,6 @@ block-level on error undo, throw.
 
 &global-define DLC C:\Progress\OpenEdge
 &global-define BaseName SparkRealm
-&global-define PassCodePrefix oech1::
 &global-define PassCodeValue SparkRealm01
 
 /* ***************************  Main Block  *************************** */
@@ -31,7 +30,7 @@ define variable oRealm as Progress.Json.ObjectModel.JsonObject no-undo.
 assign oRealm = new Progress.Json.ObjectModel.JsonObject().
 oRealm:Add("debug", false).
 oRealm:Add("domain", "OESPA").
-oRealm:Add("password", "{&PassCodePrefix}" + audit-policy:encrypt-audit-mac-key("{&PassCodeValue}")).
+oRealm:Add("password", security-policy:encode-domain-access-code("{&PassCodeValue}")).
 oRealm:Add("role", "SPAClient").
 oRealm:WriteFile(substitute("&1{&BaseName}.json", session:temp-directory), true).
 
