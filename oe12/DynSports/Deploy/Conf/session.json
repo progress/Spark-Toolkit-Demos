@@ -1,12 +1,16 @@
 {
-    "Config": {
-        "SessionParam": [{
-            "ResetClientPrincipal": "SparkReset.cp"
-        }],
-        "Domains": [{
-            "domain": "spark",
-            "accessCode": "oech1::23222e35397562",
-            "description": "Default Framework Domain"
-        }]
-    }
+  "Config": {
+    "SessionParam": [
+      {
+        "ResetClientPrincipal": "SparkReset.cp"
+      }
+    ],
+    "Domains": [
+      {
+        "domain": "spark",
+        "accessCode": "oech1::23222e35397562",
+        "description": "External Realm Domain"
+      }
+    ]
+  }
 }
