@@ -153,9 +153,9 @@
         </copy>
 
         <!-- Copy initial configuration files to the PAS instance. -->
-        <mkdir dir="${pas.path}/conf/${pas.conf.spark}"/>
-        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/signatures"/>
-        <copy toDir="${pas.path}/conf/${pas.conf.spark}" verbose="true">
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/sports"/>
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/sports/signatures"/>
+        <copy toDir="${pas.path}/conf/${pas.conf.spark}/sports" verbose="true">
             <fileset dir="${deploy}">
                 <include name="*.cp"/>
                 <include name="*.json"/>

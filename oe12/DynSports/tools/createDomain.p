@@ -22,7 +22,6 @@ block-level on error undo, throw.
 &global-define DomainName spark
 &global-define DomainType _extsso
 &global-define PassCode spark01
-&global-define PassCodePrefix oech1::
 &global-define ResetName "SparkReset.cp"
 
 define variable oService as DataAdminService no-undo.
@@ -83,7 +82,7 @@ do iDB = 1 to num-dbs:
         /* Add info to necessary metadata objects. */
         assign oEntry = new Progress.Json.ObjectModel.JsonObject().
         oEntry:Add("domain", "{&DomainName}").
-        oEntry:Add("accessCode", substitute("{&PassCodePrefix}&1", audit-policy:encrypt-audit-mac-key("{&PassCode}"))).
+        oEntry:Add("accessCode", security-policy:encode-domain-access-code("{&PassCode}")).
         oEntry:Add("description", oDomain:Description).
         oDomains:Add(oEntry).
 
