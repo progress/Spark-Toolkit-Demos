@@ -21,7 +21,6 @@ block-level on error undo, throw.
 &global-define DomainName spark
 &global-define DomainType _extsso
 &global-define PassCode spark01
-&global-define PassCodePrefix oech1::
 
 define variable oService as DataAdminService no-undo.
 define variable oDomain  as IDomain          no-undo.
