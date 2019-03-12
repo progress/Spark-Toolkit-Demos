@@ -1,6 +1,6 @@
 /*------------------------------------------------------------------------
     File        : shutdown.p
-    Purpose     : Recommended to check for anydynamic objects left behind
+    Purpose     : Recommended to check for any dynamic objects left behind
     Description : Assigned as sessionShutdownProc in openedge.properties
     Author(s)   : Dustin Grau (dugrau@progress.com)
     Created     : Tue Apr 28 15:03:17 EDT 2016
@@ -66,6 +66,9 @@ end. /* for each */
  * -Stops all lifecycles, managers.
  */
 run Spark/shutdown.p.
+
+/* Optional: Shutdown the metrics from the diagnostic tools. */
+run Spark/Diagnostic/metrics_shutdown.
 
 catch err as Progress.Lang.Error:
     run logMessage (substitute("Error: &1", err:GetMessage(1)), "SHUTDOWN").

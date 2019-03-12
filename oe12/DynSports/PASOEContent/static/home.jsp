@@ -22,7 +22,6 @@
 <tr><td style="vertical-align:top"><b>Principal:</b></td> <td><%= request.getUserPrincipal()%> </td> </tr>
 <tr><td><b>RemoteAddr:</b></td> <td><%= request.getRemoteAddr()%> </td> </tr>
 <tr><td><b>ServerName:</b></td> <td><%= request.getServerName()%> </td> </tr>
-<br>
 <%
     String lmodel = application.getInitParameter("contextConfigLocation"); 
     if ( ! lmodel.matches(".*oeablSecurity-anonymous.*") ) {
