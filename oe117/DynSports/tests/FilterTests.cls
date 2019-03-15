@@ -41,6 +41,8 @@ class tests.FilterTests:
     define private variable oFilterList    as JsonArray           no-undo.
     define private variable oFilterData    as JsonObject          no-undo.
     define private variable oABLFilter     as JsonArray           no-undo.
+    define private variable oQueryBuilder  as QueryBuilder        no-undo.
+    define private variable cFullQuery     as character           no-undo format "x(300)".
     define private variable cLogFile       as character           no-undo.
     define private variable cPattern       as character           no-undo format "x(32)".
     define private variable cTable         as character           no-undo format "x(32)".
@@ -57,10 +59,10 @@ class tests.FilterTests:
         cPattern = oFilterBuilder:FilterPattern.
         put "Pattern: " cPattern skip.
 
-        QueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
+        /* Cycle through each table request to show the data extracted. */
         do iX = 1 to extent(oDataRequest:TableRequests[1]):
             cTable = oDataRequest:TableRequests[iX]:TableName.
-            put "Table: " cTable skip.
+            put "Table" trim(string(iX)) ": " cTable skip.
             put "SkipRec: " oDataRequest:TableRequests[iX]:Skip skip.
             put "Records: " oDataRequest:TableRequests[iX]:NumRecords skip.
             put "Context: " oDataRequest:TableRequests[iX]:PagingContext skip.
@@ -74,13 +76,15 @@ class tests.FilterTests:
             put "QueryStr: " cQuery skip.
         end.
 
-        put skip(2).
+        put skip "FullQuery: " cFullQuery skip(2).
+
         output close.
     end method.
 
     @Before.
     method public void before ( ):
         assign oParser = new ObjectModelParser().
+        assign oQueryBuilder = new QueryBuilder().
 
         /* Output location for the raw test results. */
         cLogFile = substitute("tests/filter_&1.log", mtime).
@@ -117,6 +121,7 @@ class tests.FilterTests:
 
         /* Test with a simple "where" phrase and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "WHERE").
+        assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option1a").
 
         oFilterBuilder = FilterParserBuilder:Build("JFP").
@@ -125,6 +130,7 @@ class tests.FilterTests:
 
         /* Test with just the "JFP" pattern and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "JFP").
+        assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option1b").
 
         catch err as Progress.Lang.Error:
@@ -146,6 +152,7 @@ class tests.FilterTests:
 
         /* Test with the "ablFilter" pattern and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
+        assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option2").
 
         catch err as Progress.Lang.Error:
@@ -165,6 +172,7 @@ class tests.FilterTests:
 
         /* Test with the "ablFilter" pattern and its output. */
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
+        assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3a").
 
         define variable cPayload as character no-undo.
@@ -173,22 +181,24 @@ class tests.FilterTests:
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "ne", "value": 442}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
         oFilterData = cast(oParser:Parse(cPayload), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).
-        oFilterBuilder:TableName("Customer"). /* Let the parser know the database table name if we know it. */
+        oFilterBuilder:TableName("ttCustomer"). /* Let the parser know the temp-table name if we know it. */
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterData).
 
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3b").
 
         /* Test with the "kendo" pattern and its output (requires some additional setup). */        
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "gt", "value": 1}, ~{"field": "CustNum", "operator": "lt", "value": 10000}, ~{"logic": "or", "filters": [~{"field": "Name", "operator": "begins", "value": "A"}, ~{"field": "Name", "operator": "begins", "value": "B"}]}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
         oFilterData = cast(oParser:Parse(cPayload), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).
-        oFilterBuilder:TableName("Customer"). /* Let the parser know the database table name if we know it. */
+        oFilterBuilder:TableName("ttCustomer"). /* Let the parser know the temp-table name if we know it. */
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterData).
 
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3c").
 
         catch err as Progress.Lang.Error:
