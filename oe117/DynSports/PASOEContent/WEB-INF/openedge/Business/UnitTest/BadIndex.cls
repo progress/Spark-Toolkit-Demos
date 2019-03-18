@@ -29,11 +29,12 @@ class Business.UnitTest.BadIndex inherits Spark.Core.Service.DynamicResource:
         end get.
         set.
 
-    /* Indices should be listed with primary first, then unique, then all others.
+    /**
+     * Indices should be listed with primary first, then unique, then all others.
      * This is due to an issue in the XML-SCHEMA data that re-orders the indices
      * in a particular order, resulting in a temp-table mis-match when the dynamic
      * invoke of a method must pass that structure as a parameter. To trigger this
-     * issue, simply re-order the plain index below to a higher placement.
+     * issue on older OE versions, simply add plain indexes just before the primary.
      */
     define temp-table ttTest no-undo
         field EmployeeID as integer
@@ -41,9 +42,9 @@ class Business.UnitTest.BadIndex inherits Spark.Core.Service.DynamicResource:
         field Username   as character
         field Firstname  as character
         field Lastname   as character
-        index EmployeeID is primary unique EmployeeID ascending
         index Username   is unique Username ascending
         index Lastname   is unique Lastname ascending
+        index EmployeeID is primary unique EmployeeID ascending
         index Number     Number ascending
         .
     define dataset dsTest for ttTest.

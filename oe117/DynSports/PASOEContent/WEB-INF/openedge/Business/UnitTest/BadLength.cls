@@ -32,7 +32,7 @@ class Business.UnitTest.BadLength inherits Spark.Core.Service.DynamicResource:
         badLength = new JsonArray().
 
         oData = new JsonObject().
-        oData:Add("language", "Français").
+        oData:Add("language", "Français"). /* Uses an accented character to trigger the issue. */
         badLength:Add(oData).
     end method. /* testOutput */
 
