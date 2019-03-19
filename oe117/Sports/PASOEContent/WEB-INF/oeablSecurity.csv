@@ -21,6 +21,7 @@
 "/web/pdo/common/tfa/*","PUT","permitAll()"
 "/web/pdo/common/user/*","*","permitAll()"
 "/web/pdo/system/access/*","*","hasAnyRole('ROLE_WebAdmin')"
+"/web/pdo/tests/leakycode/*","GET","permitAll()"
 "/web/_oeping","GET","permitAll()"
 "/web/**","*","hasAnyRole('ROLE_PSCUser')"
 

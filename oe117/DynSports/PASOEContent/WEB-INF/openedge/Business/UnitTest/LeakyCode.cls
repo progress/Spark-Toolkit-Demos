@@ -35,29 +35,32 @@ class Business.UnitTest.LeakyCode inherits Spark.Core.Service.DynamicResource:
 
         run Business/HelloProc persistent set hProc.
         run sayHello in hProc ( "World", output textMessage).
-        
+
         /* DO NOT clean up the persistent handle, but instead let it linger. */
     end method. /* badHandle */
 
     method public void badMemptr ( output pointerSize as integer ):
         define variable mPtr as memptr no-undo.
 
-        set-size(mPtr) = 100. /* Set it, but DO NOT reset size to 0 after use.*/
+        set-size(mPtr) = 100. /* Set a size, but DO NOT reset to 0 after use.*/
         assign pointerSize = get-size(mPtr).
     end method. /* badMemptr */
 
     method public void badObject ( output textMessage as character ):
-        define variable oJSON as JsonObject no-undo.
+        define variable oParser as ObjectModelParser no-undo.
+        define variable oJSON   as JsonObject no-undo.
 
+        assign oParser = new ObjectModelParser().
         assign oJSON = new JsonObject().
-        oJson:Add("test1", "Hello USA!"). /* Created and populated with data. */
 
-        assign oJSON = new JsonObject(). /* Creates a new object instance in the same variable. */
-        oJson:Add("test2", "Hello World!"). /* Should be the value output to the user in the API. */
+        /* Create a property and populate with a parsed JSON object. */
+        oJSON:Add("test1", cast(oParser:Parse('~{"Hello": "World"}'), JsonObject)).
 
-        assign textMessage = string(oJson:GetJsonText()).
+        oJSON:Add("test2", "Hello World!"). /* Add a simple string property. */
 
-        /* DO NOT clean up the JSON object(s) created. */
+        assign textMessage = string(oJSON:GetJsonText()).
+
+        /* DO NOT clean up the JSON parser/object created. */
     end method. /* badObject */
 
     method public void badQuery ( output totalRecords as integer ):
@@ -67,6 +70,7 @@ class Business.UnitTest.LeakyCode inherits Spark.Core.Service.DynamicResource:
         hQuery:set-buffers(buffer Customer:handle).
         hQuery:query-prepare("preselect each customer").
         hQuery:query-open.
+
         assign totalRecords = hQuery:num-results.
 
         /* DO NOT close the query nor delete the handle. */
