@@ -36,7 +36,8 @@ class Business.UnitTest.LeakyCode inherits Spark.Core.Service.DynamicResource:
             assign oJsonObj = new JsonObject().
             oJsonObj:Add("iteration", ix).
             oJsonObj:Add("company", substitute("Progress: &1", ix)).
-            this-object:oArray:Add(oJsonObj).
+            this-object:oArray:Add(cast(oJsonObj:Clone(), JsonObject)).
+            delete object oJsonObj no-error.
         end.
     end method. /* LoadPropArray */
 
@@ -57,20 +58,14 @@ class Business.UnitTest.LeakyCode inherits Spark.Core.Service.DynamicResource:
     end method. /* initialize */
 
     method public void badBuffer ( output completed as logical ):
-        /* Create some buffers that will not be cleaned up. */
-        define variable hDS  as handle.
-        define variable hDS2 as handle.
-        define variable hBuf as handle.
+        /* Create a buffer that will not be cleaned up. */
+        define variable hDS as handle.
 
         create dataset hDS.
-        create dataset hDS2.
 
-        assign hBuf = buffer tt1:handle.
+        assign completed = true.
 
-        finally:
-            /* DO NOT clean up the datasets nor buffer handle. */
-            assign completed = true.
-        end finally.
+        /* DO NOT clean up the datasets nor buffer handle. */
     end method. /* badBuffer */
 
     method public void badHandle ( output textMessage as character ):

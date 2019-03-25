@@ -1,32 +1,12 @@
 {
   "version": "1.5",
-  "lastModified": "Thu Nov 29 08:53:10 EST 2018",
+  "lastModified": "Mon Mar 25 16:18:41 EDT 2019",
   "services": [
     {
       "name": "test",
       "address": "\/web\/pdo\/test",
       "useRequest": false,
       "resources": [
-        {
-          "name": "objects",
-          "path": "\/objects",
-          "autoSave": true,
-          "operations": [
-            {
-              "name": "pollute",
-              "path": "\/pollute",
-              "useBeforeImage": false,
-              "type": "invoke",
-              "verb": "put",
-              "params": [
-                {
-                  "name": "completed",
-                  "type": "RESPONSE_BODY"
-                }
-              ]
-            }
-          ]
-        },
         {
           "name": "params",
           "path": "\/params",

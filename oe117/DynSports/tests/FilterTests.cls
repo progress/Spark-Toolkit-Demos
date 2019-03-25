@@ -71,7 +71,7 @@ class tests.FilterTests:
                 cQuery = oDataRequest:TableRequests[iX]:QueryDefinition:ToString().
                 put "QueryDef: " cQuery skip.
             end.
-            
+
             cQuery = oDataRequest:TableRequests[iX]:QueryString.
             put "QueryStr: " cQuery skip.
         end.
@@ -88,7 +88,7 @@ class tests.FilterTests:
 
         /* Output location for the raw test results. */
         cLogFile = substitute("tests/filter_&1.log", mtime).
-        
+
         /* Load an array with all of the potential test cases. */
         oABLFilter = new JsonArray().
         oABLFilter:Add("WHERE CustNum <>442").
@@ -177,7 +177,7 @@ class tests.FilterTests:
 
         define variable cPayload as character no-undo.
 
-        /* Test with the "kendo" pattern and its output (requires some additional setup). */        
+        /* Test with the "kendo" pattern and its output (requires some additional setup). */
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "ne", "value": 442}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
         oFilterData = cast(oParser:Parse(cPayload), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).
@@ -189,7 +189,7 @@ class tests.FilterTests:
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3b").
 
-        /* Test with the "kendo" pattern and its output (requires some additional setup). */        
+        /* Test with the "kendo" pattern and its output (requires some additional setup). */
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "gt", "value": 1}, ~{"field": "CustNum", "operator": "lt", "value": 10000}, ~{"logic": "or", "filters": [~{"field": "Name", "operator": "begins", "value": "A"}, ~{"field": "Name", "operator": "begins", "value": "B"}]}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
         oFilterData = cast(oParser:Parse(cPayload), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).

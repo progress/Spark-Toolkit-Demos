@@ -11,33 +11,6 @@
             "name": "dataservice.catalog"
           }
         },
-        "\/objects": {
-        },
-        "\/objects\/pollute": {
-          "PUT": {
-            "contentType": "application\/json",
-            "options": {
-              "writeBI": false,
-              "requestEnvelope": false,
-              "responseEnvelope": false
-            },
-            "entity": {
-              "name": "Business.UnitTest.BadObjects",
-              "function": "PolluteMemory",
-              "arg": [
-                {
-                  "ablName": "completed",
-                  "ablType": "LOGICAL",
-                  "ioMode": "OUTPUT",
-                  "msgElem": {
-                    "type": "field",
-                    "name": "completed"
-                  }
-                }
-              ]
-            }
-          }
-        },
         "\/params": {
         },
         "\/params\/primitives": {
