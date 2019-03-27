@@ -52,6 +52,6 @@ conf/catalina.properties (adjust list of compressible file types):
     psc.as.compress.types=text/html,text/xml,text/javascript,text/css,application/json,application/javascript
 
 
-conf/catalina.properties (support enhanced MDC logging):
+conf/logging-tomcat.properties (supports additional tokens):
 
-    psc.as.accesslog.pattern=%h %{OEReq.userId}r [%{yyyy-MM-dd'T'HH:mm:ss.SSSZ}t] "%r" %s %b %D %I %S %{OEReq.requestId}r
+    psc.as.logging.access.pattern=%h %reqAttribute{OEReq.userId} [%date{"yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}] "%r" %s %b %D %I %S %reqAttribute{OEReq.requestId} %n
