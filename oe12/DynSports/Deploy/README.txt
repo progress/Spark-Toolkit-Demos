@@ -54,4 +54,4 @@ conf/catalina.properties (adjust list of compressible file types):
 
 conf/logging-tomcat.properties (supports additional tokens):
 
-    psc.as.logging.access.pattern=%h %reqAttribute{OEReq.userId} [%date{"yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}] "%r" %s %b %D %I %S %reqAttribute{OEReq.requestId} %n
+    psc.as.logging.access.pattern=%h %reqAttribute{OEReq.userId} [%date{"yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}] "%r" %s %b %D %reqAttribute{OEReq.requestId} %n
