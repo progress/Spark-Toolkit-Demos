@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<configuration debug="false" scan="false" scanPeriod="60 seconds" >
+
+  <!-- Include the logging configuration properties used to control the tomcat access logs,
+       ABL application's SessionManager & Spring Security, and authentication/authorization
+       audit logs -->
+  <property file="${catalina.base}/conf/logging-pasoe.properties" />
+
+  <!-- Include the PASOE instances logging.  If the file does not exist, then logging will not
+       initialize correctly and no output will be found. 
+       
+       EDIT CATALINA_BASE/conf/logging-oeabl.xml to change the common log file column formats 
+        and default logging level found in the logs/<abl-app>.<date>.log files.
+
+       EDIT this file to set logging levels for the individual web application's PASOE & 
+       Spring Security Java packages.
+        -->
+  <include optional="false" 
+           file="${catalina.base}/conf/logging-oeabl.xml" />
+
+  <!-- Include the PASOE instances core security audit event logging.  If the file does not 
+       exist, the security audit envent logging functionality is implicitly turned off 
+       
+       EDIT CATALINA_BASE/conf/logging-security.xml to change the common log file column 
+       formats and logging levels found in the logs/<abl-app>_{authn|authz}.<date>.log files     
+        -->
+  <include optional="true" 
+           file="${catalina.base}/conf/logging-security.xml" />
+
+  <!-- You may include logback <logger>....</logger> directives here in the event
+       that logging can only be turned on for specific Tomcat web application contexts.
+       -->
+
+</configuration>
+

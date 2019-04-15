@@ -1,0 +1,40 @@
+{
+    "Config": {
+        "General": [{
+            "ApiVersion": 4.4,
+            "CatalogService": "Spark.Core.Service.ICatalog",
+            "BusinessRoot": "Business",
+            "IdProperty": "id",
+            "PreLoader": "Common/preload.p",
+            "ReadFilter": "filter",
+            "ServicePrefix": "api",
+            "EnableDebugs": false
+        }],
+        "ServiceSource": [{
+            "ServiceName": "common",
+            "ServiceURI": "/web/api/common",
+            "ClassPath": "Business",
+            "UseRequest": false
+        }, {
+            "ServiceName": "ordering",
+            "ServiceURI": "/web/api/ordering",
+            "ClassPath": "Business.Ordering",
+            "UseRequest": false
+        }, {
+            "ServiceName": "personnel",
+            "ServiceURI": "/web/api/personnel",
+            "ClassPath": "Business.Personnel",
+            "UseRequest": false
+        }, {
+            "ServiceName": "system",
+            "ServiceURI": "/web/api/system",
+            "ClassPath": "Business.System",
+            "UseRequest": false
+        }, {
+            "ServiceName": "tests",
+            "ServiceURI": "/web/api/tests",
+            "ClassPath": "Business.UnitTest",
+            "UseRequest": false
+        }]
+    }
+}

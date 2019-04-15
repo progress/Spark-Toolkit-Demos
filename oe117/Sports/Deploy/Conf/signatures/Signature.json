@@ -1,19 +1,19 @@
-[
-  "Project.Business.EntityBE": [
+{
+  "Project.Business.EntityBE": {
     "super": "Spark.Core.Service.SparkEntity",
     "abstract": false,
     "final": false,
     "interface": false,
     "statics": false,
-    "constructors": [
-      "EntityBE": [
+    "constructors": {
+      "EntityBE": {
         "mode": "Public",
         "params": [
         ]
-      ]
-    ],
-    "properties": [
-      "resourceName": [
+      }
+    },
+    "properties": {
+      "resourceName": {
         "origin": "Project.Business.EntityBE",
         "defined": "Project.Business.EntityBE",
         "mode": "Public",
@@ -22,8 +22,8 @@
         "readable": true,
         "writable": true,
         "type": "character"
-      ],
-      "primaryKeys": [
+      },
+      "primaryKeys": {
         "origin": "Project.Business.EntityBE",
         "defined": "Project.Business.EntityBE",
         "mode": "Public",
@@ -32,8 +32,8 @@
         "readable": true,
         "writable": true,
         "type": "character"
-      ],
-      "mappingType": [
+      },
+      "mappingType": {
         "origin": "Project.Business.EntityBE",
         "defined": "Project.Business.EntityBE",
         "mode": "Public",
@@ -42,8 +42,8 @@
         "readable": true,
         "writable": true,
         "type": "character"
-      ],
-      "capabilities": [
+      },
+      "capabilities": {
         "origin": "Project.Business.EntityBE",
         "defined": "Project.Business.EntityBE",
         "mode": "Public",
@@ -52,8 +52,8 @@
         "readable": true,
         "writable": true,
         "type": "character"
-      ],
-      "operations": [
+      },
+      "operations": {
         "origin": "Project.Business.EntityBE",
         "defined": "Project.Business.EntityBE",
         "mode": "Public",
@@ -62,8 +62,8 @@
         "readable": true,
         "writable": true,
         "type": "character"
-      ],
-      "ProDataSet": [
+      },
+      "ProDataSet": {
         "origin": "Project.Business.EntityBE",
         "defined": "Spark.Core.Service.SparkEntity",
         "mode": "Public",
@@ -72,8 +72,8 @@
         "readable": true,
         "writable": true,
         "type": "handle"
-      ],
-      "entityName": [
+      },
+      "entityName": {
         "origin": "Project.Business.EntityBE",
         "defined": "Spark.Core.Service.SparkEntity",
         "mode": "Public",
@@ -82,71 +82,71 @@
         "readable": true,
         "writable": true,
         "type": "character"
-      ]
-    ],
-    "variables": [
-    ],
-    "methods": [
-      "readData": [
+      }
+    },
+    "variables": {
+    },
+    "methods": {
+      "readData": {
         "return": "void",
         "params": [
-          [
+          {
             "mode": "Input",
             "name": "filter",
             "type": "character"
-          ],
-          [
+          },
+          {
             "mode": "Output",
             "name": "numRecs",
             "type": "integer"
-          ],
-          [
+          },
+          {
             "mode": "Output",
             "name": "phDataSet",
             "type": "datasethandle"
-          ]
+          }
         ]
-      ],
-      "createData": [
+      },
+      "createData": {
         "return": "void",
         "params": [
-          [
+          {
             "mode": "InputOutput",
             "name": "phDataSet",
             "type": "datasethandle"
-          ]
+          }
         ]
-      ],
-      "updateData": [
+      },
+      "updateData": {
         "return": "void",
         "params": [
-          [
+          {
             "mode": "InputOutput",
             "name": "phDataSet",
             "type": "datasethandle"
-          ]
+          }
         ]
-      ],
-      "deleteData": [
+      },
+      "deleteData": {
         "return": "void",
         "params": [
-          [
+          {
             "mode": "InputOutput",
             "name": "phDataSet",
             "type": "datasethandle"
-          ]
+          }
         ]
-      ],
-      "submitData": [
+      },
+      "submitData": {
         "return": "void",
         "params": [
-          [
+          {
             "mode": "InputOutput",
             "name": "phDataSet",
             "type": "datasethandle"
-          ]
+          }
         ]
-      ]
-    ]
-  ]
-]
+      }
+    }
+  }
+}
