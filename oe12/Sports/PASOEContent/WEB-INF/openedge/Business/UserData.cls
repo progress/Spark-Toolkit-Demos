@@ -12,7 +12,6 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
-using Spark.Core.Util.ApplicationError from propath.
 using Spark.Core.Util.Sendmail from propath.
 
 block-level on error undo, throw.
@@ -513,7 +512,7 @@ class Business.UserData inherits Spark.Core.Service.SparkEntity use-widget-pool:
                 changed:Add("timezone").
             end.
             else
-                undo, throw new ApplicationError("Timezone must be in the format of +/-HH:00").
+                undo, throw new AppError("Timezone must be in the format of +/-HH:00", 0).
         end. /* cTimezone */
     end method. /* setLocale */
 

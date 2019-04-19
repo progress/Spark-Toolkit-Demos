@@ -114,7 +114,7 @@ class Business.UserContext inherits Spark.Core.Service.SparkEntity use-widget-po
 
         assign lFound = false.
         if filter begins "~{" then
-            assign oFilterObj = this-object:getFilter(filter).
+            assign oFilterObj = this-object:getFilterObject(filter).
         if valid-object(oFilterObj) then do:
             if oFilterObj:Has("filter") and oFilterObj:Has("client") and
                oFilterObj:GetCharacter("client") eq "KendoUI" then do:
@@ -138,7 +138,7 @@ class Business.UserContext inherits Spark.Core.Service.SparkEntity use-widget-po
             /* Did not find filter criteria by field name, so create it. */
             assign oCriteria = new JsonObject().
             oCriteria:Add("field", "IdentityName").
-            oCriteria:Add("operator", "equals").
+            oCriteria:Add("operator", "eq").
             oCriteria:Add("value", oClientContext:userID).
 
             /* Create a filters array if it doesn't exist. */
