@@ -87,6 +87,14 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     define public property TrackRequests as logical no-undo initial false get. private set.
 
+    define public property CollectorType as character no-undo initial "file" get. private set.
+
+    define public property CollectorScheme as character no-undo initial "http" get. private set.
+
+    define public property CollectorServer as character no-undo initial "localhost" get. private set.
+
+    define public property CollectorPort as integer no-undo initial 0 get. private set.
+
 
     /***** Constructor/Destructor *****/
 
@@ -200,6 +208,35 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                             delete object oSubObj no-error.
                         end. /* has sub-object */
                     end. /* profiler */
+
+                    when "collector" then do:
+                        if oConfig:Has("collector") and oConfig:GetType("collector") eq JsonDataType:Object then do:
+                            assign oSubObj = oConfig:GetJsonObject("collector").
+
+                            /* If the collector is enabled, set type to "remote" otherwise use local files. */
+                            if oSubObj:Has("enabled") and oSubObj:GetType("enabled") eq JsonDataType:Boolean then
+                                assign this-object:CollectorType = trim(string(oSubObj:GetLogical("enabled"), "remote/file")).
+                            else
+                                assign this-object:CollectorType = "file".
+
+                            if oSubObj:Has("scheme") and oSubObj:GetType("scheme") eq JsonDataType:String then
+                                assign this-object:CollectorScheme = oSubObj:GetCharacter("scheme").
+                            else
+                                assign this-object:CollectorScheme = "http".
+
+                            if oSubObj:Has("server") and oSubObj:GetType("server") eq JsonDataType:String then
+                                assign this-object:CollectorServer = oSubObj:GetCharacter("server").
+                            else
+                                assign this-object:CollectorServer = "localhost".
+
+                            if oSubObj:Has("port") and oSubObj:GetType("port") eq JsonDataType:String then
+                                assign this-object:CollectorPort = oSubObj:GetInteger("port").
+                            else
+                                assign this-object:CollectorPort = ?.
+
+                            delete object oSubObj no-error.
+                        end. /* has sub-object */
+                    end. /* general */
                 end case. /* cNames */
             end. /* do ix */
         end. /* valid object */
