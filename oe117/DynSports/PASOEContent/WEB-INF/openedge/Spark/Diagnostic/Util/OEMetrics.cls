@@ -16,6 +16,18 @@
                   placed in the CATALINA_BASE/bin directory.
   ----------------------------------------------------------------------*/
 
+/**
+ * @TODO: Change the current output scheme from dumping all content to disk
+ * as metrics are gathered, and instead build a large payload of content. Then
+ * if the remote collector is enabled this can be sent to the remote server as
+ * a single packet of data. If no remote collector is enabled then the data can
+ * be written out to it's respective location on disk per the existing scheme.
+ * The data structure could include the planned filename (full path) plus the
+ * respective metrics data. This would provide the ISO datetime and agent/session
+ * data as proposed and expected by the PAS Monitor parsing logic. The latter
+ * will naturally need to be changed as well to pick apart the new payload.
+ */
+
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Assert from propath.
@@ -46,6 +58,33 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     define private property RequestCount as integer no-undo initial 0 get. set.
 
     define private property RequestStart as datetime-tz no-undo initial ? get. set.
+
+    define private property MetricsOutput as JsonObject no-undo get. set.
+
+    /**
+     * MetricsOutput Structure:
+     *
+     * {
+     *   ABLObjects: {
+     *     Filename: "",
+     *     Agent: 0,
+     *     Session: 0,
+     *     Data: []
+     *   },
+     *   Session: {
+     *     Filename: "",
+     *     Agent: 0,
+     *     Data: []
+     *   },
+     *   Requests: {
+     *     Filename: "",
+     *     Agent: 0,
+     *     Data: []
+     *   }
+     * }
+     *
+     * @TODO: Figure out best format for sending profiler output.
+     */
 
     define private property oMetricsLogger as ILogWriter no-undo
         get():
@@ -97,6 +136,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         os-create-dir value(substitute("&1/metrics/ProfilerData", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/Requests", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/SessionData", this-object:TemporaryDir)).
+
+        assign this-object:MetricsOutput = new JsonObject(). /* Create initial JSON object for output. */
     end constructor.
 
 
@@ -856,6 +897,11 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         this-object:OutputTime = now. /* Synchronize output time. */
         oMetricsLogger:Info(substitute("Running reports for Agent '&1', Session '&2' at &3",
                                        piAgentID, piSessionID, this-object:OutputTime)).
+
+        /* Clean up any old metrics if they exist in the output object. */
+        if this-object:MetricsOutput:Has("ABLObjects") then this-object:MetricsOutput:Remove("ABLObjects").
+        if this-object:MetricsOutput:Has("Session") then this-object:MetricsOutput:Remove("Session").
+        if this-object:MetricsOutput:Has("Requests") then this-object:MetricsOutput:Remove("Requests").
 
         if oConfig:AreObjectsEnabled("PrepareSessionABLObjectReport") then
             this-object:GetSessionABLObjects(piAgentID, piSessionID). /* ABLObjects Report */
