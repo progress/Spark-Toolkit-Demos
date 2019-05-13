@@ -32,6 +32,10 @@ using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Assert from propath.
 using OpenEdge.Logging.* from propath.
+using OpenEdge.Net.HTTP.HttpClient from propath.
+using OpenEdge.Net.HTTP.IHttpRequest from propath.
+using OpenEdge.Net.HTTP.IHttpResponse from propath.
+using OpenEdge.Net.HTTP.RequestBuilder from propath.
 using Spark.Diagnostic.Util.RemoteMetrics from propath.
 
 block-level on error undo, throw.
@@ -71,7 +75,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
      *     Session: 0,
      *     Data: []
      *   },
-     *   Session: {
+     *   Sessions: {
      *     Filename: "",
      *     Agent: 0,
      *     Data: []
@@ -300,6 +304,86 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* GetSessionID */
 
 
+    method private void ResetOutput ( ):
+        /* Clean up any old metrics if they exist in the output object. */
+        if this-object:MetricsOutput:Has("ABLObjects") then this-object:MetricsOutput:Remove("ABLObjects").
+        if this-object:MetricsOutput:Has("Sessions") then this-object:MetricsOutput:Remove("Sessions").
+        if this-object:MetricsOutput:Has("Requests") then this-object:MetricsOutput:Remove("Requests").
+    end method. /* ResetOutput */
+
+
+    method private void WriteSessionReports ( ):
+        define variable oSubObj as JsonObject no-undo.
+        define variable lError  as logical    no-undo initial false.
+
+        /**
+         * Note when this output is being generated.
+         */
+        oMetricsLogger:Debug("Writing all metrics output").
+
+        /* Output the collected metrics to their respective locations. */
+        if oConfig:CollectorType eq "remote" then do on error undo, throw:
+            /* Send full MetricsOutput to remote collector endpoint. */
+            define variable cRequestURI as character     no-undo.
+            define variable oHttpReq    as IHttpRequest  no-undo.
+            define variable oHttpResp   as IHttpResponse no-undo.
+
+            /* Prepare the URL to the remote PAS Monitor instance endpoint for data intake. */
+            assign cRequestURI = substitute("&1://&2:&3/web/pdo/monitor/intake/liveData",
+                                            oConfig:CollectorScheme, oConfig:CollectorServer, oConfig:CollectorPort).
+
+            /* Prepare to send the metrics data as JSON to the endpoint. */
+            oMetricsLogger:Info(substitute("Sending metrics data to &1", cRequestURI)).
+            oHttpReq = RequestBuilder:Put(cRequestURI, this-object:MetricsOutput)
+                                     :ContentType("application/json")
+                                     :Request.
+            oHttpResp = HttpClient:Instance():Execute(oHttpReq).
+
+            /* Check the status code from the remote collector. */
+            oMetricsLogger:Info(substitute("Collector Status: &1", oHttpResp:StatusCode)).
+            if oHttpResp:StatusCode ne 200 then
+                undo, throw new AppError(substitute("Response Code was not HTTP/200: &1", string(oHttpResp:StatusCode)), 0).
+
+            /* Make sure that entity is a true JSON object prior to casting and returning. */
+            if valid-object(oHttpResp:Entity) and type-of(oHttpResp:Entity, JsonObject) then
+                cast(oHttpResp:Entity, JsonObject):WriteFile(substitute("&1/metrics/LastMetricsResponse-&2.&3.json",
+                                                                        iso-date(today), mtime), true).
+
+            catch err as Progress.Lang.Error:
+                /* Mark failure if error occurs. */
+                assign lError = true.
+            end catch.
+            finally:
+                /* Dump the last metrics output object. */
+                this-object:MetricsOutput:WriteFile(substitute("&1/metrics/LastMetricsOutput-&2.&3.json",
+                                                               this-object:TemporaryDir, iso-date(today), mtime), true).
+            end finally.
+        end. /* remote */
+
+        /* Output each of the MetricsOutput to local files on disk. */
+        if oConfig:CollectorType eq "file" or lError then do:
+            if this-object:MetricsOutput:Has("ABLObjects") then do:
+                assign oSubObj = this-object:MetricsOutput:GetJsonObject("ABLObjects").
+                oSubObj:GetJsonObject("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
+            end. /* ABLObjects */
+
+            if this-object:MetricsOutput:Has("Sessions") then do:
+                assign oSubObj = this-object:MetricsOutput:GetJsonObject("Sessions").
+                oSubObj:GetJsonObject("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
+            end. /* Sessions */
+
+            if this-object:MetricsOutput:Has("Requests") then do:
+                assign oSubObj = this-object:MetricsOutput:GetJsonObject("Requests").
+                oSubObj:GetJsonObject("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
+            end. /* Requests */
+        end. /* file */
+
+        finally:
+            this-object:ResetOutput().
+        end finally.
+    end method. /* WriteSessionReports */
+
+
     /***** Public Methods *****/
 
 
@@ -328,7 +412,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         /* Ignore start of profiler if not configured to track by stated type. */
         if pcTrackBy ne oConfig:ProfilerTrackBy then return false.
- 
+
         define variable lFilterMatch as logical   no-undo initial false.
         define variable cBasePath    as character no-undo.
         define variable cOutPath     as character no-undo initial "".
@@ -462,7 +546,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 end. /* iExecTime gt piExecThreshold */
                 else
                     oMetricsLogger:Trace(substitute("&1 | &2ms | -Threshold Not Met; No Profiler Output-",
-                                                    this-object:GetProcedureName(), iExecTime)).                
+                                                    this-object:GetProcedureName(), iExecTime)).
             end. /* ProfilerTrackBy = Request */
 
             return true.
@@ -761,9 +845,16 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             if oRemoteMetrics:FilterSessionABLObjectReport(input  piAgentID,
                                                            input  piSessionID,
                                                            input  oConfig:ClassesExcluded,
-                                                           output oObjReport) then
-                /* Output the report to a known location on disk for review/archival. */
-                assign lReturn = oObjReport:WriteFile(this-object:GetObjectsPath(piAgentID, piSessionID), true).
+                                                           output oObjReport) then do:
+                /* Output the report to the common JSON structure for tracking. */
+                this-object:MetricsOutput:Add("ABLObjects", new JsonObject()).
+                this-object:MetricsOutput:GetJsonObject("ABLObjects"):Add("Filename", this-object:GetObjectsPath(piAgentID, piSessionID)).
+                this-object:MetricsOutput:GetJsonObject("ABLObjects"):Add("Agent", piAgentID).
+                this-object:MetricsOutput:GetJsonObject("ABLObjects"):Add("Session", piSessionID).
+                this-object:MetricsOutput:GetJsonObject("ABLObjects"):Add("Data", cast(oObjReport:Clone(), JsonArray)).
+                assign lReturn = true.
+
+            end.
         end. /* Has Agent/Session */
 
         return lReturn.
@@ -791,9 +882,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Obtain the current list of sessions for this agent. */
         oRemoteMetrics:GetRequestMetrics(input piAgentID, output oRequests).
 
-        /* Output the report to a known location on disk for review/archival. */
-        if valid-object(oRequests) and oRequests:Length gt 0 then
-            oRequests:WriteFile(this-object:GetRequestPath(piAgentID), true).
+        /* Output the report to the common JSON structure for tracking. */
+        if valid-object(oRequests) and oRequests:Length gt 0 then do:
+            this-object:MetricsOutput:Add("Requests", new JsonObject()).
+            this-object:MetricsOutput:GetJsonObject("Requests"):Add("Filename", this-object:GetRequestPath(piAgentID)).
+            this-object:MetricsOutput:GetJsonObject("Requests"):Add("Agent", piAgentID).
+            this-object:MetricsOutput:GetJsonObject("Requests"):Add("Data", cast(oRequests:Clone(), JsonArray)).
+        end.
 
         finally:
             delete object oRequests no-error.
@@ -818,9 +913,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         /* Obtain the current list of sessions for this agent. */
         oRemoteMetrics:GetSessions(input piAgentID, output oSessions).
 
-        /* Output the report to a known location on disk for review/archival. */
-        if valid-object(oSessions) and oSessions:Length gt 0 then
-            oSessions:WriteFile(this-object:GetSessionPath(piAgentID), true).
+        /* Output the report to the common JSON structure for tracking. */
+        if valid-object(oSessions) and oSessions:Length gt 0 then do:
+            this-object:MetricsOutput:Add("Sessions", new JsonObject()).
+            this-object:MetricsOutput:GetJsonObject("Sessions"):Add("Filename", this-object:GetRequestPath(piAgentID)).
+            this-object:MetricsOutput:GetJsonObject("Sessions"):Add("Agent", piAgentID).
+            this-object:MetricsOutput:GetJsonObject("Sessions"):Add("Data", cast(oSessions:Clone(), JsonArray)).
+        end.
 
         finally:
             delete object oSessions no-error.
@@ -899,17 +998,15 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                                        piAgentID, piSessionID, this-object:OutputTime)).
 
         /* Clean up any old metrics if they exist in the output object. */
-        if this-object:MetricsOutput:Has("ABLObjects") then this-object:MetricsOutput:Remove("ABLObjects").
-        if this-object:MetricsOutput:Has("Session") then this-object:MetricsOutput:Remove("Session").
-        if this-object:MetricsOutput:Has("Requests") then this-object:MetricsOutput:Remove("Requests").
+        this-object:ResetOutput().
 
-        if oConfig:AreObjectsEnabled("PrepareSessionABLObjectReport") then
+        if oConfig:AreObjectsEnabled("PrepareSessionReports") then
             this-object:GetSessionABLObjects(piAgentID, piSessionID). /* ABLObjects Report */
 
-        if oConfig:IsMemoryEnabled("PrepareSessionABLObjectReport") then
+        if oConfig:IsMemoryEnabled("PrepareSessionReports") then
             this-object:GetSessionMetrics(piAgentID). /* Session Metrics, eg. Memory */
 
-        if oConfig:AreRequestsEnabled("PrepareSessionABLObjectReport") then
+        if oConfig:AreRequestsEnabled("PrepareSessionReports") then
             this-object:GetRequestMetrics(piAgentID). /* Last 1000 Requests */
 
         this-object:OutputTime = ?. /* Reset output timestamp. */
@@ -919,6 +1016,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                                             piAgentID, piSessionID, err:GetMessage(1))).
             undo, throw err.
         end catch.
+        finally:
+            /* Always attempt to output any content gathered. */
+            this-object:WriteSessionReports().
+        end finally.
     end method. /* PrepareSessionReports */
 
 end class.

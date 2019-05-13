@@ -1,10 +1,10 @@
 /*------------------------------------------------------------------------
     File        : OEMetricsConfig
-    Purpose     : Provide a central object for metrics configuration options 
-    Description : 
+    Purpose     : Provide a central object for metrics configuration options
+    Description :
     Author(s)   : Dustin Grau
     Created     : Mon May 07 17:01:59 EDT 2018
-    Notes       : 
+    Notes       :
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
@@ -38,7 +38,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                     if file-info:full-pathname eq ? then do:
                         /* Last, check the SESSION-TEMP location. */
                         file-info:filename = substitute("&1/&2", this-object:TemporaryDir, cConfigName).
-                    end. /* not found in /bin/ */                        
+                    end. /* not found in /bin/ */
                 end. /* not found in /conf/ */
 
                 /* If one of the above paths is still present, use that. */
@@ -93,7 +93,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     define public property CollectorServer as character no-undo initial "localhost" get. private set.
 
-    define public property CollectorPort as integer no-undo initial 0 get. private set.
+    define public property CollectorPort as integer no-undo initial ? get. private set.
 
 
     /***** Constructor/Destructor *****/
@@ -229,7 +229,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                             else
                                 assign this-object:CollectorServer = "localhost".
 
-                            if oSubObj:Has("port") and oSubObj:GetType("port") eq JsonDataType:String then
+                            if oSubObj:Has("port") and oSubObj:GetType("port") eq JsonDataType:Number then
                                 assign this-object:CollectorPort = oSubObj:GetInteger("port").
                             else
                                 assign this-object:CollectorPort = ?.
@@ -243,7 +243,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error parsing config file: &1", err:GetMessage(1))).
-            undo, throw err.                
+            undo, throw err.
         end catch.
         finally:
             delete object oParser no-error.
