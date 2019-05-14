@@ -317,14 +317,15 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* ResetOutput */
 
 
-    method private void WriteSessionReports ( ):
+    method private void WriteSessionReports ( input piAgentID   as integer,
+                                              input piSessionID as integer ):
         define variable oSubObj as JsonObject no-undo.
         define variable lError  as logical    no-undo initial false.
 
         /**
          * Note when this output is being generated.
          */
-        oMetricsLogger:Debug("Writing all metrics output").
+        oMetricsLogger:Debug(substitute("Writing metrics for Agent '&1', Session '&2'.", piAgentID, piSessionID)).
 
         /* Output the collected metrics to their respective locations. */
         if oConfig:CollectorType eq "remote" then do on error undo, throw:
@@ -338,30 +339,26 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                                             oConfig:CollectorScheme, oConfig:CollectorServer, oConfig:CollectorPort).
 
             /* Prepare to send the metrics data as JSON to the endpoint. */
-            oMetricsLogger:Info(substitute("Sending metrics data to &1", cRequestURI)).
+            oMetricsLogger:Info(substitute("Sending metrics data to collector at &1", cRequestURI)).
             oHttpReq = RequestBuilder:Put(cRequestURI, this-object:MetricsOutput)
                                      :ContentType("application/json")
+                                     :AcceptJson()
+                                     :AddHeader("Accept-Encoding", "gzip, deflate")
                                      :Request.
             oHttpResp = HttpClient:Instance():Execute(oHttpReq).
 
             /* Check the status code from the remote collector. */
-            oMetricsLogger:Info(substitute("Collector Status: &1", oHttpResp:StatusCode)).
             if oHttpResp:StatusCode ne 200 then
-                undo, throw new AppError(substitute("Response Code was not HTTP/200: &1", string(oHttpResp:StatusCode)), 0).
-
-            /* Make sure that entity is a true JSON object prior to casting and returning. */
-            if valid-object(oHttpResp:Entity) and type-of(oHttpResp:Entity, JsonObject) then
-                cast(oHttpResp:Entity, JsonObject):WriteFile(substitute("&1/metrics/LastMetricsResponse-&2.&3.json",
-                                                                        iso-date(today), mtime), true).
+                undo, throw new AppError(substitute("Collector response code was not HTTP/200: &1", string(oHttpResp:StatusCode)), 0).
 
             catch err as Progress.Lang.Error:
-                /* Mark failure if error occurs. */
+                /* Mark failure if any error occurs. */
                 assign lError = true.
             end catch.
             finally:
                 /* Dump the last metrics output object. */
-                this-object:MetricsOutput:WriteFile(substitute("&1/metrics/LastMetricsOutput-&2.&3.json",
-                                                               this-object:TemporaryDir, iso-date(today), mtime), true).
+                this-object:MetricsOutput:WriteFile(substitute("&1/metrics/MetricsOutput_&2.&3_A&4_S&5.json",
+                                                               this-object:TemporaryDir, iso-date(today), mtime, piAgentID, piSessionID), true).
             end finally.
         end. /* remote */
 
@@ -369,20 +366,28 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if oConfig:CollectorType eq "file" or lError then do:
             if this-object:MetricsOutput:Has("ABLObjects") then do:
                 assign oSubObj = this-object:MetricsOutput:GetJsonObject("ABLObjects").
-                oSubObj:GetJsonObject("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
+                if oSubObj:Has("Data") and oSubObj:GetType("Data") eq JsonDataType:Array then
+                    oSubObj:GetJsonArray("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
             end. /* ABLObjects */
 
             if this-object:MetricsOutput:Has("Sessions") then do:
                 assign oSubObj = this-object:MetricsOutput:GetJsonObject("Sessions").
-                oSubObj:GetJsonObject("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
+                if oSubObj:Has("Data") and oSubObj:GetType("Data") eq JsonDataType:Array then
+                    oSubObj:GetJsonArray("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
             end. /* Sessions */
 
             if this-object:MetricsOutput:Has("Requests") then do:
                 assign oSubObj = this-object:MetricsOutput:GetJsonObject("Requests").
-                oSubObj:GetJsonObject("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
+                if oSubObj:Has("Data") and oSubObj:GetType("Data") eq JsonDataType:Array then
+                    oSubObj:GetJsonArray("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
             end. /* Requests */
         end. /* file */
 
+        catch err as Progress.Lang.Error:
+            oMetricsLogger:Error(substitute("Unable to output reports for Agent '&1', Session '&2': &3",
+                                            piAgentID, piSessionID, err:GetMessage(1))).
+            /* Just report error, don't throw any further. */
+        end catch.
         finally:
             this-object:ResetOutput().
         end finally.
@@ -1023,7 +1028,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         end catch.
         finally:
             /* Always attempt to output any content gathered. */
-            this-object:WriteSessionReports().
+            this-object:WriteSessionReports(piAgentID, piSessionID).
         end finally.
     end method. /* PrepareSessionReports */
 
