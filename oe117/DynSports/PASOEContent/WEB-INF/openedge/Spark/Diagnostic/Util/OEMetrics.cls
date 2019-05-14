@@ -69,6 +69,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
      * MetricsOutput Structure:
      *
      * {
+     *   AppName: "",
+     *   Instance: "",
      *   ABLObjects: {
      *     Filename: "",
      *     Agent: 0,
@@ -141,7 +143,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         os-create-dir value(substitute("&1/metrics/Requests", this-object:TemporaryDir)).
         os-create-dir value(substitute("&1/metrics/SessionData", this-object:TemporaryDir)).
 
-        assign this-object:MetricsOutput = new JsonObject(). /* Create initial JSON object for output. */
+        /* Create initial JSON object for output, supplying basic application information. */
+        assign this-object:MetricsOutput = new JsonObject().
+        this-object:MetricsOutput:Add("AppName", trim(os-getenv("ABLAPP_NAME"))).
+        this-object:MetricsOutput:Add("Instance", trim(os-getenv("INSTANCE_URI"))).
     end constructor.
 
 

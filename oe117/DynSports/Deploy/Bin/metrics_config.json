@@ -12,7 +12,7 @@
         "source": "oemanager",
         "trackMemory": true,
         "trackObjects": true,
-        "trackRequests": false
+        "trackRequests": true
     },
     "profiler": {
         "enabled": true,
