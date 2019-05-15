@@ -373,7 +373,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
             if this-object:MetricsOutput:Has("ABLObjects") then do:
                 assign oSubObj = this-object:MetricsOutput:GetJsonObject("ABLObjects").
-oLogger:Info(substitute("ABLObjects: &1", oSubObj:GetCharacter("Filename"))).
+
                 if oSubObj:Has("Data") and oSubObj:GetType("Data") eq JsonDataType:Array and
                    oSubObj:Has("Filename") and oSubObj:GetType("Filename") eq JsonDataType:String then
                     oSubObj:GetJsonArray("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
@@ -381,7 +381,7 @@ oLogger:Info(substitute("ABLObjects: &1", oSubObj:GetCharacter("Filename"))).
 
             if this-object:MetricsOutput:Has("Sessions") then do:
                 assign oSubObj = this-object:MetricsOutput:GetJsonObject("Sessions").
-oLogger:Info(substitute("Sessions: &1", oSubObj:GetCharacter("Filename"))).
+
                 if oSubObj:Has("Data") and oSubObj:GetType("Data") eq JsonDataType:Array and
                    oSubObj:Has("Filename") and oSubObj:GetType("Filename") eq JsonDataType:String then
                     oSubObj:GetJsonArray("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
@@ -389,7 +389,7 @@ oLogger:Info(substitute("Sessions: &1", oSubObj:GetCharacter("Filename"))).
 
             if this-object:MetricsOutput:Has("Requests") then do:
                 assign oSubObj = this-object:MetricsOutput:GetJsonObject("Requests").
-oLogger:Info(substitute("Requests: &1", oSubObj:GetCharacter("Filename"))).
+
                 if oSubObj:Has("Data") and oSubObj:GetType("Data") eq JsonDataType:Array and
                    oSubObj:Has("Filename") and oSubObj:GetType("Filename") eq JsonDataType:String then
                     oSubObj:GetJsonArray("Data"):WriteFile(oSubObj:GetCharacter("Filename"), true).
