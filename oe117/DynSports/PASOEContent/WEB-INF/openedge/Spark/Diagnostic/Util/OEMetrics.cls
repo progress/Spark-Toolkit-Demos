@@ -91,8 +91,12 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
      *   }
      * }
      *
-     * @TODO: Figure out best format for sending profiler output.
      */
+
+    /* URI for remote metrics collector, relative to server/port. */
+    define private property CollectorMetricsURI as character no-undo
+        initial "web/pdo/monitor/intake/liveMetrics"
+        get. set.
 
     define private property oMetricsLogger as ILogWriter no-undo
         get():
@@ -337,15 +341,14 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             define variable oHttpResp   as IHttpResponse no-undo.
 
             /* Prepare the URL to the remote PAS Monitor instance endpoint for data intake. */
-            assign cRequestURI = substitute("&1://&2:&3/web/pdo/monitor/intake/liveData",
-                                            oConfig:CollectorScheme, oConfig:CollectorServer, oConfig:CollectorPort).
+            assign cRequestURI = substitute("&1://&2:&3/&4",
+                                            oConfig:CollectorScheme, oConfig:CollectorServer,
+                                            oConfig:CollectorPort, this-object:CollectorMetricsURI).
 
             /* Prepare to send the metrics data as JSON to the endpoint. */
             oMetricsLogger:Info(substitute("Sending metrics data to collector at &1", cRequestURI)).
             oHttpReq = RequestBuilder:Put(cRequestURI, this-object:MetricsOutput)
                                      :ContentType("application/json")
-                                     :AcceptJson()
-                                     :AddHeader("Accept-Encoding", "gzip, deflate")
                                      :Request.
             oHttpResp = HttpClient:Instance():Execute(oHttpReq).
 
