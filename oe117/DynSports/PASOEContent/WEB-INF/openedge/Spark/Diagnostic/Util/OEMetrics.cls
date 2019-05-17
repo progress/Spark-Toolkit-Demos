@@ -405,8 +405,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             /* Use a common method to transport data, since the endpoints should be similar. */
             assign lError = this-object:SendToCollector("metrics", this-object:MetricsOutput).
 
-            /* Dump the last metrics output object to disk if logging at debug/trace level. */
-            if not lError and oMetricsLogger:LogLevel eq LogLevelEnum:Debug or oMetricsLogger:LogLevel eq LogLevelEnum:Trace then 
+            /* Dump the full metrics output object to disk if logging at trace level. */
+            if not lError and oMetricsLogger:LogLevel eq LogLevelEnum:Trace then 
                 this-object:MetricsOutput:WriteFile(substitute("&1/metrics/MetricsOutput_&2.&3_A&4_S&5.json",
                                                                this-object:TemporaryDir, iso-date(today),
                                                                mtime, piAgentID, piSessionID), true).
@@ -656,13 +656,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 end finally.
             end. /* remote */
 
-            /**
-             * Also prepare and send Tomcat access logs, as this method may be called
-             * by the session shutdown procedure (identified by pcTrackBy parameter).
-             */
-            if oConfig:CollectorType eq "remote" and pcTrackBy eq "session" then
-                this-object:ProcessAccessLogs().
-
             return true.
         end. /* profiler:enabled */
         else
@@ -690,11 +683,17 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable cLogFiles as character  no-undo.
         define variable iX        as integer    no-undo.
 
+        /* If not enabled for remote collection, leave. */
+        if oConfig:CollectorType ne "remote" then return.
+
         /* Prepare the JSON data for the collector. */
         assign oAccess = new JsonObject().
         oAccess:Add("AppName", trim(os-getenv("ABLAPP_NAME"))).
         oAccess:Add("Instance", trim(os-getenv("INSTANCE_URI"))).
 
+        /* @TODO: Prevent multiple sessions from sending the same log files. */
+
+        /* Look within the standard TC logs folder for access logs. */
         assign cLogDir = substitute("&1\logs", os-getenv("CATALINA_BASE")).
         input from os-dir(cLogDir) no-echo.
         repeat:
@@ -708,7 +707,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         end.
         input close.
 
-        /* Add each access log as a longchar array. */
+        /* Add each access log into an array as longchar. */
         assign oLogs = new JsonArray().
         do iX = 1 to num-entries(cLogFiles, ","):
             assign
