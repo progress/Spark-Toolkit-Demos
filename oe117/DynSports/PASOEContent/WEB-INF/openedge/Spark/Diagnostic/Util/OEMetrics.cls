@@ -643,8 +643,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 oProfiler:Add("Session", this-object:GetSessionID()).
                 oProfiler:Add("Data", lcProfile).
 
-                /* Send without regard for failure (since we have the file locally). */
-                this-object:SendToCollector("profile", oProfiler).
+                /* Send the file and then delete if no error reported. */
+                if not this-object:SendToCollector("profile", oProfiler) then
+                    os-delete value(profiler:file-name) no-error.
 
                 catch err as Progress.Lang.Error:
                     /* Just report any errors, but don't throw further (code should be allowed to exit cleanly). */
