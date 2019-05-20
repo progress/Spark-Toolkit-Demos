@@ -3,7 +3,7 @@
     Purpose     : Test harness for Two-Factor tokens
     Author(s)   : Dustin Grau (dugrau@progress.com)
     Created     : Fri Oct 13 13:17:53 EDT 2017
-    Notes       : 
+    Notes       :
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
@@ -14,7 +14,7 @@ block-level on error undo, throw.
 
 block-level on error undo, throw.
 
-class Business.UnitTest.Token inherits Spark.Core.Service.DynamicResource: 
+class Business.UnitTest.Token inherits Spark.Core.Service.DynamicResource:
 
     define public override property serviceURI as character
         initial "/web/api/tests" no-undo get.

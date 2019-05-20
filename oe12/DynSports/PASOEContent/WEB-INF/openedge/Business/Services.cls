@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
     File        : Services
-    Purpose     : 
-    Syntax      : 
-    Description : 
+    Purpose     :
+    Syntax      :
+    Description :
     Author(s)   : Dustin Grau
     Created     : Mon Sep 24 09:20:50 EDT 2018
-    Notes       : 
+    Notes       :
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
@@ -17,7 +17,7 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class Business.Services inherits Spark.Core.Service.DynamicResource: 
+class Business.Services inherits Spark.Core.Service.DynamicResource:
 
     define public override property serviceURI as character
         initial "/web/api/common" no-undo get.

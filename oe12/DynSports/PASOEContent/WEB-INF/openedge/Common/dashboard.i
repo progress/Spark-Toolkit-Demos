@@ -10,7 +10,7 @@
 define temp-table salesPipeline no-undo
     field category as character
     field amount   as decimal
-    index pkCat as primary category 
+    index pkCat as primary category
     .
 
 define temp-table salesActuals no-undo
