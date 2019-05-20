@@ -703,7 +703,8 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             if cFileName = "." or
                cFileName = ".." then next.
 
-            if cFileName matches "localhost_access_log*" then
+            if cFileName matches "localhost_access_log*" or
+               cFileName matches "localhost-access*.log" then
                 assign cLogFiles = trim(substitute("&1,&2", cLogFiles, cFullName), ",").
         end.
         input close.
