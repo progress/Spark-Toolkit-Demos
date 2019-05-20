@@ -406,7 +406,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             assign lError = this-object:SendToCollector("metrics", this-object:MetricsOutput).
 
             /* Dump the full metrics output object to disk if logging at trace level. */
-            if not lError and oMetricsLogger:LogLevel eq LogLevelEnum:Trace then 
+            if not lError and oMetricsLogger:LogLevel eq LogLevelEnum:Trace then
                 this-object:MetricsOutput:WriteFile(substitute("&1/metrics/MetricsOutput_&2.&3_A&4_S&5.json",
                                                                this-object:TemporaryDir, iso-date(today),
                                                                mtime, piAgentID, piSessionID), true).
@@ -718,8 +718,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 .
             copy-lob from file cFilename to lcLogData no-error.
             oLogs:Add(lcLogData).
-        end.
+        end. /* do iX */
         oAccess:Add("Data", oLogs).
+        oLogger:Info(substitute("Located &1 access log file(s) for parsing.", oLogs:Length)).
 
         /* Send without regard for failure (since we have the file locally). */
         this-object:SendToCollector("logs", oAccess).
