@@ -215,7 +215,7 @@ class Sports.Handler.FileUpload inherits OpenEdge.Web.WebHandler use-widget-pool
                 oBinWriter:Close().
 
                 /* Send all of the data to the output file as discovered from previous steps. */
-                copy-lob from cast(oBinWriter:Entity, OpenEdge.Core.ByteBucket):GetBytes():Value to file cOutFile no-convert no-error.            
+                copy-lob from cast(oBinWriter:Entity, OpenEdge.Core.ByteBucket):GetBytes():Value to file cOutFile no-convert no-error.
 
                 /* Log reciept of this uploaded file by this user. */
                 oLoggingManager:logMessage(substitute("&1 bytes as &2 to &3",
@@ -238,7 +238,7 @@ class Sports.Handler.FileUpload inherits OpenEdge.Web.WebHandler use-widget-pool
         catch err as Progress.Lang.Error:
             os-delete value(cUploadDir). /* Remove the upload directory just created. */
 
-            /* Prepare error response with a simple string. */            
+            /* Prepare error response with a simple string. */
             assign oResponse = new OpenEdge.Web.WebResponse().
             oResponse:StatusCode = integer(StatusCodeEnum:InternalServerError).
             oResponse:StatusReason = StatusCodeHelper:GetMessage(StatusCodeEnum:InternalServerError).
