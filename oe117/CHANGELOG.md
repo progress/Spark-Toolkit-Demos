@@ -1,7 +1,30 @@
 # Changelog
 
+## OpenEdge 11.7.4+ and 12.0
 
-## OpenEdge 11.7
+### v4.5.1
+
+- Bugfix release to synchronized some missed tool/test code between demo projects.
+- Address issues with Diagnostic library when used stand-alone (no other Spark code).
+
+### v4.5.0
+
+- Bugfix release with new Business Entity functionality and compatibility with OE12.
+- Includes pre-built PL files for OE11 and OE12, along with new locations for these files under /dist/.
+
+### v4.4.2
+
+- Bugfix release with enhancements to prepare for new Business Entity functionality.
+
+### v4.4.1
+
+- Bugfix release with enhancements for OpenAPI output.
+
+### v4.4.0
+
+- Addition of new catalog output (OpenAPI) and removal of several duplicate and outdated classes.
+- Make necessary adjustments to patterns since the switch to the DataObjectHandler class as of v4.3.0.
+- Framework now officially requires OpenEdge 11.7.4 due to features inherent in that service pack.
 
 ### v4.3.0
 
