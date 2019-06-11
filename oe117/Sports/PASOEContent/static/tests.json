@@ -1,10 +1,10 @@
 {
   "version": "1.5",
-  "lastModified": "Mon Mar 25 16:18:41 EDT 2019",
+  "lastModified": "Thu May 23 15:16:55 EDT 2019",
   "services": [
     {
-      "name": "test",
-      "address": "\/web\/pdo\/test",
+      "name": "tests",
+      "address": "\/web\/pdo\/tests",
       "useRequest": false,
       "resources": [
         {
@@ -123,6 +123,65 @@
                 },
                 {
                   "name": "messageText",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "leakycode",
+          "path": "\/leakycode",
+          "autoSave": true,
+          "operations": [
+            {
+              "name": "buffer",
+              "path": "\/buffer",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "completed",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "memptr",
+              "path": "\/memptr",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "pointerSize",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "handle",
+              "path": "\/handle",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "textMessage",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "object",
+              "path": "\/object",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "arrayLength",
                   "type": "RESPONSE_BODY"
                 }
               ]

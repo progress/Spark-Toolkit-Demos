@@ -210,12 +210,12 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity use-widget-
         assign filter = oFilterObj:GetJsonText().
 
         define variable iNumRecs as int64 no-undo.
-        super:readData(filter, iNumRecs, output dataset dsWebContext by-reference).
+        super:ReadData(filter, iNumRecs, output dataset dsWebContext by-reference).
     end method. /* ReadContext */
 
 
     method public void SubmitContext ( input-output dataset dsWebContext ):
-        super:submitData(input-output dataset dsWebContext by-reference).
+        super:SubmitData(input-output dataset dsWebContext by-reference).
     end method. /* SubmitContext */
 
 

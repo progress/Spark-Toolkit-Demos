@@ -106,14 +106,8 @@ class tests.StartupTests inherits tests.SparkUnit:
 
     /*------------------------------------------------------------------------------
         Purpose: Confirm the CatalogManager is present and valid.
-        Notes:
+        Notes: TEST NOT VALID FOR THE SPORTS DEMO PROJECT
     ------------------------------------------------------------------------------*/
-    @Test.
-    method public void testCatalogManager ( ):
-        define variable oManager as Progress.Lang.Object no-undo.
-        assign oManager = this-object:GetManager("Spark.Core.Manager.ICatalogManager").
-        OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
-    end method.
 
     /*------------------------------------------------------------------------------
         Purpose: Confirm the ConnectionManager is present and valid.
@@ -139,14 +133,8 @@ class tests.StartupTests inherits tests.SparkUnit:
 
     /*------------------------------------------------------------------------------
         Purpose: Confirm the SchemaManager is present and valid.
-        Notes:
+        Notes: TEST NOT VALID FOR THE SPORTS DEMO PROJECT
     ------------------------------------------------------------------------------*/
-    @Test.
-    method public void testSchemaManager ( ):
-        define variable oManager as Progress.Lang.Object no-undo.
-        assign oManager = this-object:GetManager("Spark.Core.Manager.ISchemaManager").
-        OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
-    end method.
 
     /*------------------------------------------------------------------------------
         Purpose: Confirm the StateManager is present and valid.

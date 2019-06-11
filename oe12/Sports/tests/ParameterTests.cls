@@ -10,7 +10,7 @@
 
 &global-define test_username dev@spark
 &global-define allowed_roles PSCUser,EndUser
-&global-define domain_passkey oech1::23222e35397562
+&global-define domain_passkey spark01
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
@@ -104,7 +104,7 @@ class tests.ParameterTests inherits tests.SparkUnit:
         hCPO:set-property("ATTR_EXPIRED", "false").
         hCPO:seal("{&domain_passkey}").
 
-        OpenEdge.Core.Assert:IsTrue(hCPO:validate-seal("{&domain_passkey}")).
+        OpenEdge.Core.Assert:IsTrue(hCPO:validate-seal(security-policy:encode-domain-access-code("{&domain_passkey}"))).
     end method.
 
     /*------------------------------------------------------------------------------

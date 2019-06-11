@@ -1,7 +1,6 @@
 using Spark.Core.Manager.IClientContext from propath.
 using Spark.Core.Manager.ILoggingManager from propath.
 using Spark.Core.Manager.StateLifeCycleEnum from propath.
-using Spark.Core.Util.ApplicationError from propath.
 
 block-level on error undo, throw.
 

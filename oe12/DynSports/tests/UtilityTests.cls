@@ -8,10 +8,6 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-&global-define test_username dev@spark
-&global-define allowed_roles PSCUser,EndUser
-&global-define domain_passkey oech1::23222e35397562
-
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
 
