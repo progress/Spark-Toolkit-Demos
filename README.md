@@ -4,7 +4,7 @@
 
 This repository contains sample projects ready for import into PDSOE and PASOE, meant to illustrate usage of the **Progress Spark Toolkit**. Please note that all demos are for illustrating server-side micro-services only; there are no UI components bundled as of the September 2018 release (v4.3.0).
 
-**Note:** This release utilizes toolkit release [v4.4.2](https://github.com/progress/Spark-Toolkit/releases/tag/v4.4.2).
+**Note:** This release utilizes toolkit release [v4.5.1](https://github.com/progress/Spark-Toolkit/releases/tag/v4.5.1).
 
 
 ## Requirements
