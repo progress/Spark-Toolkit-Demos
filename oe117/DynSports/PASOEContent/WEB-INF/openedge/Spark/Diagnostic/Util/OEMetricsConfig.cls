@@ -22,22 +22,25 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     define private property oLogger as ILogWriter no-undo get. set.
 
+    define private property MetricsConfigFile as character no-undo initial "metrics_config.json"
+        get. set.
+
     define private property MetricsConfigPath as character no-undo initial ""
         get():
             if MetricsConfigPath eq "" then do:
                 /* Determine the location of the config file for this feature. */
-                define variable cConfigName as character no-undo.
-                assign cConfigName = trim(os-getenv("METRICS_CONFIG")).
-                oLogger:Trace(substitute("Metrics Config Name: &1", cConfigName)).
+                if (trim(os-getenv("METRICS_CONFIG")) gt "") eq true then
+                    this-object:MetricsConfigFile = trim(os-getenv("METRICS_CONFIG")).
+                oLogger:Trace(substitute("Metrics Config Name: &1", this-object:MetricsConfigFile)).
 
                 /* First, check the CATALINA_BASE/conf/ location. */
-                file-info:filename = substitute("&1/conf/&2", this-object:CatalinaBase, cConfigName).
+                file-info:filename = substitute("&1/conf/&2", this-object:CatalinaBase, this-object:MetricsConfigFile).
                 if file-info:full-pathname eq ? then do:
                     /* Next, check the CATALINA_BASE/bin/ location. */
-                    file-info:filename = substitute("&1/bin/&2", this-object:CatalinaBase, cConfigName).
+                    file-info:filename = substitute("&1/bin/&2", this-object:CatalinaBase, this-object:MetricsConfigFile).
                     if file-info:full-pathname eq ? then do:
                         /* Last, check the SESSION-TEMP location. */
-                        file-info:filename = substitute("&1/&2", this-object:TemporaryDir, cConfigName).
+                        file-info:filename = substitute("&1/&2", this-object:TemporaryDir, this-object:MetricsConfigFile).
                     end. /* not found in /bin/ */
                 end. /* not found in /conf/ */
 
@@ -56,6 +59,9 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         set.
 
     /*** Public Properties ***/
+
+    /* Tracks the list of ABL Applications and WebApps for this instance. */
+    define public property ABLAppList as JsonObject no-undo get. private set.
 
     define private property OEManagerUser as character no-undo initial "" get. set.
 
@@ -95,6 +101,8 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     define public property CollectorPort as integer no-undo initial ? get. private set.
 
+    define public property InstanceURI as character no-undo initial "" get. private set.
+
 
     /***** Constructor/Destructor *****/
 
@@ -103,11 +111,113 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         super().
 
         assign oLogger = poLogger. /* Use the logger from the calling class. */
+        assign ABLAppList = new JsonObject(). /* Create initial object. */
+        this-object:Discovery(). /* Perform local discovery of necessary info. */
         this-object:RefreshConfig(). /* Obtain initial configuration options. */
     end constructor.
 
 
     /***** Private Methods *****/
+
+
+    method private void Discovery ( ):
+        define variable cCatalinaBase  as character  no-undo.
+        define variable cMetricsConfig as character  no-undo.
+        define variable cLine          as character  no-undo.
+        define variable cAppName       as character  no-undo.
+        define variable cWebApp        as character  no-undo.
+        define variable cTransport     as character  no-undo.
+        define variable lcConfigTemp   as longchar   no-undo.
+        define variable iLines         as integer    no-undo.
+        define variable iLine          as integer    no-undo.
+        define variable iX             as integer    no-undo.
+        define variable iHttpPort      as integer    no-undo.
+        define variable iHttpsPort     as integer    no-undo.
+        define variable lFound         as logical    no-undo.
+        define variable oWebAppList    as JsonArray  no-undo.
+
+define variable dStart as datetime-tz no-undo.
+assign dStart = now.
+
+        file-info:file-name = this-object:CatalinaBase + "/conf/catalina.properties".
+        if file-info:full-pathname ne ? then do:
+            copy-lob from file file-info:full-pathname to lcConfigTemp no-error.
+
+            assign iLines = num-entries(lcConfigTemp, "~n").
+            if iLines ge 1 then cfgblk:
+            do iLine = 1 to iLines:
+                assign cLine = trim(entry(iLine, lcConfigTemp, "~n")).
+
+                case true:
+                    when cLine begins "psc.as.http.port=" then
+                        assign iHttpPort = integer(trim(entry(2, cLine, "="))).
+                    when cLine begins "psc.as.https.port=" then
+                        assign iHttpsPort = integer(trim(entry(2, cLine, "="))).
+                end case.
+            end. /* do iLines */
+
+            /* Look to the same server at either the HTTP or HTTPS port for OEManager. */
+            if iHttpPort gt 0 then
+                this-object:InstanceURI = substitute("http://127.0.0.1:&1", iHttpPort).
+            else if iHttpsPort gt 0 then
+                this-object:InstanceURI = substitute("https://127.0.0.1:&1", iHttpsPort).
+        end. /* catalina.properties */
+
+        file-info:file-name = this-object:CatalinaBase + "/conf/openedge.properties".
+        if file-info:full-pathname ne ? then do:
+            copy-lob from file file-info:full-pathname to lcConfigTemp no-error.
+
+            assign iLines = num-entries(lcConfigTemp, "~n").
+            if iLines ge 1 then cfgblk:
+            do iLine = 1 to iLines:
+                assign cLine = trim(entry(iLine, lcConfigTemp, "~n")).
+
+                if cLine matches "[*.*.APSV]" or
+                   cLine matches "[*.*.REST]" or
+                   cLine matches "[*.*.SOAP]" or
+                   cLine matches "[*.*.WEB]" then do:
+                    assign cLine = replace(cLine, "[", "").
+                    assign cLine = replace(cLine, "]", "").
+
+                    assign
+                        cAppName   = entry(1, cLine, ".")
+                        cWebApp    = entry(2, cLine, ".")
+                        cTransport = entry(3, cLine, ".")
+                        lFound     = false
+                        .
+
+                    if ABLAppList:Has(cAppName) then
+                        /* If an ABLApp exists it should have an array of WebApps. */
+                        assign oWebAppList = ABLAppList:GetJsonArray(cAppName).
+                    else
+                        /* If no ABLApp then create new list of WebApp names. */
+                        assign oWebAppList = new JsonArray().
+
+                    /* WebApp names across the PAS instance must be unique. */
+                    do iX = 1 to oWebAppList:Length:
+                        if oWebAppList:GetCharacter(iX) eq cWebApp then
+                            assign lFound = true.
+                    end.
+
+                    /* Add to list if not found. */
+                    if not lFound then
+                        oWebAppList:Add(cWebApp).
+
+                    /* Either update or add the list of WebApps. */
+                    if ABLAppList:Has(cAppName) then
+                        ABLAppList:Set(cAppname, oWebAppList).
+                    else
+                        ABLAppList:Add(cAppname, oWebAppList).
+                end. /* transport */
+            end. /* do iLines */
+        end. /* openedge.properties */
+
+message "MetricsConfigPath:" this-object:MetricsConfigPath.
+message "CatalinaBase:" this-object:CatalinaBase.
+message "InstanceURI:" this-object:InstanceURI.
+message "ABLAppList:" string(this-object:ABLAppList:GetJsonText()).
+message "Elapsed:" interval(now, dStart, string(OpenEdge.Core.DateTimeAddIntervalEnum:Milliseconds)).
+    end method. /* Discovery */
 
 
     method private void ParseConfig ( ):
@@ -287,6 +397,8 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
     method public void UpdateCredentialsOEM ( input poRemoteMetrics as Spark.Diagnostic.Util.RemoteMetrics ):
         if can-do("oem,oemanager", this-object:RemoteSource) then do:
+            if (this-object:InstanceURI gt "") eq true then
+                assign poRemoteMetrics:InstanceURI = this-object:InstanceURI.
             if (this-object:OEManagerUser gt "") eq true then
                 assign poRemoteMetrics:ManagerUsername = this-object:OEManagerUser.
             if (this-object:OEManagerPass gt "") eq true then
