@@ -274,11 +274,17 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if (trim(os-getenv("ABLAPP_NAME")) gt "") eq true then
             return trim(os-getenv("ABLAPP_NAME")).
 
-        /* If there is only the default ABL Application, use that. */
+        /* If a default name was provided by the config, use that. */
+        if (oConfig:DefaultAppName gt "") eq true then
+            return oConfig:DefaultAppName.
+
+        /* If there are any discovered ABL Application, use that. */
         define variable cNames as character no-undo extent.
         assign cNames = oConfig:ABLAppList:GetNames().
-        if extent(cNames) eq 1 then
-            return cNames[1].
+        if extent(cNames) ge 1 then
+            return cNames[1]. /* Use the first discovered. */
+
+        /* @TODO: Somehow discover the ABLApp based on request. */
     end method. /* GetABLAppName */
 
 

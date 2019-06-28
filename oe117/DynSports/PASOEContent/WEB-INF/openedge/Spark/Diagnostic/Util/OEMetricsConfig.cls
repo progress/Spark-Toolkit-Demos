@@ -15,12 +15,22 @@ block-level on error undo, throw.
 
 class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPath use-widget-pool final:
 
-    /* Tracks the last time the config file was loaded from the file system. */
+    /* Tracks the last time the metrics config file was loaded from the file system. */
     define private variable dConfigLastLoaded as datetime no-undo initial ?.
+
+    /* Tracks the last time the CB props file was loaded from the file system. */
+    define private variable dCBPropsLastLoaded as datetime no-undo initial ?.
+
+    /* Tracks the last time the OE props file was loaded from the file system. */
+    define private variable dOEPropsLastLoaded as datetime no-undo initial ?.
 
     /*** Private Properties ***/
 
     define private property oLogger as ILogWriter no-undo get. set.
+
+    define private property OEManagerUser as character no-undo initial "" get. set.
+
+    define private property OEManagerPass as character no-undo initial "" get. set.
 
     define private property MetricsConfigFile as character no-undo initial "metrics_config.json"
         get. set.
@@ -63,9 +73,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
     /* Tracks the list of ABL Applications and WebApps for this instance. */
     define public property ABLAppList as JsonObject no-undo get. private set.
 
-    define private property OEManagerUser as character no-undo initial "" get. set.
-
-    define private property OEManagerPass as character no-undo initial "" get. set.
+    define public property DefaultAppName as character no-undo initial "" get. private set.
 
     define public property PollingIgnoreList as character no-undo initial "" get. private set.
 
@@ -112,7 +120,6 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
         assign oLogger = poLogger. /* Use the logger from the calling class. */
         assign ABLAppList = new JsonObject(). /* Create initial object. */
-        this-object:Discovery(). /* Perform local discovery of necessary info. */
         this-object:RefreshConfig(). /* Obtain initial configuration options. */
     end constructor.
 
@@ -134,89 +141,105 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         define variable iHttpPort      as integer    no-undo.
         define variable iHttpsPort     as integer    no-undo.
         define variable lFound         as logical    no-undo.
+        define variable dLastDate      as datetime   no-undo.
         define variable oWebAppList    as JsonArray  no-undo.
 
-define variable dStart as datetime-tz no-undo.
-assign dStart = now.
-
+        /* Examine the catalina.properties for info about the available ports. */
         file-info:file-name = this-object:CatalinaBase + "/conf/catalina.properties".
         if file-info:full-pathname ne ? then do:
-            copy-lob from file file-info:full-pathname to lcConfigTemp no-error.
+            /* Get the current date/time that the file was last modified. */
+            assign dLastDate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
 
-            assign iLines = num-entries(lcConfigTemp, "~n").
-            if iLines ge 1 then cfgblk:
-            do iLine = 1 to iLines:
-                assign cLine = trim(entry(iLine, lcConfigTemp, "~n")).
+            if dLastDate ne dCBPropsLastLoaded then do:
+                /* Mark down the current modified date/time for this file. */
+                assign dCBPropsLastLoaded = dLastDate.
 
-                case true:
-                    when cLine begins "psc.as.http.port=" then
-                        assign iHttpPort = integer(trim(entry(2, cLine, "="))).
-                    when cLine begins "psc.as.https.port=" then
-                        assign iHttpsPort = integer(trim(entry(2, cLine, "="))).
-                end case.
-            end. /* do iLines */
+                /* Read the file into a longchar value (avoids keeping the file open). */
+                copy-lob from file file-info:full-pathname to lcConfigTemp no-error.
 
-            /* Look to the same server at either the HTTP or HTTPS port for OEManager. */
-            if iHttpPort gt 0 then
-                this-object:InstanceURI = substitute("http://127.0.0.1:&1", iHttpPort).
-            else if iHttpsPort gt 0 then
-                this-object:InstanceURI = substitute("https://127.0.0.1:&1", iHttpsPort).
+                assign iLines = num-entries(lcConfigTemp, "~n").
+                if iLines ge 1 then cfgblk:
+                do iLine = 1 to iLines:
+                    assign cLine = trim(entry(iLine, lcConfigTemp, "~n")).
+
+                    case true:
+                        when cLine begins "psc.as.http.port=" then
+                            assign iHttpPort = integer(trim(entry(2, cLine, "="))).
+                        when cLine begins "psc.as.https.port=" then
+                            assign iHttpsPort = integer(trim(entry(2, cLine, "="))).
+                    end case.
+                end. /* do iLines */
+
+                /* Look to the same server at either the HTTP or HTTPS port for OEManager. */
+                if iHttpPort gt 0 then
+                    this-object:InstanceURI = substitute("http://127.0.0.1:&1", iHttpPort).
+                else if iHttpsPort gt 0 then
+                    this-object:InstanceURI = substitute("https://127.0.0.1:&1", iHttpsPort).
+
+                assign lcConfigTemp = ?. /* Reset the variable. */
+            end. /* file updated */
         end. /* catalina.properties */
 
+        /* Examine the openedge.properties for ABL Application and WebApp information. */
         file-info:file-name = this-object:CatalinaBase + "/conf/openedge.properties".
         if file-info:full-pathname ne ? then do:
-            copy-lob from file file-info:full-pathname to lcConfigTemp no-error.
+            /* Get the current date/time that the file was last modified. */
+            assign dLastDate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
 
-            assign iLines = num-entries(lcConfigTemp, "~n").
-            if iLines ge 1 then cfgblk:
-            do iLine = 1 to iLines:
-                assign cLine = trim(entry(iLine, lcConfigTemp, "~n")).
+            if dLastDate ne dOEPropsLastLoaded then do:
+                /* Mark down the current modified date/time for this file. */
+                assign dOEPropsLastLoaded = dLastDate.
 
-                if cLine matches "[*.*.APSV]" or
-                   cLine matches "[*.*.REST]" or
-                   cLine matches "[*.*.SOAP]" or
-                   cLine matches "[*.*.WEB]" then do:
-                    assign cLine = replace(cLine, "[", "").
-                    assign cLine = replace(cLine, "]", "").
+                /* Read the file into a longchar value (avoids keeping the file open). */
+                copy-lob from file file-info:full-pathname to lcConfigTemp no-error.
 
-                    assign
-                        cAppName   = entry(1, cLine, ".")
-                        cWebApp    = entry(2, cLine, ".")
-                        cTransport = entry(3, cLine, ".")
-                        lFound     = false
-                        .
+                assign iLines = num-entries(lcConfigTemp, "~n").
+                if iLines ge 1 then cfgblk:
+                do iLine = 1 to iLines:
+                    assign cLine = trim(entry(iLine, lcConfigTemp, "~n")).
 
-                    if ABLAppList:Has(cAppName) then
-                        /* If an ABLApp exists it should have an array of WebApps. */
-                        assign oWebAppList = ABLAppList:GetJsonArray(cAppName).
-                    else
-                        /* If no ABLApp then create new list of WebApp names. */
-                        assign oWebAppList = new JsonArray().
+                    if cLine matches "[*.*.APSV]" or
+                       cLine matches "[*.*.REST]" or
+                       cLine matches "[*.*.SOAP]" or
+                       cLine matches "[*.*.WEB]" then do:
+                        assign cLine = replace(cLine, "[", "").
+                        assign cLine = replace(cLine, "]", "").
 
-                    /* WebApp names across the PAS instance must be unique. */
-                    do iX = 1 to oWebAppList:Length:
-                        if oWebAppList:GetCharacter(iX) eq cWebApp then
-                            assign lFound = true.
-                    end.
+                        assign
+                            cAppName   = entry(1, cLine, ".")
+                            cWebApp    = entry(2, cLine, ".")
+                            cTransport = entry(3, cLine, ".")
+                            lFound     = false
+                            .
 
-                    /* Add to list if not found. */
-                    if not lFound then
-                        oWebAppList:Add(cWebApp).
+                        if ABLAppList:Has(cAppName) then
+                            /* If an ABLApp exists it should have an array of WebApps. */
+                            assign oWebAppList = ABLAppList:GetJsonArray(cAppName).
+                        else
+                            /* If no ABLApp then create new list of WebApp names. */
+                            assign oWebAppList = new JsonArray().
 
-                    /* Either update or add the list of WebApps. */
-                    if ABLAppList:Has(cAppName) then
-                        ABLAppList:Set(cAppname, oWebAppList).
-                    else
-                        ABLAppList:Add(cAppname, oWebAppList).
-                end. /* transport */
-            end. /* do iLines */
+                        /* WebApp names across the PAS instance must be unique. */
+                        do iX = 1 to oWebAppList:Length:
+                            if oWebAppList:GetCharacter(iX) eq cWebApp then
+                                assign lFound = true.
+                        end.
+
+                        /* Add to list if not found. */
+                        if not lFound then
+                            oWebAppList:Add(cWebApp).
+
+                        /* Either update or add the list of WebApps. */
+                        if ABLAppList:Has(cAppName) then
+                            ABLAppList:Set(cAppname, oWebAppList).
+                        else
+                            ABLAppList:Add(cAppname, oWebAppList).
+                    end. /* transport */
+                end. /* do iLines */
+
+                assign lcConfigTemp = ?. /* Reset the variable. */
+            end. /* file updated */
         end. /* openedge.properties */
-
-message "MetricsConfigPath:" this-object:MetricsConfigPath.
-message "CatalinaBase:" this-object:CatalinaBase.
-message "InstanceURI:" this-object:InstanceURI.
-message "ABLAppList:" string(this-object:ABLAppList:GetJsonText()).
-message "Elapsed:" interval(now, dStart, string(OpenEdge.Core.DateTimeAddIntervalEnum:Milliseconds)).
     end method. /* Discovery */
 
 
@@ -244,6 +267,9 @@ message "Elapsed:" interval(now, dStart, string(OpenEdge.Core.DateTimeAddInterva
                     when "general" then do:
                         if oConfig:Has("general") and oConfig:GetType("general") eq JsonDataType:Object then do:
                             assign oSubObj = oConfig:GetJsonObject("general").
+
+                            if oSubObj:Has("trackAppName") and oSubObj:GetType("trackAppName") eq JsonDataType:String then
+                                assign this-object:DefaultAppName = oSubObj:GetCharacter("trackAppName").
 
                             if oSubObj:Has("pollIgnore") and oSubObj:GetType("pollIgnore") eq JsonDataType:String then
                                 assign this-object:PollingIgnoreList = oSubObj:GetCharacter("pollIgnore").
@@ -374,12 +400,14 @@ message "Elapsed:" interval(now, dStart, string(OpenEdge.Core.DateTimeAddInterva
         /* Cannot proceed if the configuration file is not present. */
         if (this-object:MetricsConfigPath gt "") ne true then return.
 
-        /* Load the config file path as previously discovered. */
+        this-object:Discovery(). /* Perform local discovery of server info. */
+
+        /* Load the metrics config file path as previously discovered. */
         file-info:file-name = this-object:MetricsConfigPath.
         if file-info:full-pathname ne ? then do:
             define variable dLastDate as datetime no-undo.
 
-            /* Get the current date/time . */
+            /* Get the current date/time this file was modified. */
             assign dLastDate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
 
             if dLastDate ne dConfigLastLoaded then do:
