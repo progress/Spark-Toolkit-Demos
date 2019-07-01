@@ -480,7 +480,9 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
             undo, throw err.
         end catch.
         finally:
-            oLogger:Debug(substitute("Current ABL Application: &1", cAppName)).
+            if (cAppName gt "") eq true then
+                oLogger:Debug(substitute("Matched Agent PID #&1 to ABL Application '&2'.", piAgentID, cAppName)).
+
             return cAppName.
         end finally.
     end method. /* GetApplication */

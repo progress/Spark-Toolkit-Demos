@@ -38,7 +38,13 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
     define private property MetricsConfigPath as character no-undo initial ""
         get():
             if MetricsConfigPath eq "" then do:
-                /* Determine the location of the config file for this feature. */
+                /**
+                 * Determine the location of the config file for this feature. By default
+                 * the file should be called "metrics_config.json" and exist in either the
+                 * conf/ or bin/ or SESSION-TEMP folders. If the name of the config file
+                 * is custom, then it should be provided as a METRICS_CONFIG environment
+                 * variable.
+                 */
                 if (trim(os-getenv("METRICS_CONFIG")) gt "") eq true then
                     this-object:MetricsConfigFile = trim(os-getenv("METRICS_CONFIG")).
                 oLogger:Trace(substitute("Metrics Config Name: &1", this-object:MetricsConfigFile)).
@@ -145,7 +151,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         define variable oWebAppList    as JsonArray  no-undo.
 
         /* Examine the catalina.properties for info about the available ports. */
-        file-info:file-name = this-object:CatalinaBase + "/conf/catalina.properties".
+        file-info:file-name = substitute("&1/conf/catalina.properties", this-object:CatalinaBase).
         if file-info:full-pathname ne ? then do:
             /* Get the current date/time that the file was last modified. */
             assign dLastDate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
@@ -182,16 +188,19 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                 end.
 
                 assign lcConfigTemp = ?. /* Reset the variable. */
+                oLogger:Trace("Completed discovery of catalina.properties").
             end. /* file updated */
         end. /* catalina.properties */
 
         /* Examine the openedge.properties for ABL Application and WebApp information. */
-        file-info:file-name = this-object:CatalinaBase + "/conf/openedge.properties".
+        file-info:file-name = substitute("&1/conf/openedge.properties", this-object:CatalinaBase).
         if file-info:full-pathname ne ? then do:
             /* Get the current date/time that the file was last modified. */
             assign dLastDate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
 
             if dLastDate ne dOEPropsLastLoaded then do:
+                assign this-object:DefaultAppName = "". /* Clear the default ABL Application name. */
+
                 /* Mark down the current modified date/time for this file. */
                 assign dOEPropsLastLoaded = dLastDate.
 
@@ -243,8 +252,17 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                 end. /* do iLines */
 
                 assign lcConfigTemp = ?. /* Reset the variable. */
+                oLogger:Trace("Completed discovery of openedge.properties").
             end. /* file updated */
         end. /* openedge.properties */
+
+        /* Check if only a single ABL Application exists. */
+        define variable cNames as character no-undo extent.
+        assign cNames = ABLAppList:GetNames().
+        if extent(cNames) eq 1 then do:
+            assign this-object:DefaultAppName = cNames[1]. /* Use as default application. */
+            oLogger:Trace(substitute("Using default ABL Application: &1", this-object:DefaultAppName)).
+        end. 
     end method. /* Discovery */
 
 
@@ -273,8 +291,11 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                         if oConfig:Has("general") and oConfig:GetType("general") eq JsonDataType:Object then do:
                             assign oSubObj = oConfig:GetJsonObject("general").
 
-                            if oSubObj:Has("trackAppName") and oSubObj:GetType("trackAppName") eq JsonDataType:String then
-                                assign this-object:DefaultAppName = oSubObj:GetCharacter("trackAppName").
+                            /* Use a default ABL Application name if specified either by config for ENV variable. */
+                            if oSubObj:Has("limitAppName") and oSubObj:GetType("limitAppName") eq JsonDataType:String then
+                                assign this-object:DefaultAppName = oSubObj:GetCharacter("limitAppName").
+                            else if (trim(os-getenv("ABLAPP_NAME")) gt "") eq true then
+                                assign this-object:DefaultAppName = trim(os-getenv("ABLAPP_NAME")).
 
                             if oSubObj:Has("pollIgnore") and oSubObj:GetType("pollIgnore") eq JsonDataType:String then
                                 assign this-object:PollingIgnoreList = oSubObj:GetCharacter("pollIgnore").
@@ -290,7 +311,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                                 assign this-object:PollingStopTime = ?.
 
                             if this-object:PollingStartTime ne ? and this-object:PollingStopTime ne ? then
-                                oLogger:Debug(substitute("Using polling schedule: &1 to &2",
+                                oLogger:Debug(substitute("using polling schedule: &1 to &2",
                                                          this-object:PollingStartTime,
                                                          this-object:PollingStopTime)).
 
@@ -381,6 +402,8 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                 end case. /* cNames */
             end. /* do ix */
         end. /* valid object */
+
+        oLogger:Trace(substitute("Completed parsing of &1", this-object:MetricsConfigPath)).
 
         catch err as Progress.Lang.Error:
             oLogger:Error(substitute("Error parsing config file: &1", err:GetMessage(1))).

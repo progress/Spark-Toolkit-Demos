@@ -59,6 +59,33 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     /* Property to allow sychronization of timestamps on output generation. */
     define private property OutputTime as datetime no-undo initial ? get. set.
 
+    define private property ApplicationName as character no-undo initial ""
+        get():
+            if (ApplicationName gt "") ne true then do:
+                /* If a default name was provided by the config, use that. */
+                if (this-object:oConfig:DefaultAppName gt "") eq true then
+                    assign ApplicationName = this-object:oConfig:DefaultAppName.
+
+                /**
+                 * If no default ABL Application was previously discovered,
+                 * then match the correct ABLApp based on the current AgentID.
+                 * This provides support for multiple ABL Applications in the
+                 * current PAS instance, and must rely on the current AgentID
+                 * to identify the correct one as currently accessed for this
+                 * request (since AgentID's are unique across the instance).
+                 */
+                if (ApplicationName gt "") ne true then do:
+                    define variable cNames as character no-undo extent.
+                    assign cNames = this-object:oConfig:ABLAppList:GetNames().
+                    assign ApplicationName = this-object:oRemoteMetrics:GetApplication(cNames, this-object:GetAgentID()).
+                end.
+            end. /* blank value */
+
+            this-object:oLogger:Trace(substitute("Current ABL Application is '&1'.", ApplicationName)).
+            return ApplicationName.
+        end get.
+        set.
+
     define private property RequestCount as integer no-undo initial 0 get. set.
 
     define private property RequestStart as datetime-tz no-undo initial ? get. set.
@@ -269,32 +296,6 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* GetProcedureName */
 
 
-    method private character GetABLAppName ( ):
-        /* If given a distinct value by OS/ENV variable, use that. */
-/*        if (trim(os-getenv("ABLAPP_NAME")) gt "") eq true then*/
-/*            return trim(os-getenv("ABLAPP_NAME")).            */
-
-        /* If a default name was provided by the config, use that. */
-/*        if (oConfig:DefaultAppName gt "") eq true then*/
-/*            return oConfig:DefaultAppName.            */
-
-        /* If there is only a default ABL Application, use that. */
-        define variable cNames as character no-undo extent.
-        assign cNames = oConfig:ABLAppList:GetNames().
-/*        if extent(cNames) eq 1 then                             */
-/*            return cNames[1]. /* Use the default application. */*/
-
-        /*
-         * Discover the correct ABLApp based on the current AgentID.
-         * This provides support for multiple ABL Applications in the
-         * current PAS instance, and must rely on the current AgentID
-         * to identify the correct one as currently accessed for this
-         * request (since AgentID's are unique across the instance).
-         */
-        return oRemoteMetrics:GetApplication(cNames, this-object:GetAgentID()).
-    end method. /* GetABLAppName */
-
-
     method private integer GetAgentID ( ):
         define variable oRequestInfo as OERequestInfo no-undo.
         define variable iAgentID     as int64         no-undo.
@@ -430,9 +431,9 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         if oConfig:CollectorType eq "remote" then do:
             /* Make sure the ABL Application name is up to date before sending. */
             if this-object:MetricsOutput:Has("AppName") then
-                this-object:MetricsOutput:Set("AppName", this-object:GetABLAppName()).
+                this-object:MetricsOutput:Set("AppName", this-object:ApplicationName).
             else
-                this-object:MetricsOutput:Add("AppName", this-object:GetABLAppName()).
+                this-object:MetricsOutput:Add("AppName", this-object:ApplicationName).
 
             /* Use a common method to transport data, since the endpoints should be similar. */
             assign lError = this-object:SendToCollector("metrics", this-object:MetricsOutput).
@@ -669,7 +670,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
                 /* Prepare the JSON data for the collector. */
                 assign oProfiler = new JsonObject().
-                oProfiler:Add("AppName", this-object:GetABLAppName()).
+                oProfiler:Add("AppName", this-object:ApplicationName).
                 oProfiler:Add("Instance", oConfig:InstanceURI).
                 oProfiler:Add("Agent", this-object:GetAgentID()).
                 oProfiler:Add("Session", this-object:GetSessionID()).
@@ -721,13 +722,13 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         /* Prepare the JSON data for the collector. */
         assign oAccess = new JsonObject().
-        oAccess:Add("AppName", this-object:GetABLAppName()).
+        oAccess:Add("AppName", this-object:ApplicationName).
         oAccess:Add("Instance", oConfig:InstanceURI).
 
         /* @TODO: Prevent multiple sessions from sending the same log files. */
 
         /* Look within the standard TC logs folder for access logs. */
-        assign cLogDir = substitute("&1\logs", os-getenv("CATALINA_BASE")).
+        assign cLogDir = substitute("&1\logs", this-object:CatalinaBase).
         input from os-dir(cLogDir) no-echo.
         repeat:
             import cFileName cFullName cCodes.
@@ -819,7 +820,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         if not lIsTracking then do:
             /* Turn on tracking if not already enabled, and record the latest result. */
-            assign lIsTracking = oRemoteMetrics:TrackABLObjects(this-object:GetABLAppName(), piAgentID, true).
+            assign lIsTracking = oRemoteMetrics:TrackABLObjects(this-object:ApplicationName, piAgentID, true).
 
             /* Remember whether objects are being tracked for this agent. */
             if lIsTracking then do:
@@ -861,7 +862,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             os-delete value(file-info:full-pathname).
 
         /* Just immediately disable the object tracking for this agent. */
-        return oRemoteMetrics:TrackABLObjects(this-object:GetABLAppName(), this-object:GetAgentID(), false).
+        return oRemoteMetrics:TrackABLObjects(this-object:ApplicationName, this-object:GetAgentID(), false).
     end method. /* StopTrackingObjects */
 
 
@@ -896,7 +897,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         assign iAgentID = this-object:GetAgentID(). /* Obtain the current AgentID. */
 
         /* Request the current ABLObjects report for this agent. */
-        if oRemoteMetrics:FilterABLObjectReport(input  this-object:GetABLAppName(),
+        if oRemoteMetrics:FilterABLObjectReport(input  this-object:ApplicationName,
                                                 input  iAgentID,
                                                 input  oConfig:ClassesExcluded,
                                                 output oObjReport) then do:
@@ -935,7 +936,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         define variable lSuccess as logical    no-undo initial false.
 
         /* Get the agents if object is not present. */
-        if not valid-object(RemoteMetrics:AgentList) then oRemoteMetrics:GetAgents(this-object:GetABLAppName()).
+        if not valid-object(RemoteMetrics:AgentList) then oRemoteMetrics:GetAgents(this-object:ApplicationName).
 
         /* Make request to all agents of this ABLApp. */
         do iCount = 1 to RemoteMetrics:AgentList:Length:
@@ -944,7 +945,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
             if valid-object(oAgent) and oAgent:Has("pid") then do:
                 /* Set the tracking option for this agent. */
                 assign cAgentID = oAgent:GetCharacter("pid").
-                if oRemoteMetrics:TrackABLObjects(this-object:GetABLAppName(), integer(cAgentID), plEnable) then
+                if oRemoteMetrics:TrackABLObjects(this-object:ApplicationName, integer(cAgentID), plEnable) then
                     assign lSuccess = true.
             end. /* has agentId */
         end. /* do iCount */
@@ -975,7 +976,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         oConfig:UpdateCredentialsOEM(oRemoteMetrics).
 
         /* Get the agents if object is not present. */
-        if not valid-object(RemoteMetrics:AgentList) then oRemoteMetrics:GetAgents(this-object:GetABLAppName()).
+        if not valid-object(RemoteMetrics:AgentList) then oRemoteMetrics:GetAgents(this-object:ApplicationName).
 
         /* Make request to all agents of this ABLApp. */
         do iCount = 1 to RemoteMetrics:AgentList:Length:
@@ -987,7 +988,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 assign cAgentID = oAgent:GetCharacter("pid").
 
                 /* Request the ABL objects for this specific agent. */
-                if oRemoteMetrics:FilterABLObjectReport(input  this-object:GetABLAppName(),
+                if oRemoteMetrics:FilterABLObjectReport(input  this-object:ApplicationName,
                                                         input  integer(cAgentID),
                                                         input  oConfig:ClassesExcluded,
                                                         output oObjReport) then do:
@@ -1047,7 +1048,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
         if piAgentID gt 0 and piSessionID gt 0 then do:
             /* Request the ABL objects for this specific agent and session. */
-            if oRemoteMetrics:FilterSessionABLObjectReport(input  this-object:GetABLAppName(),
+            if oRemoteMetrics:FilterSessionABLObjectReport(input  this-object:ApplicationName,
                                                            input  piAgentID,
                                                            input  piSessionID,
                                                            input  oConfig:ClassesExcluded,
@@ -1087,7 +1088,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         oConfig:UpdateCredentialsOEM(oRemoteMetrics).
 
         /* Obtain the current list of sessions for this agent. */
-        oRemoteMetrics:GetRequestMetrics(input this-object:GetABLAppName(), input piAgentID, output oRequests).
+        oRemoteMetrics:GetRequestMetrics(input this-object:ApplicationName, input piAgentID, output oRequests).
 
         do iX = 1 to oRequests:Length:
             /* If a request occured prior to the last report from this session, delete the object. */
@@ -1128,7 +1129,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         oConfig:UpdateCredentialsOEM(oRemoteMetrics).
 
         /* Obtain the current list of sessions for this agent. */
-        oRemoteMetrics:GetSessions(input this-object:GetABLAppName(), input piAgentID, output oSessions).
+        oRemoteMetrics:GetSessions(input this-object:ApplicationName, input piAgentID, output oSessions).
 
         /* Output the report to the common JSON structure for tracking. */
         if valid-object(oSessions) and oSessions:Length gt 0 then do:
@@ -1192,6 +1193,10 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                                             this-object:GetAgentID(), this-object:GetSessionID(), err:GetMessage(1))).
             undo, throw err.
         end catch.
+        finally:
+            /* Always reset the current ABL Application name before the next request. */
+            assign this-object:ApplicationName = "".
+        end finally.
     end method. /* PrepareSessionReports */
 
 
