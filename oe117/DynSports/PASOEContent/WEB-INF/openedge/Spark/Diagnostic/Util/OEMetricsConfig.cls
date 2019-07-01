@@ -170,11 +170,16 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                     end case.
                 end. /* do iLines */
 
-                /* Look to the same server at either the HTTP or HTTPS port for OEManager. */
-                if iHttpPort gt 0 then
-                    this-object:InstanceURI = substitute("http://127.0.0.1:&1", iHttpPort).
-                else if iHttpsPort gt 0 then
-                    this-object:InstanceURI = substitute("https://127.0.0.1:&1", iHttpsPort).
+                /* Use a distinct INSTANCE_URI environment variable, if supplied. */
+                if (trim(os-getenv("INSTANCE_URI")) gt "") eq true then
+                    assign this-object:InstanceURI = trim(os-getenv("INSTANCE_URI")).
+                else do:
+                    /* Look to the same server at either the HTTP or HTTPS port for OEManager. */
+                    if iHttpPort gt 0 then
+                        this-object:InstanceURI = substitute("http://127.0.0.1:&1", iHttpPort).
+                    else if iHttpsPort gt 0 then
+                        this-object:InstanceURI = substitute("https://127.0.0.1:&1", iHttpsPort).
+                end.
 
                 assign lcConfigTemp = ?. /* Reset the variable. */
             end. /* file updated */

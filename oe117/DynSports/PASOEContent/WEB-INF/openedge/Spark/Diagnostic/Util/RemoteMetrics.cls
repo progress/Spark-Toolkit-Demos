@@ -25,6 +25,7 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
 
     /*** Static Properties ***/
 
+    define public static property Applications as JsonObject no-undo get. private set.
     define public static property AgentList as JsonArray no-undo get. private set.
 
     /* Default to OEManager which is the preferred means of accessing metrics. */
@@ -152,6 +153,8 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
                 assign this-object:MetricSource = "oejmx".
         end case.
         this-object:CheckTempPath().
+
+        Applications = new JsonObject(). /* Create new, empty object. */
     end constructor.
 
 
@@ -429,6 +432,58 @@ class Spark.Diagnostic.Util.RemoteMetrics inherits Spark.Diagnostic.Util.Logger 
 
 
     /***** Public Methods *****/
+
+
+    method public character GetApplication ( input pcAppList as character extent,
+                                             input piAgentID as integer ):
+        /**
+         * There exists an /applications endpoint for OEManager but no such query for the OEJMX.
+         * As such, it is not possible to get a list of appliations reliably from both sources,
+         * so instead we will rely on the openedge.properties file which should have all current
+         * ABL Application names gathered via the OEMetricsConfig. We will use that with a new
+         * request to GetAgents to determine which agents currently belong to which Application.
+         * This routine should build a list of available applications with their AgentID's so
+         * they can be matched up for subsequent requests.
+         */
+        define variable iX         as integer    no-undo.
+        define variable iY         as integer    no-undo.
+        define variable cAppName   as character  no-undo initial "".
+        define variable cAgentList as character  no-undo initial "".
+        define variable oAgent     as JsonObject no-undo.
+
+        if extent(pcAppList) ge 1 then
+        do iX = 1 to extent(pcAppList):
+            this-object:GetAgents(pcAppList[iX]). /* Get agents of this application name. */
+
+            if valid-object(AgentList) and AgentList:Length ge 1 then
+            do iY = 1 to AgentList:Length:
+                assign oAgent = AgentList:GetJsonObject(iY).
+                if valid-object(oAgent) and oAgent:Has("pid") then do:
+                    /* Add the PID to the list of agents for this ABL Application. */
+                    assign cAgentList = trim(substitute("&1,&2", cAgentList, oAgent:GetCharacter("pid")), ",").
+
+                    /* If a PID matches the current ABL Application, set that as the name to return. */
+                    if string(piAgentID) eq oAgent:GetCharacter("pid") then
+                        assign cAppName = pcAppList[iX].
+                end. /* valid oAgent */
+            end. /* do iY */
+
+            /* Update the applications with a list of agents. */
+            if Applications:Has(pcAppList[iX]) then
+                Applications:Set(pcAppList[iX], cAgentList).
+            else
+                Applications:Add(pcAppList[iX], cAgentList).
+        end. /* do iX */
+
+        catch err as Progress.Lang.Error:
+            oLogger:Error(substitute("Error in GetApplication: &1", err:GetMessage(1))).
+            undo, throw err.
+        end catch.
+        finally:
+            oLogger:Debug(substitute("Current ABL Application: &1", cAppName)).
+            return cAppName.
+        end finally.
+    end method. /* GetApplication */
 
 
     method public void GetAgents ( input pcABLApp as character ):

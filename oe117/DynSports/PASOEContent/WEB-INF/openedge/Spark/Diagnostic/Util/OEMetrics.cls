@@ -271,20 +271,27 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
 
     method private character GetABLAppName ( ):
         /* If given a distinct value by OS/ENV variable, use that. */
-        if (trim(os-getenv("ABLAPP_NAME")) gt "") eq true then
-            return trim(os-getenv("ABLAPP_NAME")).
+/*        if (trim(os-getenv("ABLAPP_NAME")) gt "") eq true then*/
+/*            return trim(os-getenv("ABLAPP_NAME")).            */
 
         /* If a default name was provided by the config, use that. */
-        if (oConfig:DefaultAppName gt "") eq true then
-            return oConfig:DefaultAppName.
+/*        if (oConfig:DefaultAppName gt "") eq true then*/
+/*            return oConfig:DefaultAppName.            */
 
-        /* If there are any discovered ABL Application, use that. */
+        /* If there is only a default ABL Application, use that. */
         define variable cNames as character no-undo extent.
         assign cNames = oConfig:ABLAppList:GetNames().
-        if extent(cNames) ge 1 then
-            return cNames[1]. /* Use the first discovered. */
+/*        if extent(cNames) eq 1 then                             */
+/*            return cNames[1]. /* Use the default application. */*/
 
-        /* @TODO: Somehow discover the ABLApp based on request. */
+        /*
+         * Discover the correct ABLApp based on the current AgentID.
+         * This provides support for multiple ABL Applications in the
+         * current PAS instance, and must rely on the current AgentID
+         * to identify the correct one as currently accessed for this
+         * request (since AgentID's are unique across the instance).
+         */
+        return oRemoteMetrics:GetApplication(cNames, this-object:GetAgentID()).
     end method. /* GetABLAppName */
 
 
