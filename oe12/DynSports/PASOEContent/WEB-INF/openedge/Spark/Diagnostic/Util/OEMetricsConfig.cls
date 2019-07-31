@@ -47,7 +47,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                  */
                 if (trim(os-getenv("METRICS_CONFIG")) gt "") eq true then
                     this-object:MetricsConfigFile = trim(os-getenv("METRICS_CONFIG")).
-                oLogger:Trace(substitute("Metrics Config Name: &1", this-object:MetricsConfigFile)).
+                oLogger:Trace(substitute("CFG: Metrics Config Name: &1", this-object:MetricsConfigFile)).
 
                 /* First, check the CATALINA_BASE/conf/ location. */
                 file-info:filename = substitute("&1/conf/&2", this-object:CatalinaBase, this-object:MetricsConfigFile).
@@ -67,7 +67,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                     assign MetricsConfigPath = "". /* Keep blank if not found. */
 
                 /* Provide context as to where we are getting our config options. */
-                oLogger:Info(substitute("Metrics Config Path: &1", MetricsConfigPath)).
+                oLogger:Info(substitute("CFG: Metrics Config Path: &1", MetricsConfigPath)).
             end. /* MetricsConfigPath eq "" */
 
             return MetricsConfigPath.
@@ -138,6 +138,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         define variable cMetricsConfig as character  no-undo.
         define variable cLine          as character  no-undo.
         define variable cAppName       as character  no-undo.
+        define variable cAppNames      as character  no-undo.
         define variable cWebApp        as character  no-undo.
         define variable cTransport     as character  no-undo.
         define variable lcConfigTemp   as longchar   no-undo.
@@ -188,7 +189,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                 end.
 
                 assign lcConfigTemp = ?. /* Reset the variable. */
-                oLogger:Trace("Completed discovery of catalina.properties").
+                oLogger:Trace(substitute("CFG: Completed discovery of catalina.properties [Instance: &1]", this-object:InstanceURI)).
             end. /* file updated */
         end. /* catalina.properties */
 
@@ -207,6 +208,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                 /* Read the file into a longchar value (avoids keeping the file open). */
                 copy-lob from file file-info:full-pathname to lcConfigTemp no-error.
 
+                /* Read each line of the properties file, looking for transports. */
                 assign iLines = num-entries(lcConfigTemp, "~n").
                 if iLines ge 1 then cfgblk:
                 do iLine = 1 to iLines:
@@ -246,23 +248,25 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                         /* Either update or add the list of WebApps. */
                         if ABLAppList:Has(cAppName) then
                             ABLAppList:Set(cAppname, oWebAppList).
-                        else
+                        else do:
                             ABLAppList:Add(cAppname, oWebAppList).
+                            cAppNames = substitute("&1,&2", cAppNames, cAppName).
+                        end.
                     end. /* transport */
                 end. /* do iLines */
 
                 assign lcConfigTemp = ?. /* Reset the variable. */
-                oLogger:Trace("Completed discovery of openedge.properties").
+                oLogger:Trace(substitute("CFG: Completed discovery of openedge.properties [ABL Apps: &1]", trim(cAppNames, ","))).
             end. /* file updated */
         end. /* openedge.properties */
 
         /* Check if only a single ABL Application exists. */
         define variable cNames as character no-undo extent.
         assign cNames = ABLAppList:GetNames().
-        if extent(cNames) eq 1 then do:
-            assign this-object:DefaultAppName = cNames[1]. /* Use as default application. */
-            oLogger:Trace(substitute("Using default ABL Application: &1", this-object:DefaultAppName)).
-        end. 
+        if extent(cNames) eq 1 and this-object:DefaultAppName ne cNames[1] then do:
+            assign this-object:DefaultAppName = cNames[1]. /* Use the only name as the default application. */
+            oLogger:Trace(substitute("CFG: Using default ABL Application: &1", this-object:DefaultAppName)).
+        end.
     end method. /* Discovery */
 
 
@@ -311,7 +315,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
                                 assign this-object:PollingStopTime = ?.
 
                             if this-object:PollingStartTime ne ? and this-object:PollingStopTime ne ? then
-                                oLogger:Debug(substitute("using polling schedule: &1 to &2",
+                                oLogger:Debug(substitute("CFG: Using polling schedule: &1 to &2",
                                                          this-object:PollingStartTime,
                                                          this-object:PollingStopTime)).
 
@@ -403,10 +407,10 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
             end. /* do ix */
         end. /* valid object */
 
-        oLogger:Trace(substitute("Completed parsing of &1", this-object:MetricsConfigPath)).
+        oLogger:Trace(substitute("CFG: Completed parsing of &1", this-object:MetricsConfigPath)).
 
         catch err as Progress.Lang.Error:
-            oLogger:Error(substitute("Error parsing config file: &1", err:GetMessage(1))).
+            oLogger:Error(substitute("CFG: Error parsing config file: &1", err:GetMessage(1))).
             undo, throw err.
         end catch.
         finally:
@@ -439,7 +443,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
             assign dLastDate = datetime(file-info:file-mod-date, file-info:file-mod-time * 1000).
 
             if dLastDate ne dConfigLastLoaded then do:
-                oLogger:Debug("Updating configuration options from file.").
+                oLogger:Debug(substitute("CFG: Updating metrics options from configuration file (&1).", this-object:MetricsConfigFile)).
 
                 /* Mark down the current modified date/time for this file. */
                 assign dConfigLastLoaded = dLastDate.
@@ -474,7 +478,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         this-object:RefreshConfig(). /* Update configuration options. */
 
         if not this-object:TrackObjects then do:
-            oLogger:Debug(substitute("Objects disabled, leaving &1", pcMethodName)).
+            oLogger:Debug(substitute("CFG: Objects disabled, leaving &1", pcMethodName)).
             return false.
         end. /* not enabled */
 
@@ -486,7 +490,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         this-object:RefreshConfig(). /* Update configuration options. */
 
         if not this-object:TrackMemory then do:
-            oLogger:Debug(substitute("Sessions disabled, leaving &1", pcMethodName)).
+            oLogger:Debug(substitute("CFG: Sessions disabled, leaving &1", pcMethodName)).
             return false.
         end. /* not enabled */
 
@@ -498,7 +502,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         this-object:RefreshConfig(). /* Update configuration options. */
 
         if not this-object:TrackRequests then do:
-            oLogger:Debug(substitute("Requests disabled, leaving &1", pcMethodName)).
+            oLogger:Debug(substitute("CFG: Requests disabled, leaving &1", pcMethodName)).
             return false.
         end. /* not enabled */
 
@@ -510,7 +514,7 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
         this-object:RefreshConfig(). /* Update configuration options. */
 
         if not this-object:ProfilerEnabled then do:
-            oLogger:Trace(substitute("Profiler disabled, leaving &1", pcMethodName)).
+            oLogger:Trace(substitute("CFG: Profiler disabled, leaving &1", pcMethodName)).
             return false.
         end. /* not enabled */
 
@@ -519,14 +523,21 @@ class Spark.Diagnostic.Util.OEMetricsConfig inherits Spark.Diagnostic.Util.OSPat
 
 
     method public logical OnValidSchedule ():
+        define variable lValid as logical  no-undo initial true.
+        define variable tNow   as datetime no-undo.
+
         /* Determine if polling is controled by start/stop datetime values. */
+        assign tNow = now.
         if this-object:PollingStartTime ne ? and this-object:PollingStopTime ne ? then do:
             /* Do not allow polling outside of scheduled start/stop times. */
-            if now lt this-object:PollingStartTime then return false. /* Before Start */
-            if now gt this-object:PollingStopTime then return false. /* After Stop */
+            if tNow lt this-object:PollingStartTime then assign lValid = false. /* Before Start */
+            if tNow gt this-object:PollingStopTime then assign lValid = false. /* After Stop */
         end. /* has polling schedule */
 
-        return true. /* Assuming polling active if no specific timestamps present. */
+        if not lValid then /* Remark when current time is outside of the expected schedule. */
+            oLogger:Trace(substitute("CFG: Configured schedule prevents tracking metrics at this time (&1).", tNow)).
+
+        return lValid. /* Assumes polling is active if no specific timestamps present. */
     end method. /* CheckSchedule */
 
 end class.

@@ -35,7 +35,8 @@ do on error undo, leave:
         .
 
     /* Output any values you wish, to be timestamped within the associated log file. */
-    oLogger:Info(substitute("&1 | &2 &3", hCPO:session-id, trim(cProgram), trim(cMethod))).
+    oLogger:Info(substitute("&1 | &2 &3",
+                            if valid-handle(hCPO) then hCPO:session-id else "UNKNOWN_SESSION", trim(cProgram), trim(cMethod))).
 
     finally:
         delete object hCPO no-error.

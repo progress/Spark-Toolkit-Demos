@@ -10,8 +10,6 @@
 using Progress.Lang.* from propath.
 using OpenEdge.Logging.* from propath.
 
-/* ***************************  Definitions  ************************** */
-
 block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
