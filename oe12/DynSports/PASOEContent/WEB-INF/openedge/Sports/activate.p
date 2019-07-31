@@ -10,8 +10,6 @@
 using Progress.Lang.* from propath.
 using OpenEdge.Logging.* from propath.
 
-/* ***************************  Definitions  ************************** */
-
 block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
@@ -55,3 +53,4 @@ end catch.
 finally:
     delete object oRequest no-error.
 end finally.
+

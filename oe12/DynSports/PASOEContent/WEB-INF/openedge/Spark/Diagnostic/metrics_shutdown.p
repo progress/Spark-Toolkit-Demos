@@ -7,9 +7,7 @@
     Notes       : PAS: Assign as sessionShutdownProc in openedge.properties
   ----------------------------------------------------------------------*/
 
-/* ***************************  Definitions  ************************** */
-
-using progress.lang.* from propath.
+using Progress.Lang.* from propath.
 
 block-level on error undo, throw.
 
@@ -31,3 +29,4 @@ catch err as Progress.Lang.Error:
     /* Catch and Release */
     message substitute("Metrics Shutdown Error: &1", err:GetMessage(1)).
 end catch.
+
