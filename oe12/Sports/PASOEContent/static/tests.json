@@ -1,6 +1,6 @@
 {
   "version": "1.4",
-  "lastModified": "Thu May 23 14:51:42 EDT 2019",
+  "lastModified": "Mon Aug 05 10:56:12 EDT 2019",
   "services": [
     {
       "name": "tests",
@@ -182,6 +182,43 @@
               "params": [
                 {
                   "name": "arrayLength",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "runcode",
+          "path": "\/runcode",
+          "autoSave": true,
+          "operations": [
+            {
+              "name": "stop",
+              "path": "\/stop",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "completed",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "busy",
+              "path": "\/busy",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "put",
+              "params": [
+                {
+                  "name": "busyTime",
+                  "type": "REQUEST_BODY"
+                },
+                {
+                  "name": "elapsed",
                   "type": "RESPONSE_BODY"
                 }
               ]
