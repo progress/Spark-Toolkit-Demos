@@ -342,6 +342,67 @@
               ]
             }
           }
+        },
+        "\/runcode": {
+        },
+        "\/runcode\/stop": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UnitTest.RunCode",
+              "function": "stopCode",
+              "arg": [
+                {
+                  "ablName": "completed",
+                  "ablType": "LOGICAL",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "completed"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/runcode\/busy": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.UnitTest.RunCode",
+              "function": "lookBusy",
+              "arg": [
+                {
+                  "ablName": "busyTime",
+                  "ablType": "INTEGER",
+                  "ioMode": "INPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "busyTime"
+                  }
+                },
+                {
+                  "ablName": "elapsed",
+                  "ablType": "INTEGER",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "elapsed"
+                  }
+                }
+              ]
+            }
+          }
         }
       },
       "schemas": {

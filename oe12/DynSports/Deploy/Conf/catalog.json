@@ -5,7 +5,7 @@
             "CatalogService": "Spark.Core.Service.ICatalog",
             "BusinessRoot": "Business",
             "IdProperty": "id",
-            "PreLoader": "Common/preload.p",
+            "PreLoader": "",
             "ReadFilter": "filter",
             "ServicePrefix": "api",
             "EnableDebugs": false

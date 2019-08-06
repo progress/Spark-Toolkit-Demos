@@ -15,7 +15,7 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class Business.UnitTest.LeakyCode inherits Spark.Core.Service.SparkEntity use-widget-pool:
+class Business.UnitTest.LeakyCode use-widget-pool:
 
     /* Will be used to demonstrate a hanging buffer. */
     define temp-table tt1
