@@ -6,7 +6,6 @@ This repository contains sample projects ready for import into PDSOE and PASOE, 
 
 **Note:** This release utilizes toolkit release [v4.6.0](https://github.com/progress/Spark-Toolkit/releases/tag/v4.6.0).
 
-
 ## Requirements
 
 **OpenEdge 11.7.4** or later, as the **Spark.pl** library is compiled on this version.
