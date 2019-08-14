@@ -384,7 +384,7 @@
               "arg": [
                 {
                   "ablName": "busyTime",
-                  "ablType": "DECIMAL",
+                  "ablType": "INTEGER",
                   "ioMode": "INPUT",
                   "msgElem": {
                     "type": "field",

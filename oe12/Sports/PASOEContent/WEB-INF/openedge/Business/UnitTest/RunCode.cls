@@ -19,15 +19,15 @@ class Business.UnitTest.RunCode use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/busy", alias="busy", mediaType="application/json").
-    method public void lookBusy ( input  busyTime as decimal,
+    method public void lookBusy ( input  busyTime as integer,
                                   output elapsed  as integer ):
-        /* If no time specified (or is negative) default to 1 seconds. */
-        if busyTime eq ? or busyTime le 0 then assign busyTime = 1.
+        /* If no time specified (or is negative) default to 1000 milliseconds. */
+        if busyTime eq ? or busyTime le 0 then assign busyTime = 1000.
 
         /* Run a wait loop for some period to imitate long-running code. */
         define variable iStart as datetime no-undo.
         assign iStart = now.
-        pause busyTime no-message.
+        pause (busyTime / 1000) no-message.
 
         finally:
             /* Confirm that execution paused for the time stated. */
