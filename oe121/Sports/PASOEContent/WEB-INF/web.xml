@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
-                      http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                      http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
    metadata-complete="true" 
    id="WebApp_ID" 
-   version="3.0">
+   version="4.0">
   <display-name>Progress Application Server for OpenEdge</display-name>
 
   <absolute-ordering />
@@ -118,7 +118,7 @@
     <!-- Load the various OpenEdge transport event listeners so they can
          respond to Tomcat and web application events. -->
     <listener>
-      <listener-class>com.progress.appserv.adapters.aia.OEAiaServletContextListener</listener-class>
+      <listener-class>com.progress.appserv.adapters.apsv.OEAiaServletContextListener</listener-class>
     </listener>
 
     <listener>
@@ -361,7 +361,7 @@
          clients calling into the ABL application's business logic -->
     <filter>
       <filter-name>APSV Transport Filter</filter-name>
-      <filter-class>com.progress.appserv.adapters.aia.PingFilter</filter-class>
+      <filter-class>com.progress.appserv.adapters.apsv.PingFilter</filter-class>
     </filter>
     <filter-mapping>
       <filter-name>APSV Transport Filter</filter-name>
@@ -370,7 +370,7 @@
 
     <servlet>
       <servlet-name>apsv</servlet-name>
-      <servlet-class>com.progress.appserv.adapters.aia.Aia</servlet-class>
+      <servlet-class>com.progress.appserv.adapters.apsv.Aia</servlet-class>
       <init-param>
 	    <param-name>instanceName</param-name>
 	    <param-value>Aia1</param-value>
