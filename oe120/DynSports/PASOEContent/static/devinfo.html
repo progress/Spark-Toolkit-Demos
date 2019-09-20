@@ -6,15 +6,16 @@
         <meta name="description" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
         <!-- Load Styles -->
-        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.3.911/styles/kendo.common.min.css"/>
-        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.3.911/styles/kendo.bootstrap.min.css"/>
-        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.3.911/styles/kendo.default.min.css"/>
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2019.2.619/styles/kendo.common.min.css"/>
+        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2019.2.619/styles/kendo.bootstrap.min.css"/>
+        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2019.2.619/styles/kendo.default.min.css"/>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
         <link rel="stylesheet" href="app.css"/>
         <!-- Framework Libraries -->
-        <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
         <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="https://kendo.cdn.telerik.com/2018.3.911/js/kendo.web.min.js"></script>
+        <script type="text/javascript" src="https://kendo.cdn.telerik.com/2019.2.619/js/kendo.web.min.js"></script>
         <script type="text/javascript">
             var app = (function(){
                 "use strict";
@@ -98,7 +99,7 @@
                     }
                 }
 
-                function getApplication(){
+                function getApplications(){
                     // Get information about all ABL applications for this PAS instance.
                     $.ajax({
                         contentType: "application/vnd.progress+json",
@@ -110,30 +111,30 @@
                             var ablApps = [];
                             // Output OE version info and PAS instance name.
                             $("#versionOE").html(data.versionStr);
-                            var servers = (data.result.Application || []);
-                            $.each(servers, function(i, server){
+                            var applications = (data.result.Application || []);
+                            $.each(applications, function(i, ablApp){
                                 // Keep a list of unique ABL app names.
-                                if ($.inArray(server.name, ablApps) === -1) {
-                                    ablApps.push(server.name);
+                                if ($.inArray(ablApp.name, ablApps) === -1) {
+                                    ablApps.push(ablApp.name);
                                 }
 
                                 // Output information about available ABL apps.
                                 var transport = "";
-                                var webApps = server.webapps || [];
-                                $("#serverInfo").empty();
-                                $("#transports").empty();
+                                var webApps = ablApp.webapps || [];
+                                $("#instanceInfo").empty();
+                                $("#transportInfo").empty();
                                 $.each(webApps, function(i, webApp){
                                     // Display the name of this ABL app and any available transports.
-                                    $("#transports").append("<h2>" + webApp.applicationName + "." + webApp.name + "</h2>");
+                                    $("#transportInfo").append("<h2>" + webApp.applicationName + "." + webApp.name + "</h2>");
                                     $.each(webApp.transports, function(j, transport){
                                         if (transport.state === "ENABLED") {
                                             transport = '&nbsp;<a href="' + transport.uri + '" title="' + transport.description + '" class="btn btn-success" target="_blank">' + transport.name + '</a>';
                                         } else {
                                             transport = '&nbsp;<a href="javascript:void(0);" title="' + transport.description + '" class="btn btn-danger">' + transport.name + '</a>';
                                         }
-                                        $("#transports").append(transport);
+                                        $("#transportInfo").append(transport);
                                     });
-                                    $("#transports").append("<br/><br/>");
+                                    $("#transportInfo").append("<br/><br/>");
                                 });
                             });
 
@@ -215,21 +216,29 @@
                     })
                     .done(function(data, textStatus, jqXHR){
                         if (data.outcome === "SUCCESS") {
-                            $("#serverInfo").append("<h3>" + ablApp + " Agents:</h3>");
+                            $("#instanceInfo").append("<h3 style='padding-top:10px'>" + ablApp + "</h3>");
                             var info = "";
                             var agents = (data.result || {}).agents || [];
                             $.each(agents, function(i, agent){
-                                info = "&nbsp;<b>" + agent.pid + ":</b> " + agent.state
-                                     + " <a href='javascript:app.killAgent(\"" + ablApp + "\", \"" + agent.agentId + "\")'>(stop)</a><br/>";
-                                $("#serverInfo").append(info);
+                                info = "<span style=' style='line-height:1.5;margin-left:5px'><b>PID: " + agent.pid + ":</b> " + agent.state
+                                     + " <a href='javascript:app.killAgent(\"" + ablApp + "\", \"" + agent.pid + "\")'>"
+                                     + "&nbsp;&nbsp;<i class='fa fa-hourglass-end' title='Kill Agent'></i></a></span><br/>";
+                                $("#instanceInfo").append(info);
+                                $("#instanceInfo").append("<span id='agent_" + agent.pid + "'></span>");
+                                getSessionInfo(ablApp, agent.pid);
                             });
-                            getSessionInfo(ablApp);
                         }
                     })
                     .fail(function(jqXHR, textStatus, errorThrown){
                         showMessage(errorThrown, "error");
                     });
                 }
+
+				function numberWithCommas(number) {
+				    var parts = number.toString().split(".");
+				    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+				    return parts.join(".");
+				}
 
                 function msToTime(s){
                     // Pad to 2 or 3 digits, default is 2
@@ -246,51 +255,27 @@
                     return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
                 }
 
-                function getSessionInfo(ablApp){
+                function getSessionInfo(ablApp, agentID){
                     // Get agent information for this ABL application.
                     $.ajax({
                         contentType: "application/vnd.progress+json",
                         dataType: "json",
-                        url: serverUrl + "/oemanager/applications/" + ablApp + "/sessions"
+                        url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentID + "/sessions"
                     })
                     .done(function(data, textStatus, jqXHR){
                         if (data.outcome === "SUCCESS") {
-                            $("#serverInfo").append("<h3>" + ablApp + " Sessions:</h3>");
                             var info = "";
-                            var sessions = (data.result || {}).OEABLSession || [];
+                            var sessions = (data.result || {}).AgentSession || [];
                             $.each(sessions, function(i, session){
-                                info = "&nbsp;<b title='Runtime: " + msToTime(session.elapsedTimeMs) + "'>"
-                                     + session.sessionID + ":</b> " + session.requestState
-                                     + " <a href='javascript:app.killSession(\"" + ablApp + "\", \"" + session.sessionID + "\")'>(trim)</a><br/>";
-                                $("#serverInfo").append(info);
+                                info = "<span style='line-height:1.5;padding-left:20px'><b title='Started: "
+                                     + session.StartTime + "'>Session " + session.SessionId + "</b>: " + session.SessionState
+                                     + " [" + numberWithCommas(Math.round(parseInt(session.SessionMemory) / 1024, 2)) + " KB]"
+                                     + " <a href='javascript:app.killSession(\"" + ablApp + "\", \"" + agentID + "\", \"" + session.SessionId + "\")'>"
+                                     + "&nbsp;&nbsp;<i class='fa fa-stop-circle' title='Trim Session'></i></a></span><br/>";
+                                $("#agent_" + agentID).append(info);
+                                //$("#instanceInfo").append(info);
                             });
-                            $("#serverInfo").append("<br/>");
-                            getClientInfo(ablApp);
-                        }
-                    })
-                    .fail(function(jqXHR, textStatus, errorThrown){
-                        showMessage(errorThrown, "error");
-                    });
-                }
-
-                function getClientInfo(ablApp){
-                    // Get agent information for this ABL application.
-                    $.ajax({
-                        contentType: "application/vnd.progress+json",
-                        dataType: "json",
-                        url: serverUrl + "/oemanager/applications/" + ablApp + "/clients"
-                    })
-                    .done(function(data, textStatus, jqXHR){
-                        if (data.outcome === "SUCCESS") {
-                            $("#serverInfo").append("<h3>" + ablApp + " Clients:</h3>");
-                            var info = "";
-                            var clients = (data.result || {}).ClientConnection || [];
-                            $.each(clients, function(i, client){
-                                info = "&nbsp;<b title='Runtime: " + msToTime(client.elapsedTimeMs) + "'>"
-                                     + client.sessionID + ":</b> " + client.httpSessionId + "<br/>";
-                                $("#serverInfo").append(info);
-                            });
-                            $("#serverInfo").append("<br/>");
+                            $("#instanceInfo").append("<br/>");
                             getMetrics(ablApp);
                         }
                     })
@@ -308,15 +293,15 @@
                     })
                     .done(function(data, textStatus, jqXHR){
                         if (data.outcome === "SUCCESS") {
-                            $("#serverInfo").append("<h3>" + ablApp + " Metrics:</h3>");
+                            $("#instanceInfo").append("<h3>" + ablApp + " Metrics:</h3>");
                             var metrics = data.result || {};
-                            $("#serverInfo").append("Concurrent Connected Clients: " + metrics.concurrentConnectedClients + " (Max: " + metrics.maxConcurrentClients + ")<br/>");
-                            $("#serverInfo").append("Resv. Connection Timeouts: " + metrics.reserveConnectionTimeouts + "<br/>");
-                            $("#serverInfo").append("Times Queued: " + metrics.timesQueued + " (Avg: " + metrics.avgQueueDepth + ", Max: " + metrics.maxQueueDepth + ")<br/>");
-                            $("#serverInfo").append("Requests: " + metrics.requests + "<br/>");
-                            $("#serverInfo").append("Reads: " + metrics.reads + " (Errors: " + metrics.readErrors + ")<br/>");
-                            $("#serverInfo").append("Writes: " + metrics.writes + " (Errors: " + metrics.writeErrors + ")<br/>");
-                            $("#serverInfo").append("<br/>");
+                            $("#instanceInfo").append("Concurrent Connected Clients: " + metrics.concurrentConnectedClients + " (Max: " + metrics.maxConcurrentClients + ")<br/>");
+                            $("#instanceInfo").append("Resv. ABL Session Timeouts: " + metrics.numReserveABLSessionTimeouts + "<br/>");
+                            $("#instanceInfo").append("Resv. ABL Session Waits: " + metrics.numReserveABLSessionWaits + "<br/>");
+                            $("#instanceInfo").append("Requests: " + metrics.requests + "<br/>");
+                            $("#instanceInfo").append("Reads: " + metrics.reads + " (Errors: " + metrics.readErrors + ")<br/>");
+                            $("#instanceInfo").append("Writes: " + metrics.writes + " (Errors: " + metrics.writeErrors + ")<br/>");
+                            $("#instanceInfo").append("<br/>");
                         }
                     })
                     .fail(function(jqXHR, textStatus, errorThrown){
@@ -335,7 +320,7 @@
                         })
                         .done(function(data, textStatus, jqXHR){
                             showMessage(data.outcome + ": Stopped agent " + agentID + ".", "success");
-                            getApplication();
+                            getApplications();
                         })
                         .fail(function(jqXHR, textStatus, errorThrown){
                             showMessage(errorThrown, "error");
@@ -343,19 +328,19 @@
                     }
                 }
 
-                function killSession(ablApp, sessionID){
+                function killSession(ablApp, agentID, sessionID){
                     // Kill a particular session.
-                    if (ablApp && sessionID && confirm("Are you sure you wish to delete session " + sessionID + "?")) {
+                    if (ablApp && sessionID && confirm("Are you sure you wish to trim session " + sessionID + "?")) {
                         // A terminateOpt value of 0 causes a graceful termination and a value of 1 causes a forced termination.
                         $.ajax({
                             contentType: "application/vnd.progress+json",
                             dataType: "json",
                             method: "delete",
-                            url: serverUrl + "/oemanager/applications/" + ablApp + "/sessions/?sessionID=" + sessionID + "&terminateOpt=1"
+                            url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentID + "/sessions/" + sessionID + "?terminateOpt=1"
                         })
                         .done(function(data, textStatus, jqXHR){
                             showMessage(data.outcome + ": Stopped session " + sessionID + ".", "success");
-                            getApplication();
+                            getApplications();
                         })
                         .fail(function(jqXHR, textStatus, errorThrown){
                             showMessage(errorThrown, "error");
@@ -370,8 +355,7 @@
 
                 $(document).ready(function(){
                     getVersions(); // Output library versions.
-                    getApplication(); // Get PAS information.
-                    $("#thumbsUp").css("display", "block");
+                    getApplications(); // Get PAS information.
                     $("#tabstrip").kendoTabStrip();
                 });
 
@@ -409,10 +393,10 @@
                                 <li>Environment</li>
                             </ul>
                             <div class="scrollable">
-                                <div class="padder-h" id="serverInfo"></div>
+                                <div class="padder-h" id="instanceInfo"></div>
                             </div>
                             <div class="scrollable">
-                                <div class="padder-h" id="transports"></div>
+                                <div class="padder-h" id="transportInfo"></div>
                             </div>
                             <div class="row scrollable">
                                 <div class="col-xs-5">
@@ -424,20 +408,13 @@
                                 </div>
                             </div>
                             <div class="scrollable">
-                                <div class="text-center m-t none" id="thumbsUp">
-                                    <h1>
-                                        <span class="fa-stack fa-2x icon-muted">
-                                            <i class="fa fa-file-o fa-stack-2x"></i>
-                                            <i class="fa fa-thumbs-up fa-stack"></i>
-                                        </span>
-                                    </h1>
-                                </div>
                                 <div class="m-l-lg">
                                     <h3 class="m-t-lg">The following libraries have been detected:</h3>
                                     <ul>
                                         <li>jQuery <span id="versionJQ"></span></li>
                                         <li>KendoUI <span id="versionKUI"></span></li>
                                         <li>OpenEdge <span id="versionOE"></span></li>
+                                        <li>Font Awesome <i class="fa fa-thumbs-up"></i></li>
                                     </ul>
                                 </div>
                             </div>
