@@ -26,6 +26,7 @@
 "/web/status/server","GET","hasAnyRole('ROLE_PSCUser','ROLE_ANONYMOUS')"
 "/web/status/login","GET","hasAnyRole('ROLE_PSCUser')"
 "/web/_oeping","GET","permitAll()"
+"/web/*.html","*","permitAll()"
 "/web/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the default URI space #################
