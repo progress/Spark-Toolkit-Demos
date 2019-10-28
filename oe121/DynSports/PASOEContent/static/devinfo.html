@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html class="app" lang="en-us">
+    <head>
+        <title>Development Information</title>
+        <meta charset="utf-8" />
+        <meta name="description" content="" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+        <!-- Load Styles -->
+        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2019.2.619/styles/kendo.common.min.css"/>
+        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2019.2.619/styles/kendo.bootstrap.min.css"/>
+        <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2019.2.619/styles/kendo.default.min.css"/>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+        <link rel="stylesheet" href="app.css"/>
+        <!-- Framework Libraries -->
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="https://kendo.cdn.telerik.com/2019.2.619/js/kendo.web.min.js"></script>
+        <script type="text/javascript">
+            var app = (function(){
+                "use strict";
+
+                /**
+                 * Consult the following documentation pages for more information about the proceeding API requests:
+                 * https://documentation.progress.com/output/ua/OpenEdge_latest/index.html#page/pasoe-admin/transport-management.html#
+                 * https://documentation.progress.com/output/OpenEdge117/openedge117/#page/pasoe-admin%2Frest-api-reference-for-oemanager.war.html%23
+                 */
+
+                // WARNING: You should change the default username/password for the oemanager webapp before proceeding with a production site!
+                var credentials = "tomcat:tomcat";
+                // WARNING: By default this site may be reached by any IP. You are encouraged to set up a limit on who can access the webapp.
+                var serverUrl = window.location.protocol + "//" + credentials + "@"
+                              + window.location.hostname + (window.location.port ? ":" + window.location.port : "");
+
+                var _notificationArea = null;
+                function setNotificationArea(selector, options){
+                    var notificationObj = null; // Notification object instance.
+                    var el = $(selector);
+                    if (el.length) {
+                        // Create a new notification widget.
+                        notificationObj = el.kendoNotification($.extend({
+                            appendTo: selector, // Element that anchors all messages.
+                            autoHideAfter: 30000, // Hide the message after 30 seconds.
+                            button: true // Display dismissal button in message area.
+                        }, options)).getKendoNotification();
+
+                        // Add a method to display a message and scroll into view.
+                        notificationObj.showNotification = function(message, type){
+                            var self = this;
+                            if (self) {
+                                try {
+                                    // Type is "info" (default), "success", "warning", or "error".
+                                    if (typeof(message) === "string" && message !== "") {
+                                        // Single message as string.
+                                        self.show(message, type || "info");
+                                    } else if (Array.isArray(message)) {
+                                        $.each(message, function(i, msg){
+                                            // Message is an array of strings.
+                                            if (msg !== "") {
+                                                self.show(msg, type || "info");
+                                            }
+                                        });
+                                    }
+                                    if (self.options && self.options.appendTo) {
+                                        var container = $(self.options.appendTo);
+                                        if (container.length) {
+                                            container.scrollTop(container[0].scrollHeight);
+                                        }
+                                    }
+                                } catch(e){
+                                    console.log(e);
+                                }
+                            }
+                        };
+                    }
+                    return notificationObj;
+                }
+
+                function showMessage(message, type){
+                    if (!_notificationArea) {
+                        // Create notification widget as needed, when not present.
+                        // Override with extra properties as required for application.
+                        var options = {
+                            appendTo: null,
+                            position: {
+                                pinned: false,
+                                right: 30,
+                                top: 50
+                            },
+                            stacking: "down",
+                            width: "30em"
+                        };
+                        _notificationArea = setNotificationArea("#notification", options);
+                    }
+                    if (_notificationArea) {
+                        // Add wrapper style around message before display.
+                        message = '&nbsp;<span style="word-wrap:break-word;white-space:normal;">' + message + '</span>';
+                        _notificationArea.showNotification(message, type);
+                    }
+                }
+
+                function getApplications(){
+                    // Get information about all ABL applications for this PAS instance.
+                    $.ajax({
+                        contentType: "application/vnd.progress+json",
+                        dataType: "json",
+                        url: serverUrl + "/oemanager/applications"
+                    })
+                    .done(function(data, textStatus, jqXHR){
+                        if (data.outcome === "SUCCESS") {
+                            var ablApps = [];
+                            // Output OE version info and PAS instance name.
+                            $("#versionOE").html(data.versionStr);
+                            var applications = (data.result.Application || []);
+                            $.each(applications, function(i, ablApp){
+                                // Keep a list of unique ABL app names.
+                                if ($.inArray(ablApp.name, ablApps) === -1) {
+                                    ablApps.push(ablApp.name);
+                                }
+
+                                // Output information about available ABL apps.
+                                var transport = "";
+                                var webApps = ablApp.webapps || [];
+                                $("#instanceInfo").empty();
+                                $("#transportInfo").empty();
+                                $.each(webApps, function(i, webApp){
+                                    // Display the name of this ABL app and any available transports.
+                                    $("#transportInfo").append("<h2>" + webApp.applicationName + "." + webApp.name + "</h2>");
+                                    $.each(webApp.transports, function(j, transport){
+                                        if (transport.state === "ENABLED") {
+                                            transport = '&nbsp;<a href="' + transport.uri + '" title="' + transport.description + '" class="btn btn-success" target="_blank">' + transport.name + '</a>';
+                                        } else {
+                                            transport = '&nbsp;<a href="javascript:void(0);" title="' + transport.description + '" class="btn btn-danger">' + transport.name + '</a>';
+                                        }
+                                        $("#transportInfo").append(transport);
+                                    });
+                                    $("#transportInfo").append("<br/><br/>");
+                                });
+                            });
+
+                            $.each(ablApps, function(i, ablApp){
+                                // Get properties of this ABL app.
+                                getAgentProperties(ablApp);
+                                getSessionProperties(ablApp);
+
+                                // Get process information.
+                                getAgentInfo(ablApp);
+                            });
+                        }
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown){
+                        showMessage(errorThrown, "error");
+                    });
+                }
+
+                function getAgentProperties(ablApp){
+                    // Get all Agent properties for this ABL application.
+                    $.ajax({
+                        contentType: "application/vnd.progress+json",
+                        dataType: "json",
+                        url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/properties"
+                    })
+                    .done(function(data, textStatus, jqXHR){
+                        if (data.outcome === "SUCCESS") {
+                            var props = data.result || {};
+                            var keys = Object.keys(props).sort();
+                            $("#agentInfo").empty();
+                            $("#agentInfo").append("<h3>AppServer.Agent." + ablApp + "</h3>");
+                            var info = "";
+                            $.each(keys, function(i, name){
+                                if (props[name] !== "" && props[name] !== null) {
+                                    info = "&nbsp;<b>" + name + "</b>: " + props[name] + "<br/>";
+                                    $("#agentInfo").append(info);
+                                }
+                            });
+                            $("#agentInfo").append("<br/>");
+                        }
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown){
+                        showMessage(errorThrown, "error");
+                    });
+                }
+
+                function getSessionProperties(ablApp){
+                    // Get all SessMgr properties for this ABL application.
+                    $.ajax({
+                        contentType: "application/vnd.progress+json",
+                        dataType: "json",
+                        url: serverUrl + "/oemanager/applications/" + ablApp + "/properties"
+                    })
+                    .done(function(data, textStatus, jqXHR){
+                        if (data.outcome === "SUCCESS") {
+                            var props = data.result || {};
+                            var keys = Object.keys(props).sort();
+                            $("#sessInfo").empty();
+                            $("#sessInfo").append("<h3>AppServer.SessMgr." + ablApp + "</h3>");
+                            $.each(keys, function(i, name){
+                                if (props[name] !== "" && props[name] !== null) {
+                                    $("#sessInfo").append("&nbsp;<b>" + name + "</b>: " + props[name] + "<br/>");
+                                }
+                            });
+                            $("#sessInfo").append("<br/>");
+                        }
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown){
+                        showMessage(errorThrown, "error");
+                    });
+                }
+
+                function getAgentInfo(ablApp){
+                    // Get agent information for this ABL application.
+                    $.ajax({
+                        contentType: "application/vnd.progress+json",
+                        dataType: "json",
+                        url: serverUrl + "/oemanager/applications/" + ablApp + "/agents"
+                    })
+                    .done(function(data, textStatus, jqXHR){
+                        if (data.outcome === "SUCCESS") {
+                            $("#instanceInfo").append("<h3 style='padding-top:10px'>" + ablApp + "</h3>");
+                            var info = "";
+                            var agents = (data.result || {}).agents || [];
+                            $.each(agents, function(i, agent){
+                                info = "<span style=' style='line-height:1.5;margin-left:5px'><b>PID: " + agent.pid + ":</b> " + agent.state
+                                     + " <a href='javascript:app.killAgent(\"" + ablApp + "\", \"" + agent.pid + "\")'>"
+                                     + "&nbsp;&nbsp;<i class='fa fa-hourglass-end' title='Kill Agent'></i></a></span><br/>";
+                                $("#instanceInfo").append(info);
+                                $("#instanceInfo").append("<span id='agent_" + agent.pid + "'></span>");
+                                getSessionInfo(ablApp, agent.pid);
+                            });
+                        }
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown){
+                        showMessage(errorThrown, "error");
+                    });
+                }
+
+				function numberWithCommas(number) {
+				    var parts = number.toString().split(".");
+				    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+				    return parts.join(".");
+				}
+
+                function msToTime(s){
+                    // Pad to 2 or 3 digits, default is 2
+                    function pad(n, z) {
+                        z = z || 2;
+                        return ('00' + n).slice(-z);
+                    }
+                    var ms = s % 1000;
+                    s = (s - ms) / 1000;
+                    var secs = s % 60;
+                    s = (s - secs) / 60;
+                    var mins = s % 60;
+                    var hrs = (s - mins) / 60;
+                    return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
+                }
+
+                function getSessionInfo(ablApp, agentID){
+                    // Get agent information for this ABL application.
+                    $.ajax({
+                        contentType: "application/vnd.progress+json",
+                        dataType: "json",
+                        url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentID + "/sessions"
+                    })
+                    .done(function(data, textStatus, jqXHR){
+                        if (data.outcome === "SUCCESS") {
+                            var info = "";
+                            var sessions = (data.result || {}).AgentSession || [];
+                            $.each(sessions, function(i, session){
+                                info = "<span style='line-height:1.5;padding-left:20px'><b title='Started: "
+                                     + session.StartTime + "'>Session " + session.SessionId + "</b>: " + session.SessionState
+                                     + " [" + numberWithCommas(Math.round(parseInt(session.SessionMemory) / 1024, 2)) + " KB]"
+                                     + " <a href='javascript:app.killSession(\"" + ablApp + "\", \"" + agentID + "\", \"" + session.SessionId + "\")'>"
+                                     + "&nbsp;&nbsp;<i class='fa fa-stop-circle' title='Trim Session'></i></a></span><br/>";
+                                $("#agent_" + agentID).append(info);
+                                //$("#instanceInfo").append(info);
+                            });
+                            $("#instanceInfo").append("<br/>");
+                            getMetrics(ablApp);
+                        }
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown){
+                        showMessage(errorThrown, "error");
+                    });
+                }
+
+                function getMetrics(ablApp){
+                    // Get agent information for this ABL application.
+                    $.ajax({
+                        contentType: "application/vnd.progress+json",
+                        dataType: "json",
+                        url: serverUrl + "/oemanager/applications/" + ablApp + "/metrics"
+                    })
+                    .done(function(data, textStatus, jqXHR){
+                        if (data.outcome === "SUCCESS") {
+                            $("#instanceInfo").append("<h3>" + ablApp + " Metrics:</h3>");
+                            var metrics = data.result || {};
+                            $("#instanceInfo").append("Concurrent Connected Clients: " + metrics.concurrentConnectedClients + " (Max: " + metrics.maxConcurrentClients + ")<br/>");
+                            $("#instanceInfo").append("Resv. ABL Session Timeouts: " + metrics.numReserveABLSessionTimeouts + "<br/>");
+                            $("#instanceInfo").append("Resv. ABL Session Waits: " + metrics.numReserveABLSessionWaits + "<br/>");
+                            $("#instanceInfo").append("Requests: " + metrics.requests + "<br/>");
+                            $("#instanceInfo").append("Reads: " + metrics.reads + " (Errors: " + metrics.readErrors + ")<br/>");
+                            $("#instanceInfo").append("Writes: " + metrics.writes + " (Errors: " + metrics.writeErrors + ")<br/>");
+                            $("#instanceInfo").append("<br/>");
+                        }
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown){
+                        showMessage(errorThrown, "error");
+                    });
+                }
+
+                function killAgent(ablApp, agentID){
+                    // Kill a particular session.
+                    if (ablApp && agentID && confirm("Are you sure you wish to stop agent " + agentID + "?")) {
+                        $.ajax({
+                            contentType: "application/vnd.progress+json",
+                            dataType: "json",
+                            method: "delete",
+                            url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentID
+                        })
+                        .done(function(data, textStatus, jqXHR){
+                            showMessage(data.outcome + ": Stopped agent " + agentID + ".", "success");
+                            getApplications();
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown){
+                            showMessage(errorThrown, "error");
+                        });
+                    }
+                }
+
+                function killSession(ablApp, agentID, sessionID){
+                    // Kill a particular session.
+                    if (ablApp && sessionID && confirm("Are you sure you wish to trim session " + sessionID + "?")) {
+                        // A terminateOpt value of 0 causes a graceful termination and a value of 1 causes a forced termination.
+                        $.ajax({
+                            contentType: "application/vnd.progress+json",
+                            dataType: "json",
+                            method: "delete",
+                            url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentID + "/sessions/" + sessionID + "?terminateOpt=1"
+                        })
+                        .done(function(data, textStatus, jqXHR){
+                            showMessage(data.outcome + ": Stopped session " + sessionID + ".", "success");
+                            getApplications();
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown){
+                            showMessage(errorThrown, "error");
+                        });
+                    }
+                }
+
+                function getVersions(){
+                    $("#versionJQ").html("v" + jQuery().jquery);
+                    $("#versionKUI").html(kendo ? ("v" + kendo.version) : "UNAVAILABLE");
+                }
+
+                $(document).ready(function(){
+                    getVersions(); // Output library versions.
+                    getApplications(); // Get PAS information.
+                    $("#tabstrip").kendoTabStrip();
+                });
+
+                return {
+                    killAgent: killAgent,
+                    killSession: killSession,
+                    showMessage: showMessage
+                };
+            })();
+        </script>
+    </head>
+    <body>
+        <section class="vbox">
+            <header class="bg-primary header header-md navbar box-shadow" id="mainHeader">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="navbar-header aside-sm">
+                            <h2 class="m-l m-t-sm" style="width:400px;">Development Information</h2>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <span id="notification"></span>
+                    </div>
+                </div>
+            </header>
+            <section class="container-fluid no-padder bg-white">
+                <section class="vbox flex">
+                    <header></header>
+                    <section style="top:0px;">
+                        <div id="tabstrip">
+                            <ul>
+                                <li class="k-state-active">Information</li>
+                                <li>Transports</li>
+                                <li>Configuration</li>
+                                <li>Environment</li>
+                            </ul>
+                            <div class="scrollable">
+                                <div class="padder-h" id="instanceInfo"></div>
+                            </div>
+                            <div class="scrollable">
+                                <div class="padder-h" id="transportInfo"></div>
+                            </div>
+                            <div class="row scrollable">
+                                <div class="col-xs-5">
+                                    <div class="padder-h" id="agentInfo"></div>
+                                </div>
+                                <div class="col-xs-1"></div>
+                                <div class="col-xs-6">
+                                    <div class="padder-h" id="sessInfo"></div>
+                                </div>
+                            </div>
+                            <div class="scrollable">
+                                <div class="m-l-lg">
+                                    <h3 class="m-t-lg">The following libraries have been detected:</h3>
+                                    <ul>
+                                        <li>jQuery <span id="versionJQ"></span></li>
+                                        <li>KendoUI <span id="versionKUI"></span></li>
+                                        <li>OpenEdge <span id="versionOE"></span></li>
+                                        <li>Font Awesome <i class="fa fa-thumbs-up"></i></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        <div>
+                    </section>
+                </section>
+            </section>
+        </section>
+    </body>
+</html>
