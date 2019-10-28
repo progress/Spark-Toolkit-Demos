@@ -8,10 +8,10 @@ This repository contains sample projects ready for import into PDSOE and PASOE, 
 
 ## Requirements
 
-**OpenEdge 11.7.4** or later, as the **Spark.pl** library is compiled on this version.
+**OpenEdge 11.7.4** or later, with the **Spark.pl** library compiled on your appropriate version (11 or 12).
 
-- Apache Ant 1.9.x+ (now included with OE 11.7.0 at DLC/ant)
-- Progress Compile Tools, or "PCT" (now included with OE 11.7.3 at DLC/pct/PCT.jar)
+- Apache Ant 1.9.x+ (included as of OE 11.7+ at DLC/ant and run as DLC/bin/proant)
+- Progress Compile Tools, or "PCT" (included as of OE 11.7.3 at DLC/pct/PCT.jar)
 
 ## Installation / Setup
 
@@ -19,7 +19,7 @@ Utilize the projects from the same folder as your major version of OpenEdge to m
 
 To provide sample data you may use the provided database structure, schema, and table data from `/support/schema/` to create the necessary **Sports2020** and **WebState** databases. To speed up this process on Windows, you can run `ant create` to create and load the databases in a `C:\Databases` folder (use the `-Dpath` option to choose an alternate location).
 
-**Note:** For compatibility with the security mechanisms in place within the application, each database must be pre-loaded with the necessary domain data. For each database, use the Data Administration tool to import Domain security via the supplied `_sec-authentication-domain.d` file in each database folder under `/support/schema/`.
+**Note:** For compatibility with the security mechanisms in place within the application, each database must be pre-loaded with the necessary domain data. For each database, use the Data Administration tool to import Domain security via the supplied `_sec-authentication-domain.d` file in each database folder under `/support/schema/`. Note that the correct authentication domain file must agree with the version of OpenEdge as security passcode hashes changed between versions 11 and 12.
 
 ## PAS Deployment
 
