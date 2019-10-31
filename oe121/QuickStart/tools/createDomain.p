@@ -108,10 +108,10 @@ os-command silent value(substitute("&1~/bin~/genspacp -password &2 -user sparkRe
                                    cDLC, "{&PassCode}", "{&DomainName}")).
 
 message "Creating registry binary file..." view-as alert-box.
-output to value("registry.csv").
+output to value("ABLDomainRegistry.csv").
 put unformatted substitute("&1,&2", "{&DomainName}", "{&PassCode}") skip.
 output close.
-os-command silent value(substitute("&1~/bin~/gendomreg registry.csv ABLDomainRegistry.keystore", cDLC)).
+os-command silent value(substitute("&1~/bin~/gendomreg ABLDomainRegistry.csv ABLDomainRegistry.keystore", cDLC)).
 
 message substitute("Check for output in '&1'", session:temp-directory) view-as alert-box.
 
