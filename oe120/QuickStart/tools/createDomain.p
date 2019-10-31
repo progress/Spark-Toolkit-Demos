@@ -22,7 +22,6 @@ block-level on error undo, throw.
 &global-define DomainName spark
 &global-define DomainType _extsso
 &global-define PassCode spark01
-&global-define PassCodePrefix oech1::
 &global-define ResetName "SparkReset.cp"
 
 define variable oService as DataAdminService no-undo.
@@ -83,7 +82,11 @@ do iDB = 1 to num-dbs:
         /* Add info to necessary metadata objects. */
         assign oEntry = new Progress.Json.ObjectModel.JsonObject().
         oEntry:Add("domain", "{&DomainName}").
-        oEntry:Add("accessCode", substitute("{&PassCodePrefix}&1", audit-policy:encrypt-audit-mac-key("{&PassCode}"))).
+        &if proversion(1) begins "12" &then
+            oEntry:Add("accessCode", security-policy:encode-domain-access-code("{&PassCode}")).
+        &else
+            oEntry:Add("accessCode", substitute("oech1::&1", audit-policy:encrypt-audit-mac-key("{&PassCode}"))).
+        &endif
         oEntry:Add("description", oDomain:Description).
         oDomains:Add(oEntry).
 
@@ -103,6 +106,13 @@ if (cDLC gt "") ne true then assign cDLC = "{&DLC}".
 message "Generating reset CP token..." view-as alert-box.
 os-command silent value(substitute("&1~/bin~/genspacp -password &2 -user sparkRest -role NoAccess -domain &3 -file SparkReset.cp",
                                    cDLC, "{&PassCode}", "{&DomainName}")).
+
+message "Creating registry binary file..." view-as alert-box.
+output to value("registry.csv").
+put unformatted substitute("&1,&2", "{&DomainName}", "{&PassCode}") skip.
+output close.
+os-command silent value(substitute("&1~/bin~/gendomreg registry.csv ABLDomainRegistry.keystore", cDLC)).
+
 message substitute("Check for output in '&1'", session:temp-directory) view-as alert-box.
 
 catch e as Error:

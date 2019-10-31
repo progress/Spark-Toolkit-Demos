@@ -106,6 +106,13 @@ if (cDLC gt "") ne true then assign cDLC = "{&DLC}".
 message "Generating reset CP token..." view-as alert-box.
 os-command silent value(substitute("&1~/bin~/genspacp -password &2 -user sparkRest -role NoAccess -domain &3 -file SparkReset.cp",
                                    cDLC, "{&PassCode}", "{&DomainName}")).
+
+message "Creating registry binary file..." view-as alert-box.
+output to value("registry.csv").
+put unformatted substitute("&1,&2", "{&DomainName}", "{&PassCode}") skip.
+output close.
+os-command silent value(substitute("&1~/bin~/gendomreg registry.csv ABLDomainRegistry.keystore", cDLC)).
+
 message substitute("Check for output in '&1'", session:temp-directory) view-as alert-box.
 
 catch e as Error:
