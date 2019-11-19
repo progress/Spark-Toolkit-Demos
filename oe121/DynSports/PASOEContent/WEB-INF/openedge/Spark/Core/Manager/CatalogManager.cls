@@ -888,6 +888,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                 /* Add operations for resource. */
                 resourceObj:Add("operations", this-object:getOperations(pcServiceURI, bResInfo.ClassPath)).
+
                 /* Add data definitions for invoke operations. */
                 resourceObj:Add("dataDefinitions", this-object:getDataDefs(pcServiceURI, bResInfo.ClassPath)).
                 resourceArr:Add(resourceObj).
@@ -925,12 +926,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getResources */
 
 
-    method private JsonObject getSchema ( input pcServiceURI   as character,
-                                          input pcResClassPath as character ):
-        return this-object:getSchema(pcServiceURI, pcResClassPath, false).
-    end method. /* getSchema */
-
-
     method private JsonObject getSchema ( input pcServiceURI    as character,
                                           input pcResClassPath  as character,
                                           input plPrimaryEntity as logical ):
@@ -951,7 +946,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         assign oSchemaObj = new JsonObject().
 
         if plPrimaryEntity then do:
-            /* Meant for obtaining the primary entity for this resource. */
+            /* Meant for obtaining the primary entity (READ operation) for this resource. */
             for first bMethod no-lock
                 where bMethod.ServiceURI eq pcServiceURI
                   and bMethod.ClassPath eq pcResClassPath
@@ -981,6 +976,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             end. /* for first */
         end. /* plPrimaryEntity */
         else do:
+            /* Obtain all non-primary schema (eg. INVOKE operation tables and datasets). */
             for each bMethod no-lock
                where bMethod.ServiceURI eq pcServiceURI
                  and bMethod.ClassPath eq pcResClassPath
@@ -1505,16 +1501,14 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
     method private JsonObject getDataDefs ( input pcServiceURI   as character,
                                             input pcResClassPath as character):
-        define variable oSchema       as JsonObject        no-undo.
-        define variable definitionObj as JsonObject        no-undo.
+        define variable oSchema as JsonObject no-undo.
 
-        assign oSchema = getSchema(pcServiceURI, pcResClassPath).
+        /* Obtain all non-primary schema (tables, datasets). */
+        assign oSchema = this-object:getSchema(pcServiceURI, pcResClassPath, false).
         if oSchema:Has("properties") then
-            assign definitionObj = oSchema:GetJsonObject("properties").
+            return oSchema:GetJsonObject("properties").
         else
-            assign definitionObj = new JsonObject().
-
-        return definitionObj.
+            return new JsonObject().
     end method. /* getDataDefs */
 
 
