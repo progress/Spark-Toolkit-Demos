@@ -140,6 +140,16 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         define variable dStart as datetime-tz no-undo.
         assign dStart = now. /* Mark start time. */
 
+        /* Confirm whether the necessary OE.BL.BE class exists for the current environment. */
+        define variable oBusinessEntity as Progress.Lang.Object no-undo.
+        assign oBusinessEntity = Progress.Lang.Class:GetClass("OpenEdge.BusinessLogic.BusinessEntity") no-error.
+        if not valid-object(oBusinessEntity) then do:
+            /* Provide warnings in the log now, as this event handler class should be common to any standard startup for the Spark Toolkit. */
+            oLoggingManager:logMessage("WARNING: Spark-Toolkit is unable to find the required OpenEdge.BusinessLogic.BusinessEntity class.", "SPARK-WARN", 0).
+            oLoggingManager:logMessage("WARNING: Any SparkEntity/DynamicEntity classes cannot be loaded without this required super-class.", "SPARK-WARN", 0).
+            oLoggingManager:logMessage("SOLUTION: Add OpenEdge.BusinessLogic.pl to PROPATH, available in versions 11.7.5, 12.1, and later.", "SPARK-WARN", 0).
+        end. /* not valid-object */
+
         /* Read business entities from disk and creates method signatures for API requests. */
         if valid-object(oCatalogManager) then do:
             /* Inform the DOH of what portion of the URL is to be ignored. */
@@ -185,6 +195,11 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
         /* Log the end of the initialization process with an elapsed time. */
         oLoggingManager:logMessage(substitute("Finshed Loading Resource Metadata in &1ms",
                                               interval(now, dStart, string(DateTimeAddIntervalEnum:Milliseconds))), "SPARK-STRT", 2).
+
+        finally:
+            if valid-object(oBusinessEntity) then
+                delete object oBusinessEntity no-error.
+        end finally.
     end method. /* InitializeRegistries */
 
 

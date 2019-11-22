@@ -1786,12 +1786,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         /* Confirm whether the necessary OE.BL.BE class exists for the current environment. */
         define variable oBusinessEntity as Progress.Lang.Object no-undo.
         assign oBusinessEntity = Progress.Lang.Class:GetClass("OpenEdge.BusinessLogic.BusinessEntity") no-error.
-        if not valid-object(oBusinessEntity) then do:
+        if not valid-object(oBusinessEntity) then
             assign lHasOEBLBE = false. /* Signal that the required class was not found. */
-            oLoggingManager:logMessage("WARNING: Spark-Toolkit is unable to find the required OpenEdge.BusinessLogic.BusinessEntity class.", "SPARK-WARN", 0).
-            oLoggingManager:logMessage("WARNING: Any SparkEntity/DynamicEntity classes cannot be loaded without this required super-class.", "SPARK-WARN", 0).
-            oLoggingManager:logMessage("SOLUTION: Add OpenEdge.BusinessLogic.pl to PROPATH, available in versions 11.7.5, 12.1, and later.", "SPARK-WARN", 0).
-        end.
 
         /* Before loading the (dynamic) resources, run a preloader if configured. */
         oLoggingManager:logMessage("Running Preloader...", "SPARK-LOAD", 4).
