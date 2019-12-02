@@ -1,6 +1,27 @@
 # Changelog
 
-## OpenEdge 11.7.4+ and 12.0
+## OpenEdge 11.7.5 and 12.1
+
+### v5.0.0
+
+- Removes all local overrides of the OpenEdge.* classes which are now provided in the minimum OE versions required: 11.7.5 and 12.1.
+
+
+## OpenEdge 11.7.4 and 12.0
+
+### v4.6.2
+
+- Minor fixes, primarily updates to ensure full compatibility with OpenEdge 12.1.
+
+### v4.6.1
+
+- Documentation updates, clarifying minimal version of OpenEdge.
+- Minor bugfixes, cleanup as needed.
+
+### v4.6.0
+
+- Bugfix release focused on enhancements for diagnostic tooling and reporting capabilities.
+- Further support for OpenEdge 12.0 and forthcoming 12.1 release.
 
 ### v4.5.1
 
@@ -25,6 +46,8 @@
 - Addition of new catalog output (OpenAPI) and removal of several duplicate and outdated classes.
 - Make necessary adjustments to patterns since the switch to the DataObjectHandler class as of v4.3.0.
 - Framework now officially requires OpenEdge 11.7.4 due to features inherent in that service pack.
+
+## OpenEdge 11.7.3
 
 ### v4.3.0
 
