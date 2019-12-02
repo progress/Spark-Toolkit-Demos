@@ -402,9 +402,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 assign bResource.ProcHandle = hProcHandle.
 
                 /* Load (or re-load) service procedure internal methods, as needed. */
-                registerProcedures( bResource.ServiceURI,
-                                    bResource.ClassPath,
-                                    bResource.ProcHandle ).
+                this-object:registerProcedures( bResource.ServiceURI,
+                                                bResource.ClassPath,
+                                                bResource.ProcHandle ).
 
                 if lUseDebugs and available(bResource) then
                     oLoggingManager:logMessage(substitute("Loaded &1 as '&2/&3'",
@@ -776,7 +776,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 cParam    = entry(iX, pcMethodSignature)
                 .
 
-            if num-entries(cParam, " ") eq 3 then do {&THROW}:
+            if num-entries(cParam, " ") ge 3 then do {&THROW}:
                 oParamObj:Add("mode", lc(replace(entry(1, cParam, " "), "-", ""))).
 
                 if entry(2, cParam, " ") eq "table" or entry(2, cParam, " ") eq "table-handle" or
@@ -787,7 +787,17 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 else do:
                     oParamObj:Add("name", entry(2, cParam, " ")).
                     oParamObj:Add("type", lc(entry(3, cParam, " "))).
-                end. /* other */
+                    
+                    if num-entries(cParam, " ") ge 4 and lc(entry(4, cParam, " ")) eq "extent" then do:
+                        /* Extent is present, determine if variable or fixed. */
+                        if num-entries(cParam, " ") ge 5 and entry(5, cParam, " ") gt "" then
+                            oParamObj:Add("extent", integer(entry(5, cParam, " "))).
+                        else
+                            oParamObj:AddNull("extent").
+                    end.
+                    else
+                        oParamObj:Add("extent", 0). /* Default is an extent of 0. */
+                end. /* other primitive */
 
                 oParamArr:Add(oParamObj).
             end. /* num-entries */
@@ -2221,6 +2231,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                 oLoggingManager:logMessage(substitute("| Schema: no table handle for &1", cParamName), "SPARK-SVC", 2).
                         end. /* not HasSchema */
                     end. /* table */
+
+                    /* If the param has an unknown or non-zero extent, then the datatype should be treated as an extent/array. */
+                    if oParamObj:Has("extent") and oParamObj:GetInteger("extent") ne 0 then
+                        assign cParamType = substitute("&1 extent", cParamType).
 
                     /* Create the parameter for this method. */
                     assign oParam = new OperationParameter( IOModeEnum:GetEnum(cParamMode), cParamType, cParamName ).

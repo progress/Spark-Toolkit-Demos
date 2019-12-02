@@ -7,11 +7,7 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-/* ***************************  Definitions  ************************** */
-
 block-level on error undo, throw.
-
-/* ***************************  Main Block  *************************** */
 
 procedure sayHello:
     define input  parameter toWhom   as character no-undo.
@@ -29,6 +25,18 @@ procedure sayHello2Many:
     do ix = 1 to recipients:length:
         if recipients:GetType(ix) eq Progress.Json.ObjectModel.JsonDataType:string then
             assign greeting = substitute("&1, Hello &2", greeting, recipients:GetCharacter(ix)).
+    end.
+
+    assign greeting = trim(left-trim(greeting, ",")).
+end procedure.
+
+procedure sayHelloExtent:
+    define input  parameter recipients as character no-undo extent.
+    define output parameter greeting   as character no-undo.
+
+    define variable ix as integer no-undo.
+    do ix = 1 to extent(recipients):
+        assign greeting = substitute("&1, Hello &2", greeting, recipients[ix]).
     end.
 
     assign greeting = trim(left-trim(greeting, ",")).
