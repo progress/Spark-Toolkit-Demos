@@ -1,6 +1,6 @@
 /*------------------------------------------------------------------------
     File        : testApsv.p
-    Purpose     : Test remote APSV connections via special facade on AS.
+    Purpose     : Test remote APSV connections for the instance.
     Description :
     Author(s)   : dugrau
     Created     : Wed Mar 02 15:38:52 EST 2016
@@ -26,18 +26,19 @@ create server hServer.
 /*assign cConnect = substitute("http://&1:&2@&3:&4/apsv", "apsvuser", "secret", "localhost", "8830").*/
 assign cConnect = substitute("http://&1:&2/sports/apsv", "localhost", "8830").
 
-assign lReturn = hServer:connect(substitute("-URL &1 -sessionModel Session-free", cConnect)) no-error.
+assign cConnect = substitute("-URL &1 -sessionModel Session-free", cConnect).
+assign lReturn = hServer:connect(cConnect) no-error.
 if error-status:error then
     message error-status:get-message(1) view-as alert-box.
 
 if not lReturn then
-    message "Failed to connect to AppServer." view-as alert-box.
+    message "Failed to connect to AppServer: " + cConnect view-as alert-box.
 
 if hServer:connected() then do:
     define variable cGreeting as character no-undo.
     define variable hCPO      as handle    no-undo.
 
-    message "Connected to AppServer!" view-as alert-box.
+    message "Connected to AppServer: " + cConnect view-as alert-box.
 
 /*    if valid-object(session:current-request-info) then                                             */
 /*        hServer:request-info:SetClientPrincipal(session:current-request-info:GetClientPrincipal()).*/
@@ -54,8 +55,7 @@ if hServer:connected() then do:
             message "Error, Return-Value:" return-value view-as alert-box.
 
         if valid-handle(hProc) then
-            run sayHello in hProc ( input  "World",
-                                    output cGreeting ).
+            run sayHello in hProc ( input "World", output cGreeting ).
 
         message "Greeting:" cGreeting view-as alert-box.
     end. /* do */

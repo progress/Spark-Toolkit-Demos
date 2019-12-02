@@ -25,7 +25,7 @@ procedure logMessage private:
 end procedure. /* logMessage */
 
 /* Optional: Startup the metrics from the diagnostic tools. */
-run Spark/Diagnostic/metrics_startup.
+run Spark/Diagnostic/metrics_startup ( input startup-data ).
 
 /**
  * Run the default startup procedure.

@@ -3,9 +3,9 @@
 
 ## PASOE Projects (Type: ABL Web App)
 
-**Sports** - Demonstrates use of the built-in DataObjectHandler (DOH) included with 11.6.3 and later, using statically-produced service mapping files from PDSOE. There is no UI for this application.
+**Sports** - Demonstrates use of the built-in DataObjectHandler (DOH) using statically-produced service mapping files from PDSOE. There is no UI for this application.
 
-**DynSports** - Similar to the Sports project, but uses runtime discovery of classes to create necessary metadata for the DOH pattern. There is no UI for this application.
+**DynSports** - Similar to the Sports project, but uses an automatic runtime discovery of classes to create necessary metadata for the DOH pattern. There is no UI for this application.
 
 ## Other Projects
 

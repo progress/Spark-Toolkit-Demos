@@ -27,7 +27,7 @@ Window -> Preferences
 
 Project Explorer -> View Menu -> Customize View
     Select the filters to apply (matching items will be hidden)
-        Unselect *.pl to view Procedure Library files.s
+        Unselect *.pl to view Procedure Library files.
 
 %DLC%/oeide/eclipse/plugins/com.openedge.pdt.text_<version>/templates/
     class.cjet - OpenEdge Standard Class
