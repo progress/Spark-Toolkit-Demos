@@ -4,7 +4,10 @@
     Description :
     Author(s)   : Dustin Grau (dugrau@progress.com)
     Created     : Fri Dec 19 14:30:46 EST 2014
-    Notes       :
+    Notes       : Setting the logging-level for your ABL Application to at
+                  least 3 (verbose) will trigger additional messages in
+                  the logs as well as output multiple files in the session
+                  temp directory (eg. the service mapping files).
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
@@ -66,7 +69,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field ApiVersion     as decimal   /* Expected version to be used with all API's.              */
         field CatalogService as character /* Service class for delivering catalog output for clients. */
         field BusinessRoot   as character /* Starting location for reading all business entities.     */
-        field EnableDebugs   as logical   /* Display additional info as resources are loaded.         */
         field IdProperty     as character /* Name of property to use for record ID purposes.          */
         field SeqProperty    as character /* Name of property to use for result sequence purposes.    */
         field PreLoader      as character /* Special procedure to run prior to loading resources.     */
@@ -115,7 +117,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field ForeignKeys as character serialize-hidden         /* For business entities, denotes any foreign key fields.      */
         field ClassSig    as character serialize-hidden         /* For business entities, holds full signature of class.       */
         index idxPrimary  is primary unique ServiceURI ClassPath
-        index idxPublic   is unique         ServiceURI PublicName
+        index idxPublic   is         unique ServiceURI PublicName
         .
 
     define protected temp-table MethodInfo no-undo serialize-name "Operation"
@@ -127,7 +129,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field OperationType   as character serialize-name "Operation"
         field OperationVerb   as character serialize-name "HttpVerb"
         index idxPrimary      is primary unique ServiceURI ClassPath MethodName
-        index idxPublic       is unique         ServiceURI ClassPath PublicName
+        index idxPublic       is         unique ServiceURI ClassPath PublicName
         .
 
     define protected temp-table ResourceProperty no-undo serialize-name "Annotation"
@@ -787,7 +789,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 else do:
                     oParamObj:Add("name", entry(2, cParam, " ")).
                     oParamObj:Add("type", lc(entry(3, cParam, " "))).
-                    
+
                     if num-entries(cParam, " ") ge 4 and lc(entry(4, cParam, " ")) eq "extent" then do:
                         /* Extent is present, determine if variable or fixed. */
                         if num-entries(cParam, " ") ge 5 and entry(5, cParam, " ") gt "" then
@@ -1552,6 +1554,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         else
             undo, throw new AppError(substitute("Catalog config file [catalog.json] not found in [&1]", OSTools:sparkConf), -500).
 
+        assign lUseDebugs = log-manager:logging-level ge 3.
+
         for first GeneralParam:
             /* First attempt to gather defaults from the catalog config file. */
             this-object:ApiVersion = GeneralParam.ApiVersion.
@@ -1567,7 +1571,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
             assign /* Obtain defaults for general operation. */
                 cPreLoader = GeneralParam.PreLoader /* Executes code prior to anything else. */
-                lUseDebugs = (GeneralParam.EnableDebugs eq true) or log-manager:logging-level ge 4
                 .
         end. /* for first */
 
@@ -2113,6 +2116,12 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             /* Register the service using the name and version discovered. */
             assign oService = poRegistry:RegisterService(pcServiceName, poServiceVersion, ?, ?).
 
+            if not valid-object(oService:Options) then
+                assign oService:Options = new Spark.Core.Handler.ServiceOptions().
+
+            if valid-object(oService:Options) then
+                assign cast(oService:Options, Spark.Core.Handler.ServiceOptions):PrefixURI = substitute("/web/&1", this-object:ServicePrefix).
+
             /* Store the catalog data within the DOS instance. */
             oService:Catalog = this-object:getCatalog(bService.ServiceURI, "").
 
@@ -2159,6 +2168,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 /* Set any options for the current operation. */
                 assign oOperOpts = new OperationOptions().
                 oOperOpts:WriteBI = lIsEntity. /* Should be true for entities, otherwise false. */
+                oOperOpts:HasErrorEnvelope = false. /* Default is false. */
+                oOperOpts:HasRequestEnvelope = false. /* Default is false. */
+                oOperOpts:HasResponseEnvelope = false. /* Default is false. */
 
                 /* Create a new mapped operation for this service. */
                 assign oOperation = new MappedOperation( cServiceURI,
@@ -2170,6 +2182,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                          cFuncMethod,
                                                          oOperOpts,
                                                          iStatusCode ).
+
+                /* Supply a public name for this operation. */
+                oOperation:name = bMethod.PublicName.
 
                 /* Obtain the method signature for this resource. */
                 assign oParamArr = this-object:getMethodSignature( bResource.ServiceURI,
@@ -2328,6 +2343,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     assign oServiceImpl = Ccs.Common.Application:ServiceManager:getService(oServiceClass) no-error.
 
                 if valid-object(oServiceImpl) then do:
+                    /* This will use a common method to access the catalog data from the Data Object Servics. */
                     assign oOperation = new MappedOperation( "/",
                                                              MethodEnum:GET,
                                                              "application/json",
@@ -2361,7 +2377,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         end. /* not avaialble bService */
 
         /* Debug the current service by dumping to a JSON file when logging level is verbose. */
-        if log-manager:logging-level ge 3 and valid-object(oService) then do on error undo, leave:
+        if lUseDebugs and valid-object(oService) then do on error undo, leave:
             define variable oSvcWriter as MappingFileServiceWriter no-undo.
 
             assign oSvcWriter = new MappingFileServiceWriter().

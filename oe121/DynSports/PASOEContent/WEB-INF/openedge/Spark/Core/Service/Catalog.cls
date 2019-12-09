@@ -14,6 +14,7 @@ using OpenEdge.Net.HTTP.MethodEnum from propath.
 using OpenEdge.Web.DataObject.* from propath.
 using OpenEdge.Web.DataObject.Writer.OpenAPI30ServiceWriter from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
+using Spark.Core.Handler.CloudDataObjectCatalogWriter from propath.
 
 block-level on error undo, throw.
 
@@ -49,6 +50,7 @@ class Spark.Core.Service.Catalog implements Spark.Core.Service.ICatalog:
                         cFilename = replace(oOperation:TargetName, "$CATALINA_BASE", os-getenv("CATALINA_BASE"))
                         cFilename = replace(cFilename, "$oepas-webapp", trim(web-context:get-cgi-value("env", "CONTEXT_PATH"), "/"))
                         .
+
                     file-info:file-name = cFilename.
                     if file-info:full-pathname ne ? then do:
                         define variable oParser as ObjectModelParser no-undo.
@@ -64,6 +66,7 @@ class Spark.Core.Service.Catalog implements Spark.Core.Service.ICatalog:
                 end. /* Operation Not Available */
             end. /* No Catalog */
             else if oServices[iX]:Catalog:Has("services") then
+                /* Each service should only have one defined catalog for that service. */
                 oSvcArray:Add(oServices[iX]:Catalog:GetJsonArray("services"):GetJsonObject(1)).
         end. /* do ix */
 
@@ -82,6 +85,7 @@ class Spark.Core.Service.Catalog implements Spark.Core.Service.ICatalog:
     end method. /* getDataObjectServiceCatalogs */
 
     method public void getOpenApiCatalog ( output catalog as JsonObject ):
+        /* Specialized method to return an Open API v3.0 formatted description of resource endpoints. */
         define variable oServiceWriter as OpenAPI30ServiceWriter no-undo.
         assign oServiceWriter = new OpenAPI30ServiceWriter().
         if valid-object(oServiceWriter) then do:
@@ -98,29 +102,49 @@ class Spark.Core.Service.Catalog implements Spark.Core.Service.ICatalog:
             assign catalog = new Progress.Json.ObjectModel.JsonObject().
     end method. /* getOpenApiCatalog */
 
+
     method public void getCatalog ( output catalog as JsonObject ):
-        /**
-         * First attempt to return a combined catalog from any available services.
-         * These would be stored within each DOS object via the Catalog property.
-         */
-        assign catalog = this-object:getDataObjectServiceCatalogs().
+        /* Return a typical Cloud Data Object catalog as utilized by the Progress JSDO pattern. */
+        define variable oServiceWriter as CloudDataObjectCatalogWriter no-undo.
+        assign oServiceWriter = new CloudDataObjectCatalogWriter().
+        if valid-object(oServiceWriter) then do:
+            oServiceWriter:open().
+            oServiceWriter:write(ServiceRegistry:GetServices()).
+            oServiceWriter:close().
 
-        /**
-         * As a last resort, return a catalog of endpoints in OpenAPI format.
-         * This format is chosen as it is an open standard and can be easily
-         * consumed via many available parsers in multiple languages.
-         */
+            assign catalog = cast(oServiceWriter:Value, JsonObject).
+            delete object oServiceWriter no-error.
+        end.
+
+        /* Return an empty object if catalog object is invalid. */
         if not valid-object(catalog) then
-            this-object:getOpenApiCatalog(output catalog).
-
-        define variable cNames as character no-undo extent.
-        if valid-object(catalog) then
-            assign cNames = catalog:GetNames(). /* Check for properties of object. */
-        if not valid-object(catalog) or extent(cNames) eq 0 then
-            assign catalog = new Progress.Json.ObjectModel.JsonObject(). /* Otherwise, return an empty object. */
-
-        if log-manager:logging-level ge 3 then
-            catalog:WriteFile(substitute("&1/catalog.json", session:temp-directory), true).
+            assign catalog = new Progress.Json.ObjectModel.JsonObject().
     end method. /* getCatalog */
+
+
+/*    method public void getCatalog ( output catalog as JsonObject ):                                              */
+/*        /**                                                                                                      */
+/*         * First attempt to return a combined catalog from any available services.                               */
+/*         * These would be stored within each DOS object via the Catalog property.                                */
+/*         */                                                                                                      */
+/*        assign catalog = this-object:getDataObjectServiceCatalogs().                                             */
+/*                                                                                                                 */
+/*        /**                                                                                                      */
+/*         * As a last resort, return a catalog of endpoints in OpenAPI format.                                    */
+/*         * This format is chosen as it is an open standard and can be easily                                     */
+/*         * consumed via many available parsers in multiple languages.                                            */
+/*         */                                                                                                      */
+/*        if not valid-object(catalog) then                                                                        */
+/*            this-object:getOpenApiCatalog(output catalog).                                                       */
+/*                                                                                                                 */
+/*        define variable cNames as character no-undo extent.                                                      */
+/*        if valid-object(catalog) then                                                                            */
+/*            assign cNames = catalog:GetNames(). /* Check for properties of object. */                            */
+/*        if not valid-object(catalog) or extent(cNames) eq 0 then                                                 */
+/*            assign catalog = new Progress.Json.ObjectModel.JsonObject(). /* Otherwise, return an empty object. */*/
+/*                                                                                                                 */
+/*        if log-manager:logging-level ge 3 then                                                                   */
+/*            catalog:WriteFile(substitute("&1/catalog.json", session:temp-directory), true).                      */
+/*    end method. /* getCatalog */                                                                                 */
 
 end class.
