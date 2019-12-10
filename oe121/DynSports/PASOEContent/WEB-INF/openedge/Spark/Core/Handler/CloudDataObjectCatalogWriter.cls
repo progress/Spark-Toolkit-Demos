@@ -29,12 +29,12 @@ using Progress.Json.ObjectModel.JsonObject.
 
 class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectServiceWriter:
 
-    define static public property CATALOG_VERSION as SemanticVersion no-undo
+    define static public property CATALOG_VERSION as decimal no-undo
         get.
         private set.
 
     constructor static CloudDataObjectCatalogWriter ( ):
-        assign CATALOG_VERSION = new SemanticVersion(1,5,0).
+        assign CATALOG_VERSION = 1.5.
     end constructor.
 
     /* Default constructor */
@@ -55,9 +55,9 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
 
         assign catJson = new JsonObject().
 
-        catJson:Add('version':u, string(CATALOG_VERSION)). // REQUIRED. This string must be the semantic version number of the catalog.
-        catJson:Add('lastModified':u, now).                // REQUIRED. Timestamp for when this catalog data was generated.
-        catJson:Add('services':u, new JsonArray()).        // REQUIRED. The available services which have been defined.
+        catJson:Add('version':u, CATALOG_VERSION).  // REQUIRED. This string must be the semantic version number of the catalog.
+        catJson:Add('lastModified':u, now).         // REQUIRED. Timestamp for when this catalog data was generated.
+        catJson:Add('services':u, new JsonArray()). // REQUIRED. The available services which have been defined.
 
         return catJson.
     end method. /* WriteServiceRoot */
@@ -108,23 +108,31 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
     end method.
 
     method override protected void WriteOperation ( input pService as DataObjectService,
-                                                    input pData    as MappedOperation ):
+                                                    input pMapOp   as MappedOperation ):
         define variable serviceObj  as JsonObject no-undo.
         define variable resourceArr as JsonArray  no-undo.
         define variable resource    as JsonObject no-undo.
         define variable operation   as JsonObject no-undo.
+        define variable childObj    as JsonObject no-undo.
+        define variable schemaJson  as JsonObject no-undo.
+        define variable paramArr    as JsonArray  no-undo.
+        define variable iter        as IIterator  no-undo.
         define variable cResource   as character  no-undo.
+        define variable fldType     as character  no-undo.
+        define variable fldFormat   as character  no-undo.
         define variable iCnt        as integer    no-undo.
         define variable iX          as integer    no-undo.
+        define variable operSchema  as handle     no-undo.
+        define variable opParam     as OperationParameter no-undo.
 
-        if pData:name eq '':u then return. /* Can't proceed if there is no operation name. */
+        if pMapOp:name eq '':u then return. /* Can't proceed if there is no operation name. */
 
         assign serviceObj = this-object:GetServiceJson(pService:Name).
         if valid-object(serviceObj) and serviceObj:Has('resources':u) then
             assign resourceArr = serviceObj:GetJsonArray('resources':u).
 
         assign
-            cResource = entry(1, left-trim(pData:ServiceURI, '~/':u), '~/':u)
+            cResource = entry(1, left-trim(pMapOp:ServiceURI, '~/':u), '~/':u)
             iCnt      = resourceArr:Length
             .
 
@@ -140,6 +148,9 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
             resource:Add('autoSave':u, false).
             resource:Add('displayName':u, cResource).
             resource:Add('schema':u, new JsonObject()).
+            resource:GetJsonObject('schema':u):Add('type':u, 'object':u).
+            resource:GetJsonObject('schema':u):Add('additionalProperties':u, false).
+            resource:GetJsonObject('schema':u):Add('properties':u, new JsonObject()).
             resource:Add('relations':u, new JsonArray()).
             resource:Add('operations':u, new JsonArray()).
             resource:Add('dataDefinitions':u, new JsonObject()).
@@ -147,293 +158,138 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
         end.
 
         assign operation = new JsonObject().
-        operation:Add('name':u, pData:name).
-        operation:Add('path':u, substring(pData:ServiceURI, length(cResource) + 2)).
-        operation:Add('useBeforeImage':u, false).
-        if can-do("create,read,update,delete,submit", pData:name) then
-            operation:Add('type':u, pData:name).
-        else
-            operation:Add('type':u, 'invoke':u).
-        operation:Add('verb':u, lc(string(pData:Method))).
-        operation:Add('params':u, new JsonArray()).
-        resource:GetJsonArray('operations':u):Add(operation).
+        operation:Add('name':u, pMapOp:name).
+        operation:Add('path':u, substring(pMapOp:ServiceURI, length(cResource) + 2)).
 
-/*        do loop = 1 to cnt:                                                                                                                                                           */
-/*            assign jsonData = operJson:GetJsonObject('responses':u):GetJsonObject(string(pData:StatusCode, '999':u)).                                                                 */
-/*            case pData:ReturnValue:OutputElement[loop]:ElementType:                                                                                                                   */
-/*                when ElementTypeEnum:Field then                                                                                                                                       */
-/*                do:                                                                                                                                                                   */
-/*                    if not jsonData:Has('content':u) then                                                                                                                             */
-/*                    do:                                                                                                                                                               */
-/*                        assign childObj    = new JsonObject()                                                                                                                         */
-/*                               contentJson = new JsonObject()                                                                                                                         */
-/*                               schemaJson  = new JsonObject()                                                                                                                         */
-/*                               .                                                                                                                                                      */
-/*                        jsonData:Add('content':u,   childObj).                                                                                                                        */
-/*                            childObj:Add(pData:ContentType, contentJson).                                                                                                             */
-/*                                contentJson:Add('schema':u, schemaJson).                                                                                                              */
-/*                                    schemaJson:Add('type':u, 'object':u).                                                                                                             */
-/*                                    schemaJson:Add('description':u, 'FIELD mapping').                                                                                                 */
-/*                    end.                                                                                                                                                              */
-/*                end.                                                                                                                                                                  */
-/*                                                                                                                                                                                      */
-/*                when ElementTypeEnum:Body then                                                                                                                                        */
-/*                do:                                                                                                                                                                   */
-/*                    assign childObj    = new JsonObject()                                                                                                                             */
-/*                           contentJson = new JsonObject()                                                                                                                             */
-/*                           schemaJson  = new JsonObject()                                                                                                                             */
-/*                           .                                                                                                                                                          */
-/*                    jsonData:Add('content':u,   childObj).                                                                                                                            */
-/*                        childObj:Add(pData:ContentType, contentJson).                                                                                                                 */
-/*                            contentJson:Add('schema':u, schemaJson).                                                                                                                  */
-/*                    // for per-operation schemas, use inline; for service schemas, use a reference                                                                                    */
-/*                    assign operSchema = pData:GetSchema(pData:ReturnValue:ABLName).                                                                                                   */
-/*                    if valid-handle(operSchema) then                                                                                                                                  */
-/*                    do:                                                                                                                                                               */
-/*                        assign schemaChild = new JsonObject().                                                                                                                        */
-/*                                                                                                                                                                                      */
-/*                        schemaJson:Add('type':u, 'object':u).                                                                                                                         */
-/*                        schemaJson:Add('additionalProperties':u, false).                                                                                                              */
-/*                        schemaJson:Add('properties', schemaChild).                                                                                                                    */
-/*                                                                                                                                                                                      */
-/*                        case operSchema:type:                                                                                                                                         */
-/*                            when 'dataset':u then                                                                                                                                     */
-/*                                schemaChild:Add(operSchema:serialize-name, WriteDataset(operSchema)).                                                                                 */
-/*                            when 'buffer':u then                                                                                                                                      */
-/*                                schemaChild:Add(operSchema:serialize-name, WriteTable(operSchema)).                                                                                   */
-/*                            when 'table':u then                                                                                                                                       */
-/*                                schemaChild:Add(operSchema:serialize-name, WriteTable(operSchema:default-buffer-handle)).                                                             */
-/*                        end case.                                                                                                                                                     */
-/*                    end.                                                                                                                                                              */
-/*                    else                                                                                                                                                              */
-/*                        assign operSchema = pService:GetSchema(pData:ReturnValue:ABLName).                                                                                            */
-/*                                                                                                                                                                                      */
-/*                    if valid-handle(operSchema) then                                                                                                                                  */
-/*                        schemaJson:Add('$ref':u, '#/components/schemas/':u + operSchema:serialize-name).                                                                              */
-/*                    else                                                                                                                                                              */
-/*                        schemaJson:Add('type':u, 'object':u).                                                                                                                         */
-/*                end.                                                                                                                                                                  */
-/*                otherwise                                                                                                                                                             */
-/*                    next.                                                                                                                                                             */
-/*            end case.                                                                                                                                                                 */
-/*        end.        //output                                                                                                                                                          */
-/*                                                                                                                                                                                      */
-/*        //parameters                                                                                                                                                                  */
-/*        assign iter      = pData:Parameters:Iterator()                                                                                                                                */
-/*               paramJson = operJson:GetJsonArray('parameters':u)                                                                                                                      */
-/*               .                                                                                                                                                                      */
-/*        do while iter:HasNext():                                                                                                                                                      */
-/*            assign opParam  = cast(iter:Next(), OperationParameter).                                                                                                                  */
-/*                                                                                                                                                                                      */
-/*            // we only care about inputs here                                                                                                                                         */
-/*            assign cnt = extent(opParam:InputElement).                                                                                                                                */
-/*            do loop = 1 to cnt:                                                                                                                                                       */
-/*                // REQUIRED. The location of the parameter. Possible values are "query", "header", "path" or "cookie".                                                                */
-/*                case opParam:InputElement[loop]:ElementType:                                                                                                                          */
-/*                    when ElementTypeEnum:Query  or                                                                                                                                    */
-/*                    when ElementTypeEnum:Header or                                                                                                                                    */
-/*                    when ElementTypeEnum:Cookie or                                                                                                                                    */
-/*                    when ElementTypeEnum:Path then                                                                                                                                    */
-/*                    do:                                                                                                                                                               */
-/*                        assign childObj   = new JsonObject()                                                                                                                          */
-/*                               schemaJson = new JsonObject()                                                                                                                          */
-/*                               fldType    = FieldInfo(opParam:ABLType, output fldFormat)                                                                                              */
-/*                               .                                                                                                                                                      */
-/*                        paramJson:Add(childObj).                                                                                                                                      */
-/*                            childObj:Add('in':u,        lc(string(opParam:InputElement[loop]:ElementType))).                                                                          */
-/*                            childObj:Add('name':u,      opParam:InputElement[loop]:ElementName).                                                                                      */
-/*                            childObj:Add('required':u,  (opParam:InputElement[loop]:ElementType eq ElementTypeEnum:Path)).                                                            */
-/*                            childObj:Add('schema':u, schemaJson).                                                                                                                     */
-/*                                schemaJson:Add('type':u,   fldType).                                                                                                                  */
-/*                                schemaJson:Add('format':u, fldFormat).                                                                                                                */
-/*                                schemaJson:Add('description':u, caps(string(opParam:InputElement[loop]:ElementType)) + ' mapping').                                                   */
-/*                    end.                                                                                                                                                              */
-/*                                                                                                                                                                                      */
-/*                    when ElementTypeEnum:Field then                                                                                                                                   */
-/*                    do:                                                                                                                                                               */
-/*                        if not operJson:Has('requestBody':u) then                                                                                                                     */
-/*                        do:                                                                                                                                                           */
-/*                            assign childObj    = new JsonObject()                                                                                                                     */
-/*                                   jsonData    = new JsonObject()                                                                                                                     */
-/*                                   contentJson = new JsonObject()                                                                                                                     */
-/*                                   schemaJson  = new JsonObject()                                                                                                                     */
-/*                                   .                                                                                                                                                  */
-/*                            operJson:Add('requestBody':u, childObj).                                                                                                                  */
-/*                                childObj:Add('description':u, opParam:ABLType).                                                                                                       */
-/*                                childObj:Add('content':u,   jsonData).                                                                                                                */
-/*                                    jsonData:Add(pData:ContentType, contentJson).                                                                                                     */
-/*                                        contentJson:Add('schema':u, schemaJson).                                                                                                      */
-/*                                            schemaJson:Add('type':u, 'object':u).                                                                                                     */
-/*                                            schemaJson:Add('description':u, 'FIELD mapping').                                                                                         */
-/*                        end.                                                                                                                                                          */
-/*                    end.                                                                                                                                                              */
-/*                                                                                                                                                                                      */
-/*                    when ElementTypeEnum:Body then                                                                                                                                    */
-/*                    do:                                                                                                                                                               */
-/*                        assign childObj    = new JsonObject()                                                                                                                         */
-/*                               jsonData    = new JsonObject()                                                                                                                         */
-/*                               contentJson = new JsonObject()                                                                                                                         */
-/*                               schemaJson  = new JsonObject()                                                                                                                         */
-/*                               .                                                                                                                                                      */
-/*                        operJson:Add('requestBody':u, childObj).                                                                                                                      */
-/*                            childObj:Add('description':u, opParam:ABLType).                                                                                                           */
-/*                            childObj:Add('content':u,   jsonData).                                                                                                                    */
-/*                                jsonData:Add(pData:ContentType, contentJson).                                                                                                         */
-/*                                    contentJson:Add('schema':u, schemaJson).                                                                                                          */
-/*                        // for per-operation schemas, use inline; for service schemas, use a reference                                                                                */
-/*                        assign operSchema  = pData:GetSchema(opParam:ABLName).                                                                                                        */
-/*                        if valid-handle(operSchema) then                                                                                                                              */
-/*                        do:                                                                                                                                                           */
-/*                            assign schemaChild = new JsonObject().                                                                                                                    */
-/*                            schemaJson:Add('type':u, 'object':u).                                                                                                                     */
-/*                            schemaJson:Add('description':u, 'BODY mapping').                                                                                                          */
-/*                            schemaJson:Add('additionalProperties':u, false).                                                                                                          */
-/*                            schemaJson:Add('properties', schemaChild).                                                                                                                */
-/*                            /*                                                                                                                                                        */
-/*                                "type": "object",                                                                                                                                     */
-/*                                "additionalProperties": false,                                                                                                                        */
-/*                                "properties": {"dsEmployee": {                                                                                                                        */
-/*                            */                                                                                                                                                        */
-/*                            case operSchema:type:                                                                                                                                     */
-/*                                when 'dataset':u then                                                                                                                                 */
-/*                                    schemaChild:Add(operSchema:serialize-name, WriteDataset(operSchema)).                                                                             */
-/*                                when 'buffer':u then                                                                                                                                  */
-/*                                    schemaChild:Add(operSchema:serialize-name, WriteTable(operSchema)).                                                                               */
-/*                                when 'table':u then                                                                                                                                   */
-/*                                    schemaChild:Add(operSchema:serialize-name, WriteTable(operSchema:default-buffer-handle)).                                                         */
-/*                            end case.                                                                                                                                                 */
-/*                        end.                                                                                                                                                          */
-/*                        else                                                                                                                                                          */
-/*                            assign operSchema = pService:GetSchema(opParam:ABLName).                                                                                                  */
-/*                                                                                                                                                                                      */
-/*                        if valid-handle(operSchema) then                                                                                                                              */
-/*                        do:                                                                                                                                                           */
-/*                            schemaJson:Add('$ref':u, '#/components/schemas/':u + operSchema:serialize-name).                                                                          */
-/*                        end.                                                                                                                                                          */
-/*                        else                                                                                                                                                          */
-/*                            schemaJson:Add('type':u, 'object':u).                                                                                                                     */
-/*                    end.                                                                                                                                                              */
-/*                                                                                                                                                                                      */
-/*                    otherwise                                                                                                                                                         */
-/*                        next.                                                                                                                                                         */
-/*                end case.                                                                                                                                                             */
-/*            end.    // input loop                                                                                                                                                     */
-/*                                                                                                                                                                                      */
-/*            // now outputs                                                                                                                                                            */
-/*            assign cnt = extent(opParam:OutputElement).                                                                                                                               */
-/*            do loop = 1 to cnt:                                                                                                                                                       */
-/*                assign jsonData = operJson:GetJsonObject('responses':u):GetJsonObject(string(pData:StatusCode, '999':u)).                                                             */
-/*                case opParam:OutputElement[loop]:ElementType:                                                                                                                         */
-/*                    when ElementTypeEnum:Field then                                                                                                                                   */
-/*                    do:                                                                                                                                                               */
-/*                        if not jsonData:Has('content':u) then                                                                                                                         */
-/*                        do:                                                                                                                                                           */
-/*                            assign childObj    = new JsonObject()                                                                                                                     */
-/*                                   contentJson = new JsonObject()                                                                                                                     */
-/*                                   schemaJson  = new JsonObject()                                                                                                                     */
-/*                                   .                                                                                                                                                  */
-/*                            jsonData:Add('content':u,   childObj).                                                                                                                    */
-/*                                childObj:Add(pData:ContentType, contentJson).                                                                                                         */
-/*                                    contentJson:Add('schema':u, schemaJson).                                                                                                          */
-/*                                        schemaJson:Add('type':u, 'object':u).                                                                                                         */
-/*                                        schemaJson:Add('description':u, 'FIELD mapping').                                                                                             */
-/*                        end.                                                                                                                                                          */
-/*                    end.                                                                                                                                                              */
-/*                                                                                                                                                                                      */
-/*                    when ElementTypeEnum:Body then                                                                                                                                    */
-/*                    do:                                                                                                                                                               */
-/*                        assign childObj    = new JsonObject()                                                                                                                         */
-/*                               contentJson = new JsonObject()                                                                                                                         */
-/*                               schemaJson  = new JsonObject()                                                                                                                         */
-/*                               .                                                                                                                                                      */
-/*                        if not jsonData:Has('content':U) then                                                                                                                         */
-/*                        do:                                                                                                                                                           */
-/*                            jsonData:Add('content':u,   childObj).                                                                                                                    */
-/*                                    childObj:Add(pData:ContentType, contentJson).                                                                                                     */
-/*                                        contentJson:Add('schema':u, schemaJson).                                                                                                      */
-/*                        end.                                                                                                                                                          */
-/*                        else                                                                                                                                                          */
-/*                            assign schemaJson = jsonData:GetJsonObject('content':u)                                                                                                   */
-/*                                                            :GetJsonObject(pData:ContentType)                                                                                         */
-/*                                                                :GetJsonObject('schema':u).                                                                                           */
-/*                                                                                                                                                                                      */
-/*                        // for per-operation schemas, use inline; for service schemas, use a reference                                                                                */
-/*                        assign operSchema = pData:GetSchema(opParam:ABLName).                                                                                                         */
-/*                        if valid-handle(operSchema) then                                                                                                                              */
-/*                        do:                                                                                                                                                           */
-/*                            assign schemaChild = new JsonObject().                                                                                                                    */
-/*                            schemaJson:Add('type':u, 'object':u).                                                                                                                     */
-/*                            schemaJson:Add('description':u, 'BODY mapping').                                                                                                          */
-/*                            schemaJson:Add('additionalProperties':u, false).                                                                                                          */
-/*                            schemaJson:Add('properties', schemaChild).                                                                                                                */
-/*                            /*                                                                                                                                                        */
-/*                                "type": "object",                                                                                                                                     */
-/*                                "additionalProperties": false,                                                                                                                        */
-/*                                "properties": {"dsEmployee": {                                                                                                                        */
-/*                            */                                                                                                                                                        */
-/*                            case operSchema:type:                                                                                                                                     */
-/*                                when 'dataset':u then                                                                                                                                 */
-/*                                    schemaChild:Add(operSchema:serialize-name, WriteDataset(operSchema)).                                                                             */
-/*                                when 'buffer':u then                                                                                                                                  */
-/*                                    schemaChild:Add(operSchema:serialize-name, WriteTable(operSchema)).                                                                               */
-/*                                when 'table':u then                                                                                                                                   */
-/*                                    schemaChild:Add(operSchema:serialize-name, WriteTable(operSchema:default-buffer-handle)).                                                         */
-/*                            end case.                                                                                                                                                 */
-/*                        end.                                                                                                                                                          */
-/*                        else                                                                                                                                                          */
-/*                            assign operSchema = pService:GetSchema(opParam:ABLName).                                                                                                  */
-/*                        if valid-handle(operSchema) then                                                                                                                              */
-/*                        do:                                                                                                                                                           */
-/*                            schemaJson:Add('$ref':u, '#/components/schemas/':u + operSchema:serialize-name).                                                                          */
-/*                        end.                                                                                                                                                          */
-/*                        else                                                                                                                                                          */
-/*                            schemaJson:Add('type':u, 'object':u).                                                                                                                     */
-/*                    end.                                                                                                                                                              */
-/*                                                                                                                                                                                      */
-/*                    otherwise                                                                                                                                                         */
-/*                        next.                                                                                                                                                         */
-/*                end case.                                                                                                                                                             */
-/*            end.        //output                                                                                                                                                      */
-/*        end.                                                                                                                                                                          */
+        if pMapOp:name eq "read" then do:
+            operation:Set('path':u, '?filter=~{filter~}':u).
+            operation:Add('capabilities':u, 'filter,id,orderBy,skip,sort,top':u).
+            operation:Add('mappingType':u, 'AFP':u).
+            operation:Add('useBeforeImage':u, true).
+            operation:Add('type':u, 'read':u).
+        end.
+        else if can-do("create,update,delete,submit", pMapOp:name) then do:
+            operation:Add('useBeforeImage':u, true).
+            operation:Add('type':u, pMapOp:name).
+        end.
+        else do:
+            operation:Add('useBeforeImage':u, false).
+            operation:Add('type':u, 'invoke':u).
+        end.
+
+        operation:Add('verb':u, lc(string(pMapOp:Method))).
+
+        assign
+            iter     = pMapOp:Parameters:Iterator()
+            paramArr = new JsonArray()
+            .
+
+        do while iter:HasNext():
+            assign opParam = cast(iter:Next(), OperationParameter).
+
+            assign childObj = new JsonObject().
+            case opParam:IOMode:
+                when OpenEdge.Core.IOModeEnum:Input or
+                when OpenEdge.Core.IOModeEnum:Input-by-reference then do:
+                    childObj:Add('mode':u, 'Input':u).
+                    childObj:Add('name':u, opParam:ABLName).
+                    if opParam:IsArray then
+                        childObj:AddNull('extent':u).
+                    else
+                        childObj:Add('extent':u, 0).
+                    childObj:Add('xType':u, if num-entries(opParam:ABLType, ' ':u) eq 2 then entry(2, opParam:ABLType, ' ':u) else opParam:ABLType).
+                    if pMapOp:name eq "read" then
+                        childObj:Add('type':u, 'QUERY':u).
+                    else
+                        childObj:Add('type':u, 'REQUEST_BODY':u).
+                end.
+
+                when OpenEdge.Core.IOModeEnum:Input-Output or
+                when OpenEdge.Core.IOModeEnum:Input-Output-By-Reference then do:
+                    childObj:Add('mode':u, 'InputOutput':u).
+                    childObj:Add('name':u, opParam:ABLName).
+                    if opParam:IsArray then
+                        childObj:AddNull('extent':u).
+                    else
+                        childObj:Add('extent':u, 0).
+                    childObj:Add('xType':u, if num-entries(opParam:ABLType, ' ':u) eq 2 then entry(2, opParam:ABLType, ' ':u) else opParam:ABLType).
+                    childObj:Add('type':u, 'REQUEST_BODY,RESPONSE_BODY':u).
+
+                end.
+                
+                when OpenEdge.Core.IOModeEnum:Output or
+                when OpenEdge.Core.IOModeEnum:Output-by-reference then do:
+                    childObj:Add('mode':u, 'Output':u).
+                    childObj:Add('name':u, opParam:ABLName).
+                    if opParam:IsArray then
+                        childObj:AddNull('extent':u).
+                    else
+                        childObj:Add('extent':u, 0).
+                    childObj:Add('xType':u, if num-entries(opParam:ABLType, ' ':u) eq 2 then entry(2, opParam:ABLType, ' ':u) else opParam:ABLType).
+                    childObj:Add('type':u, 'RESPONSE_BODY':u).
+                end.
+
+                otherwise
+                    message substitute('Unknown IOMode &1 for &2':u, string(opParam:IOMode), opParam:ABLName).
+            end case.
+
+            assign operSchema = pMapOp:GetSchema(opParam:ABLName).
+            if not valid-handle(operSchema) then
+                assign operSchema = pService:GetSchema(opParam:ABLName).
+
+            if valid-handle(operSchema) then do:
+                case operSchema:type:
+                    when 'dataset':u then
+                        resource:GetJsonObject('schema':u):Set('properties':u, WriteDataset(operSchema)).
+                    when 'buffer':u then
+                        resource:GetJsonObject('schema':u):Set('properties':u, WriteTable(operSchema)).
+                    when 'table':u then
+                        resource:GetJsonObject('schema':u):Set('properties':u, WriteTable(operSchema:default-buffer-handle)).
+                end case.
+            end.
+
+            paramArr:Add(childObj).             
+        end. /* do while */
+
+        operation:Add('params':u, paramArr).
+        resource:GetJsonArray('operations':u):Add(operation).
     end method.
 
     method protected JsonObject WriteDataset ( input pDataset as handle ):
-        define variable loop as integer no-undo.
-        define variable cnt as integer no-undo.
-        define variable childData as JsonObject no-undo.
-        define variable datasetJson as JsonObject no-undo.
-        define variable bufferHdl as handle no-undo.
+        define variable iX as integer no-undo.
+        define variable iCnt as integer no-undo.
         define variable propsJson as JsonObject no-undo.
+        define variable childData as JsonObject no-undo.
+        define variable tableData as JsonObject no-undo.
+        define variable bufferHdl as handle no-undo.
+        
 
         if not valid-handle(pDataset) then
-            return datasetJson.
+            return propsJson.
 
-        assign datasetJson = new JsonObject()
-               propsJson   = new JsonObject()
+        assign propsJson   = new JsonObject()
                childData   = new JsonObject()
-               cnt         = pDataset:num-buffers
+               iCnt        = pDataset:num-buffers
                .
-        datasetJson:Add('type':u, 'object':u).
-        datasetJson:Add('additionalProperties':u, false).
-        datasetJson:Add('properties':u, propsJson).
-            propsJson:Add(pDataset:serialize-name, childData).
-                childData:Add('type':u, 'object':u).
-                childData:Add('additionalProperties':u, false).
 
-        assign propsJson = new JsonObject().
-                childData:Add('properties':u, propsJson).
+        childData:Add('type':u, 'object':u).
+        childData:Add('additionalProperties':u, false).
+        propsJson:Add(pDataset:serialize-name, childData).
 
-        do loop = 1 to cnt:
-            assign bufferHdl = pDataset:get-buffer-handle(loop).
-            propsJson:Add(bufferHdl:serialize-name, WriteTable(bufferHdl)).
+        assign tableData = new JsonObject().
+        childData:Add('properties':u, tableData).
+
+        do iX = 1 to iCnt:
+            assign bufferHdl = pDataset:get-buffer-handle(iX).
+            tableData:Add(bufferHdl:serialize-name, WriteTable(bufferHdl)).
         end.
 
-        return datasetJson.
+        return propsJson.
     end method.
 
     method protected JsonObject WriteTable ( input pTable as handle ):
-        define variable loop as integer no-undo.
-        define variable cnt as integer no-undo.
+        define variable iX as integer no-undo.
+        define variable iCnt as integer no-undo.
         define variable idx as integer no-undo.
         define variable tableJson as JsonObject no-undo.
         define variable fldJson as JsonObject no-undo.
@@ -458,11 +314,11 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
             if entry(2, idxInfo) eq '1':u then
             do:
                 // index fields
-                assign cnt = num-entries(idxInfo).
-                do loop = 5 to cnt by 2:
-                    if entry(loop, idxInfo) eq '':u then
+                assign iCnt = num-entries(idxInfo).
+                do iX = 5 to iCnt by 2:
+                    if entry(iX, idxInfo) eq '':u then
                         next.
-                    assign uniqueFld = uniqueFld + delim + entry(loop, idxInfo)
+                    assign uniqueFld = uniqueFld + delim + entry(iX, idxInfo)
                            delim     = ',':u
                            .
                 end.
@@ -476,53 +332,48 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
         assign tableJson = new JsonObject()
                itemsJson = new JsonObject()
                propsJson = new JsonObject()
-               cnt       = pTable:num-fields
+               iCnt      = pTable:num-fields
                .
         tableJson:Add('type':u, 'array':u).
         tableJson:Add('items':u, itemsJson).
-            itemsJson:Add('additionalProperties':u, false).
-            itemsJson:Add('properties':u, propsJson).
+        itemsJson:Add('additionalProperties':u, false).
+        itemsJson:Add('properties':u, propsJson).
 
-        do loop = 1 to cnt:
-            assign bufferFld = pTable:buffer-field(loop).
+        propsJson:Add('_id':u, new JsonObject()).
+        propsJson:GetJsonObject('_id':u):Add('type':u, 'string':u).
+        propsJson:Add('_errorString':u, new JsonObject()).
+        propsJson:GetJsonObject('_errorString':u):Add('type':u, 'string':u).
+
+        do iX = 1 to iCnt:
+            assign bufferFld = pTable:buffer-field(iX).
 
             // not visible to the outside world
             if bufferFld:serialize-hidden then
                 next.
 
             /* Create the new field object. */
-            assign fldJson= new JsonObject().
+            assign fldJson = new JsonObject().
             propsJson:Add(bufferFld:serialize-name, fldJson).
 
             assign fldType = FieldInfo(bufferFld:data-type,
                                        output fldFormat).
 
-            if bufferFld:extent gt 0 then
-            do:
+            if bufferFld:extent gt 0 then do:
                 fldJson:Add('type':u, 'array':u).
-                fldJson:Add('title':u, bufferFld:label).
                 fldJson:Add('maxItems':u, bufferFld:extent).
+
                 assign childObj = new JsonObject().
                 fldJson:Add('items':u, childObj).
-                    childObj:Add('type':u, fldType).
-                    childObj:Add('nullable':u, true).
-                    if lookup(bufferFld:name, uniqueFld) gt 0 then
-                        childObj:Add('required':u, true).
-
-                    if not fldFormat eq '':u then
-                        childObj:Add('format':u, fldFormat ).
-
-                    WriteDefaultFieldValue(bufferFld, childObj).
-            end. /* Extent */
-            else
-            do:
+                childObj:Add('type':u, fldType).
+                childObj:Add('ablType':u, caps(bufferFld:data-type)).
                 fldJson:Add('title':u, bufferFld:label).
+
+                WriteDefaultFieldValue(bufferFld, childObj).
+            end. /* Extent */
+            else do:
                 fldJson:Add('type':u,  fldType).
-                fldJson:Add('nullable':u, true).
-                if lookup(bufferFld:name, uniqueFld) gt 0 then
-                    fldJson:Add('required':u, true).
-                if not fldFormat eq '':u then
-                    fldJson:Add('format':u, fldFormat ).
+                fldJson:Add('ablType':u, caps(bufferFld:data-type)).
+                fldJson:Add('title':u, bufferFld:label).
 
                 WriteDefaultFieldValue(bufferFld, fldJson).
             end. /* Normal */
@@ -544,7 +395,7 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
         else
         case pField:data-type:
             when 'date':u then
-                //date-fullyear "-" date-month "-" date-mday
+                // date-fullyear "-" date-month "-" date-mday
                 pJson:Add('default':u, substitute('&1-&2-&3':u,
                                     string(year(pField:default-value), '9999':u),
                                     string(month(pField:default-value), '99':u),
