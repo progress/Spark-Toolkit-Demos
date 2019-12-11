@@ -14,7 +14,7 @@ block-level on error undo, throw.
 
 class Spark.Core.Handler.ServiceOptions inherits OpenEdge.Web.DataObject.ServiceOptions:
 
-    /* (optional) Prefix for service URI, if applicable [PrefixURI + / + Service] */
+    /* Prefix for service URI, if applicable [Transport + / + Prefix] */
     define public property PrefixURI as character no-undo get. set.
 
     /* Default constructor */

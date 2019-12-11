@@ -197,7 +197,7 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
                         childObj:AddNull('extent':u).
                     else
                         childObj:Add('extent':u, 0).
-                    childObj:Add('xType':u, if num-entries(opParam:ABLType, ' ':u) eq 2 then entry(2, opParam:ABLType, ' ':u) else opParam:ABLType).
+                    childObj:Add('xType':u, if opParam:ABLType begins 'class':u then entry(2, opParam:ABLType, ' ':u) else opParam:ABLType).
                     if pMapOp:name eq "read" then
                         childObj:Add('type':u, 'QUERY':u).
                     else
@@ -212,7 +212,7 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
                         childObj:AddNull('extent':u).
                     else
                         childObj:Add('extent':u, 0).
-                    childObj:Add('xType':u, if num-entries(opParam:ABLType, ' ':u) eq 2 then entry(2, opParam:ABLType, ' ':u) else opParam:ABLType).
+                    childObj:Add('xType':u, if opParam:ABLType begins 'class':u then entry(2, opParam:ABLType, ' ':u) else opParam:ABLType).
                     childObj:Add('type':u, 'REQUEST_BODY,RESPONSE_BODY':u).
 
                 end.
@@ -225,7 +225,7 @@ class Spark.Core.Handler.CloudDataObjectCatalogWriter inherits DataObjectService
                         childObj:AddNull('extent':u).
                     else
                         childObj:Add('extent':u, 0).
-                    childObj:Add('xType':u, if num-entries(opParam:ABLType, ' ':u) eq 2 then entry(2, opParam:ABLType, ' ':u) else opParam:ABLType).
+                    childObj:Add('xType':u, if opParam:ABLType begins 'class':u then entry(2, opParam:ABLType, ' ':u) else opParam:ABLType).
                     childObj:Add('type':u, 'RESPONSE_BODY':u).
                 end.
 
