@@ -1433,7 +1433,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             end. /* Invoke/Submit */
             else do:
                 operationObj:Add("name", bMethod.OperationType).
-                operationObj:Add("path", ""). /* Supply a default string property. */
+                operationObj:AddNull("path"). /* Supply a null property, as we'll update this next. */
             end. /* CRUD */
 
             /* Supply default property for special methods. */
@@ -2127,12 +2127,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             /* Register the service using the name and version discovered. */
             assign oService = poRegistry:RegisterService(pcServiceName, poServiceVersion, ?, ?).
 
-            if not valid-object(oService:Options) then
-                assign oService:Options = new Spark.Core.Handler.ServiceOptions().
-
-            if valid-object(oService:Options) then
-                assign cast(oService:Options, Spark.Core.Handler.ServiceOptions):PrefixURI  = substitute("/web/&1", this-object:ServicePrefix).
-
             /* Store the Progress-default Cloud Data Object catalog data within the DOS instance. */
             oService:Catalog = this-object:getCatalog(bService.ServiceURI, "").
 
@@ -2165,7 +2159,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                 /* Just use name of the resource for CRUD operations. */
                 if lIsEntity and can-do("Create,Read,Update,Delete", bMethod.OperationType) then
-                    assign cServiceURI = bResource.PublicName. /* Should just be "/<resource>" */
+                    assign cServiceURI = bResource.PublicName. /* Should just be "/<resource>" with no method in the URI. */
 
                 /* Denote start of operation mapping. */
                 oLoggingManager:logMessage(substitute("Mapping &1 &2/&3 to &4:&5",

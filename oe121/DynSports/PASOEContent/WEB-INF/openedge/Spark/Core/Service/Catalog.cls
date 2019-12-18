@@ -14,7 +14,6 @@ using OpenEdge.Net.HTTP.MethodEnum from propath.
 using OpenEdge.Web.DataObject.* from propath.
 using OpenEdge.Web.DataObject.Writer.OpenAPI30ServiceWriter from propath.
 using Spark.Core.Manager.ICatalogManager from propath.
-using Spark.Core.Handler.CloudDataObjectCatalogWriter from propath.
 
 block-level on error undo, throw.
 
@@ -171,26 +170,6 @@ class Spark.Core.Service.Catalog inherits Spark.Diagnostic.Util.OSPath implement
         if not valid-object(catalog) then
             assign catalog = new Progress.Json.ObjectModel.JsonObject().
     end method. /* getOpenApiCatalog */
-
-
-/*    method public void getCatalog ( output catalog as JsonObject ):                               */
-/*        /* Return a typical Cloud Data Object catalog as utilized by the Progress JSDO pattern. */*/
-/*        define variable oServiceWriter as CloudDataObjectCatalogWriter no-undo.                   */
-/*        assign oServiceWriter = new CloudDataObjectCatalogWriter().                               */
-/*        if valid-object(oServiceWriter) then do:                                                  */
-/*            oServiceWriter:open().                                                                */
-/*            oServiceWriter:write(ServiceRegistry:GetServices()).                                  */
-/*            oServiceWriter:close().                                                               */
-/*                                                                                                  */
-/*            assign catalog = cast(oServiceWriter:Value, JsonObject).                              */
-/*            delete object oServiceWriter no-error.                                                */
-/*        end.                                                                                      */
-/*                                                                                                  */
-/*        /* Return an empty object if catalog object is invalid. */                                */
-/*        if not valid-object(catalog) then                                                         */
-/*            assign catalog = new Progress.Json.ObjectModel.JsonObject().                          */
-/*    end method. /* getCatalog */                                                                  */
-
 
     method public void getCatalog ( output catalog as JsonObject ):
         /**
