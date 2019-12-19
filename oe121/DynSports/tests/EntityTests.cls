@@ -22,7 +22,8 @@ block-level on error undo, throw.
 
 class tests.EntityTests inherits tests.SparkUnit:
 
-    define private variable oCatalogManager as ICatalogManager no-undo.
+    define private variable oCatalogManager as ICatalogManager   no-undo.
+    define private variable oServices       as DataObjectService no-undo extent.
 
     /*------------------------------------------------------------------------------
      Purpose: Start up the Spark stack similar to a session of the MSAS agent.
@@ -47,10 +48,32 @@ class tests.EntityTests inherits tests.SparkUnit:
     end method.
 
     @Test.
-    method public void discovery ( ):
-        define variable oServices  as DataObjectService no-undo extent.
+    method public void hasServices ( ):
+        /* Services should have been created/loaded as part of the Spark startup logic run in the "before" method. */
         assign oServices = ServiceRegistry:GetServices().
         log-manager:write-message(substitute("Found &1 services in registry.", extent(oServices))).
+
+        define variable oOps as MappedOperation no-undo extent.
+        define variable iX   as integer         no-undo.
+        do iX = 1 to extent(oServices):
+            extent(oOps) = ?. /* Reset extent. */
+            assign oOps = oServices[iX]:GetOperations().
+            log-manager:write-message(substitute("Service #&1: &2 with &3 operations.", iX, oServices[iX]:Name, extent(oOps))).
+        end.
+
+        OpenEdge.Core.Assert:NonZero(extent(oServices)). /* Should be a non-zero number of services. */
+
+        catch err as Progress.Lang.Error:
+            log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
+        end catch.
+    end method.
+
+    @Test.
+    method public void writeMappings ( ):
+        define variable iX as integer no-undo.
+        do iX = 1 to extent(oServices):
+
+        end.
 
         catch err as Progress.Lang.Error:
             log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).

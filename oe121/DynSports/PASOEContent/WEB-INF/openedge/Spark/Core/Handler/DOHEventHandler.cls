@@ -188,7 +188,7 @@ class Spark.Core.Handler.DOHEventHandler use-widget-pool final:
 
         if file-info:full-pathname eq ? then /* File is not present, so try a different common file. */
             file-info:file-name = "catalog.map". /* Try looking for a catalog.map file on disk. */
-        
+
         if file-info:full-pathname ne ? then /* When file is present, obtain the base path of the file. */
             assign cServiceMapPath = replace(substring(file-info:full-pathname, 1, length(file-info:full-pathname) - length(file-info:file-name)), "~\", "/").
 

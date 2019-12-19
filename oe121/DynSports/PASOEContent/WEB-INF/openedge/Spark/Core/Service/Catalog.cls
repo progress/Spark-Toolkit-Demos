@@ -156,7 +156,7 @@ class Spark.Core.Service.Catalog inherits Spark.Diagnostic.Util.OSPath implement
             if valid-object(catalog) then do:
                 define variable oVars as JsonObject no-undo.
 
-                assign oVars = catalog:GetJsonArray("servers"):GetJsonObject(1):GetJsonObject("variables"). 
+                assign oVars = catalog:GetJsonArray("servers"):GetJsonObject(1):GetJsonObject("variables").
                 oVars:GetJsonObject("port"):Set("default", string(iPort)). /* Use the discovered port for the instance. */
                 oVars:GetJsonObject("basePath"):Set("default", "/api"). /* Use the default typically set for a Spark-based application. */
 
