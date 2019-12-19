@@ -15,6 +15,7 @@ block-level on error undo, throw.
 @TestSuite(classes="tests.ParameterTests").
 @TestSuite(classes="tests.UtilityTests").
 @TestSuite(classes="tests.FilterTests").
+@TestSuite(classes="tests.EntityTests").
 
 class tests.MainSuite:
 

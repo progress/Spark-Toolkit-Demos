@@ -1,4 +1,4 @@
 {
     "loggingLevel": 2,
-    "logEntryTypes": "DB.Connects"
+    "logEntryTypes": "ASPlumbing,DB.Connects"
 }

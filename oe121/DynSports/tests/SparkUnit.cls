@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
     File        : SparkUnit
     Purpose     : Provide basic methods to run ABLUnit against Spark.
-    Syntax      : 
-    Description : 
+    Syntax      :
+    Description :
     Author(s)   : dugrau@progress.com
     Created     : Tue May 30 11:47:54 EDT 2017
-    Notes       : 
+    Notes       :
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
@@ -13,7 +13,7 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class tests.SparkUnit abstract: 
+class tests.SparkUnit abstract:
 
     define protected variable NumDatabases as integer no-undo.
 

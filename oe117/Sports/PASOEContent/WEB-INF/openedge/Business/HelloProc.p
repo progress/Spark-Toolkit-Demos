@@ -7,12 +7,14 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-/* ***************************  Definitions  ************************** */
+@program FILE(name="HelloProc.p", module="AppServer").
+@openapi.openedge.export FILE(type="REST", executionMode="singleton", useReturnValue="false", writeDataSetBeforeImage="false").
+@progress.service.resource FILE(name="HelloProc", URI="/HelloProc", schemaName="", schemaFile="").
 
 block-level on error undo, throw.
 
-/* ***************************  Main Block  *************************** */
-
+@openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
+@progress.service.resourceMapping(type="REST", operation="invoke", URI="/sayHello", alias="", mediaType="application/json").
 procedure sayHello:
     define input  parameter toWhom   as character no-undo.
     define output parameter greeting as character no-undo.
@@ -20,6 +22,8 @@ procedure sayHello:
     assign greeting = substitute("Hello &1", toWhom).
 end procedure.
 
+@openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
+@progress.service.resourceMapping(type="REST", operation="invoke", URI="/sayHello2Many", alias="", mediaType="application/json").
 procedure sayHello2Many:
     define input  parameter recipients as Progress.Json.ObjectModel.JsonArray no-undo.
     define output parameter greeting   as character no-undo.
@@ -29,6 +33,20 @@ procedure sayHello2Many:
     do ix = 1 to recipients:length:
         if recipients:GetType(ix) eq Progress.Json.ObjectModel.JsonDataType:string then
             assign greeting = substitute("&1, Hello &2", greeting, recipients:GetCharacter(ix)).
+    end.
+
+    assign greeting = trim(left-trim(greeting, ",")).
+end procedure.
+
+@openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
+@progress.service.resourceMapping(type="REST", operation="invoke", URI="/sayHelloExtent", alias="", mediaType="application/json").
+procedure sayHelloExtent:
+    define input  parameter recipients as character no-undo extent.
+    define output parameter greeting   as character no-undo.
+
+    define variable ix as integer no-undo.
+    do ix = 1 to extent(recipients):
+        assign greeting = substitute("&1, Hello &2", greeting, recipients[ix]).
     end.
 
     assign greeting = trim(left-trim(greeting, ",")).

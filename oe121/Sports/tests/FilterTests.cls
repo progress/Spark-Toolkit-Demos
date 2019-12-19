@@ -1,8 +1,8 @@
 /*------------------------------------------------------------------------
-    File        : test_filter_parser.p
+    File        : FilterTests
     Purpose     :
     Description :
-    Author(s)   : pjudge
+    Author(s)   : pjudge & dugrau
     Created     : Mon Jun 18 10:05:30 EDT 2018
     Notes       :
   ----------------------------------------------------------------------*/
@@ -134,7 +134,7 @@ class tests.FilterTests:
         this-object:showOutput("Option1b").
 
         catch err as Progress.Lang.Error:
-            message substitute("Error: &1", err:GetMessage(1)).
+            log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
         end catch.
     end method.
 
@@ -156,7 +156,7 @@ class tests.FilterTests:
         this-object:showOutput("Option2").
 
         catch err as Progress.Lang.Error:
-            message substitute("Error: &1", err:GetMessage(1)).
+            log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
         end catch.
     end method.
 
@@ -202,7 +202,7 @@ class tests.FilterTests:
         this-object:showOutput("Option3c").
 
         catch err as Progress.Lang.Error:
-            message substitute("Error: &1", err:GetMessage(1)).
+            log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
         end catch.
     end method.
 
