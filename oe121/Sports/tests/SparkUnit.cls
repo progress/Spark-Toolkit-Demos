@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
     File        : SparkUnit
     Purpose     : Provide basic methods to run ABLUnit against Spark.
-    Syntax      : 
-    Description : 
+    Syntax      :
+    Description :
     Author(s)   : dugrau@progress.com
     Created     : Tue May 30 11:47:54 EDT 2017
-    Notes       : 
+    Notes       :
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
@@ -13,7 +13,7 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class tests.SparkUnit abstract: 
+class tests.SparkUnit abstract:
 
     define protected variable NumDatabases as integer no-undo.
 
@@ -29,12 +29,12 @@ class tests.SparkUnit abstract:
 
         this-object:NumDatabases = 0.
         if search("tests/config.json") ne ? then do:
-            /* Parse config file when found. */
+            /* Parse config file when found, and use that location as a working directory. */
             assign oParser = new Progress.Json.ObjectModel.ObjectModelParser().
             assign oConfig = cast(oParser:ParseFile(search("tests/config.json")), JsonObject) no-error.
             delete object oParser no-error.
 
-            /* Isolate current working directory. */
+            /* Isolate current working directory from the config path. */
             assign cPath = replace(search("tests/config.json"), "~\", "~/").
             assign cPath = substring(cPath, 1, length(cPath) - 11).
         end. /* config.json */
@@ -65,14 +65,17 @@ class tests.SparkUnit abstract:
         run Spark/startup.p (input cStartup).
 
         if UseProfiler then do:
+            define variable cProfDir as character no-undo.
             define variable cListDir as character no-undo.
-            assign cListDir = substitute("&1/listing/", right-trim(cPath, "~/")).
+            assign cProfDir = substitute("&1/profiler/", right-trim(cPath, "~/")).
+            assign cListDir = substitute("&1/listing/", right-trim(cProfDir, "~/")).
+            os-create-dir value(cProfDir).
             os-create-dir value(cListDir).
 
             assign /* Note: Order matters here, do not rearrange! */
                 profiler:enabled      = true
                 profiler:profiling    = true
-                profiler:file-name    = substitute("&1/output_&2.prof", right-trim(cPath, "~/"), pcTestSuiteName)
+                profiler:file-name    = substitute("&1/profiler/output_&2.prof", right-trim(cPath, "~/"), pcTestSuiteName)
                 profiler:description  = "Spark ABLUnit Output"
                 profiler:listings     = true /* Note: Requires source code. */
                 profiler:directory    = cListDir

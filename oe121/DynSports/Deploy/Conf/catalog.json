@@ -7,8 +7,7 @@
             "IdProperty": "id",
             "PreLoader": "",
             "ReadFilter": "filter",
-            "ServicePrefix": "api",
-            "EnableDebugs": false
+            "ServicePrefix": "api"
         }],
         "ServiceSource": [{
             "ServiceName": "common",
