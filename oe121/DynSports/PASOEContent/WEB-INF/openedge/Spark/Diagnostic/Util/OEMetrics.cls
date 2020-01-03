@@ -99,6 +99,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
      * {
      *   AppName: "",
      *   Instance: "",
+     *   TestRun: "",
      *   ABLObjects: {
      *     Filename: "",
      *     Agent: 0,
@@ -189,6 +190,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
         assign this-object:MetricsOutput = new JsonObject().
         this-object:MetricsOutput:Add("AppName", ""). /* Default to blank value initially. */
         this-object:MetricsOutput:Add("Instance", oConfig:InstanceURI).
+        this-object:MetricsOutput:Add("TestRun", "").
     end constructor.
 
 
