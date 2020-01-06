@@ -1,5 +1,5 @@
  
- # Copyright © 1998-2019 Progress Software Corporation and/or one of its subsidiaries or affiliates. All rights reserved.
+ # Copyright (c) 1998-2020 Progress Software Corporation and/or one of its subsidiaries or affiliates. All rights reserved.
  # Spring Security bean properties definition file for all oeabl.war based
  # web applications found in a PAS for OE instance. The properties values found 
  # in this file constitute the full set of Spring Security configuration 
