@@ -13,6 +13,9 @@ block-level on error undo, throw.
 
 class Business.UnitTest.LeakyCode inherits Spark.Core.Service.DynamicResource:
 
+    /* Will be used to demonstrate a leaking memptr. */
+    define private variable mPtr as memptr no-undo.
+
     /* Will be used to demonstrate a hanging buffer. */
     define temp-table tt1
         field f1 as character
@@ -78,9 +81,8 @@ class Business.UnitTest.LeakyCode inherits Spark.Core.Service.DynamicResource:
     end method. /* badHandle */
 
     method public void badMemptr ( output pointerSize as integer ):
-        define variable mPtr as memptr no-undo.
-
-        set-size(mPtr) = 100. /* Set a size, but DO NOT reset to 0 after use.*/
+        /* Set a size, but DO NOT reset to 0 after use.*/
+        set-size(mPtr) = random(100, 200).
         assign pointerSize = get-size(mPtr).
     end method. /* badMemptr */
 
