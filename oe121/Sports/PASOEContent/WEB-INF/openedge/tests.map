@@ -288,6 +288,15 @@
                     "type": "field",
                     "name": "pointerSize"
                   }
+                },
+                {
+                  "ablName": "pointerValue",
+                  "ablType": "INT64",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "pointerValue"
+                  }
                 }
               ]
             }

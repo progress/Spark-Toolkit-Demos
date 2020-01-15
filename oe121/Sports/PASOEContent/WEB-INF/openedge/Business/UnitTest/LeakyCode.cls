@@ -17,9 +17,6 @@ block-level on error undo, throw.
 
 class Business.UnitTest.LeakyCode use-widget-pool:
 
-    /* Will be used to demonstrate a leaking memptr. */
-    define private variable mPtr as memptr no-undo.
-
     /* Will be used to demonstrate a hanging buffer. */
     define temp-table tt1
         field f1 as character
@@ -74,10 +71,14 @@ class Business.UnitTest.LeakyCode use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/memptr", alias="memptr", mediaType="application/json").
-    method public void badMemptr ( output pointerSize as integer ):
+    method public void badMemptr ( output pointerSize  as integer,
+                                   output pointerValue as int64 ):
+        define variable mPtr as memptr no-undo.
+
         /* Set a size, but DO NOT reset to 0 after use.*/
         set-size(mPtr) = random(100, 200).
         assign pointerSize = get-size(mPtr).
+        assign pointerValue = get-pointer-value(mPtr).
     end method. /* badMemptr */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
