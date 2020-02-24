@@ -354,6 +354,25 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
     end method. /* GetSessionID */
 
 
+    method private character GetRequestID ( ):
+        define variable oRequestInfo as OERequestInfo no-undo.
+        define variable cRequestID   as character     no-undo.
+
+        assign oRequestInfo = this-object:GetRequestInfo().
+        if valid-object(oRequestInfo) then
+            assign cRequestID = oRequestInfo:RequestId.
+
+        /* Don't return an unknown value. */
+        if (cRequestID gt "") ne true then assign cRequestID = "".
+
+        return cRequestID.
+
+        finally:
+            delete object oRequestInfo no-error.
+        end finally.
+    end method. /* GetRequestID */
+
+
     method private void ResetOutput ( ):
         /* Clean up any old metrics if they exist in the output object. */
         if this-object:MetricsOutput:Has("ABLObjects") then this-object:MetricsOutput:Remove("ABLObjects").
@@ -679,6 +698,7 @@ class Spark.Diagnostic.Util.OEMetrics inherits Spark.Diagnostic.Util.Logger use-
                 oProfiler:Add("Instance", oConfig:InstanceURI).
                 oProfiler:Add("AgentPID", this-object:GetAgentID()).
                 oProfiler:Add("ABLSessionID", this-object:GetSessionID()).
+                oProfiler:Add("RequestID", this-object:GetRequestID()).
                 oProfiler:Add("Data", lcProfile).
 
                 /* Send the file and then delete if no error reported. */
