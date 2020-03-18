@@ -14,6 +14,9 @@
         <echo message="    -Dablapp=[INSTANCE_NAME] = default ABL App name (Default: {alias})"/>
         <echo message="${line.separator}ant enable_oerealm - Enable use of OERealm by copying config files"/>
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
+        <echo message="${line.separator}Location Assumptions:"/>
+        <echo message="    DLC Environment: ${dlcHome}"/>
+        <echo message="    PAS Instance: ${pas.path}"/>
     </target>
 
     <target name="create">
