@@ -1,0 +1,30 @@
+{
+    "services": {
+        "ROOT": {
+            "version": "1.0.0",
+            "operations": {
+                "/": {
+                    "GET": {
+                        "contentType": "application/json",
+                        "statusCode": 200,
+                        "entity": {
+                            "name": "Spark.Core.Service.Catalog",
+                            "function": "getCatalog",
+                            "typeof": "Progress.Lang.Object",
+                            "arg": [{
+                                "ablName": "catalog",
+                                "ablType": "class Progress.Json.ObjectModel.JsonObject",
+                                "ioMode": "Output",
+                                "msgElem": {
+                                    "type": "BODY",
+                                    "name": "catalog",
+                                    "ioMode": "Output"
+                                }
+                            }]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
