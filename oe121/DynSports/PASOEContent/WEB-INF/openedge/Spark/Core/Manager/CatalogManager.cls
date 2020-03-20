@@ -1811,8 +1811,6 @@ message "Dispose".
 
     method public void loadResources ( ):
         empty temp-table ResourceInfo.
-        empty temp-table MethodInfo.
-        empty temp-table ResourceList.
         empty temp-table ResourceProperty.
 
         /* Confirm whether the necessary OE.BL.BE class exists for the current environment. */

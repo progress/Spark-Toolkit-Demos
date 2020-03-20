@@ -20,6 +20,7 @@ class tests.SparkUnit abstract:
     define protected variable UseProfiler as logical no-undo initial true.
 
     method protected void StartSpark ( input pcTestSuiteName as character ):
+message "StartSpark".
         define variable oParser    as ObjectModelParser no-undo.
         define variable oConfig    as JsonObject        no-undo.
         define variable oDatabases as JsonObject        no-undo.
@@ -96,7 +97,7 @@ class tests.SparkUnit abstract:
     end method. /* StartSpark */
 
     method protected void StopSpark ( ):
-message "StopSpark, shutdown".
+message "StopSpark".
         /* Run standard "sessionShutdownProc". */
         run Spark/shutdown.p.
 
