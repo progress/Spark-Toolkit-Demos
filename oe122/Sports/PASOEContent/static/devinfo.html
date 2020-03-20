@@ -336,7 +336,7 @@
                             contentType: "application/vnd.progress+json",
                             dataType: "json",
                             method: "delete",
-                            url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentID + "/sessions/" + sessionID + "?terminateOpt=1"
+                            url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentID + "/sessions/" + sessionID + "?terminateOpt=0"
                         })
                         .done(function(data, textStatus, jqXHR){
                             showMessage(data.outcome + ": Stopped session " + sessionID + ".", "success");

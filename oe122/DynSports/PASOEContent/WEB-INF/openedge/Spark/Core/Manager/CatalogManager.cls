@@ -1553,6 +1553,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
 
     method override public void initialize ( ):
+message "Initialize".
         /* Read catalog configuration file and register values in properties. */
         define variable cFullCfgFileName as character no-undo.
         file-info:file-name = OSTools:sparkConf + "catalog.json".
@@ -1612,6 +1613,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
 
     method override public void dispose ( ):
+message "Dispose".
         for each EntityProperty:
             /* Delete entity properties when manager is disposed. */
             delete object EntityProperty.FieldData no-error.
@@ -1632,6 +1634,15 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             oCatRegistry:Remove(cCat[iX]). /* Remove cached catalog. */
         end. /* do iX */
         delete object oCatRegistry no-error. /* Clear the catalog registry. */
+
+        empty temp-table GeneralParam.
+        empty temp-table ServiceList.
+        empty temp-table ResourceList.
+        empty temp-table ServiceInfo.
+        empty temp-table ResourceInfo.
+        empty temp-table MethodInfo.
+        empty temp-table ResourceProperty.
+        empty temp-table EntityProperty.
     end method. /* dispose */
 
 
@@ -1656,8 +1667,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define buffer bResource for ResourceInfo.
         define buffer bService  for ServiceList.
         define buffer bSrvcRes  for ResourceList.
-
-        empty temp-table bResource.
 
         for first bGenParam no-lock:
             assign cRoot = "".
@@ -1802,6 +1811,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
     method public void loadResources ( ):
         empty temp-table ResourceInfo.
+        empty temp-table MethodInfo.
+        empty temp-table ResourceList.
         empty temp-table ResourceProperty.
 
         /* Confirm whether the necessary OE.BL.BE class exists for the current environment. */

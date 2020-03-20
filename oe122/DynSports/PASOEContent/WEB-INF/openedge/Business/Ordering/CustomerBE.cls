@@ -220,9 +220,6 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use
 
         if not valid-handle(phDataset) then return. /* Leave if handle is invalid. */
 
-        if phDataset:error then
-            undo, throw new AppError(substitute("Error in ProDataSet during &1 action", pcAction), -500).
-
         if pcAction eq "Delete" then do:
             /* If explicitly a delete, remember the current record primary value(s). */
             assign bhTopTable = phDataset:get-top-buffer(1).

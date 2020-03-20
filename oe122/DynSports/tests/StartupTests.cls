@@ -29,6 +29,7 @@ class tests.StartupTests inherits tests.SparkUnit:
     ------------------------------------------------------------------------------*/
     @After.
     method public void after ( ):
+message "after, stopSpark".
         this-object:StopSpark().
     end method.
 

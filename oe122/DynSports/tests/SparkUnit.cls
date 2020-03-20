@@ -96,6 +96,7 @@ class tests.SparkUnit abstract:
     end method. /* StartSpark */
 
     method protected void StopSpark ( ):
+message "StopSpark, shutdown".
         /* Run standard "sessionShutdownProc". */
         run Spark/shutdown.p.
 

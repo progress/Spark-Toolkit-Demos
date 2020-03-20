@@ -12,6 +12,9 @@
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
         <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: ${path})"/>
         <echo message="    -Dablapp=[INSTANCE_NAME] = default ABL App name (Default: {alias})"/>
+        <echo message="${line.separator}ant upgrade - Upgrade a PAS instance with Spark"/>
+        <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
+        <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: ${path})"/>
         <echo message="${line.separator}ant enable_oerealm - Enable use of OERealm by copying config files"/>
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
         <echo message="${line.separator}Location Assumptions:"/>
@@ -24,6 +27,16 @@
 
         <!-- Begin by creating an instance. -->
         <antcall target="_create_instance"/>
+    </target>
+
+    <target name="upgrade">
+    	<init_env/>
+
+        <!-- Tailor the instance using the deployment directory. -->
+        <antcall target="_tailor_instance"/>
+
+        <!-- Merge any available properties to the instance. -->
+        <antcall target="_merge_properties"/>
     </target>
 
     <target name="enable_oerealm">

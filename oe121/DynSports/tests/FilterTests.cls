@@ -54,29 +54,29 @@ class tests.FilterTests:
 
     method private void showOutput ( input pcTestName as character ):
         output to value(cLogFile) append.
-        put "Test: " pcTestName skip.
+        put unformatted "Test: " pcTestName skip.
 
         cPattern = oFilterBuilder:FilterPattern.
-        put "Pattern: " cPattern skip.
+        put unformatted "Pattern: " cPattern skip.
 
         /* Cycle through each table request to show the data extracted. */
         do iX = 1 to extent(oDataRequest:TableRequests[1]):
             cTable = oDataRequest:TableRequests[iX]:TableName.
-            put "Table" trim(string(iX)) ": " cTable skip.
-            put "SkipRec: " oDataRequest:TableRequests[iX]:Skip skip.
-            put "Records: " oDataRequest:TableRequests[iX]:NumRecords skip.
-            put "Context: " oDataRequest:TableRequests[iX]:PagingContext skip.
+            put unformatted "Table" trim(string(iX)) ": " cTable skip.
+            put unformatted "SkipRec: " oDataRequest:TableRequests[iX]:Skip skip.
+            put unformatted "Records: " oDataRequest:TableRequests[iX]:NumRecords skip.
+            put unformatted "Context: " oDataRequest:TableRequests[iX]:PagingContext skip.
 
             if valid-object(oDataRequest:TableRequests[iX]:QueryDefinition) then do:
                 cQuery = oDataRequest:TableRequests[iX]:QueryDefinition:ToString().
-                put "QueryDef: " cQuery skip.
+                put unformatted "QueryDef: " cQuery skip.
             end.
 
             cQuery = oDataRequest:TableRequests[iX]:QueryString.
-            put "QueryStr: " cQuery skip.
+            put unformatted "QueryStr: " cQuery skip.
         end.
 
-        put skip "FullQuery: " cFullQuery skip(2).
+        put unformatted skip "FullQuery: " cFullQuery skip(2).
 
         output close.
     end method.
@@ -200,6 +200,43 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3c").
+
+        catch err as Progress.Lang.Error:
+            log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
+        end catch.
+    end method.
+
+    /*------------------------------------------------------------------------------
+        Purpose: Option 4 - Serialized Names
+        Notes: Attempt to create matching queries from real/serialized field names.
+    ------------------------------------------------------------------------------*/
+    @Test.
+    method public void testSerialized ( ):
+        define variable cPayload as character no-undo.
+
+        /* Test with the "kendo" pattern using a direct temp-table field name. */
+        assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "Name", "operator": "eq", "value": "Test"}]}, "skip": &1, "top": &2}', iSkip, iTop).
+        oFilterData = cast(oParser:Parse(cPayload), JsonObject).
+        oFilterBuilder = FilterParserBuilder:Build(oFilterData).
+        oFilterBuilder:TableName("ttCustomer"). /* Let the parser know the temp-table name if we know it. */
+        oFilterParser = oFilterBuilder:Parser.
+        oDataRequest = oFilterParser:Parse(oFilterData).
+
+        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
+        this-object:showOutput("RealField").
+
+        /* Test with the "kendo" pattern using a serialized temp-table field name. */
+        assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustName", "operator": "eq", "value": "Test"}]}, "skip": &1, "top": &2}', iSkip, iTop).
+        oFilterData = cast(oParser:Parse(cPayload), JsonObject).
+        oFilterBuilder = FilterParserBuilder:Build(oFilterData).
+        oFilterBuilder:TableName("ttCustomer"). /* Let the parser know the temp-table name if we know it. */
+        oFilterParser = oFilterBuilder:Parser.
+        oDataRequest = oFilterParser:Parse(oFilterData).
+
+        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
+        this-object:showOutput("SerializedField").
 
         catch err as Progress.Lang.Error:
             log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
