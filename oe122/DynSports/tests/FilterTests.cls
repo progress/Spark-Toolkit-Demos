@@ -22,7 +22,7 @@ class tests.FilterTests:
 
     /* Schema for testing of the QueryBuilder */
 
-    define temp-table ttCustomer no-undo before-table bttCustomer
+    define temp-table ttCustomer no-undo serialize-name "customer" before-table bttCustomer
         field id      as character
         field seq     as integer   initial ?
         field CustNum as integer   label "Cust Num" initial 0
@@ -86,19 +86,23 @@ class tests.FilterTests:
         assign oParser = new ObjectModelParser().
         assign oQueryBuilder = new QueryBuilder().
 
+        /* Set output location for any messages, if not specified. */
+        if log-manager:logfile-name eq ? then
+            log-manager:logfile-name = "server.log".
+
         /* Output location for the raw test results. */
         cLogFile = substitute("tests/filter_&1.log", mtime).
 
         /* Load an array with all of the potential test cases. */
         oABLFilter = new JsonArray().
-        oABLFilter:Add("WHERE CustNum <>442").
-        oABLFilter:Add("WHERE CustNum<> 442").
-        oABLFilter:Add("WHERE CustNum <> 442").
+        oABLFilter:Add("WHERE CustNum <>42").
+        oABLFilter:Add("WHERE CustNum<> 42").
+        oABLFilter:Add("WHERE CustNum <> 42").
         oABLFilter:Add('WHERE Name begins "abc"').
         oABLFilter:Add('WHERE Name="abc"').
         oABLFilter:Add('WHERE Name="ab~'c"').
         oABLFilter:Add("WHERE Name='a~"bc'").
-        oABLFilter:Add("WHERE ((CustNum <> 442) and Name ne ?))").
+        oABLFilter:Add("WHERE ((CustNum <> 42) and Name ne ?))").
 
         /* Create a JSON object for use with additional examples. */
         oFilterData = new JsonObject().
@@ -123,6 +127,7 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "WHERE").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option1a").
+        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where CustNum ne 42').
 
         oFilterBuilder = FilterParserBuilder:Build("JFP").
         oFilterParser = oFilterBuilder:Parser.
@@ -132,10 +137,7 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "JFP").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option1b").
-
-        catch err as Progress.Lang.Error:
-            log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
-        end catch.
+        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where CustNum ne 42').
     end method.
 
     /*------------------------------------------------------------------------------
@@ -154,10 +156,7 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option2").
-
-        catch err as Progress.Lang.Error:
-            log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
-        end catch.
+        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where CustNum ne 42 by CustNum Descending by SalesRep').
     end method.
 
     /*------------------------------------------------------------------------------
@@ -174,11 +173,12 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3a").
+        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where CustNum ne 42 by CustNum Descending by SalesRep').
 
         define variable cPayload as character no-undo.
 
         /* Test with the "kendo" pattern and its output (requires some additional setup). */
-        assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "ne", "value": 442}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
+        assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "ne", "value": 42}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
         oFilterData = cast(oParser:Parse(cPayload), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).
         oFilterBuilder:TableName("ttCustomer"). /* Let the parser know the temp-table name if we know it. */
@@ -188,6 +188,7 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3b").
+        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (CustNum ne 42) by CustNum Descending by SalesRep').
 
         /* Test with the "kendo" pattern and its output (requires some additional setup). */
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "gt", "value": 1}, ~{"field": "CustNum", "operator": "lt", "value": 10000}, ~{"logic": "or", "filters": [~{"field": "Name", "operator": "begins", "value": "A"}, ~{"field": "Name", "operator": "begins", "value": "B"}]}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
@@ -200,47 +201,64 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3c").
-
-        catch err as Progress.Lang.Error:
-            log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
-        end catch.
+        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (CustNum gt 1) and (CustNum lt 10000) and ((Name begins "A") or (Name begins "B")) by CustNum Descending by SalesRep').
     end method.
 
     /*------------------------------------------------------------------------------
-        Purpose: Option 4 - Serialized Names
-        Notes: Attempt to create matching queries from real/serialized field names.
+        Purpose: Serialized Field Name
+        Notes: Attempt to create matching queries from real/serialized field name.
     ------------------------------------------------------------------------------*/
     @Test.
-    method public void testSerialized ( ):
+    method public void testSerializedField ( ):
         define variable cPayload as character no-undo.
 
         /* Test with the "kendo" pattern using a direct temp-table field name. */
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "Name", "operator": "eq", "value": "Test"}]}, "skip": &1, "top": &2}', iSkip, iTop).
         oFilterData = cast(oParser:Parse(cPayload), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).
-        oFilterBuilder:TableName("ttCustomer"). /* Let the parser know the temp-table name if we know it. */
+        oFilterBuilder:TableName("ttCustomer"). /* Give the parser a known temp-table name. */
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterData).
 
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("RealField").
+        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (Name eq "Test")').
 
         /* Test with the "kendo" pattern using a serialized temp-table field name. */
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustName", "operator": "eq", "value": "Test"}]}, "skip": &1, "top": &2}', iSkip, iTop).
         oFilterData = cast(oParser:Parse(cPayload), JsonObject).
         oFilterBuilder = FilterParserBuilder:Build(oFilterData).
-        oFilterBuilder:TableName("ttCustomer"). /* Let the parser know the temp-table name if we know it. */
+        oFilterBuilder:TableName("ttCustomer"). /* Give the parser a known temp-table name. */
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterData).
 
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("SerializedField").
+        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (Name eq "Test")').
+    end method.
 
-        catch err as Progress.Lang.Error:
-            log-manager:write-message(substitute("Error: &1", err:GetMessage(1))).
-        end catch.
+    /*------------------------------------------------------------------------------
+        Purpose: Serialized Table Name
+        Notes: Attempt to create matching queries from serialized table name.
+    ------------------------------------------------------------------------------*/
+    @Test.
+    method public void testSerializedTable ( ):
+        define variable cPayload as character no-undo.
+
+        /* Test with the "kendo" pattern using a serialized temp-table name. */
+        assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustName", "operator": "eq", "value": "Test"}]}, "skip": &1, "top": &2}', iSkip, iTop).
+        oFilterData = cast(oParser:Parse(cPayload), JsonObject).
+        oFilterBuilder = FilterParserBuilder:Build(oFilterData).
+        oFilterBuilder:TableName("customer"). /* Give the parser a serialized temp-table name. */
+        oFilterParser = oFilterBuilder:Parser.
+        oDataRequest = oFilterParser:Parse(oFilterData).
+
+        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
+        this-object:showOutput("SerializedTable").
+        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (Name eq "Test")').
     end method.
 
 end class.
