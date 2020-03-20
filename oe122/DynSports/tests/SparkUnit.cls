@@ -20,7 +20,6 @@ class tests.SparkUnit abstract:
     define protected variable UseProfiler as logical no-undo initial true.
 
     method protected void StartSpark ( input pcTestSuiteName as character ):
-message "StartSpark".
         define variable oParser    as ObjectModelParser no-undo.
         define variable oConfig    as JsonObject        no-undo.
         define variable oDatabases as JsonObject        no-undo.
@@ -80,8 +79,9 @@ message "StartSpark".
                 profiler:description  = "Spark ABLUnit Output"
                 profiler:listings     = true /* Note: Requires source code. */
                 profiler:directory    = cListDir
-                profiler:trace-filter = "*":u
-                profiler:tracing      = "":u
+                /* As of OE 12.2 you cannot enable tracing without the -zproftmpf startup flag. */
+                /*profiler:trace-filter = "":u*/
+                /*profiler:tracing      = "":u*/
                 profiler:coverage     = true
                 profiler:statistics   = true
                 .
@@ -97,7 +97,6 @@ message "StartSpark".
     end method. /* StartSpark */
 
     method protected void StopSpark ( ):
-message "StopSpark".
         /* Run standard "sessionShutdownProc". */
         run Spark/shutdown.p.
 

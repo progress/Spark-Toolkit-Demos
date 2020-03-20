@@ -1553,7 +1553,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
 
     method override public void initialize ( ):
-message "Initialize".
         /* Read catalog configuration file and register values in properties. */
         define variable cFullCfgFileName as character no-undo.
         file-info:file-name = OSTools:sparkConf + "catalog.json".
@@ -1613,7 +1612,6 @@ message "Initialize".
 
 
     method override public void dispose ( ):
-message "Dispose".
         for each EntityProperty:
             /* Delete entity properties when manager is disposed. */
             delete object EntityProperty.FieldData no-error.
