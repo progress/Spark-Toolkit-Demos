@@ -88,7 +88,7 @@ class tests.FilterTests:
 
         /* Set output location for any messages, if not specified. */
         if log-manager:logfile-name eq ? then
-            log-manager:logfile-name = "server.log".
+            log-manager:logfile-name = session:temp-directory + "server.log".
 
         /* Output location for the raw test results. */
         cLogFile = substitute("tests/filter_&1.log", mtime).
@@ -205,11 +205,11 @@ class tests.FilterTests:
     end method.
 
     /*------------------------------------------------------------------------------
-        Purpose: Serialized Field Name
-        Notes: Attempt to create matching queries from real/serialized field name.
+        Purpose: Real Field Name
+        Notes: Attempt to create matching queries from a real field name.
     ------------------------------------------------------------------------------*/
     @Test.
-    method public void testSerializedField ( ):
+    method public void testRealField ( ):
         define variable cPayload as character no-undo.
 
         /* Test with the "kendo" pattern using a direct temp-table field name. */
@@ -223,7 +223,16 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("RealField").
-        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (Name eq "Test")').
+        OpenEdge.Core.Assert:Equals('each ttCustomer where (Name eq "Test")', cFullQuery).
+    end method.
+
+    /*------------------------------------------------------------------------------
+        Purpose: Serialized Field Name
+        Notes: Attempt to create matching queries from a serialized field name.
+    ------------------------------------------------------------------------------*/
+    @Test.
+    method public void testSerializedField ( ):
+        define variable cPayload as character no-undo.
 
         /* Test with the "kendo" pattern using a serialized temp-table field name. */
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustName", "operator": "eq", "value": "Test"}]}, "skip": &1, "top": &2}', iSkip, iTop).
@@ -236,7 +245,7 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("SerializedField").
-        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (Name eq "Test")').
+        OpenEdge.Core.Assert:Equals('each ttCustomer where (Name eq "Test")', cFullQuery).
     end method.
 
     /*------------------------------------------------------------------------------
@@ -258,7 +267,7 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("SerializedTable").
-        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (Name eq "Test")').
+        OpenEdge.Core.Assert:Equals('each ttCustomer where (Name eq "Test")', cFullQuery).
     end method.
 
 end class.
