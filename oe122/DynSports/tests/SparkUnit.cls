@@ -88,6 +88,7 @@ class tests.SparkUnit abstract:
         end. /* UseProfiler */
 
         catch err as Progress.Lang.Error:
+            log-manager:write-message(substitute("Error during SparkUnit startup: &1", err:GetMessage(1))).
     		OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
         end catch.
         finally:
@@ -112,6 +113,7 @@ class tests.SparkUnit abstract:
         end. /* profiler:enabled */
 
         catch err as Progress.Lang.Error:
+            log-manager:write-message(substitute("Error during SparkUnit shutdown: &1", err:GetMessage(1))).
             OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
         end catch.
     end method. /* StopSpark */
