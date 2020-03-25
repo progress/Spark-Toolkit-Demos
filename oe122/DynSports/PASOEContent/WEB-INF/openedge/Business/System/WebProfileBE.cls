@@ -108,8 +108,9 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use
             VALIDATEBLK:
             do while lAvail:
                 if bhBefore:row-state eq row-deleted then do:
-                    /* This will return an error to indicate delete is not allowed. */
-                    undo, throw new AppError("Delete operation is not allowed. Mark profile as inactive, instead.", -500).
+                    /* This will return an error (as HTTP 405) to indicate delete is not allowed. */
+                    undo, throw new OpenEdge.Web.SendExceptionError(OpenEdge.Net.HTTP.StatusCodeEnum:MethodNotAllowed,
+                                                                    "Delete operation is not allowed. Mark profile as inactive, instead.").
                 end. /* row-deleted */
 
                 if bhTopTable:find-first(substitute("where rowid(&1) eq to-rowid('&2')", bhTopTable:name, bhBefore:after-rowid)) then

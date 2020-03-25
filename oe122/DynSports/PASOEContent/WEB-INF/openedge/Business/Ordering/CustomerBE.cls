@@ -133,15 +133,9 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use
             VALIDATEBLK:
             do while lAvail:
                 if bhBefore:row-state eq row-deleted then do:
-                    /* Trigger an error to be displayed on the front-end. */
-                    bhBefore:error = true.
-                    bhBefore:error-string = "Delete operation is not allowed.".
-                    bhBefore:rejected = true.
-                    phDataset:error = true.
-                    return "".
-
-                    /* This will return an error to indicate delete is not allowed. */
-                    /* undo, throw new AppError("Delete operation is not allowed.", -500). */
+                    /* This will return an error (as HTTP 405) to indicate delete is not allowed. */
+                     undo, throw new OpenEdge.Web.SendExceptionError(OpenEdge.Net.HTTP.StatusCodeEnum:MethodNotAllowed,
+                                                                     "Delete operation is not allowed for Customers.").
 
                     /* If delete IS allowed, then this method should return blank. */
                     /* return "". */
@@ -210,9 +204,6 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use
 
         return "".
 
-        catch err as Progress.Lang.Error:
-            message substitute("Caught error during validation: &1", err:GetMessage(1)).
-        end catch.
         finally:
             hQuery:query-close() no-error.
             delete object hQuery no-error.

@@ -22,7 +22,9 @@
 "/web/pdo/common/user/*","*","permitAll()"
 "/web/pdo/system/access/*","*","hasAnyRole('ROLE_WebAdmin')"
 "/web/pdo/tests/leakycode/*","PUT","permitAll()"
+"/web/pdo/tests/runcode/*","PUT","permitAll()"
 "/web/_oeping","GET","permitAll()"
+"/web/*.html","*","permitAll()"
 "/web/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the default URI space #################
