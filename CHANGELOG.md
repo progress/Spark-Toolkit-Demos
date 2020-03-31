@@ -2,6 +2,16 @@
 
 ## OpenEdge 11.7.5 and 12.1
 
+### v5.0.2
+
+- Critical fixes, notably in error handling by the DOHEventHandler and updates to Business Entity examples.
+- Prepare for upcoming OpenEdge 12.2 release which alters metadata for projects, Spring Framwork configs.
+
+### v5.0.1
+
+- Minor fixes, updated code comments, and code consistency improvements.
+- Feature improvement: support for extent types on primitive datatypes in CatalogManager, as is supported by the DOH pattern.
+
 ### v5.0.0
 
 - Removes all local overrides of the OpenEdge.* classes which are now provided in the minimum OE versions required: 11.7.5 and 12.1.
