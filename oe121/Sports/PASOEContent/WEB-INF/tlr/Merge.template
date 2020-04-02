@@ -9,7 +9,7 @@
 
 # Transport properties for the SOAP protocol
 [${oepas-app}.${oepas-webapp}.SOAP]
-    adapterEnabled=0
+    adapterEnabled=1
     adminEnabled=1
     adminSoapAction=urn:services-progress-com:wsa-admin:01
     debugClients=
@@ -25,6 +25,6 @@
     adapterEnabled=1
     defaultCookieDomain=
     defaultCookiePath=
-    defaultHandler=OpenEdge.Web.DefaultWebHandler
+    defaultHandler=OpenEdge.Web.CompatibilityHandler
     srvrDebug=0
     wsRoot=/${oepas-webapp}/static/webspeed

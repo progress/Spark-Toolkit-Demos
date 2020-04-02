@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Implementation-Version: 12.2.0
+Implementation-Vendor: Progress Software
+Implementation-URL: http://www.progress.com
+Build-Timestamp: 2020-03-12T17:18:51.662-0400
+Implementation-Title: PAS for OpenEdge ABL Application
+ABL-web-application-version: 0.0.0.0
+
