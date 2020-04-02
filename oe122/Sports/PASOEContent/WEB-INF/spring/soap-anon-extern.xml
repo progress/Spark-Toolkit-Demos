@@ -1,0 +1,48 @@
+<!-- Import this file is oeablSecurity-basic-*.xml to enable security for SOAP transport -->
+<b:beans xmlns="http://www.springframework.org/schema/security"
+    xmlns:b="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/security
+                        http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <http pattern="/soap/**"
+        auto-config="false" 
+        use-expressions="true" 
+        create-session="stateless" 
+        disable-url-rewriting="true" 
+        authentication-manager-ref="nullApplicationAuth"
+        entry-point-ref="http403ForbiddenEntryPoint"
+        realm="${http.soap.realm}" >
+
+        <!-- OpenEdge ClientPrincipal SSO Filter -->
+        <custom-filter position="SWITCH_USER_FILTER" 
+                       ref="OEClientPrincipalFilter" />
+
+        <!-- OpenEdge CORS Filter -->
+        <custom-filter before="SECURITY_CONTEXT_FILTER" 
+                       ref="OECORSFilter" />
+
+        <!-- Standard web-application root for public data like index.html 
+             DO NOT grant /** permitAll() access  -->
+        <intercept-url pattern="/soap/**" access="permitAll()"/>
+
+        <!-- authentication model -->
+        <anonymous />
+
+        <!-- login session controls -->
+        <!--session-management session-fixation-protection="none" /-->
+
+        <!-- error handlers -->
+        <access-denied-handler error-page="/WEB-INF/jsp/errorPage.jsp" />
+
+        <headers defaults-disabled="false"
+                 disabled="false" />
+
+        <!-- Disable org.springframework.security.web.csrf.CsrfFilter -->
+        <csrf disabled="true"/>
+
+    </http>
+
+</b:beans>
