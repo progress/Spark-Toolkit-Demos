@@ -19,7 +19,6 @@ using OpenEdge.Net.HTTP.MethodEnum from propath.
 using OpenEdge.Net.HTTP.StatusCodeEnum from propath.
 using OpenEdge.Web.DataObject.* from propath.
 using OpenEdge.Web.DataObject.Writer.* from propath.
-using Spark.Core.Manager.ICatalogManager from propath.
 using Spark.Core.Manager.ILoggingManager from propath.
 using Spark.Core.Manager.ISchemaManager from propath.
 using Spark.Core.Service.IDynamicEntity from propath.
@@ -33,7 +32,7 @@ block-level on error undo, throw.
 
 &GLOBAL-DEFINE THROW ON ERROR UNDO, THROW
 
-class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager implements ICatalogManager use-widget-pool:
+class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager implements Spark.Core.Manager.ICatalogManager use-widget-pool:
 
     define public property ApiVersion     as decimal   no-undo get. protected set.
     define public property IdProperty     as character no-undo get. protected set.

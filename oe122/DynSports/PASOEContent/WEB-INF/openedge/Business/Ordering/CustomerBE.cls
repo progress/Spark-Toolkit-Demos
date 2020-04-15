@@ -221,6 +221,14 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use
 
         if not valid-handle(phDataset) then return. /* Leave if handle is invalid. */
 
+        if pcAction eq "Submit" then do:
+            /* If explicitly a submit, set the Country to USA. */
+            assign bhTopTable = phDataset:get-top-buffer(1).
+
+            if bhTopTable:find-first(substitute("where true", bhTopTable:name)) then
+                bhTopTable:buffer-field("Country"):buffer-value = "USA".
+        end. /* Submit */
+
         if pcAction eq "Delete" then do:
             /* If explicitly a delete, remember the current record primary value(s). */
             assign bhTopTable = phDataset:get-top-buffer(1).
@@ -237,7 +245,7 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use
 
     method protected override void postCommitLogic ( input pcAction as character,
                                                      input-output dataset-handle phDataset ):
-        /* When explicitly a delete and primary key available, delete child records. */
+        /* When explicitly a delete action and primary key is available, delete child records. */
         if pcAction eq "Delete" and (iCustNum ne ? and iCustNum gt 0) then do:
             message substitute("Removing related records for customer &1.", iCustNum).
             for each Order exclusive-lock
