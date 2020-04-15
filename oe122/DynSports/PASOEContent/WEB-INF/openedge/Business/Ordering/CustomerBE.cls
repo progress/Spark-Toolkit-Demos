@@ -221,14 +221,6 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use
 
         if not valid-handle(phDataset) then return. /* Leave if handle is invalid. */
 
-        if pcAction eq "Submit" then do:
-            /* If explicitly a submit, set the Country to USA. */
-            assign bhTopTable = phDataset:get-top-buffer(1).
-
-            if bhTopTable:find-first(substitute("where true", bhTopTable:name)) then
-                bhTopTable:buffer-field("Country"):buffer-value = "USA".
-        end. /* Submit */
-
         if pcAction eq "Delete" then do:
             /* If explicitly a delete, remember the current record primary value(s). */
             assign bhTopTable = phDataset:get-top-buffer(1).
