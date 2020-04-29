@@ -17,7 +17,7 @@
 @openapi.openedge.entity.field.property(field="CreditLimit", name="semanticType", value="Currency").
 @openapi.openedge.entity.foreignkey(name="SalesrepFK", fields="SalesRep", parent="salesrep.ttSalesrep", parentFields="SalesRep").
 
-define temp-table ttCustomer no-undo before-table bttCustomer
+define protected temp-table ttCustomer no-undo before-table bttCustomer
     field id           as character
     field seq          as integer   initial ?
     field CustNum      as integer   label "Cust Num" initial 0
@@ -46,5 +46,5 @@ define temp-table ttCustomer no-undo before-table bttCustomer
     index idxSalesRep             SalesRep
     .
 
-define dataset dsCustomer for ttCustomer.
+define protected dataset dsCustomer for ttCustomer.
 
