@@ -14,10 +14,8 @@ using OpenEdge.Core.Collections.* from propath.
 using Spark.Util.* from propath.
 
 define variable cStartDir    as character        no-undo.
-define variable cOutFolder   as character        no-undo initial "Deploy/Annotations".
+define variable cOutFolder   as character        no-undo initial "Deploy/Conf".
 define variable cXrefTemp    as character        no-undo.
-define variable cTempFile    as character        no-undo.
-define variable cOutFile     as character        no-undo.
 define variable oAnnotations as JsonObject       no-undo.
 define variable oParser      as XrefParser       no-undo.
 define variable oFileMap     as IStringStringMap no-undo.
@@ -71,12 +69,8 @@ end function. /* getSourceFiles */
 file-info:file-name = ".".
 assign cStartDir = file-info:full-pathname.
 
-oOptMap = new StringStringMap().
-oOptMap:Put("openapi.openedge.entity.primarykey", "schema").
-oOptMap:Put("openapi.openedge.entity.foreignkey", "schema").
-oOptMap:Put("openapi.openedge.entity.field.property", "schema").
-
-oParser = new XrefParser().
+assign oParser = new XrefParser().
+oParser:Initialize().
 
 assign oFileMap = getSourceFiles().
 assign oIter = oFileMap:EntrySet:Iterator().
@@ -88,15 +82,19 @@ do while oIter:HasNext() on error undo, throw:
     compile value(string(oFile:Value)) xref-xml value(cXrefTemp) no-error.
 
     /* Process each XREF file and create an annotations JSON file. */
-    oParser:Initialize().
     oParser:ParseXref(cXrefTemp).
-    oAnnotations = oParser:GetAnnotations(string(oFile:Value), oOptMap).
-    assign cTempFile = replace(string(oFile:key), entry(num-entries(string(oFile:key), "."), string(oFile:key), "."), "json").
-    assign cOutFile = substitute("&1/&2/&3", cStartDir, cOutFolder, cTempFile).
-    oAnnotations:WriteFile(cOutFile, yes).
 
     finally:
         os-delete value(cXrefTemp) no-error.
     end finally.
 end. /* oIter */
 
+/* Create a set of custom groupings for certain annotations. */
+oOptMap = new StringStringMap().
+oOptMap:Put("openapi.openedge.entity.primarykey", "schema").
+oOptMap:Put("openapi.openedge.entity.foreignkey", "schema").
+oOptMap:Put("openapi.openedge.entity.field.property", "schema").
+
+/* Generate a singular annotation file from all the XREF files parsed. */
+assign oAnnotations = oParser:GetAnnotations(oOptMap).
+oAnnotations:WriteFile(substitute("&1/&2/annotations.json", cStartDir, cOutFolder), yes).
