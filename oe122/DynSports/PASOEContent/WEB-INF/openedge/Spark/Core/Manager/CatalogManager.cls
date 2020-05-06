@@ -108,6 +108,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field ClassPath   as character serialize-name "Package" /* Actual class path (aka. resource name) for API operations.  */
         field PublicName  as character serialize-name "Name"    /* Public name for resource, as used by the catalog generator. */
         field SourcePath  as character serialize-name "Source"  /* For all types, path to file on disk relative to propath.    */
+        field ResourceURI as character serialize-hidden         /* Explicit path element for this resource's final URI.        */
         field ProcHandle  as handle    serialize-hidden         /* For procedures, a handle to the procedure run as a super.   */
         field IsClass     as logical   serialize-hidden         /* Denotes loaded resource is a class per rcode-info:is-class. */
         field ValidClass  as logical   serialize-hidden         /* For classes, denotes a valid interface implementation.      */
@@ -124,6 +125,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field ClassPath       as character serialize-name "Package"
         field MethodName      as character serialize-name "Method"
         field PublicName      as character serialize-name "Name"
+        field MethodURI       as character serialize-name "URI"
         field MethodSignature as character serialize-name "Signature"
         field OperationType   as character serialize-name "Operation"
         field OperationVerb   as character serialize-name "HttpVerb"
@@ -391,8 +393,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
             /* Denote that this is a valid class. */
             assign
-                bResource.PublicName = cClassName
-                bResource.ValidClass = true
+                bResource.PublicName  = cClassName
+                bResource.ResourceURI = "/" + cClassName
+                bResource.ValidClass  = true
                 .
 
             /* Load (or re-load) service class internal methods, as needed. */
@@ -406,8 +409,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 if oProgram:Has("progress.service.resource FILE") then do:
                     assign oSubObj = oProgram:GetJsonObject("progress.service.resource FILE").
                     assign
-                        bResource.PublicName = oSubObj:GetCharacter("name") when oSubObj:Has("name")
-/*                        bResource. = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")*/
+                        bResource.PublicName  = oSubObj:GetCharacter("name") when oSubObj:Has("name")
+                        bResource.ResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
                         .
                 end. /* progress.service.resource FILE */
             end. /* program */
@@ -524,8 +527,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                     /* Denote that this is a valid class. */
                     assign
-                        bResource.PublicName = oEntity:resourceName
-                        bResource.ValidClass = true
+                        bResource.PublicName  = oEntity:resourceName
+                        bResource.ResourceURI = "/" + oEntity:resourceName
+                        bResource.ValidClass  = true
                         .
 
                     /* When an entity name has been provided, register and check for a dataset. */
@@ -582,8 +586,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                     /* Denote that this is a valid class. */
                     assign
-                        bResource.PublicName = oResource:resourceName
-                        bResource.ValidClass = true
+                        bResource.PublicName  = oResource:resourceName
+                        bResource.ResourceURI = "/" + oResource:resourceName
+                        bResource.ValidClass  = true
                         .
 
                     /* Load (or re-load) service class internal methods, as needed. */
@@ -966,64 +971,64 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable resourceArr as JsonArray  no-undo.
         define variable resourceObj as JsonObject no-undo.
 
-        define buffer bResInfo for ResourceInfo.
+        define buffer bResource for ResourceInfo.
 
         /* Create resources for service. */
         assign resourceArr = new JsonArray().
         if (pcResourceName gt "") eq true then
-            for first bResInfo no-lock
-                where bResInfo.ServiceURI eq pcServiceURI
-                  and bResInfo.PublicName eq pcResourceName:
+            for first bResource no-lock
+                where bResource.ServiceURI eq pcServiceURI
+                  and bResource.PublicName eq pcResourceName:
                 /* Break on unique resource name. */
                 assign resourceObj = new JsonObject().
-                resourceObj:Add("name", bResInfo.PublicName).
-                resourceObj:Add("path", "/" + bResInfo.PublicName).
+                resourceObj:Add("name", bResource.PublicName).
+                resourceObj:Add("path", bResource.ResourceURI).
                 resourceObj:Add("autoSave", false).
                 if this-object:IdProperty ne "id" then
                     resourceObj:Add("recIdProperty", this-object:IdProperty).
                 if this-object:SeqProperty ne "seq" then
                     resourceObj:Add("seqProperty", this-object:SeqProperty).
-                resourceObj:Add("displayName", bResInfo.PublicName).
+                resourceObj:Add("displayName", bResource.PublicName).
 
                 /* Only return for the associated entity, which should always be on a ReadData method. */
-                resourceObj:Add("schema", this-object:getSchema(pcServiceURI, bResInfo.ClassPath, true)).
-                resourceObj:Add("relations", this-object:getRelations(pcServiceURI, bResInfo.ClassPath)).
+                resourceObj:Add("schema", this-object:getSchema(pcServiceURI, bResource.ClassPath, true)).
+                resourceObj:Add("relations", this-object:getRelations(pcServiceURI, bResource.ClassPath)).
 
                 /* Add operations for the resource. */
-                resourceObj:Add("operations", this-object:getOperations(pcServiceURI, bResInfo.ClassPath)).
+                resourceObj:Add("operations", this-object:getOperations(pcServiceURI, bResource.ClassPath)).
 
                 /* Add data definitions for invoke operations. */
-                resourceObj:Add("dataDefinitions", this-object:getDataDefs(pcServiceURI, bResInfo.ClassPath)).
+                resourceObj:Add("dataDefinitions", this-object:getDataDefs(pcServiceURI, bResource.ClassPath)).
                 resourceArr:Add(resourceObj).
-            end. /* for first bResInfo (exact) */
+            end. /* for first bResource (exact) */
         else
-            for each bResInfo no-lock
-               where bResInfo.ServiceURI eq pcServiceURI
-               break by bResInfo.PublicName:
-                if first-of(bResInfo.PublicName) then do:
+            for each bResource no-lock
+               where bResource.ServiceURI eq pcServiceURI
+               break by bResource.PublicName:
+                if first-of(bResource.PublicName) then do:
                     /* Break on unique resource name. */
                     assign resourceObj = new JsonObject().
-                    resourceObj:Add("name", bResInfo.PublicName).
-                    resourceObj:Add("path", "/" + bResInfo.PublicName).
+                    resourceObj:Add("name", bResource.PublicName).
+                    resourceObj:Add("path", bResource.ResourceURI).
                     resourceObj:Add("autoSave", false).
                     if this-object:IdProperty ne "id" then
                         resourceObj:Add("recIdProperty", this-object:IdProperty).
                     if this-object:SeqProperty ne "seq" then
                         resourceObj:Add("seqProperty", this-object:SeqProperty).
-                    resourceObj:Add("displayName", bResInfo.PublicName).
+                    resourceObj:Add("displayName", bResource.PublicName).
 
                     /* Only return for the associated entity, which should always be on a ReadData method. */
-                    resourceObj:Add("schema", this-object:getSchema(pcServiceURI, bResInfo.ClassPath, true)).
-                    resourceObj:Add("relations", this-object:getRelations(pcServiceURI, bResInfo.ClassPath)).
+                    resourceObj:Add("schema", this-object:getSchema(pcServiceURI, bResource.ClassPath, true)).
+                    resourceObj:Add("relations", this-object:getRelations(pcServiceURI, bResource.ClassPath)).
 
                     /* Add operations for the resource. */
-                    resourceObj:Add("operations", this-object:getOperations(pcServiceURI, bResInfo.ClassPath)).
+                    resourceObj:Add("operations", this-object:getOperations(pcServiceURI, bResource.ClassPath)).
 
                     /* Add data definitions for invoke operations. */
-                    resourceObj:Add("dataDefinitions", this-object:getDataDefs(pcServiceURI, bResInfo.ClassPath)).
+                    resourceObj:Add("dataDefinitions", this-object:getDataDefs(pcServiceURI, bResource.ClassPath)).
                     resourceArr:Add(resourceObj).
                 end.
-            end. /* for first bResInfo (all) */
+            end. /* for first bResource (all) */
 
         return resourceArr.
     end method. /* getResources */
@@ -1497,7 +1502,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
             if can-do("invoke,submit", bMethod.OperationType) then do:
                 operationObj:Add("name", bMethod.PublicName).
-                operationObj:Add("path", "/" + bMethod.PublicName).
+                operationObj:Add("path", bMethod.MethodURI).
             end. /* Invoke/Submit */
             else do:
                 operationObj:Add("name", bMethod.OperationType).
@@ -1563,7 +1568,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         if oParamObj:GetCharacter("mode") eq "input" and
                            oParamObj:GetCharacter("name") eq this-object:ReadFilter then do:
                             if bMethod.OperationType eq OperationEnum:invoke:toString() then
-                                operationObj:Set("path", substitute("/&1?&2=~{&2~}", bMethod.PublicName, this-object:ReadFilter)).
+                                operationObj:Set("path", substitute("&1?&2=~{&2~}", bMethod.MethodURI, this-object:ReadFilter)).
                             else
                                 operationObj:Set("path", substitute("?&1=~{&1~}", this-object:ReadFilter)).
                             oParamObj:Set("type", "query"). /* Set any INPUT for a READ to use the Query parameter type. */
@@ -1759,19 +1764,21 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         create bResource. /* ResourceInfo */
                         if not (cClassPath matches "*.r") then
                             assign /* Create information about a class. */
-                                bResource.ServiceURI = bService.ServiceURI
-                                bResource.ClassPath  = bSrvcRes.ClassPath
-                                bResource.PublicName = entry(num-entries(bSrvcRes.ClassPath, "."), bSrvcRes.ClassPath, ".")
-                                bResource.SourcePath = replace(bSrvcRes.ClassPath, ".", "~/") + ".cls" /* Convert to path to class file. */
-                                bResource.IsClass    = true
+                                bResource.ServiceURI  = bService.ServiceURI
+                                bResource.ClassPath   = bSrvcRes.ClassPath
+                                bResource.PublicName  = entry(num-entries(bSrvcRes.ClassPath, "."), bSrvcRes.ClassPath, ".")
+                                bResource.ResourceURI = "/" + bResource.PublicName
+                                bResource.SourcePath  = replace(bSrvcRes.ClassPath, ".", "~/") + ".cls" /* Convert to path to class file. */
+                                bResource.IsClass     = true
                                 .
                         else
                             assign /* Create information about a procedure. */
-                                bResource.ServiceURI = bService.ServiceURI
-                                bResource.ClassPath  = this-object:stripFileExtensions(entry(num-entries(cClassPath, "~/"), cClassPath, "~/"))
-                                bResource.PublicName = bResource.ClassPath
-                                bResource.SourcePath = cClassPath /* Use the path with .r extension. */
-                                bResource.IsClass    = false
+                                bResource.ServiceURI  = bService.ServiceURI
+                                bResource.ClassPath   = this-object:stripFileExtensions(entry(num-entries(cClassPath, "~/"), cClassPath, "~/"))
+                                bResource.PublicName  = bResource.ClassPath
+                                bResource.ResourceURI = "/" + bResource.PublicName
+                                bResource.SourcePath  = cClassPath /* Use the path with .r extension. */
+                                bResource.IsClass     = false
                                 .
                     end. /* bSrvcRes */
                 end. /* bService */
@@ -1847,23 +1854,25 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                         if rcode-info:is-class or cFileName matches "*.cls" then
                             assign /* Create information about a class. */
-                                bSrvcRes.ServiceName = bService.ServiceName
-                                bSrvcRes.ClassPath   = cResource
-                                bResource.ServiceURI = bService.ServiceURI
-                                bResource.ClassPath  = cResource
-                                bResource.PublicName = cTempName
-                                bResource.SourcePath = replace(cFilePath, cRootPath, "")
-                                bResource.IsClass    = true
+                                bSrvcRes.ServiceName  = bService.ServiceName
+                                bSrvcRes.ClassPath    = cResource
+                                bResource.ServiceURI  = bService.ServiceURI
+                                bResource.ClassPath   = cResource
+                                bResource.PublicName  = cTempName
+                                bResource.ResourceURI = "/" + cTempName
+                                bResource.SourcePath  = replace(cFilePath, cRootPath, "")
+                                bResource.IsClass     = true
                                 .
                         else
                             assign /* Create information about a procedure. */
-                                bSrvcRes.ServiceName = bService.ServiceName
-                                bSrvcRes.ClassPath   = replace(cFilePath, cRootPath, "")
-                                bResource.ServiceURI = bService.ServiceURI
-                                bResource.ClassPath  = cTempName
-                                bResource.PublicName = cTempName
-                                bResource.SourcePath = replace(cFilePath, cRootPath, "")
-                                bResource.IsClass    = false
+                                bSrvcRes.ServiceName  = bService.ServiceName
+                                bSrvcRes.ClassPath    = replace(cFilePath, cRootPath, "")
+                                bResource.ServiceURI  = bService.ServiceURI
+                                bResource.ClassPath   = cTempName
+                                bResource.PublicName  = cTempName
+                                bResource.ResourceURI = "/" + cTempName
+                                bResource.SourcePath  = replace(cFilePath, cRootPath, "")
+                                bResource.IsClass     = false
                                 .
 
                         release bSrvcRes no-error.
@@ -2038,6 +2047,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     bMethod.ClassPath  = pcClassPath
                     bMethod.MethodName = pcMethodName
                     bMethod.PublicName = ""
+                    bMethod.MethodURI  = ""
                     .
 
                 /* Set default attributes for certain entity class methods. */
@@ -2083,6 +2093,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
             assign
                 bMethod.PublicName    = pcPublicName when (pcPublicName gt "")
+                bMethod.MethodURI     = "/" + bMethod.PublicName
                 bMethod.OperationType = pcOperationType when (pcOperationType gt "")
                 bMethod.OperationVerb = pcOperationVerb when (pcOperationVerb gt "")
                 .
@@ -2212,7 +2223,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                  and bMethod.ClassPath eq bResource.ClassPath:
                 /* Prepare the common values for this operation mapping. */
                 assign
-                    cServiceURI  = (if (bMethod.PublicName gt "") eq true then substitute("&1/&2", bResource.PublicName, bMethod.PublicName) else bResource.PublicName)
+                    cServiceURI  = (if (bMethod.MethodURI gt "") eq true then substitute("&1&2", bResource.ResourceURI, bMethod.MethodURI) else bResource.ResourceURI)
                     oHttpMethod  = MethodEnum:GetEnum(bMethod.OperationVerb) /* The HTTP verb to be used for URI access. */
                     cTargetType  = (if bResource.IsClass then TargetTypeEnum:Class:ToString() else TargetTypeEnum:Procedure:ToString())
                     cTargetName  = (if bResource.IsClass then bMethod.ClassPath else bResource.SourcePath)
@@ -2234,7 +2245,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                 /* Just use name of the resource for CRUD operations. */
                 if lIsEntity and can-do("Create,read,update,delete", bMethod.OperationType) then
-                    assign cServiceURI = bResource.PublicName. /* Should just be "/<resource>" with no method in the URI. */
+                    assign cServiceURI = bResource.ResourceURI. /* Should just be "/<resource>" with no method in the URI. */
 
                 /* Denote start of operation mapping. */
                 oLoggingManager:logMessage(substitute("Mapping &1 &2/&3 to &4:&5",
