@@ -4,7 +4,6 @@
     <propathentry env="all" kind="lib" path="@{ROOT}\AppServer\Spark.pl" platform="All"/>
     <propathentry env="all" kind="src" path="@{ROOT}\AppServer" platform="All"/>
     <propathentry env="all" kind="dir" path="@{ROOT}\tools" platform="All"/>
-    <propathentry env="all" kind="dir" path="@{ROOT}\corelib" platform="All"/>
     <propathentry env="all" excluding="@{ROOT}/PASOEContent/static¦@{ROOT}/Deploy¦@{ROOT}/PASOEContent/WEB-INF/home/¦/DynSports/xref/" kind="src" path="@{ROOT}" platform="All"/>
     <propathentry env="tty" kind="con" path="com.openedge.pdt.text.TTY_LIBRARIES" platform="All"/>
     <propathentry env="gui" kind="con" path="com.openedge.pdt.text.GUI_LIBRARIES" platform="All"/>

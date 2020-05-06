@@ -12,7 +12,7 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
-using Progress.Json.ObjectModel.ObjectModelParser.* from propath.
+using Progress.Json.ObjectModel.ObjectModelParser from propath.
 using OpenEdge.Core.* from propath.
 using OpenEdge.Core.Collections.* from propath.
 using OpenEdge.Net.HTTP.MethodEnum from propath.
@@ -369,11 +369,73 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getResourcePath */
 
 
+    method protected void loadAnnotatedResource ( input pcServiceURI as character,
+                                                  input pcClassPath  as character,
+                                                  input pcSuperClass as character ):
+        define variable cClassName as character no-undo.
+
+        define buffer bResource for ResourceInfo.
+
+        find first bResource exclusive-lock
+             where bResource.ServiceURI eq pcServiceURI
+               and bResource.ClassPath eq pcClassPath no-error.
+
+        /* Get any annotations from this class and attempt to update any registered methods. */
+        assign cClassName = entry(num-entries(pcClassPath, "."), pcClassPath, ".").
+        file-info:filename = substitute("&1/annotations/&2.json", right-trim(OSTools:sparkConf, "/"), cClassName).
+        if available(bResource) and file-info:full-pathname ne ? then do on error undo, throw:
+            define variable oParser      as ObjectModelParser no-undo.
+            define variable oAnnotations as JsonObject        no-undo.
+            define variable oProgram     as JsonObject        no-undo.
+            define variable oSubObj      as JsonObject        no-undo.
+
+            /* Denote that this is a valid class. */
+            assign
+                bResource.PublicName = cClassName
+                bResource.ValidClass = true
+                .
+
+            /* Load (or re-load) service class internal methods, as needed. */
+            this-object:registerMethods(pcServiceURI, pcClassPath).
+
+            assign oParser = new ObjectModelParser().
+            assign oAnnotations = cast(oParser:ParseFile(file-info:full-pathname), JsonObject).
+
+            if oAnnotations:Has("program") and oAnnotations:GetType("program") eq JsonDataType:Object then do:
+                assign oProgram = oAnnotations:GetJsonObject("program").
+                if oProgram:Has("progress.service.resource FILE") then do:
+                    assign oSubObj = oProgram:GetJsonObject("progress.service.resource FILE").
+                    assign
+                        bResource.PublicName = oSubObj:GetCharacter("name") when oSubObj:Has("name")
+/*                        bResource. = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")*/
+                        .
+                end. /* progress.service.resource FILE */
+            end. /* program */
+
+            if lUseDebugs and available(bResource) then
+                oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2/&3'",
+                                                      bResource.ClassPath,
+                                                      bResource.ServiceURI,
+                                                      bResource.PublicName), "SPARK-LOAD", 3).
+
+            finally:
+                delete object oParser no-error.
+                delete object oAnnotations no-error.
+                delete object oProgram no-error.
+                delete object oSubObj no-error.
+                release bResource no-error.
+            end finally.
+        end. /* Has Annotation File */
+        else
+            undo, throw new AppError(substitute("Resource '&1' (&2) is neither a Spark Entity nor annotated class.", pcClassPath, pcServiceURI), -500).
+    end method. /* loadAnnotatedResource */
+
+
     method protected void loadDynamicResource ( input pcServiceURI as character,
                                                 input pcClassPath  as character ):
         define buffer bResource for ResourceInfo.
 
-        /* Destroy any previous procedure handles. */
+        /* Destroy any previous procedure handles for this resource. */
         for each bResource exclusive-lock
            where not bResource.IsClass
              and bResource.ServiceURI eq pcServiceURI
@@ -401,11 +463,12 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             if valid-handle(hProcHandle) then do {&THROW}:
                 find current bResource exclusive-lock.
                 assign bResource.ProcHandle = hProcHandle.
-
                 /* Load (or re-load) service procedure internal methods, as needed. */
                 this-object:registerProcedures( bResource.ServiceURI,
                                                 bResource.ClassPath,
                                                 bResource.ProcHandle ).
+
+                /* @TODO: Check for annotations to help override certain aspects of this registered procedure. */
 
                 if lUseDebugs and available(bResource) then
                     oLoggingManager:logMessage(substitute("Loaded &1 as '&2/&3'",
@@ -435,8 +498,14 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             end.
             else if not valid-object(oImplement) or
                  not (oImplement:IsA(get-class(IDynamicEntity)) or
-                      oImplement:IsA(get-class(IDynamicResource))) then
-                undo, throw new AppError(substitute("Resource '&1' (&2) is not a Spark Entity class.", pcClassPath, pcServiceURI), -500).
+                      oImplement:IsA(get-class(IDynamicResource))) then do:
+                /**
+                 * Attempt to treat the class as annotated and proceed with registration of any methods.
+                 * Should this class fail to have any annotations, then it will be ultimately skipped.
+                 */
+                this-object:loadAnnotatedResource(pcServiceURI, pcClassPath, oImplement:SuperClass:TypeName).
+                return. /* Do not proceed further, as we don't have a valid Spark-based class type to process. */
+            end.
 
             /* Create new class instance and run initialization method. */
             if oImplement:IsA(get-class(IDynamicEntity)) then do:
@@ -472,7 +541,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             oSchemaManager:registerDataset(input phDataSet).
                     end. /* entityName */
 
-                    /* Load (or re-load) service procedure internal methods, as needed. */
+                    /* Load (or re-load) service class internal methods, as needed. */
                     this-object:registerMethods(pcServiceURI, pcClassPath, oEntity:operations).
 
                     /* Apply properties for the read operation, when they are present. */
@@ -517,7 +586,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         bResource.ValidClass = true
                         .
 
-                    /* Load (or re-load) service procedure internal methods, as needed. */
+                    /* Load (or re-load) service class internal methods, as needed. */
                     this-object:registerMethods(pcServiceURI, pcClassPath).
 
                     /* Load annotations and other prerequisite data. */
@@ -1377,7 +1446,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                      * https://wiki.progress.com/display/Pacific/Semantic+Type
                      * https://wiki.progress.com/display/Pacific/Foreign+Key+Support
                      */
-                    if valid-object(extraObj) and extraObj:GetClass():IsA("Progress.Json.ObjectModel.JsonObject") then do:
+                    if valid-object(extraObj) and extraObj:GetClass():IsA("progress.Json.ObjectModel.JsonObject") then do:
                         if extraObj:Has(cFieldName) then do:
                             oLoggingManager:logMessage(substitute("Adding extra properties to field '&1.&2.&3'",
                                                                   pcDatasetName,
@@ -1497,7 +1566,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                 operationObj:Set("path", substitute("/&1?&2=~{&2~}", bMethod.PublicName, this-object:ReadFilter)).
                             else
                                 operationObj:Set("path", substitute("?&1=~{&1~}", this-object:ReadFilter)).
-                            oParamObj:Set("type", "QUERY"). /* Set any INPUT for a READ to use the Query parameter type. */
+                            oParamObj:Set("type", "query"). /* Set any INPUT for a READ to use the Query parameter type. */
                         end. /* INPUT + READ */
 
                         if oParamObj:GetCharacter("xType") eq "datetimetz" then
@@ -1517,7 +1586,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                 /* Determine how a parameter should be obtained, based on the mode of the parameter and the operation verb. */
                 if oParamObj:GetCharacter("mode") eq "input" and bMethod.OperationVerb eq MethodEnum:get:toString() then
-                    oParamObj:Set("type", "QUERY"). /* For INPUT on a GET, we should only obtain from the Query Parameters. */
+                    oParamObj:Set("type", "query"). /* For INPUT on a GET, we should only obtain from the Query Parameters. */
                 else if oParamObj:GetCharacter("mode") eq "inputoutput" then
                     oParamObj:Set("type", "REQUEST_BODY,RESPONSE_BODY"). /* Any INPUT-OUTPUT should use the BODY by default. */
                 else if oParamObj:GetCharacter("mode") eq "input" then
@@ -1557,7 +1626,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         file-info:file-name = OSTools:sparkConf + "catalog.json".
         cFullCfgFileName = file-info:full-pathname.
         if cFullCfgFileName ne ? then
-            dataset dsConfig:read-json("FILE", cFullCfgFileName, "EMPTY").
+            dataset dsConfig:read-json("file", cFullCfgFileName, "empty").
         else
             undo, throw new AppError(substitute("Catalog config file [catalog.json] not found in [&1]", OSTools:sparkConf), -500).
 
@@ -2164,7 +2233,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 end. /* Is Class */
 
                 /* Just use name of the resource for CRUD operations. */
-                if lIsEntity and can-do("Create,Read,Update,Delete", bMethod.OperationType) then
+                if lIsEntity and can-do("Create,read,update,delete", bMethod.OperationType) then
                     assign cServiceURI = bResource.PublicName. /* Should just be "/<resource>" with no method in the URI. */
 
                 /* Denote start of operation mapping. */
@@ -2217,7 +2286,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                     /* Adjust parameter mode if using a non-standard name. */
                     if cParamMode eq "inputoutput" then
-                        assign cParamMode = "Input-Output".
+                        assign cParamMode = "input-output".
 
                     /* Adjust parameter type based on name or format. */
                     case true:
@@ -2240,7 +2309,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             oSchemaManager:getDataset(cParamName, dataset-handle hSchema by-reference).
                             if valid-handle(hSchema) then do:
                                 oService:PutSchema(cParamName, hSchema). /* Add schema to service. Do not delete the hSchema handle! */
-                                oLoggingManager:logMessage(substitute("| Schema: &1 as dataset", cParamName), "SPARK-SVC", 4).
+                                oLoggingManager:logMessage(substitute("| schema: &1 as dataset", cParamName), "SPARK-SVC", 4).
                             end. /* valid-handle */
                             else
                                 oLoggingManager:logMessage(substitute("| Schema: no dataset handle for &1", cParamName), "SPARK-SVC", 2).

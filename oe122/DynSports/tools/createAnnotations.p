@@ -1,9 +1,9 @@
 /*------------------------------------------------------------------------
-    File        : readXref.p
+    File        : createAnnotations.p
     Purpose     : Reads XML-XREF data into a ProDataset and generates JSON
-                  from the annotation data 
-    Author(s)   : pjudge
-    Created     : 2018-11-07
+                  files with annotation data 
+    Author(s)   : pjudge & dugrau
+    Created     : 2020-05-06
     Notes       :
   ----------------------------------------------------------------------*/
 block-level on error undo, throw.
@@ -13,10 +13,9 @@ using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Collections.* from propath.
 using Spark.Util.* from propath.
 
-define variable cStartDir    as character        no-undo initial "D:\OpenSource\Spark-Toolkit-Demos\oe122\DynSports".
-define variable cOutFolder   as character        no-undo initial "Deploy/Annotations/Business/".
-define variable cXrefDir     as character        no-undo initial "xref/Business/".
-define variable cXrefRoot    as character        no-undo.
+define variable cStartDir    as character        no-undo.
+define variable cOutFolder   as character        no-undo initial "Deploy/Annotations".
+define variable cXrefTemp    as character        no-undo.
 define variable cTempFile    as character        no-undo.
 define variable cOutFile     as character        no-undo.
 define variable oAnnotations as JsonObject       no-undo.
@@ -30,16 +29,26 @@ session:error-stack-trace = true.
 
 /* ***************************  Functions  *************************** */
 
-function getFiles returns StringStringMap ( ):
+function getSourceFiles returns StringStringMap ( ):
     define variable ix         as integer         no-undo.
+    define variable cRoot      as character       no-undo.
     define variable cFileName  as character       no-undo.
     define variable cFilePath  as character       no-undo.
     define variable oDirStruct as JsonArray       no-undo.
     define variable oFile      as JsonObject      no-undo.
     define variable oList      as StringStringMap no-undo.
 
+    /* Find the PROPATH entry with "openedge" in the path. */
+    ROOTBLK:
+    do ix = 1 to num-entries(propath):
+        if entry(ix, propath) matches "*\WEB-INF\openedge" then do:
+            assign cRoot = entry(ix, propath).
+            leave ROOTBLK.
+        end. /* matches */
+    end. /* ix */
+
     /* Get a recursive list of files from the specified directory. */
-    assign oDirStruct = Spark.Core.Util.OSTools:recurseDir(cXrefRoot, true).
+    assign oDirStruct = Spark.Core.Util.OSTools:recurseDir(cRoot + "\Business", true).
 
     /* Create a new list for names/paths. */
     assign oList = new StringStringMap().
@@ -48,19 +57,19 @@ function getFiles returns StringStringMap ( ):
     do ix = 1 to oDirStruct:Length:
         assign oFile = oDirStruct:GetJsonObject(ix).
         assign cFileName = oFile:GetCharacter("FileName").
-        if cFileName matches "*.xref.xml" then do:
+        if cFileName matches "*.cls" or cFileName matches "*.p" then do:
             assign cFilePath = oFile:GetCharacter("FullPath").
             oList:Put(cFileName, cFilePath).
         end. /* matches */
     end. /* ix */
 
     return oList.
-end function. /* getFiles */
+end function. /* getSourceFiles */
 
 /* ***************************  Main Block  *************************** */
 
-/* Assemble the xref directory location. */
-assign cXrefRoot = substitute("&1/&2", cStartDir, cXrefDir).
+file-info:file-name = ".".
+assign cStartDir = file-info:full-pathname.
 
 oOptMap = new StringStringMap().
 oOptMap:Put("openapi.openedge.entity.primarykey", "schema").
@@ -69,19 +78,25 @@ oOptMap:Put("openapi.openedge.entity.field.property", "schema").
 
 oParser = new XrefParser().
 
-assign oFileMap = getFiles().
+assign oFileMap = getSourceFiles().
 assign oIter = oFileMap:EntrySet:Iterator().
-do while oIter:HasNext():
+do while oIter:HasNext() on error undo, throw:
     /* Iterate through the .xref.xml files. */
     oFile = cast(oIter:Next(), IMapEntry).
 
+    assign cXrefTemp = string(oFile:Value) + ".xref".
+    compile value(string(oFile:Value)) xref-xml value(cXrefTemp) no-error.
+
     /* Process each XREF file and create an annotations JSON file. */
     oParser:Initialize().
-    oParser:ParseXref(string(oFile:value)).
-    oAnnotations = oParser:GetAnnotations(string(oFile:value), oOptMap).
-    assign cTempFile = substitute("&1/&2", cStartDir, cOutFolder) + substring(string(oFile:value), length(cXrefRoot) + 1).
-    os-create-dir value(substring(cTempFile, 1, length(cTempFile) - length(string(oFile:key)))).
-    assign cOutFile = replace(cTempFile, "xref.xml", "json").
+    oParser:ParseXref(cXrefTemp).
+    oAnnotations = oParser:GetAnnotations(string(oFile:Value), oOptMap).
+    assign cTempFile = replace(string(oFile:key), entry(num-entries(string(oFile:key), "."), string(oFile:key), "."), "json").
+    assign cOutFile = substitute("&1/&2/&3", cStartDir, cOutFolder, cTempFile).
     oAnnotations:WriteFile(cOutFile, yes).
+
+    finally:
+        os-delete value(cXrefTemp) no-error.
+    end finally.
 end. /* oIter */
 
