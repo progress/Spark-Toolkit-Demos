@@ -71,6 +71,10 @@ function loadData returns JsonObject ( input pcFilePath as character ):
     assign oGenData = cast(oParser:parseFile(pcFilePath), JsonObject).
 
     return oGenData.
+
+    finally:
+        delete object oParser no-error.
+    end finally.
 end function. /* loadData */
 
 function fixCatalog returns logical ( input pcServiceName as character ):

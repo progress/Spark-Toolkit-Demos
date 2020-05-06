@@ -1,0 +1,1 @@
+Placeholder to keep XREF folder present for Git.
