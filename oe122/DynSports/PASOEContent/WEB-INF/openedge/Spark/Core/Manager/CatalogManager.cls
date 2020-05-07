@@ -394,6 +394,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                and bResource.ClassPath eq pcClassPath no-error.
 
         /* Get any annotations from this class and attempt to update any registered methods. */
+        /* @TODO: Change this to use a single file with the full class package name. */
         assign cClassName = entry(num-entries(pcClassPath, "."), pcClassPath, ".").
         file-info:filename = substitute("&1/annotations/&2.json", right-trim(OSTools:sparkConf, "/"), cClassName).
         if available(bResource) and file-info:full-pathname ne ? then do on error undo, throw:
@@ -405,6 +406,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             define variable oSubArr      as JsonArray         no-undo.
             define variable oSubObj      as JsonObject        no-undo.
             define variable cAnnoPath    as character         no-undo.
+            define variable cMethodName  as character         no-undo.
             define variable cMethods     as character extent  no-undo.
             define variable cAnnoNames   as character extent  no-undo.
             define variable iX           as integer           no-undo.
@@ -450,49 +452,69 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     .
 
                 /* Match up any available method (from reflection) to annotations. */
-                for each bMethod exclusive-lock
-                   where bMethod.ServiceURI eq pcServiceURI
-                     and bMethod.ClassPath eq pcClassPath:
-                    do iX = 1 to extent(cMethods):
-                        if cMethods[iX] begins bMethod.MethodName then do:
-                            assign
-                                oMethod    = oMethods:GetJsonObject(cMethods[iX])
-                                cAnnoNames = oMethod:GetNames()
-                                .
+                do iX = 1 to extent(cMethods):
+                    /* Isolate the method name from the annotation structure. */
+                    assign cMethodName = trim(entry(1, cMethods[iX], "(")).
 
-                            do iY = 1 to extent(cAnnoNames):
-                                case cAnnoNames[iY]:
-                                    when "progress.service.resourceMapping" then do:
+                    find first bMethod exclusive-lock
+                         where bMethod.ServiceURI eq pcServiceURI
+                           and bMethod.ClassPath eq pcClassPath
+                           and bMethod.MethodName eq cMethodName no-error.
+                    if available(bMethod) then do:
+                        assign
+                            oMethod    = oMethods:GetJsonObject(cMethods[iX])
+                            cAnnoNames = oMethod:GetNames()
+                            .
+
+                        do iY = 1 to extent(cAnnoNames):
+                            case cAnnoNames[iY]:
+                                when "progress.service.resourceMapping" then do:
+                                    assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
+                                    if oSubObj:GetCharacter("type") eq "REST" then
+                                        assign
+                                            bMethod.OperationType = oSubObj:GetCharacter("operation")
+                                            bMethod.PublicName    = oSubObj:GetCharacter("alias")
+                                            bMethod.MethodURI     = oSubObj:GetCharacter("URI")
+                                            bMethod.ContentType   = oSubObj:GetCharacter("mediaType")
+                                            .
+                                end. /* progress.service.resourceMapping */
+
+                                when "openapi.openedge.method.property" then do:
+                                    if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Object then do:
                                         assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
-                                        if oSubObj:GetCharacter("type") eq "REST" then
-                                            assign
-                                                bMethod.OperationType = oSubObj:GetCharacter("operation")
-                                                bMethod.PublicName    = oSubObj:GetCharacter("alias")
-                                                bMethod.MethodURI     = oSubObj:GetCharacter("URI")
-                                                bMethod.ContentType   = oSubObj:GetCharacter("mediaType")
-                                                .
-                                    end. /* progress.service.resourceMapping */
-
-                                    when "openapi.openedge.method.property" then do:
-                                        if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Object then do:
-                                            assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
+                                        if oSubObj:GetCharacter("name") eq "verb" then
+                                            assign bMethod.OperationVerb = oSubObj:GetCharacter("value").
+                                    end. /* Annotation Object */
+                                    else if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Array then do:
+                                        assign oSubArr = oMethod:GetJsonArray(cAnnoNames[iY]).
+                                        do iZ = 1 to oSubArr:length:
+                                            assign oSubObj = oSubArr:GetJsonObject(iZ).
                                             if oSubObj:GetCharacter("name") eq "verb" then
                                                 assign bMethod.OperationVerb = oSubObj:GetCharacter("value").
-                                        end. /* Annotation Object */
-                                        else if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Array then do:
-                                            assign oSubArr = oMethod:GetJsonArray(cAnnoNames[iY]).
-                                            do iZ = 1 to oSubArr:length:
-                                                assign oSubObj = oSubArr:GetJsonObject(iZ).
-                                                if oSubObj:GetCharacter("name") eq "verb" then
-                                                    assign bMethod.OperationVerb = oSubObj:GetCharacter("value").
-                                            end. /* do iZ oSubArr */
-                                        end. /* Annotation Array */
+                                        end. /* do iZ oSubArr */
+                                    end. /* Annotation Array */
 
-                                    end. /* openapi.openedge.method.property */
+                                end. /* openapi.openedge.method.property */
 
-                                    when "openapi.openedge.method.parameter" then do:
-                                        if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Object then do:
-                                            assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
+                                when "openapi.openedge.method.parameter" then do:
+                                    if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Object then do:
+                                        assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
+
+                                        for first bParam exclusive-lock
+                                            where bParam.ServiceURI eq pcServiceURI
+                                              and bParam.ClassPath eq pcClassPath
+                                              and bParam.MethodName eq bMethod.MethodName
+                                              and bParam.ParamName eq oSubObj:GetCharacter("name"):
+                                            assign
+                                                bParam.PublicName  = oSubObj:GetCharacter("alias")
+                                                bParam.ElementType = oSubObj:GetCharacter("type")
+                                                .
+                                        end. /* for first bParam */
+                                    end. /* Annotation Object */
+                                    else if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Array then do:
+                                        assign oSubArr = oMethod:GetJsonArray(cAnnoNames[iY]).
+                                        do iZ = 1 to oSubArr:length:
+                                            assign oSubObj = oSubArr:GetJsonObject(iZ).
 
                                             for first bParam exclusive-lock
                                                 where bParam.ServiceURI eq pcServiceURI
@@ -504,36 +526,21 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                     bParam.ElementType = oSubObj:GetCharacter("type")
                                                     .
                                             end. /* for first bParam */
-                                        end. /* Annotation Object */
-                                        else if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Array then do:
-                                            assign oSubArr = oMethod:GetJsonArray(cAnnoNames[iY]).
-                                            do iZ = 1 to oSubArr:length:
-                                                assign oSubObj = oSubArr:GetJsonObject(iZ).
+                                        end. /* do iZ oSubArr */
+                                    end. /* Annotation Array */
+                                end. /* openapi.openedge.method.parameter */
+                            end case. /* cAnnoNames */
+                        end. /* do iY cAnnoNames */
+                    end. /* available(bMethod) */
 
-                                                for first bParam exclusive-lock
-                                                    where bParam.ServiceURI eq pcServiceURI
-                                                      and bParam.ClassPath eq pcClassPath
-                                                      and bParam.MethodName eq bMethod.MethodName
-                                                      and bParam.ParamName eq oSubObj:GetCharacter("name"):
-                                                    assign
-                                                        bParam.PublicName  = oSubObj:GetCharacter("alias")
-                                                        bParam.ElementType = oSubObj:GetCharacter("type")
-                                                        .
-                                                end. /* for first bParam */
-                                            end. /* do iZ oSubArr */
-                                        end. /* Annotation Array */
-                                    end. /* openapi.openedge.method.parameter */
-                                end case. /* cAnnoNames */
-                            end. /* do iY cAnnoNames */
-                        end. /* Matching MethodName */
-                    end. /* do iX cMethods */
-                end. /* bMethod */
+                    release bMethod no-error.
+                end. /* do iX cMethods */
 
                 catch err as Progress.Lang.Error:
                     oLoggingManager:logError(substitute("Error in method annotations for '&1'", pcClassPath), err, "SPARK-ERR", 0).
                     /* Do not throw error from this point, allow processing to continue. */
                 end catch.
-            end. /* method */
+            end. /* has method */
 
             if lUseDebugs and available(bResource) then
                 oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2/&3'",
@@ -944,6 +951,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
               and bMethod.MethodName eq pcMethodName:
             assign iTotal = poMethodParams:length.
 
+            /* Do some pre-processing and adjustments for entity resources with CRUD+Submit methods. */
             if can-do("read,create,update,delete,submit", bMethod.OperationType) then do:
                 do iParam = 1 to iTotal:
                     /* For parameters of an entity operation, add the entity name as a public name for the parameter. */
@@ -970,7 +978,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                               and bParam.MethodName eq pcMethodName
                               and bParam.ParamName eq cParamName no-lock) then next.
 
-                /* Create the parameter record for this service/resource/method. */
+                /* Create a parameter information record for this service/resource/method. */
                 create bParam.
                 assign
                     bParam.ParamUUID      = this-object:ParamUUID
@@ -1004,6 +1012,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 release bParam no-error.
             end. /* do iParam */
 
+            /* Udpate the signature with any modifications determined above. */
             assign bMethod.MethodSignature = string(poMethodParams:GetJsonText()).
         end. /* for first */
 
@@ -1120,13 +1129,14 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             end. /* num-entries */
         end. /* iX */
 
+        /* Write the signature back to the method table using a format similar to class reflection. */
         if oParamArr:Length gt 0 then
             for first bMethod exclusive-lock
                 where bMethod.ServiceURI eq pcServiceURI
                   and bMethod.ClassPath eq pcResourceName
                   and bMethod.MethodName eq pcMethodName:
                 assign bMethod.MethodSignature = string(oParamArr:GetJsonText()).
-            end.
+            end. /* for first bMethod */
     end method. /* setResourceProcedure */
 
 
