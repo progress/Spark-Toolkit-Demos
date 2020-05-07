@@ -344,31 +344,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getMethodName */
 
 
-    method protected JsonArray getMethodSignature ( input pcServiceURI as character,
-                                                    input pcClassPath  as character,
-                                                    input pcMethodName as character ):
-        define variable oParser as ObjectModelParser no-undo.
-
-        define buffer bMethod for MethodInfo.
-
-        for first bMethod
-            where bMethod.ServiceURI eq pcServiceURI
-              and bMethod.ClassPath eq pcClassPath
-              and bMethod.MethodName eq pcMethodName:
-            if (bMethod.MethodSignature gt "") eq true then do {&THROW}:
-                assign oParser = new ObjectModelParser().
-                return cast(oParser:Parse(bMethod.MethodSignature), JsonArray).
-
-                finally:
-                    delete object oParser no-error.
-                end finally.
-            end. /* Signature Present */
-        end. /* for first */
-
-        return new JsonArray().
-    end method. /* getMethodSignature */
-
-
     method protected character getClassPath ( input pcServiceURI   as character,
                                               input pcResourceName as character ):
         define buffer bResource for ResourceInfo.
@@ -411,8 +386,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cClassName as character no-undo.
 
         define buffer bResource for ResourceInfo.
-        define buffer bMethod for MethodInfo.
-        define buffer bParam for ParameterInfo.
+        define buffer bMethod   for MethodInfo.
+        define buffer bParam    for ParameterInfo.
 
         find first bResource exclusive-lock
              where bResource.ServiceURI eq pcServiceURI
@@ -462,7 +437,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         bResource.ResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
                         .
                 end. /* progress.service.resource FILE */
-            
+
                 /* @TODO: Handle the "progress.service.resource FILE" annotation as needed. */
             end. /* program */
 
@@ -512,7 +487,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                     assign bMethod.OperationVerb = oSubObj:GetCharacter("value").
                                             end. /* do iZ oSubArr */
                                         end. /* Annotation Array */
-                                        
+
                                     end. /* openapi.openedge.method.property */
 
                                     when "openapi.openedge.method.parameter" then do:
@@ -950,7 +925,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable iParam     as integer    no-undo.
 
         define buffer bMethod for MethodInfo.
-        define buffer bParam for ParameterInfo.
+        define buffer bParam  for ParameterInfo.
 
         /* Create a default description if none specified yet. */
         this-object:describeResource( pcServiceURI,
@@ -969,7 +944,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
               and bMethod.MethodName eq pcMethodName:
             assign iTotal = poMethodParams:length.
 
-            if can-do("read,create,update,delete,submit", bMethod.OperationType) then do:                
+            if can-do("read,create,update,delete,submit", bMethod.OperationType) then do:
                 do iParam = 1 to iTotal:
                     /* For parameters of an entity operation, add the entity name as a public name for the parameter. */
                     assign oParamObj = poMethodParams:GetJsonObject(iParam).
@@ -980,7 +955,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 /* Add default property to enable use of before-image for CRUD+Submit as necessary. */
                 this-object:addProperty(pcServiceURI, pcResourceName, bMethod.OperationType, "useBeforeImage", "logical", "true").
             end. /* CRUD+Submit */
-            
+
             /* Add the parameters as records in the ParameterInfo table. */
             do iParam = 1 to iTotal:
                 assign
@@ -1050,7 +1025,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cParam3   as character  no-undo.
 
         define buffer bMethod for MethodInfo.
-        define buffer bParam for ParameterInfo.
+        define buffer bParam  for ParameterInfo.
 
         /* Create a default description if none specified yet. */
         this-object:describeResource( pcServiceURI,
@@ -1108,6 +1083,18 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         bParam.ParamName = cParam2
                         bParam.DataType  = lc(cParam3)
                         .
+
+                    /* Adjust parameter type based on name or format. */
+                    case true:
+                        when bParam.DataType eq "datetimetz" then
+                            assign bParam.DataType = "datetime-tz".
+                        when bParam.DataType begins "dataset" then
+                            assign bParam.DataType = "dataset".
+                        when bParam.DataType begins "table" then
+                            assign bParam.DataType = "table".
+                        when index(bParam.DataType, ".") gt 0 then
+                            assign bParam.DataType = substitute("class &1", bParam.DataType).
+                    end case.
 
                     oParamObj:Add("name", cParam2).
                     oParamObj:Add("type", lc(cParam3)).
@@ -1287,8 +1274,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                             input plPrimaryEntity as logical ):
         define variable oSchemaObj    as JsonObject no-undo.
         define variable oProperty     as JsonObject no-undo.
-        define variable oParamArr     as JsonArray  no-undo.
-        define variable oParamObj     as JsonObject no-undo.
         define variable cDatasetNames as character  no-undo.
         define variable cTableNames   as character  no-undo.
         define variable cParamName    as character  no-undo.
@@ -1298,6 +1283,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
         define buffer bResource for ResourceInfo.
         define buffer bMethod   for MethodInfo.
+        define buffer bParam    for ParameterInfo.
 
         assign oSchemaObj = new JsonObject().
 
@@ -1307,28 +1293,20 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 where bMethod.ServiceURI eq pcServiceURI
                   and bMethod.ClassPath eq pcResClassPath
                   and bMethod.OperationType eq OperationEnum:read:toString():
-                assign oParamArr = this-object:getMethodSignature( pcServiceURI,
-                                                                   pcResClassPath,
-                                                                   bMethod.MethodName ).
+                for each bParam no-lock
+                   where bParam.ServiceURI eq pcServiceURI
+                     and bParam.ClassPath eq pcResClassPath
+                     and bParam.MethodName eq bMethod.MethodName:
+                    assign cParamName = bParam.PublicName.
 
-                do iX = 1 to oParamArr:Length:
-                    assign oParamObj = oParamArr:GetJsonObject(iX).
-                    if oParamObj:Has("type") then do {&THROW}:
-                        /* Check and use public name for parameter, if present. */
-                        if oParamObj:Has("publicName") then
-                            assign cParamName = oParamObj:GetCharacter("publicName").
-                        else
-                            assign cParamName = oParamObj:GetCharacter("name").
+                    if bParam.DataType begins "dataset" and
+                       not can-do(cDatasetNames, cParamName) then
+                        assign cDatasetNames = trim(substitute("&1,&2", cDatasetNames, cParamName), ",").
 
-                        if oParamObj:GetCharacter("type") begins "dataset" and
-                           not can-do(cDatasetNames, cParamName) then
-                            assign cDatasetNames = trim(substitute("&1,&2", cDatasetNames, cParamName), ",").
-
-                        if oParamObj:GetCharacter("type") begins "table" and
-                           not can-do(cTableNames, cParamName) then
-                            assign cTableNames = trim(substitute("&1,&2", cTableNames, cParamName), ",").
-                    end. /* Has Type */
-                end. /* iX */
+                    if bParam.DataType begins "table" and
+                       not can-do(cTableNames, cParamName) then
+                        assign cTableNames = trim(substitute("&1,&2", cTableNames, cParamName), ",").
+                end. /* for each bParam */
             end. /* for first */
         end. /* plPrimaryEntity */
         else do:
@@ -1338,28 +1316,20 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                  and bMethod.ClassPath eq pcResClassPath
                  and bMethod.OperationType eq OperationEnum:invoke:toString()
                   by bMethod.MethodName:
-                assign oParamArr = this-object:getMethodSignature( pcServiceURI,
-                                                                   pcResClassPath,
-                                                                   bMethod.MethodName ).
+                for each bParam no-lock
+                   where bParam.ServiceURI eq pcServiceURI
+                     and bParam.ClassPath eq pcResClassPath
+                     and bParam.MethodName eq bMethod.MethodName:
+                    assign cParamName = bParam.PublicName.
 
-                do iX = 1 to oParamArr:Length:
-                    assign oParamObj = oParamArr:GetJsonObject(iX).
-                    if oParamObj:Has("type") then do {&THROW}:
-                        /* Check and use public name for parameter, if present. */
-                        if oParamObj:Has("publicName") then
-                            assign cParamName = oParamObj:GetCharacter("publicName").
-                        else
-                            assign cParamName = oParamObj:GetCharacter("name").
+                    if bParam.DataType begins "dataset" and
+                       not can-do(cDatasetNames, cParamName) then
+                        assign cDatasetNames = trim(substitute("&1,&2", cDatasetNames, cParamName), ",").
 
-                        if oParamObj:GetCharacter("type") begins "dataset" and
-                           not can-do(cDatasetNames, cParamName) then
-                            assign cDatasetNames = trim(substitute("&1,&2", cDatasetNames, cParamName), ",").
-
-                        if oParamObj:GetCharacter("type") begins "table" and
-                           not can-do(cTableNames, cParamName) then
-                            assign cTableNames = trim(substitute("&1,&2", cTableNames, cParamName), ",").
-                    end. /* Has Type */
-                end. /* iX */
+                    if bParam.DataType begins "table" and
+                       not can-do(cTableNames, cParamName) then
+                        assign cTableNames = trim(substitute("&1,&2", cTableNames, cParamName), ",").
+                end. /* for each bParam */
             end. /* for each */
         end. /* not plPrimaryEntity */
 
@@ -1476,14 +1446,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable oFieldArr     as JsonArray  no-undo.
         define variable oFieldObj     as JsonObject no-undo.
         define variable cDatasetNames as character  no-undo.
-        define variable oParamArr     as JsonArray  no-undo.
-        define variable oParamObj     as JsonObject no-undo.
         define variable cParamName    as character  no-undo.
         define variable iX            as integer    no-undo.
         define variable iY            as integer    no-undo.
         define variable iZ            as integer    no-undo.
 
         define buffer bMethod for MethodInfo.
+        define buffer bParam  for ParameterInfo.
 
         assign oRelationArr = new JsonArray().
 
@@ -1491,23 +1460,16 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             where bMethod.ServiceURI eq pcServiceURI
               and bMethod.ClassPath eq pcResClassPath
               and bMethod.OperationType eq OperationEnum:read:toString():
-            assign oParamArr = this-object:getMethodSignature( pcServiceURI,
-                                                               pcResClassPath,
-                                                               bMethod.MethodName ).
+            for each bParam no-lock
+               where bParam.ServiceURI eq pcServiceURI
+                 and bParam.ClassPath eq pcResClassPath
+                 and bParam.MethodName eq bMethod.MethodName:
+                assign cParamName = bParam.PublicName.
 
-            do iX = 1 to oParamArr:Length:
-                assign oParamObj = oParamArr:GetJsonObject(iX).
-                if oParamObj:Has("type") then do {&THROW}:
-                    if oParamObj:Has("publicName") then
-                        assign cParamName = oParamObj:GetCharacter("publicName").
-                    else
-                        assign cParamName = oParamObj:GetCharacter("name").
-
-                    if oParamObj:GetCharacter("type") begins "dataset" and
-                       not can-do(cDatasetNames, cParamName) then
-                        assign cDatasetNames = trim(substitute("&1,&2", cDatasetNames, cParamName), ",").
-                end. /* Has Type */
-            end. /* iX */
+                if bParam.DataType begins "dataset" and
+                   not can-do(cDatasetNames, cParamName) then
+                    assign cDatasetNames = trim(substitute("&1,&2", cDatasetNames, cParamName), ",").
+            end. /* for each bParam */
         end. /* for first */
 
         if (cDatasetNames gt "") eq true then do:
@@ -1737,6 +1699,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable iX           as integer    no-undo.
 
         define buffer bMethod   for MethodInfo.
+        define buffer bParam    for ParameterInfo.
         define buffer bProperty for ResourceProperty.
 
         assign operationArr = new JsonArray().
@@ -1787,19 +1750,19 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             operationObj:Add("type", lc(bMethod.OperationType)).
             operationObj:Add("verb", lc(bMethod.OperationVerb)).
 
-            /* Obtain the true (ABL) parameters for operation (cloned to prevent altering of the original signature. */
-            assign oParamArr = cast(this-object:getMethodSignature( pcServiceURI,
-                                                                    bMethod.ClassPath,
-                                                                    bMethod.MethodName ):Clone(), JsonArray).
+            /* Create a JSON array of parameters from the temp-table data. */
+            assign oParamArr = new JsonArray().
+            for each bParam no-lock
+               where bParam.ServiceURI eq pcServiceURI
+                 and bParam.ClassPath eq pcResourceName
+                 and bParam.MethodName eq bMethod.MethodName:
+                assign oParamObj = new JsonObject().
 
-            /* Add parameters for operation, altering as necessary for the catalog format. */
-            if valid-object(oParamArr) then
-            do iX = 1 to oParamArr:Length:
-                assign oParamObj = oParamArr:GetJsonObject(iX).
-
-                /* Set a default for the ablType property. */
-                if not oParamObj:Has("xType") then
-                    oParamObj:Add("xType", oParamObj:GetCharacter("type")).
+                oParamObj:Add("mode", bParam.IOMode).
+                oParamObj:Add("name", bParam.PublicName).
+                oParamObj:AddNull("type"). /* Will be ElementType */
+                oParamObj:Add("extent", bParam.DataTypeExtent).
+                oParamObj:Add("xType", bParam.DataType).
 
                 /* Override the [ABL] xType as needed. */
                 case oParamObj:GetCharacter("xType"):
@@ -1827,26 +1790,18 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     end.
                 end case.
 
-                /* Use the public name for the name property. */
-                if oParamObj:Has("publicName") then do:
-                    oParamObj:Set("name", oParamObj:GetCharacter("publicName")).
-                    oParamObj:Remove("publicName").
-                end. /* Has publicName */
-
-                /* Add a default "type" property if it doesn't exist, as this will be updated according to the mode of the parameter. */
-                if not oParamObj:Has("type") then
-                    oParamObj:AddNull("type").
-
                 /* Determine how a parameter should be obtained, based on the mode of the parameter and the operation verb. */
                 if oParamObj:GetCharacter("mode") eq "input" and bMethod.OperationVerb eq MethodEnum:get:toString() then
                     oParamObj:Set("type", "query"). /* For INPUT on a GET, we should only obtain from the Query Parameters. */
-                else if oParamObj:GetCharacter("mode") eq "inputoutput" then
+                else if oParamObj:GetCharacter("mode") eq "input-output" then
                     oParamObj:Set("type", "REQUEST_BODY,RESPONSE_BODY"). /* Any INPUT-OUTPUT should use the BODY by default. */
                 else if oParamObj:GetCharacter("mode") eq "input" then
                     oParamObj:Set("type", "REQUEST_BODY"). /* For INPUT on a non-GET, assume the parameter to be in the BODY. */
                 else
                     oParamObj:Set("type", "RESPONSE_BODY"). /* Anything non-INPUT should be an OUTPUT, and returned via BODY. */
-            end. /* iX */
+
+                oParamArr:Add(oParamObj). /* Add parameter to the array. */
+            end. /* for each bParam */
 
             /* Add params to operation, and operation to array. */
             operationObj:Add("params", oParamArr).
@@ -2425,7 +2380,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cTargetName  as character           no-undo.
         define variable cEntityType  as character           no-undo.
         define variable cFuncMethod  as character           no-undo.
-        define variable cParamMode   as character           no-undo.
         define variable cParamName   as character           no-undo.
         define variable cParamType   as character           no-undo.
         define variable iStatusCode  as integer             no-undo.
@@ -2447,6 +2401,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define buffer bService  for ServiceList.
         define buffer bResource for ResourceInfo.
         define buffer bMethod   for MethodInfo.
+        define buffer bParam    for ParameterInfo.
 
         find first bService no-lock
              where bService.ServiceName eq pcServiceName no-error.
@@ -2498,7 +2453,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     assign cServiceURI = bResource.ResourceURI. /* Should just be "/<resource>" with no method in the URI. */
 
                 /* Denote start of operation mapping. */
-                oLoggingManager:logMessage(substitute("Mapping &1 &2/&3 to &4:&5",
+                oLoggingManager:logMessage(substitute("Mapping &1 &2&3 to &4:&5",
                                                       oHttpMethod:ToString(),
                                                       pcServiceName,
                                                       cServiceURI,
@@ -2527,42 +2482,18 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 /* Supply a public name for this operation. */
                 oOperation:name = bMethod.PublicName.
 
-                /* Obtain the method signature for this resource. */
-                assign oParamArr = this-object:getMethodSignature( bResource.ServiceURI,
-                                                                   bResource.ClassPath,
-                                                                   bMethod.MethodName ).
-
-                /* Add the individual parameters for this operation. */
-                if valid-object(oParamArr) then
-                do iX = 1 to oParamArr:Length
-                on error undo, throw:
-                    /* Obtain parameter information. */
-                    assign oParamObj = oParamArr:GetJsonObject(iX).
+                for each bParam no-lock
+                   where bParam.ServiceURI eq bResource.ServiceURI
+                     and bParam.ClassPath eq bResource.ClassPath
+                     and bParam.MethodName eq bMethod.MethodName:
                     assign
-                        cParamMode = oParamObj:GetCharacter("mode") when oParamObj:Has("mode")
-                        cParamName = oParamObj:GetCharacter("name") when oParamObj:Has("name")
-                        cParamType = oParamObj:GetCharacter("type") when oParamObj:Has("type")
+                        cParamName = bParam.PublicName
+                        cParamType = bParam.DataType
                         hSchema    = ?
                         .
 
-                    /* Adjust parameter mode if using a non-standard name. */
-                    if cParamMode eq "inputoutput" then
-                        assign cParamMode = "input-output".
-
-                    /* Adjust parameter type based on name or format. */
-                    case true:
-                        when cParamType eq "datetimetz" then
-                            assign cParamType = "datetime-tz".
-                        when cParamType begins "dataset" then
-                            assign cParamType = "dataset".
-                        when cParamType begins "table" then
-                            assign cParamType = "table".
-                        when index(cParamType, ".") gt 0 then
-                            assign cParamType = substitute("class &1", cParamType).
-                    end case.
-
                     /* Obtain the schema for a dataset parameter. */
-                    if cParamType eq "dataset" then do:
+                    if cParamType begins "dataset" then do:
                         if lIsEntity and cParamName ne bResource.EntityName then
                             assign cParamName = bResource.EntityName.
 
@@ -2578,7 +2509,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     end. /* dataset */
 
                     /* Obtain the schema for a table parameter. */
-                    if cParamType eq "table" then do:
+                    if cParamType begins "table" then do:
                         if not oService:HasSchema(cParamName) then do:
                             oSchemaManager:getTempTable(cParamName, table-handle hSchema by-reference).
                             if valid-handle(hSchema) then do:
@@ -2591,15 +2522,15 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     end. /* table */
 
                     /* If the param has an unknown or non-zero extent, then the datatype should be treated as an extent/array. */
-                    if oParamObj:Has("extent") and oParamObj:GetInteger("extent") ne 0 then
+                    if bParam.DataTypeExtent ne 0 then
                         assign cParamType = substitute("&1 extent", cParamType).
 
                     /* Create the parameter for this method. */
-                    assign oParam = new OperationParameter(IOModeEnum:GetEnum(cParamMode), cParamType, cParamName).
+                    assign oParam = new OperationParameter(IOModeEnum:GetEnum(bParam.IOMode), cParamType, cParamName).
 
                     /* Assign message elements based on the parameter IO mode. */
 
-                    if cParamMode eq "input" then do:
+                    if bParam.IOMode eq "input" then do:
                         if oHttpMethod eq MethodEnum:GET then
                             assign oElementType = ElementTypeEnum:Query. /* Use query parameters for GET. */
                         else
@@ -2612,7 +2543,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         assign oParam:InputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Input).
                     end. /* input */
 
-                    else if cParamMode eq "output" then do:
+                    else if bParam.IOMode eq "output" then do:
                         if can-do("dataset,table", cParamType) then
                             assign oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
                         else
@@ -2625,7 +2556,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         assign oParam:OutputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Output).
                     end. /* output */
 
-                    else if cParamMode eq "input-output" then do:
+                    else if bParam.IOMode eq "input-output" then do:
                         if can-do("dataset,table", cParamType) then
                             assign oElementType = ElementTypeEnum:Body. /* Output dataset/table as body. */
                         else
@@ -2645,15 +2576,11 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                     /* Log creation of each parameter. */
                     oLoggingManager:logMessage(substitute("| &1: &2 as &3 [&4]",
-                                                          cParamMode,
+                                                          bParam.IOMode,
                                                           cParamName,
                                                           cParamType,
                                                           oElementType:ToString()), "SPARK-SVC", 4).
-
-                    finally:
-                        delete object oParamObj no-error.
-                    end finally.
-                end. /* do iX */
+                end. /* for each bParam */
 
                 /* Add the new mapped operation to the current service. */
                 oService:PutOperation(oOperation).
