@@ -58,6 +58,14 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         end get.
         set.
 
+    define protected property TemporaryDir as character no-undo initial ""
+        get():
+            if TemporaryDir eq "" then
+                assign TemporaryDir = right-trim(replace(session:temp-directory, "~\", "~/"), "~/").
+            return TemporaryDir.
+        end get.
+        set.
+
     define protected variable cPreLoader   as character  no-undo.
     define protected variable cDefaultURI  as character  no-undo.
     define protected variable lUseDebugs   as logical    no-undo initial false.
@@ -129,6 +137,21 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field MethodSignature as character serialize-name "Signature"
         field OperationType   as character serialize-name "Operation"
         field OperationVerb   as character serialize-name "HttpVerb"
+        field ContentType     as character serialize-name "MediaType" initial "application/json"
+        index idxPrimary      is primary unique ServiceURI ClassPath MethodName
+        index idxPublic       is         unique ServiceURI ClassPath PublicName
+        .
+
+    define protected temp-table ParamInfo no-undo serialize-name "Parameter"
+        field ServiceURI      as character serialize-name "Service"
+        field ClassPath       as character serialize-name "Package"
+        field MethodName      as character serialize-name "Method"
+        field ParamName       as character serialize-name "Name"
+        field PublicName      as character serialize-name "Alias"
+        field IOMode          as character serialize-name "Mode"
+        field DataType        as character serialize-name "Type"
+        field DataTypeExtent  as integer   serialize-name "Extent"  initial 0
+        field ElementType     as character serialize-name "Element" initial "field"
         index idxPrimary      is primary unique ServiceURI ClassPath MethodName
         index idxPublic       is         unique ServiceURI ClassPath PublicName
         .
@@ -151,7 +174,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         .
 
     define protected dataset dsResource serialize-name "Mapping"
-        for ServiceInfo, ResourceInfo, MethodInfo, ResourceProperty
+        for ServiceInfo, ResourceInfo, MethodInfo, ParamInfo, ResourceProperty
         data-relation Service for ServiceInfo, ResourceInfo
         relation-fields(ServiceURI, ServiceURI)
         nested foreign-key-hidden
@@ -160,6 +183,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         nested foreign-key-hidden
         data-relation Operation for MethodInfo, ResourceProperty
         relation-fields(ServiceURI, ServiceURI, ClassPath, ClassPath, OperationType, OperationType)
+        nested foreign-key-hidden
+        data-relation Params for MethodInfo, ParamInfo
+        relation-fields(ServiceURI, ServiceURI, ClassPath, ClassPath, MethodName, MethodName)
         nested foreign-key-hidden.
 
 
@@ -377,6 +403,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cClassName as character no-undo.
 
         define buffer bResource for ResourceInfo.
+        define buffer bMethod for MethodInfo.
 
         find first bResource exclusive-lock
              where bResource.ServiceURI eq pcServiceURI
@@ -389,7 +416,19 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             define variable oParser      as ObjectModelParser no-undo.
             define variable oAnnotations as JsonObject        no-undo.
             define variable oProgram     as JsonObject        no-undo.
+            define variable oMethods     as JsonObject        no-undo.
+            define variable oMethod      as JsonObject        no-undo.
+            define variable oSubArr      as JsonArray         no-undo.
             define variable oSubObj      as JsonObject        no-undo.
+            define variable cAnnoPath    as character         no-undo.
+            define variable cMethods     as character extent  no-undo.
+            define variable cAnnoNames   as character extent  no-undo.
+            define variable iX           as integer           no-undo.
+            define variable iY           as integer           no-undo.
+            define variable iZ           as integer           no-undo.
+
+            /* Make note of the full path to the annotation file before we proceed any further. */
+            assign cAnnoPath = file-info:full-pathname.
 
             /* Denote that this is a valid class. */
             assign
@@ -402,9 +441,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             this-object:registerMethods(pcServiceURI, pcClassPath).
 
             assign oParser = new ObjectModelParser().
-            assign oAnnotations = cast(oParser:ParseFile(file-info:full-pathname), JsonObject).
+            assign oAnnotations = cast(oParser:ParseFile(cAnnoPath), JsonObject).
 
             if oAnnotations:Has("program") and oAnnotations:GetType("program") eq JsonDataType:Object then do:
+                /* Parse annotations for this resource (program). */
                 assign oProgram = oAnnotations:GetJsonObject("program").
                 if oProgram:Has("progress.service.resource FILE") then do:
                     assign oSubObj = oProgram:GetJsonObject("progress.service.resource FILE").
@@ -413,7 +453,85 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         bResource.ResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
                         .
                 end. /* progress.service.resource FILE */
+            
+                /* @TODO: Handle the "progress.service.resource FILE" annotation as needed. */
             end. /* program */
+
+            if oAnnotations:Has("method") and oAnnotations:GetType("method") eq JsonDataType:Object then
+            do on error undo, throw:
+                /* Parse annotations for this resource's methods. */
+                assign
+                    oMethods = oAnnotations:GetJsonObject("method")
+                    cMethods = oMethods:GetNames()
+                    .
+
+                /* Match up any available method (from reflection) to annotations. */
+                for each bMethod exclusive-lock
+                   where bMethod.ServiceURI eq pcServiceURI
+                     and bMethod.ClassPath eq pcClassPath:
+                    do iX = 1 to extent(cMethods):
+                        if cMethods[iX] begins bMethod.MethodName then do:
+                            assign
+                                oMethod    = oMethods:GetJsonObject(cMethods[iX])
+                                cAnnoNames = oMethod:GetNames()
+                                .
+
+                            do iY = 1 to extent(cAnnoNames):
+                                case cAnnoNames[iY]:
+                                    when "progress.service.resourceMapping" then do:
+                                        assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
+                                        if oSubObj:GetCharacter("type") eq "REST" then
+                                            assign
+                                                bMethod.OperationType = oSubObj:GetCharacter("operation")
+                                                bMethod.PublicName    = oSubObj:GetCharacter("alias")
+                                                bMethod.MethodURI     = oSubObj:GetCharacter("URI")
+                                                bMethod.ContentType   = oSubObj:GetCharacter("mediaType")
+                                                .
+                                    end. /* progress.service.resourceMapping */
+
+                                    when "openapi.openedge.method.property" then do:
+                                        if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Object then do:
+                                            assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
+                                            if oSubObj:GetCharacter("name") eq "verb" then
+                                                assign bMethod.OperationVerb = oSubObj:GetCharacter("value").
+                                        end. /* Annotation Object */
+                                        else if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Array then do:
+                                            assign oSubArr = oMethod:GetJsonArray(cAnnoNames[iY]).
+                                            do iZ = 1 to oSubArr:length:
+                                                assign oSubObj = oSubArr:GetJsonObject(iZ).
+                                                if oSubObj:GetCharacter("name") eq "verb" then
+                                                    assign bMethod.OperationVerb = oSubObj:GetCharacter("value").
+                                            end. /* do iZ oSubArr */
+                                        end. /* Annotation Array */
+                                        
+                                    end. /* openapi.openedge.method.property */
+
+                                    when "openapi.openedge.method.parameter" then do:
+                                        if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Object then do:
+                                            assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
+/*                                            if oSubObj:GetCharacter("name") eq "verb" then                   */
+/*                                                assign bMethod.OperationVerb = oSubObj:GetCharacter("alias").*/
+                                        end. /* Annotation Object */
+                                        else if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Array then do:
+                                            assign oSubArr = oMethod:GetJsonArray(cAnnoNames[iY]).
+                                            do iZ = 1 to oSubArr:length:
+                                                assign oSubObj = oSubArr:GetJsonObject(iZ).
+/*                                                if oSubObj:GetCharacter("name") eq "verb" then                   */
+/*                                                    assign bMethod.OperationVerb = oSubObj:GetCharacter("alias").*/
+                                            end. /* do iZ oSubArr */
+                                        end. /* Annotation Array */
+                                    end. /* openapi.openedge.method.parameter */
+                                end case. /* cAnnoNames */
+                            end. /* do iY cAnnoNames */
+                        end. /* Matching MethodName */
+                    end. /* do iX cMethods */
+                end. /* bMethod */
+
+                catch err as Progress.Lang.Error:
+                    oLoggingManager:logError(substitute("Error in method annotations for '&1'", pcClassPath), err, "SPARK-ERR", 0).
+                    /* Do not throw error from this point, allow processing to continue. */
+                end catch.
+            end. /* method */
 
             if lUseDebugs and available(bResource) then
                 oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2/&3'",
@@ -425,12 +543,20 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 delete object oParser no-error.
                 delete object oAnnotations no-error.
                 delete object oProgram no-error.
+                delete object oMethods no-error.
+                delete object oMethod no-error.
+                delete object oSubArr no-error.
                 delete object oSubObj no-error.
                 release bResource no-error.
             end finally.
         end. /* Has Annotation File */
         else
             undo, throw new AppError(substitute("Resource '&1' (&2) is neither a Spark Entity nor annotated class.", pcClassPath, pcServiceURI), -500).
+
+        catch err as Progress.Lang.Error:
+            oLoggingManager:logError(substitute("Error loading annotated resource '&1'", pcClassPath), err, "SPARK-ERR", 0).
+            /* Do not throw error from this point, allow resource registration to fail with only logging. */
+        end catch.
     end method. /* loadAnnotatedResource */
 
 
@@ -493,7 +619,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             /* Confirm whether the specified class is of type IDynamicEntity. */
             assign oImplement = Progress.Lang.Class:GetClass(pcClassPath) no-error.
             if error-status:error then do:
-                /* If error is specifically due to a missing super-class, and the OE.BL.BE is not available, then let's report that specifically. */
+                /* If error is due to a missing super-class, and the OE.BL.BE is not available, then let's report that specifically. */
                 if error-status:get-number(1) eq 12932 and not lHasOEBLBE then
                     undo, throw new AppError("- Missing super-class OpenEdge.BusinessLogic.BusinessEntity", -500).
                 else
@@ -640,6 +766,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable oParser   as ObjectModelParser no-undo.
         define variable oClassSig as JsonObject        no-undo.
         define variable oMethods  as JsonObject        no-undo.
+        define variable cSigPath  as character         no-undo.
         define variable cMethods  as character         no-undo extent.
         define variable ix        as integer           no-undo.
 
@@ -658,10 +785,11 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             /* Generate class signature (in JSON) using reflection. */
             oClassSig = Reflection:getClassSignature(pcResClassPath).
             if lUseDebugs then do:
-                file-info:file-name = substitute("&1signatures", OSTools:sparkConf).
+                assign cSigPath = substitute("&1/signatures", right-trim(OSTools:sparkConf, "/")).
+                file-info:file-name = cSigPath.
                 if file-info:full-pathname eq ? then
-                    os-create-dir value(substitute("&1signatures", OSTools:sparkConf)).
-                oClassSig:WriteFile(substitute("&1signatures/&2.json", OSTools:sparkConf, pcResClassPath), true).
+                    os-create-dir value(cSigPath).
+                oClassSig:WriteFile(substitute("&1/&2.json", cSigPath, pcResClassPath), true).
             end.
 
 
@@ -1451,7 +1579,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                      * https://wiki.progress.com/display/Pacific/Semantic+Type
                      * https://wiki.progress.com/display/Pacific/Foreign+Key+Support
                      */
-                    if valid-object(extraObj) and extraObj:GetClass():IsA("progress.Json.ObjectModel.JsonObject") then do:
+                    if valid-object(extraObj) and extraObj:GetClass():IsA("Progress.Json.ObjectModel.JsonObject") then do:
                         if extraObj:Has(cFieldName) then do:
                             oLoggingManager:logMessage(substitute("Adding extra properties to field '&1.&2.&3'",
                                                                   pcDatasetName,
@@ -1712,6 +1840,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         empty temp-table ServiceInfo.
         empty temp-table ResourceInfo.
         empty temp-table MethodInfo.
+        empty temp-table ParamInfo.
         empty temp-table ResourceProperty.
         empty temp-table EntityProperty.
     end method. /* dispose */
@@ -1768,13 +1897,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                 bResource.ClassPath   = bSrvcRes.ClassPath
                                 bResource.PublicName  = entry(num-entries(bSrvcRes.ClassPath, "."), bSrvcRes.ClassPath, ".")
                                 bResource.ResourceURI = "/" + bResource.PublicName
-                                bResource.SourcePath  = replace(bSrvcRes.ClassPath, ".", "~/") + ".cls" /* Convert to path to class file. */
+                                bResource.SourcePath  = replace(bSrvcRes.ClassPath, ".", "/") + ".cls" /* Convert to path to class file. */
                                 bResource.IsClass     = true
                                 .
                         else
                             assign /* Create information about a procedure. */
                                 bResource.ServiceURI  = bService.ServiceURI
-                                bResource.ClassPath   = this-object:stripFileExtensions(entry(num-entries(cClassPath, "~/"), cClassPath, "~/"))
+                                bResource.ClassPath   = this-object:stripFileExtensions(entry(num-entries(cClassPath, "/"), cClassPath, "/"))
                                 bResource.PublicName  = bResource.ClassPath
                                 bResource.ResourceURI = "/" + bResource.PublicName
                                 bResource.SourcePath  = cClassPath /* Use the path with .r extension. */
@@ -1788,7 +1917,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 assign cPath = replace(entry(ix, propath), "~\", "/").
                 file-info:file-name = substitute("&1/&2", cPath, bGenParam.BusinessRoot).
                 if file-info:full-pathname ne ? then do:
-                    assign cRoot = replace(file-info:full-pathname, "~\", "~/").
+                    assign cRoot = replace(file-info:full-pathname, "~\", "/").
                     oLoggingManager:logMessage(substitute("Discovering resource options from filesystem (&1).", cRoot), "SPARK-LOAD", 3).
                     leave.
                 end.
@@ -1816,7 +1945,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 assign /* Reset variables on each loop. */
                     cFileName = oFile:GetCharacter("FileName")
                     cFilePath = oFile:GetCharacter("FullPath")
-                    cRootPath = replace(cRoot, "~/" + bGenParam.BusinessRoot, "") + "~/"
+                    cRootPath = replace(cRoot, "/" + bGenParam.BusinessRoot, "") + "/"
                     cResource = ""
                     cTempName = ""
                     .
@@ -1914,8 +2043,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 create ServiceInfo.
                 buffer-copy ServiceList to ServiceInfo no-error.
             end. /* for each */
-            dataset dsConfig:write-json("file", substitute("&1/CatalogDetail.json", right-trim(replace(session:temp-directory, "~\", "~/"), "~/")), true).
-            dataset dsResource:write-json("file", substitute("&1/ResourceMetadata.json", right-trim(replace(session:temp-directory, "~\", "~/"), "~/")), true).
+            dataset dsConfig:write-json("file", substitute("&1/CatalogDetail.json", this-object:TemporaryDir), true).
+            dataset dsResource:write-json("file", substitute("&1/ResourceMetadata.json", this-object:TemporaryDir), true).
             oSchemaManager:dumpObjects().
         end. /* lUseDebugs */
 
@@ -2171,7 +2300,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                       input pcServiceName    as character,
                                                       input poServiceVersion as SemanticVersion ):
         define variable cServiceURI  as character           no-undo.
-        define variable cContentType as character           no-undo initial "application/json".
+        define variable cContentType as character           no-undo.
         define variable cTargetType  as character           no-undo.
         define variable cTargetName  as character           no-undo.
         define variable cEntityType  as character           no-undo.
@@ -2225,6 +2354,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 assign
                     cServiceURI  = (if (bMethod.MethodURI gt "") eq true then substitute("&1&2", bResource.ResourceURI, bMethod.MethodURI) else bResource.ResourceURI)
                     oHttpMethod  = MethodEnum:GetEnum(bMethod.OperationVerb) /* The HTTP verb to be used for URI access. */
+                    cContentType = if (bMethod.ContentType gt "") then bMethod.ContentType else "application/json" /* MIME Type */
                     cTargetType  = (if bResource.IsClass then TargetTypeEnum:Class:ToString() else TargetTypeEnum:Procedure:ToString())
                     cTargetName  = (if bResource.IsClass then bMethod.ClassPath else bResource.SourcePath)
                     cEntityType  = (if bResource.IsClass then "Progress.Lang.Object" else ?)
@@ -2259,9 +2389,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 /* Set any options for the current operation. */
                 assign oOperOpts = new OperationOptions().
                 oOperOpts:WriteBI = lIsEntity. /* Should be true for entities, otherwise false. */
-                oOperOpts:HasErrorEnvelope = false. /* Default is false. */
-                oOperOpts:HasRequestEnvelope = false. /* Default is false. */
-                oOperOpts:HasResponseEnvelope = false. /* Default is false. */
+                oOperOpts:HasErrorEnvelope = false. /* Default is false for this implementation. */
+                oOperOpts:HasRequestEnvelope = false. /* Default is false for this implementation. */
+                oOperOpts:HasResponseEnvelope = false. /* Default is false for this implementation. */
 
                 /* Create a new mapped operation for this service. */
                 assign oOperation = new MappedOperation( cServiceURI,
@@ -2479,7 +2609,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             oSvcWriter:write(oService).
             oSvcWriter:close().
             oSvcJson = cast(oSvcWriter:Value, JsonObject).
-            oSvcJson:WriteFile(substitute("&1/&2.map", right-trim(replace(session:temp-directory, "~\", "~/"), "~/"), pcServiceName), yes).
+            oSvcJson:WriteFile(substitute("&1/&2.map", this-object:TemporaryDir, pcServiceName), yes).
 
             catch err as Progress.Lang.Error:
                 oLoggingManager:logError("Error while dumping service.", err, "SPARK-SVC", 2).

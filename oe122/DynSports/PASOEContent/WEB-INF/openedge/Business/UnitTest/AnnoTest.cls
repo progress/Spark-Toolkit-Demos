@@ -20,8 +20,10 @@ block-level on error undo, throw.
 class Business.UnitTest.AnnoTest use-widget-pool: 
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
-    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/test", alias="test", mediaType="application/json").
+    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/test", alias="msgTest", mediaType="application/json").
     @openapi.openedge.method.property (name="verb", value="post").
+    @openapi.openedge.method.parameter(name="messageType", type="field", alias="type").
+    @openapi.openedge.method.parameter(name="messageText", type="field", alias="text").
     method public void testMessage ( input  messageType as character,
                                      output messageText as character ):
         assign messageText = "no type".
