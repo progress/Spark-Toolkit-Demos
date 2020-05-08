@@ -402,18 +402,20 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
     method protected void processAnnotations ( input  pcServiceURI  as character,
                                                input  pcClassPath   as character,
-                                               input  plIsClass     as logical,
+                                               input  pcSourcePath  as character,
                                                output pcPublicName  as character,
                                                output pcResourceURI as character ):
         define variable cAnnoName as character no-undo.
+        define variable lIsClass  as logical   no-undo.
 
         define buffer bMethod for MethodInfo.
         define buffer bParam  for ParameterInfo.
 
         /* Get a default name and URI. */
         assign
-            cAnnoName     = if plIsClass then pcClassPath else entry(num-entries(pcClassPath, "/"), pcClassPath, "/")
-            pcPublicName  = if plIsClass then entry(num-entries(pcClassPath, "."), pcClassPath, ".") else entry(1, cAnnoName, ".")
+            lIsClass      = (pcSourcePath gt "") ne true /* Is class when no source path is present. */
+            cAnnoName     = if lIsClass then pcClassPath else entry(num-entries(pcSourcePath, "/"), pcSourcePath, "/")
+            pcPublicName  = if lIsClass then entry(num-entries(pcClassPath, "."), pcClassPath, ".") else entry(1, cAnnoName, ".")
             pcResourceURI = "/" + pcPublicName
             .
 
@@ -431,12 +433,12 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             define variable iX           as integer          no-undo.
             define variable iY           as integer          no-undo.
             define variable iZ           as integer          no-undo.
-message pcServiceURI ":" pcClassPath ":" cAnnoName.
+
             if this-object:Annotations:Has(cAnnoName) then
                 assign oAnnotation = this-object:Annotations:GetJsonObject(cAnnoName).
             else
                 return. /* There are no annotations for this resource. */
-message "program" oAnnotation:Has("program").
+
             if oAnnotation:Has("program") and oAnnotation:GetType("program") eq JsonDataType:Object then do:
                 /* Parse annotations for this resource (program). */
                 assign oProgram = oAnnotation:GetJsonObject("program").
@@ -448,12 +450,13 @@ message "program" oAnnotation:Has("program").
                         .
                 end. /* progress.service.resource FILE */
             end. /* program */
-message "method" oAnnotation:Has("method").
-message "procedure" oAnnotation:Has("procedure").
+
+            /* Methods and Procedures should be mutually exclusive, but the annotation parsing is the same. */
             if (oAnnotation:Has("method") and oAnnotation:GetType("method") eq JsonDataType:object) or
                (oAnnotation:Has("procedure") and oAnnotation:GetType("procedure") eq JsonDataType:object) then
             do on error undo, throw:
                 /* Parse annotations for this resource's methods. */
+                extent(cMethods) = ?.
                 assign
                     oMethods = if oAnnotation:Has("method") then oAnnotation:GetJsonObject("method") else oAnnotation:GetJsonObject("procedure")
                     cMethods = oMethods:GetNames()
@@ -464,11 +467,13 @@ message "procedure" oAnnotation:Has("procedure").
                     /* Isolate the method name from the annotation structure. */
                     assign cMethodName = trim(entry(1, cMethods[iX], "(")).
 
+                    /* Locate an existing method/procedure for the resource. */
                     find first bMethod exclusive-lock
                          where bMethod.ServiceURI eq pcServiceURI
                            and bMethod.ClassPath eq pcClassPath
                            and bMethod.MethodName eq cMethodName no-error.
                     if available(bMethod) then do:
+                        extent(cAnnoNames) = ?.
                         assign
                             oMethod    = oMethods:GetJsonObject(cMethods[iX])
                             cAnnoNames = oMethod:GetNames()
@@ -545,7 +550,7 @@ message "procedure" oAnnotation:Has("procedure").
                 end. /* do iX cMethods */
 
                 catch err as Progress.Lang.Error:
-                    oLoggingManager:logError(substitute("Error in method annotations for '&1'", pcClassPath), err, "SPARK-ERR", 0).
+                    oLoggingManager:logError(substitute("Error in method/procedure annotations for '&1'", pcClassPath), err, "SPARK-ERR", 0).
                     /* Do not throw error from this point, allow processing to continue. */
                 end catch.
             end. /* has method */
@@ -606,7 +611,8 @@ message "procedure" oAnnotation:Has("procedure").
                                                 hProcHandle ).
 
                 /* Check for annotations to help override certain aspects of this registered procedure. */
-                this-object:processAnnotations(pcServiceURI, bResource.SourcePath, false,
+message bResource.ClassPath ":" bResource.SourcePath.
+                this-object:processAnnotations(pcServiceURI, bResource.ClassPath, bResource.SourcePath,
                                                output cPublicName, cResourceURI).
 
                 /* Assign the procedure handle and other values to the resource record. */
@@ -657,7 +663,7 @@ message "procedure" oAnnotation:Has("procedure").
                  * Attempt to treat the class as annotated and proceed with registration of any methods.
                  * Should this class fail to have any annotations, then it will be ultimately skipped.
                  */
-                this-object:processAnnotations(pcServiceURI, pcClassPath, true,
+                this-object:processAnnotations(pcServiceURI, pcClassPath, "",
                                                output cPublicName, cResourceURI).
 
                 /* Assign the procedure handle and other values to the resource record. */
