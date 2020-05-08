@@ -101,3 +101,7 @@ oOptMap:Put("progress.service.resource FILE", "program").
 /* Generate a singular annotation file from all the XREF files parsed. */
 assign oAnnotations = oParser:GetAnnotations(oOptMap).
 oAnnotations:WriteFile(substitute("&1/&2/annotations.json", cStartDir, cOutFolder), yes).
+
+finally:
+    return. /* Use this so that ANT scripts can return gracefully when finished. */
+end finally.
