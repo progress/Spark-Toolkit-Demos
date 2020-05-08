@@ -79,8 +79,11 @@ using OpenEdge.Core.String.
 using OpenEdge.Core.Json.JsonPropertyHelper.
 
 class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
-    
     {OpenEdge/Core/Util/dsxref.i ACCESS-LEVEL=PRIVATE }
+    
+    // list of JSON properties reserved by this parser
+    define private variable mNonUserProperties as character no-undo
+        initial 'meta,fileName,program,data,method,constructor,destructor,property,event,procedure,function,inherits,implements,user':u.
     
     /* Default constructor */
     constructor public XrefParser():
@@ -153,6 +156,7 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
                                             input pUserMap as IStringStringMap):
         define variable annoData as JsonObject no-undo.
         define variable progData as JsonObject no-undo.
+        define variable refName as character no-undo.
         define buffer lbSource for Source.
         define buffer lbRef for Reference.
         
@@ -177,9 +181,12 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
         no-error.
         
         if available lbRef then
-            annoData:Add(lbRef.Object-identifier, progData). 
+            assign refName = lbRef.Object-identifier. 
         else
-            annoData:Add(pAblProgram, progData). 
+            assign refName = replace(lbSource.File-name, StringConstant:BACKSLASH, '/':u)
+                   refName = entry(num-entries(refName, '/':u), refName, '/':u) 
+                   .
+        annoData:Add(refName, progData). 
         
         return annoData.
     end method.
@@ -258,22 +265,27 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
         
         define buffer lbSrc for Source. 
         
-        assign annotations = new JsonObject().
-        annotations:AddNull('fileName':u).
+        assign annotations = new JsonObject()
+               groupData   = new JsonObject()
+               .
+        annotations:Add('meta':u, groupData).
+            groupData:Add('version':u, '1.0.0':u).
         
         if not available pSource then
             return annotations.
         
-        assign groupData = new JsonObject()
-               pos       = r-index(pSource.File-name, '.':u)
-               .
+        groupData:Add('fileName':u, pSource.File-name).
         
-        annotations:Set('fileName':u, pSource.File-name).
         annotations:AddNull('program':u).
         annotations:AddNull('data':u).
         
+        assign groupData = new JsonObject()
+               pos       = r-index(pSource.File-name, '.':u)
+               .
+        annotations:AddNull('user':u).
+        
+        /*
         if not valid-object(pUserMap) then
-            annotations:AddNull('user':u).
         else
         do:
             assign groupData = new JsonObject()
@@ -285,12 +297,14 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
                 assign propGroup = iter:Next():ToString().
                 
                 if  not propGroup eq ?
-                and not propGroup eq '':u   
-                and not groupData:Has(propGroup) 
+                and not propGroup eq '':u
+                and lookup(propGroup, mNonUserProperties) eq 0
+                and not groupData:Has(propGroup)
                 then
                     groupData:AddNull(propGroup).
             end.
         end.
+        */
         
         if substring(pSource.File-name, pos + 1) eq 'cls':u then
         do:
@@ -347,6 +361,7 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
         define variable groupSet as JsonArray no-undo.
         define variable valueSet as JsonArray no-undo.
         define variable iter as IIterator no-undo.
+        define variable groupName as character extent 2 no-undo.
         
         define buffer lbReference for Reference.
         define buffer lbParam for Parameter-ref.
@@ -432,11 +447,23 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
                         if  not propGroup eq ?
                         and not propGroup eq '':u
                         then
-                            assign jsonData   = annotGroup
-                                   annotGroup = JsonPropertyHelper:GetObjectValue(
-                                                    JsonPropertyHelper:GetObjectValue(pData, 'user':u, true),
-                                                    propGroup, true)
+                        do:
+                            assign jsonData     = annotGroup
+                                   groupName    = ?
+                                   pos          = index(propGroup, '.')
+                                   groupName[1] = entry(1, propGroup, '.')
                                    .
+                            if pos gt 0 then
+                                assign groupName[2] = substring(propGroup, pos + 1).
+                            
+                            if lookup(groupName[1], mNonUserProperties) eq 0 then
+                                assign groupName[2] = groupName[1]
+                                       groupName[1] = 'user':u
+                                       .
+                            assign annotGroup = JsonPropertyHelper:GetObjectValue(pData, groupName[1], true).
+                            if not groupName[2] eq ? then
+                                assign annotGroup = JsonPropertyHelper:GetObjectValue(annotGroup, groupName[2], true).
+                        end.
                     end.
                     else
                     if not valid-object(annotGroup) then
@@ -477,7 +504,9 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
                 do:
                     if valid-object(annotGroup) then
                     do:
-                        pData:Set('program':u, annotGroup).
+                        JsonConverter:Merge(JsonPropertyHelper:GetObjectValue(pData, 'program':u, true),    //target
+                                            annotGroup,                                                     // source
+                                            true).                                                          // overwrite?
                         assign annotGroup = ?.
                     end.
                 end.
@@ -506,7 +535,9 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
                     
                     if valid-object(annotGroup) then
                     do:
-                        pData:Set('program':u, annotGroup).
+                        JsonConverter:Merge(JsonPropertyHelper:GetObjectValue(pData, 'program':u, true),    //target
+                                            annotGroup,                                                     // source
+                                            true).                                                          // overwrite?
                         assign annotGroup = ?.
                     end.
                 end.
@@ -525,8 +556,13 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
                         assign propGroup = lc(lbReference.reference-type)
                                propGroup = replace(propGroup, 'private-':u, '':u)
                                .
-                        JsonPropertyHelper:GetObjectValue(pData, propGroup, true)
-                                          :Add(lbReference.object-identifier, annotGroup).
+                        JsonConverter:Merge(
+                            JsonPropertyHelper:GetObjectValue(              // target
+                                JsonPropertyHelper:GetObjectValue(pData, propGroup, true),
+                                lbReference.object-identifier,
+                                true),
+                            annotGroup,                                     // source
+                            true).                                          // overwrite?
                         assign annotGroup = ?.
                     end.
                 end.
@@ -537,8 +573,13 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
                 do:
                     if valid-object(annotGroup) then
                     do:
-                        JsonPropertyHelper:GetObjectValue(pData, 'data':u, true)
-                                          :Add(lbReference.object-identifier, annotGroup ).
+                        JsonConverter:Merge(
+                            JsonPropertyHelper:GetObjectValue(              //target
+                                JsonPropertyHelper:GetObjectValue(pData, 'data':u, true),
+                                lbReference.object-identifier,
+                                true),
+                            annotGroup,                                     //source
+                            true).                                          // overwrite?
                         assign annotGroup = ?.
                     end.
                 end.
@@ -565,9 +606,13 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
                                   .
                         end.
                         
-                        JsonPropertyHelper:GetObjectValue(pData, lc(lbReference.reference-type), true)
-                                          :Add(substitute('&1(&2)':u, lbReference.object-identifier, annoName),
-                                               annotGroup).
+                        JsonConverter:Merge(
+                            JsonPropertyHelper:GetObjectValue(      //target
+                                JsonPropertyHelper:GetObjectValue(pData, lc(lbReference.reference-type), true),
+                                substitute('&1(&2)':u, lbReference.object-identifier, annoName),
+                                true),
+                            annotGroup,                             //source
+                            true).                                  //overwrite?
                         assign annotGroup = ?.
                     end.
                 end.    // ctor/method
@@ -575,17 +620,10 @@ class OpenEdge.Core.Util.XrefParser implements ISupportInitialize:
         end.
         
         // If there are annotations that are written after any public things, add to the compile unit
-        if valid-object(annotGroup) then
-        do:
-            assign extent(propNames) = ?
-                   propNames         = annotGroup:GetNames()
-                   cnt               = extent(propNames)
-                   valueData         = JsonPropertyHelper:GetObjectValue(pData, 'program':u, true)
-                   .
-            do loop = 1 to cnt:
-                valueData:Add(string(propNames[loop]),
-                              annotGroup:GetJsonObject(string(propNames[loop]))).
-            end. 
-        end.
+        JsonConverter:Merge(JsonPropertyHelper:GetObjectValue(pData, 'program':u, true),    //target
+                            annotGroup,                                                     // source
+                            true).                                                          // overwrite?
+
     end method.
+    
 end class.

@@ -423,6 +423,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         if valid-object(this-object:Annotations) then do on error undo, throw:
             define variable oAnnotation  as JsonObject       no-undo.
             define variable oProgram     as JsonObject       no-undo.
+            define variable oUserGrp     as JsonObject       no-undo.
             define variable oMethods     as JsonObject       no-undo.
             define variable oMethod      as JsonObject       no-undo.
             define variable oSubArr      as JsonArray        no-undo.
@@ -439,17 +440,22 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             else
                 return. /* There are no annotations for this resource. */
 
-            if oAnnotation:Has("program") and oAnnotation:GetType("program") eq JsonDataType:Object then do:
-                /* Parse annotations for this resource (program). */
+            /* Check for and retain a "user" grouping of annotations. */
+            if oAnnotation:Has("user") and oAnnotation:GetType("user") eq JsonDataType:Object then
+                assign oUserGrp = oAnnotation:GetJsonObject("user").
+            
+            /* Look for a valid "program" grouping of annotations, which might be in the "user" grouping. */
+            if oAnnotation:Has("program") and oAnnotation:GetType("program") eq JsonDataType:Object then
                 assign oProgram = oAnnotation:GetJsonObject("program").
-                if oProgram:Has("progress.service.resource FILE") then do:
-                    assign oSubObj = oProgram:GetJsonObject("progress.service.resource FILE").
-                    assign
-                        pcPublicName  = oSubObj:GetCharacter("name") when oSubObj:Has("name")
-                        pcResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
-                        .
-                end. /* progress.service.resource FILE */
-            end. /* program */
+message cAnnoName ":" valid-object(oProgram) ":" oProgram:Has("progress.service.resource FILE").
+            /* Parse annotations for this resource (program). */
+            if valid-object(oProgram) and oProgram:Has("progress.service.resource FILE") then do:
+                assign oSubObj = oProgram:GetJsonObject("progress.service.resource FILE").
+                assign
+                    pcPublicName  = oSubObj:GetCharacter("name") when oSubObj:Has("name")
+                    pcResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
+                    .
+            end. /* progress.service.resource FILE */
 
             /* Methods and Procedures should be mutually exclusive, but the annotation parsing is the same. */
             if (oAnnotation:Has("method") and oAnnotation:GetType("method") eq JsonDataType:object) or
@@ -558,6 +564,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             finally:
                 delete object oAnnotation no-error.
                 delete object oProgram no-error.
+                delete object oUserGrp no-error.
                 delete object oMethods no-error.
                 delete object oMethod no-error.
                 delete object oSubArr no-error.
@@ -611,7 +618,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                 hProcHandle ).
 
                 /* Check for annotations to help override certain aspects of this registered procedure. */
-message bResource.ClassPath ":" bResource.SourcePath.
                 this-object:processAnnotations(pcServiceURI, bResource.ClassPath, bResource.SourcePath,
                                                output cPublicName, cResourceURI).
 

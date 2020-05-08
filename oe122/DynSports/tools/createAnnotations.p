@@ -91,9 +91,12 @@ end. /* oIter */
 
 /* Create a set of custom groupings for certain annotations. */
 oOptMap = new StringStringMap().
-oOptMap:Put("openapi.openedge.entity.primarykey", "schema").
-oOptMap:Put("openapi.openedge.entity.foreignkey", "schema").
-oOptMap:Put("openapi.openedge.entity.field.property", "schema").
+oOptMap:Put("openapi.openedge.entity.primarykey", "data").
+oOptMap:Put("openapi.openedge.entity.foreignkey", "data").
+oOptMap:Put("openapi.openedge.entity.field.property", "data").
+oOptMap:Put("program FILE", "program").
+oOptMap:Put("openapi.openedge.export FILE", "program").
+oOptMap:Put("progress.service.resource FILE", "program").
 
 /* Generate a singular annotation file from all the XREF files parsed. */
 assign oAnnotations = oParser:GetAnnotations(oOptMap).
