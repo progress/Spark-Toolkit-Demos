@@ -66,6 +66,26 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         end get.
         set.
 
+    define protected property Annotations as JsonObject no-undo
+        get():
+            if not valid-object(Annotations) then do:
+                /* Look for a central annotations.json file and parse this for use throughout the life of the CatalogManager. */
+                file-info:filename = substitute("&1/annotations.json", right-trim(OSTools:sparkConf, "/")).
+                if file-info:full-pathname ne ? then do on error undo, throw:
+                    define variable oParser as ObjectModelParser no-undo.
+
+                    assign oParser = new ObjectModelParser().
+                    Annotations = cast(oParser:ParseFile(file-info:full-pathname), JsonObject).
+
+                    finally:
+                        delete object oParser no-error.
+                    end finally.
+                end. /* file present */
+            end. /* not valid-object */
+            return Annotations.
+        end get.
+        set.
+
     define protected property ParamUUID as int64 no-undo initial 0
         get():
             /* Automatically increment value by 1 on each get. */
@@ -380,74 +400,62 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getResourcePath */
 
 
-    method protected void loadAnnotatedResource ( input pcServiceURI as character,
-                                                  input pcClassPath  as character,
-                                                  input pcSuperClass as character ):
-        define variable cClassName as character no-undo.
+    method protected void processAnnotations ( input  pcServiceURI  as character,
+                                               input  pcClassPath   as character,
+                                               input  plIsClass     as logical,
+                                               output pcPublicName  as character,
+                                               output pcResourceURI as character ):
+        define variable cAnnoName as character no-undo.
 
-        define buffer bResource for ResourceInfo.
-        define buffer bMethod   for MethodInfo.
-        define buffer bParam    for ParameterInfo.
+        define buffer bMethod for MethodInfo.
+        define buffer bParam  for ParameterInfo.
 
-        find first bResource exclusive-lock
-             where bResource.ServiceURI eq pcServiceURI
-               and bResource.ClassPath eq pcClassPath no-error.
+        /* Get a default name and URI. */
+        assign
+            cAnnoName     = if plIsClass then pcClassPath else entry(num-entries(pcClassPath, "/"), pcClassPath, "/")
+            pcPublicName  = if plIsClass then entry(num-entries(pcClassPath, "."), pcClassPath, ".") else entry(1, cAnnoName, ".")
+            pcResourceURI = "/" + pcPublicName
+            .
 
         /* Get any annotations from this class and attempt to update any registered methods. */
-        /* @TODO: Change this to use a single file with the full class package name. */
-        assign cClassName = entry(num-entries(pcClassPath, "."), pcClassPath, ".").
-        file-info:filename = substitute("&1/annotations/&2.json", right-trim(OSTools:sparkConf, "/"), cClassName).
-        if available(bResource) and file-info:full-pathname ne ? then do on error undo, throw:
-            define variable oParser      as ObjectModelParser no-undo.
-            define variable oAnnotations as JsonObject        no-undo.
-            define variable oProgram     as JsonObject        no-undo.
-            define variable oMethods     as JsonObject        no-undo.
-            define variable oMethod      as JsonObject        no-undo.
-            define variable oSubArr      as JsonArray         no-undo.
-            define variable oSubObj      as JsonObject        no-undo.
-            define variable cAnnoPath    as character         no-undo.
-            define variable cMethodName  as character         no-undo.
-            define variable cMethods     as character extent  no-undo.
-            define variable cAnnoNames   as character extent  no-undo.
-            define variable iX           as integer           no-undo.
-            define variable iY           as integer           no-undo.
-            define variable iZ           as integer           no-undo.
-
-            /* Make note of the full path to the annotation file before we proceed any further. */
-            assign cAnnoPath = file-info:full-pathname.
-
-            /* Denote that this is a valid class. */
-            assign
-                bResource.PublicName  = cClassName
-                bResource.ResourceURI = "/" + cClassName
-                bResource.ValidClass  = true
-                .
-
-            /* Load (or re-load) service class internal methods, as needed. */
-            this-object:registerMethods(pcServiceURI, pcClassPath).
-
-            assign oParser = new ObjectModelParser().
-            assign oAnnotations = cast(oParser:ParseFile(cAnnoPath), JsonObject).
-
-            if oAnnotations:Has("program") and oAnnotations:GetType("program") eq JsonDataType:Object then do:
+        if valid-object(this-object:Annotations) then do on error undo, throw:
+            define variable oAnnotation  as JsonObject       no-undo.
+            define variable oProgram     as JsonObject       no-undo.
+            define variable oMethods     as JsonObject       no-undo.
+            define variable oMethod      as JsonObject       no-undo.
+            define variable oSubArr      as JsonArray        no-undo.
+            define variable oSubObj      as JsonObject       no-undo.
+            define variable cMethodName  as character        no-undo.
+            define variable cMethods     as character extent no-undo.
+            define variable cAnnoNames   as character extent no-undo.
+            define variable iX           as integer          no-undo.
+            define variable iY           as integer          no-undo.
+            define variable iZ           as integer          no-undo.
+message pcServiceURI ":" pcClassPath ":" cAnnoName.
+            if this-object:Annotations:Has(cAnnoName) then
+                assign oAnnotation = this-object:Annotations:GetJsonObject(cAnnoName).
+            else
+                return. /* There are no annotations for this resource. */
+message "program" oAnnotation:Has("program").
+            if oAnnotation:Has("program") and oAnnotation:GetType("program") eq JsonDataType:Object then do:
                 /* Parse annotations for this resource (program). */
-                assign oProgram = oAnnotations:GetJsonObject("program").
+                assign oProgram = oAnnotation:GetJsonObject("program").
                 if oProgram:Has("progress.service.resource FILE") then do:
                     assign oSubObj = oProgram:GetJsonObject("progress.service.resource FILE").
                     assign
-                        bResource.PublicName  = oSubObj:GetCharacter("name") when oSubObj:Has("name")
-                        bResource.ResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
+                        pcPublicName  = oSubObj:GetCharacter("name") when oSubObj:Has("name")
+                        pcResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
                         .
                 end. /* progress.service.resource FILE */
-
-                /* @TODO: Handle the "progress.service.resource FILE" annotation as needed. */
             end. /* program */
-
-            if oAnnotations:Has("method") and oAnnotations:GetType("method") eq JsonDataType:Object then
+message "method" oAnnotation:Has("method").
+message "procedure" oAnnotation:Has("procedure").
+            if (oAnnotation:Has("method") and oAnnotation:GetType("method") eq JsonDataType:object) or
+               (oAnnotation:Has("procedure") and oAnnotation:GetType("procedure") eq JsonDataType:object) then
             do on error undo, throw:
                 /* Parse annotations for this resource's methods. */
                 assign
-                    oMethods = oAnnotations:GetJsonObject("method")
+                    oMethods = if oAnnotation:Has("method") then oAnnotation:GetJsonObject("method") else oAnnotation:GetJsonObject("procedure")
                     cMethods = oMethods:GetNames()
                     .
 
@@ -542,35 +550,28 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 end catch.
             end. /* has method */
 
-            if lUseDebugs and available(bResource) then
-                oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2/&3'",
-                                                      bResource.ClassPath,
-                                                      bResource.ServiceURI,
-                                                      bResource.PublicName), "SPARK-LOAD", 3).
-
             finally:
-                delete object oParser no-error.
-                delete object oAnnotations no-error.
+                delete object oAnnotation no-error.
                 delete object oProgram no-error.
                 delete object oMethods no-error.
                 delete object oMethod no-error.
                 delete object oSubArr no-error.
                 delete object oSubObj no-error.
-                release bResource no-error.
             end finally.
         end. /* Has Annotation File */
-        else
-            undo, throw new AppError(substitute("Resource '&1' (&2) is neither a Spark Entity nor annotated class.", pcClassPath, pcServiceURI), -500).
 
         catch err as Progress.Lang.Error:
-            oLoggingManager:logError(substitute("Error loading annotated resource '&1'", pcClassPath), err, "SPARK-ERR", 0).
+            oLoggingManager:logError(substitute("Error processing annotations for '&1'", pcClassPath), err, "SPARK-ERR", 0).
             /* Do not throw error from this point, allow resource registration to fail with only logging. */
         end catch.
-    end method. /* loadAnnotatedResource */
+    end method. /* processAnnotations */
 
 
     method protected void loadDynamicResource ( input pcServiceURI as character,
                                                 input pcClassPath  as character ):
+        define variable cPublicName  as character no-undo.
+        define variable cResourceURI as character no-undo.
+
         define buffer bResource for ResourceInfo.
 
         /* Destroy any previous procedure handles for this resource. */
@@ -599,20 +600,28 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             define variable hProcHandle as handle no-undo.
             run value(bResource.SourcePath) persistent set hProcHandle.
             if valid-handle(hProcHandle) then do {&THROW}:
-                find current bResource exclusive-lock.
-                assign bResource.ProcHandle = hProcHandle.
                 /* Load (or re-load) service procedure internal methods, as needed. */
                 this-object:registerProcedures( bResource.ServiceURI,
                                                 bResource.ClassPath,
-                                                bResource.ProcHandle ).
+                                                hProcHandle ).
 
-                /* @TODO: Check for annotations to help override certain aspects of this registered procedure. */
+                /* Check for annotations to help override certain aspects of this registered procedure. */
+                this-object:processAnnotations(pcServiceURI, bResource.SourcePath, false,
+                                               output cPublicName, cResourceURI).
+
+                /* Assign the procedure handle and other values to the resource record. */
+                find current bResource exclusive-lock.
+                assign
+                    bResource.ProcHandle  = hProcHandle
+                    bResource.PublicName  = cPublicName
+                    bResource.ResourceURI = cResourceURI
+                    .
 
                 if lUseDebugs and available(bResource) then
-                    oLoggingManager:logMessage(substitute("Loaded &1 as '&2/&3'",
+                    oLoggingManager:logMessage(substitute("Loaded &1 as '&2&3'",
                                                           bResource.SourcePath,
                                                           bResource.ServiceURI,
-                                                          bResource.PublicName), "SPARK-LOAD", 3).
+                                                          bResource.ResourceURI), "SPARK-LOAD", 3).
             end. /* valid-handle */
             else
                 oLoggingManager:logMessage(substitute("Could not create persistent handle: '&1'", bResource.SourcePath), "SPARK-WARN", 2).
@@ -636,12 +645,35 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             end.
             else if not valid-object(oImplement) or
                  not (oImplement:IsA(get-class(IDynamicEntity)) or
-                      oImplement:IsA(get-class(IDynamicResource))) then do:
+                      oImplement:IsA(get-class(IDynamicResource))) then do:              
+                /**
+                 * Load (or re-load) service class internal methods, using default assumptions:
+                 * - All exposed methods will be of "invoke" type and use the "PUT" verb.
+                 * - All names of methods and parameters will be used as-is from code.
+                 */
+                this-object:registerMethods(pcServiceURI, pcClassPath).
+
                 /**
                  * Attempt to treat the class as annotated and proceed with registration of any methods.
                  * Should this class fail to have any annotations, then it will be ultimately skipped.
                  */
-                this-object:loadAnnotatedResource(pcServiceURI, pcClassPath, oImplement:SuperClass:TypeName).
+                this-object:processAnnotations(pcServiceURI, pcClassPath, true,
+                                               output cPublicName, cResourceURI).
+
+                /* Assign the procedure handle and other values to the resource record. */
+                find current bResource exclusive-lock.
+                assign
+                    bResource.PublicName  = cPublicName
+                    bResource.ResourceURI = cResourceURI
+                    bResource.ValidClass  = true
+                    .
+
+                if lUseDebugs then
+                    oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2&3'",
+                                                          pcClassPath,
+                                                          pcServiceURI,
+                                                          cResourceURI), "SPARK-LOAD", 3).
+
                 return. /* Do not proceed further, as we don't have a valid Spark-based class type to process. */
             end.
 
@@ -699,10 +731,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     oEntity:initialize().
 
                     if lUseDebugs and available(bResource) then
-                        oLoggingManager:logMessage(substitute("Loaded Entity &1 as '&2/&3'",
+                        oLoggingManager:logMessage(substitute("Loaded Entity &1 as '&2&3'",
                                                               bResource.ClassPath,
                                                               bResource.ServiceURI,
-                                                              bResource.PublicName), "SPARK-LOAD", 3).
+                                                              bResource.ResourceURI), "SPARK-LOAD", 3).
                 end. /* valid-object */
             end. /* IDynamicEntity */
             else if oImplement:IsA(get-class(IDynamicResource)) then do:
@@ -733,10 +765,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     oResource:initialize().
 
                     if lUseDebugs and available(bResource) then
-                        oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2/&3'",
+                        oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2&3'",
                                                               bResource.ClassPath,
                                                               bResource.ServiceURI,
-                                                              bResource.PublicName), "SPARK-LOAD", 3).
+                                                              bResource.ResourceURI), "SPARK-LOAD", 3).
                 end. /* valid-object */
             end. /* IDynamicResource */
 
@@ -759,6 +791,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             oLoggingManager:logError(substitute("Error loading resource '&1'", pcClassPath), err, "SPARK-ERR", 0).
             /* Do not throw error from this point, allow resource registration to fail with only logging. */
         end catch.
+        finally:
+            release bResource no-error.
+        end finally.
     end method. /* loadDynamicResource */
 
 
