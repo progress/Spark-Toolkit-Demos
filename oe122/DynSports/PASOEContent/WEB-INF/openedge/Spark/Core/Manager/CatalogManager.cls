@@ -421,33 +421,28 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
         /* Get any annotations from this class and attempt to update any registered methods. */
         if valid-object(this-object:Annotations) then do on error undo, throw:
-            define variable oAnnotation  as JsonObject       no-undo.
-            define variable oProgram     as JsonObject       no-undo.
-            define variable oUserGrp     as JsonObject       no-undo.
-            define variable oMethods     as JsonObject       no-undo.
-            define variable oMethod      as JsonObject       no-undo.
-            define variable oSubArr      as JsonArray        no-undo.
-            define variable oSubObj      as JsonObject       no-undo.
-            define variable cMethodName  as character        no-undo.
-            define variable cMethods     as character extent no-undo.
-            define variable cAnnoNames   as character extent no-undo.
-            define variable iX           as integer          no-undo.
-            define variable iY           as integer          no-undo.
-            define variable iZ           as integer          no-undo.
+            define variable oAnnotation as JsonObject       no-undo.
+            define variable oProgram    as JsonObject       no-undo.
+            define variable oMethods    as JsonObject       no-undo.
+            define variable oMethod     as JsonObject       no-undo.
+            define variable oSubArr     as JsonArray        no-undo.
+            define variable oSubObj     as JsonObject       no-undo.
+            define variable cMethodName as character        no-undo.
+            define variable cMethods    as character extent no-undo.
+            define variable cAnnoNames  as character extent no-undo.
+            define variable iX          as integer          no-undo.
+            define variable iY          as integer          no-undo.
+            define variable iZ          as integer          no-undo.
 
             if this-object:Annotations:Has(cAnnoName) then
                 assign oAnnotation = this-object:Annotations:GetJsonObject(cAnnoName).
             else
                 return. /* There are no annotations for this resource. */
 
-            /* Check for and retain a "user" grouping of annotations. */
-            if oAnnotation:Has("user") and oAnnotation:GetType("user") eq JsonDataType:Object then
-                assign oUserGrp = oAnnotation:GetJsonObject("user").
-            
             /* Look for a valid "program" grouping of annotations, which might be in the "user" grouping. */
             if oAnnotation:Has("program") and oAnnotation:GetType("program") eq JsonDataType:Object then
                 assign oProgram = oAnnotation:GetJsonObject("program").
-message cAnnoName ":" valid-object(oProgram) ":" oProgram:Has("progress.service.resource FILE").
+
             /* Parse annotations for this resource (program). */
             if valid-object(oProgram) and oProgram:Has("progress.service.resource FILE") then do:
                 assign oSubObj = oProgram:GetJsonObject("progress.service.resource FILE").
@@ -564,7 +559,6 @@ message cAnnoName ":" valid-object(oProgram) ":" oProgram:Has("progress.service.
             finally:
                 delete object oAnnotation no-error.
                 delete object oProgram no-error.
-                delete object oUserGrp no-error.
                 delete object oMethods no-error.
                 delete object oMethod no-error.
                 delete object oSubArr no-error.
