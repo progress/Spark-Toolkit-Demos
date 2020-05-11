@@ -430,6 +430,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             define variable cMethodName as character        no-undo.
             define variable cMethods    as character extent no-undo.
             define variable cAnnoNames  as character extent no-undo.
+            define variable cName       as character        no-undo.
             define variable iX          as integer          no-undo.
             define variable iY          as integer          no-undo.
             define variable iZ          as integer          no-undo.
@@ -486,10 +487,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                     assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
                                     if oSubObj:GetCharacter("type") eq "REST" then
                                         assign
-                                            bMethod.OperationType = oSubObj:GetCharacter("operation")
-                                            bMethod.PublicName    = oSubObj:GetCharacter("alias")
-                                            bMethod.MethodURI     = oSubObj:GetCharacter("URI")
-                                            bMethod.ContentType   = oSubObj:GetCharacter("mediaType")
+                                            bMethod.OperationType = oSubObj:GetCharacter("operation") when oSubObj:Has("operation")
+                                            bMethod.PublicName    = oSubObj:GetCharacter("alias") when oSubObj:Has("alias")
+                                            bMethod.MethodURI     = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
+                                            bMethod.ContentType   = oSubObj:GetCharacter("mediaType") when oSubObj:Has("mediaType")
                                             .
                                 end. /* progress.service.resourceMapping */
 
@@ -497,14 +498,14 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                     if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Object then do:
                                         assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
                                         if oSubObj:GetCharacter("name") eq "verb" then
-                                            assign bMethod.OperationVerb = oSubObj:GetCharacter("value").
+                                            assign bMethod.OperationVerb = oSubObj:GetCharacter("value") when oSubObj:Has("value").
                                     end. /* Annotation Object */
                                     else if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Array then do:
                                         assign oSubArr = oMethod:GetJsonArray(cAnnoNames[iY]).
                                         do iZ = 1 to oSubArr:length:
                                             assign oSubObj = oSubArr:GetJsonObject(iZ).
                                             if oSubObj:GetCharacter("name") eq "verb" then
-                                                assign bMethod.OperationVerb = oSubObj:GetCharacter("value").
+                                                assign bMethod.OperationVerb = oSubObj:GetCharacter("value") when oSubObj:Has("value").
                                         end. /* do iZ oSubArr */
                                     end. /* Annotation Array */
 
@@ -512,32 +513,38 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                                 when "openapi.openedge.method.parameter" then do:
                                     if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Object then do:
-                                        assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
+                                        assign
+                                            oSubObj = oMethod:GetJsonObject(cAnnoNames[iY])
+                                            cName   = oSubObj:GetCharacter("name") when oSubObj:Has("name")
+                                            .
 
                                         for first bParam exclusive-lock
                                             where bParam.ServiceURI eq pcServiceURI
                                               and bParam.ClassPath eq pcClassPath
                                               and bParam.MethodName eq bMethod.MethodName
-                                              and bParam.ParamName eq oSubObj:GetCharacter("name"):
+                                              and bParam.ParamName eq cName:
                                             assign
-                                                bParam.PublicName  = oSubObj:GetCharacter("alias")
-                                                bParam.ElementType = oSubObj:GetCharacter("type")
+                                                bParam.PublicName  = oSubObj:GetCharacter("alias") when oSubObj:Has("alias")
+                                                bParam.ElementType = oSubObj:GetCharacter("type") when oSubObj:Has("type")
                                                 .
                                         end. /* for first bParam */
                                     end. /* Annotation Object */
                                     else if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Array then do:
                                         assign oSubArr = oMethod:GetJsonArray(cAnnoNames[iY]).
                                         do iZ = 1 to oSubArr:length:
-                                            assign oSubObj = oSubArr:GetJsonObject(iZ).
+                                            assign
+                                                oSubObj = oSubArr:GetJsonObject(iZ)
+                                                cName   = oSubObj:GetCharacter("name") when oSubObj:Has("name")
+                                                .
 
                                             for first bParam exclusive-lock
                                                 where bParam.ServiceURI eq pcServiceURI
                                                   and bParam.ClassPath eq pcClassPath
                                                   and bParam.MethodName eq bMethod.MethodName
-                                                  and bParam.ParamName eq oSubObj:GetCharacter("name"):
+                                                  and bParam.ParamName eq cName:
                                                 assign
-                                                    bParam.PublicName  = oSubObj:GetCharacter("alias")
-                                                    bParam.ElementType = oSubObj:GetCharacter("type")
+                                                    bParam.PublicName  = oSubObj:GetCharacter("alias") when oSubObj:Has("alias")
+                                                    bParam.ElementType = oSubObj:GetCharacter("type") when oSubObj:Has("type")
                                                     .
                                             end. /* for first bParam */
                                         end. /* do iZ oSubArr */
@@ -2432,6 +2439,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cEntityType  as character           no-undo.
         define variable cFuncMethod  as character           no-undo.
         define variable cParamName   as character           no-undo.
+        define variable cPublicName  as character           no-undo.
         define variable cParamType   as character           no-undo.
         define variable iStatusCode  as integer             no-undo.
         define variable iX           as integer             no-undo.
@@ -2538,15 +2546,16 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                      and bParam.ClassPath eq bResource.ClassPath
                      and bParam.MethodName eq bMethod.MethodName:
                     assign
-                        cParamName = bParam.PublicName
-                        cParamType = bParam.DataType
-                        hSchema    = ?
+                        cParamName  = bParam.ParamName
+                        cPublicName = bParam.PublicName
+                        cParamType  = bParam.DataType
+                        hSchema     = ?
                         .
 
                     /* Obtain the schema for a dataset parameter. */
                     if cParamType begins "dataset" then do:
-                        if lIsEntity and cParamName ne bResource.EntityName then
-                            assign cParamName = bResource.EntityName.
+                        if lIsEntity and cPublicName ne bResource.EntityName then
+                            assign cPublicName = bResource.EntityName.
 
                         if not oService:HasSchema(cParamName) then do:
                             oSchemaManager:getDataset(cParamName, dataset-handle hSchema by-reference).
@@ -2591,7 +2600,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             assign oElementType = ElementTypeEnum:Body. /* Special name indicates use of body. */
 
                         extent(oParam:InputElement) = 1.
-                        assign oParam:InputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Input).
+                        assign oParam:InputElement[1] = new MessageElement(oElementType, cPublicName, IOModeEnum:Input).
                     end. /* input */
 
                     else if bParam.IOMode eq "output" then do:
@@ -2604,7 +2613,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             assign oElementType = ElementTypeEnum:Body. /* Special name indicates use of body. */
 
                         extent(oParam:OutputElement) = 1.
-                        assign oParam:OutputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:Output).
+                        assign oParam:OutputElement[1] = new MessageElement(oElementType, cPublicName, IOModeEnum:Output).
                     end. /* output */
 
                     else if bParam.IOMode eq "input-output" then do:
@@ -2618,8 +2627,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                         extent(oParam:InputElement) = 1.
                         extent(oParam:OutputElement) = 1.
-                        assign oParam:InputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:InputOutput).
-                        assign oParam:OutputElement[1] = new MessageElement(oElementType, cParamName, IOModeEnum:InputOutput).
+                        assign oParam:InputElement[1] = new MessageElement(oElementType, cPublicName, IOModeEnum:InputOutput).
+                        assign oParam:OutputElement[1] = new MessageElement(oElementType, cPublicName, IOModeEnum:InputOutput).
                     end. /* output/input-output */
 
                     /* Add parameter to the operation. */

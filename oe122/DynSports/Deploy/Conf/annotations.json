@@ -2,21 +2,19 @@
   "Business.Dashboard": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Dashboard.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Dashboard.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "HelloProc.p": {
     "meta": {
@@ -39,354 +37,240 @@
         "URI": "\/helloworld",
         "schemaName": "",
         "schemaFile": ""
-      },
-      "openapi.openedge.export": {
-        "type": "REST",
-        "useReturnValue": "false",
-        "writeDataSetBeforeImage": "false"
-      },
-      "progress.service.resourceMapping": {
-        "type": "REST",
-        "operation": "invoke",
-        "URI": "\/hello",
-        "alias": "hello",
-        "mediaType": "application\/json"
       }
     },
+    "procedure": null,
+    "function": null,
     "data": null,
-    "user": null,
-    "procedure": {
-      "sayHello": {
-        "program FILE": {
-          "name": "HelloProc.p",
-          "module": "AppServer"
-        },
-        "openapi.openedge.export FILE": {
-          "type": "REST",
-          "executionMode": "singleton",
-          "useReturnValue": "false",
-          "writeDataSetBeforeImage": "false"
-        },
-        "progress.service.resource FILE": {
-          "name": "HelloProc",
-          "URI": "\/helloworld",
-          "schemaName": "",
-          "schemaFile": ""
-        },
-        "openapi.openedge.export": {
-          "type": "REST",
-          "useReturnValue": "false",
-          "writeDataSetBeforeImage": "false"
-        },
-        "progress.service.resourceMapping": {
-          "type": "REST",
-          "operation": "invoke",
-          "URI": "\/hello",
-          "alias": "hello",
-          "mediaType": "application\/json"
-        }
-      },
-      "sayHello2Many": {
-        "openapi.openedge.export": {
-          "type": "REST",
-          "useReturnValue": "false",
-          "writeDataSetBeforeImage": "false"
-        },
-        "progress.service.resourceMapping": {
-          "type": "REST",
-          "operation": "invoke",
-          "URI": "\/hello2Many",
-          "alias": "hello2Many",
-          "mediaType": "application\/json"
-        }
-      },
-      "sayHelloExtent": {
-        "openapi.openedge.export": {
-          "type": "REST",
-          "useReturnValue": "false",
-          "writeDataSetBeforeImage": "false"
-        },
-        "progress.service.resourceMapping": {
-          "type": "REST",
-          "operation": "invoke",
-          "URI": "\/helloExtent",
-          "alias": "helloExtent",
-          "mediaType": "application\/json"
-        }
-      }
-    },
-    "function": null
+    "user": null
   },
   "Business.Locality": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Locality.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Locality.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.Ordering.OrderBE": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Ordering\\OrderBE.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Ordering\\OrderBE.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicEntity",
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicEntity",
-      "Spark.Core.Service.SparkEntity",
-      "OpenEdge.BusinessLogic.BusinessEntity"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.Ordering.SalesrepBE": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Ordering\\SalesrepBE.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Ordering\\SalesrepBE.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicEntity",
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ]
     },
-    "program": {
-      "openapi.openedge.entity.primarykey": {
-        "fields": "SalesRep"
-      }
-    },
+    "program": null,
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": null,
+    "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
         "fields": "SalesRep"
       }
     },
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
-    "property": null,
-    "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicEntity",
-      "Spark.Core.Service.SparkEntity",
-      "OpenEdge.BusinessLogic.BusinessEntity"
-    ],
-    "implements": null
+    "user": null
   },
   "Business.Personnel.EmployeeBE": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Personnel\\EmployeeBE.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Personnel\\EmployeeBE.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicEntity",
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ]
     },
-    "program": {
-      "openapi.openedge.entity.primarykey": {
-        "fields": "EmpNum"
-      }
-    },
+    "program": null,
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": null,
+    "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
         "fields": "EmpNum"
       }
     },
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
-    "property": null,
-    "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicEntity",
-      "Spark.Core.Service.SparkEntity",
-      "OpenEdge.BusinessLogic.BusinessEntity"
-    ],
-    "implements": null
+    "user": null
   },
   "Business.Personnel.FamilyBE": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Personnel\\FamilyBE.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Personnel\\FamilyBE.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicEntity",
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ]
     },
-    "program": {
-      "openapi.openedge.entity.primarykey": {
-        "fields": "EmpNum",
-        "RelativeName": null
-      }
-    },
+    "program": null,
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": null,
+    "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
         "fields": "EmpNum",
         "RelativeName": null
       }
     },
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
-    "property": null,
-    "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicEntity",
-      "Spark.Core.Service.SparkEntity",
-      "OpenEdge.BusinessLogic.BusinessEntity"
-    ],
-    "implements": null
+    "user": null
   },
   "Business.Services": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Services.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\Services.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.System.Access": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\Access.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\Access.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.System.WebData": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\WebData.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\WebData.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicEntity",
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ]
     },
-    "program": {
-      "openapi.openedge.entity.primarykey": {
-        "fields": "WebSessionID",
-        "ObjectName": null
-      }
-    },
+    "program": null,
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": null,
+    "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
         "fields": "WebSessionID",
         "ObjectName": null
       }
     },
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
-    "property": null,
-    "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicEntity",
-      "Spark.Core.Service.SparkEntity",
-      "OpenEdge.BusinessLogic.BusinessEntity"
-    ],
-    "implements": null
+    "user": null
   },
   "Business.System.WebProfileBE": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\WebProfileBE.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\WebProfileBE.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicEntity",
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ]
     },
-    "program": {
-      "openapi.openedge.entity.primarykey": {
-        "fields": "Username",
-        "DomainName": null
-      }
-    },
+    "program": null,
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": null,
+    "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
         "fields": "Username",
         "DomainName": null
       }
     },
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
-    "property": null,
-    "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicEntity",
-      "Spark.Core.Service.SparkEntity",
-      "OpenEdge.BusinessLogic.BusinessEntity"
-    ],
-    "implements": null
+    "user": null
   },
   "Business.System.WebRoleBE": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\WebRoleBE.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\WebRoleBE.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicEntity",
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ]
     },
-    "program": {
-      "openapi.openedge.entity.primarykey": {
-        "fields": "RoleID"
-      }
-    },
+    "program": null,
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": null,
+    "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
         "fields": "RoleID"
       }
     },
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
-    "property": null,
-    "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicEntity",
-      "Spark.Core.Service.SparkEntity",
-      "OpenEdge.BusinessLogic.BusinessEntity"
-    ],
-    "implements": null
+    "user": null
   },
   "Business.TwoFactor": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\TwoFactor.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\TwoFactor.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.UnitTest.AnnoTest": {
     "meta": {
@@ -411,222 +295,172 @@
         "schemaFile": ""
       }
     },
-    "data": null,
-    "user": null,
-    "method": {
-      "testMessage(INPUT CHARACTER,OUTPUT CHARACTER)": {
-        "openapi.openedge.export": {
-          "type": "REST",
-          "useReturnValue": "false",
-          "writeDataSetBeforeImage": "false"
-        },
-        "progress.service.resourceMapping": {
-          "type": "REST",
-          "operation": "invoke",
-          "URI": "\/test",
-          "alias": "msgTest",
-          "mediaType": "application\/json"
-        },
-        "openapi.openedge.method.property": {
-          "name": "verb",
-          "value": "post"
-        },
-        "openapi.openedge.method.parameter": [
-          {
-            "name": "messageType",
-            "type": "field",
-            "alias": "type"
-          },
-          {
-            "name": "messageText",
-            "type": "field",
-            "alias": "text"
-          }
-        ]
-      }
-    },
-    "constructor": null,
-    "destructor": null,
     "property": null,
     "event": null,
-    "inherits": null,
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.UnitTest.CustomerBE": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\CustomerBE.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\CustomerBE.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicEntity",
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ]
     },
-    "program": {
-      "openapi.openedge.entity.primarykey": {
-        "fields": "CustNum"
-      }
-    },
+    "program": null,
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": null,
+    "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
         "fields": "CustNum"
       }
     },
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
-    "property": null,
-    "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicEntity",
-      "Spark.Core.Service.SparkEntity",
-      "OpenEdge.BusinessLogic.BusinessEntity"
-    ],
-    "implements": null
+    "user": null
   },
   "Business.UnitTest.Email": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Email.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Email.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.UnitTest.LeakyCode": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\LeakyCode.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\LeakyCode.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.UnitTest.Messages": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Messages.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Messages.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.UnitTest.Params": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Params.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Params.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.UnitTest.RunCode": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\RunCode.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\RunCode.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.UnitTest.Serialized": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Serialized.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Serialized.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.UnitTest.Token": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Token.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Token.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   },
   "Business.UserContext": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UserContext.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UserContext.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicEntity",
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ]
     },
-    "program": {
-      "openapi.openedge.entity.primarykey": {
-        "fields": "IdentityName",
-        "ContextType": null,
-        "ContextViewID": null,
-        "ContextTitle": null,
-        "ContextSeqNo": null
-      }
-    },
+    "program": null,
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": null,
+    "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
         "fields": "IdentityName",
@@ -636,36 +470,23 @@
         "ContextSeqNo": null
       }
     },
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
-    "property": null,
-    "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicEntity",
-      "Spark.Core.Service.SparkEntity",
-      "OpenEdge.BusinessLogic.BusinessEntity"
-    ],
-    "implements": null
+    "user": null
   },
   "Business.UserData": {
     "meta": {
       "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UserData.cls"
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UserData.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ]
     },
-    "program": {
-    },
-    "data": null,
-    "user": null,
-    "method": null,
-    "constructor": null,
-    "destructor": null,
+    "program": null,
     "property": null,
     "event": null,
-    "inherits": [
-      "Spark.Core.Service.DynamicResource"
-    ],
-    "implements": null
+    "constructor": null,
+    "method": null,
+    "destructor": null,
+    "data": null,
+    "user": null
   }
 }

@@ -23,7 +23,7 @@ procedure sayHello:
 end procedure.
 
 @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
-@progress.service.resourceMapping(type="REST", operation="invoke", URI="/hello2Many", alias="hello2Many", mediaType="application/json").
+@progress.service.resourceMapping(type="REST", operation="invoke", URI="/hello2Many", alias="many", mediaType="application/json").
 procedure sayHello2Many:
     define input  parameter recipients as Progress.Json.ObjectModel.JsonArray no-undo.
     define output parameter greeting   as character no-undo.
@@ -39,7 +39,7 @@ procedure sayHello2Many:
 end procedure.
 
 @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
-@progress.service.resourceMapping(type="REST", operation="invoke", URI="/helloExtent", alias="helloExtent", mediaType="application/json").
+@progress.service.resourceMapping(type="REST", operation="invoke", URI="/helloExtent", alias="extent", mediaType="application/json").
 procedure sayHelloExtent:
     define input  parameter recipients as character no-undo extent.
     define output parameter greeting   as character no-undo.
