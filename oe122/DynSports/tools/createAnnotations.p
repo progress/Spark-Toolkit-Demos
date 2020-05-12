@@ -97,6 +97,9 @@ oOptMap:Put("openapi.openedge.entity.field.property", "data").
 oOptMap:Put("program FILE", "program").
 oOptMap:Put("openapi.openedge.export FILE", "program").
 oOptMap:Put("progress.service.resource FILE", "program").
+oOptMap:Put("openapi.openedge.service", "program").
+oOptMap:Put("openapi.openedge.resource.version", "program").
+oOptMap:Put("openapi.openedge.resource.security", "program").
 
 /* Generate a singular annotation file from all the XREF files parsed. */
 assign oAnnotations = oParser:GetAnnotations(oOptMap).

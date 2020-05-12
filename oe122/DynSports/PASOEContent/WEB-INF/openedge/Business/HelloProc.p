@@ -11,6 +11,10 @@
 @openapi.openedge.export FILE(type="REST", executionMode="singleton", useReturnValue="false", writeDataSetBeforeImage="false").
 @progress.service.resource FILE(name="HelloProc", URI="/helloworld", schemaName="", schemaFile="").
 
+/* Proposed annotations for service assignment and API versioning. */
+@openapi.openedge.service(name="tests", URI="/web/api/tests").
+@openapi.openedge.resource.version(major="1", minor="0", patch="0").
+
 block-level on error undo, throw.
 
 @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").

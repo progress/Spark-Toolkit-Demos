@@ -37,6 +37,15 @@
         "URI": "\/helloworld",
         "schemaName": "",
         "schemaFile": ""
+      },
+      "openapi.openedge.service": {
+        "name": "tests",
+        "URI": "\/web\/api\/tests"
+      },
+      "openapi.openedge.resource.version": {
+        "major": "1",
+        "minor": "0",
+        "patch": "0"
       }
     },
     "procedure": null,
@@ -293,6 +302,17 @@
         "URI": "\/annotated",
         "schemaName": "",
         "schemaFile": ""
+      },
+      "openapi.openedge.service": {
+        "name": "tests"
+      },
+      "openapi.openedge.resource.version": {
+        "major": "1",
+        "minor": "0",
+        "patch": "1"
+      },
+      "openapi.openedge.resource.security": {
+        "denyAll": "true"
       }
     },
     "property": null,
