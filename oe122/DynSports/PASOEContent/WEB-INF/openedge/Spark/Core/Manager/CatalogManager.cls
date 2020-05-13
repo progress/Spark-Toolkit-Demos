@@ -152,7 +152,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
     define protected temp-table ResourceInfo no-undo serialize-name "Resource"
         field ServiceUUID  as character serialize-hidden         /* Identifier for service.                                     */
-        field ResourceUUID as character serialize-name "UUID"    /* Identifier for resource.                                    */
+        field ResourceUUID as character serialize-hidden         /* Identifier for resource.                                    */
         field ClassPath    as character serialize-name "Package" /* Actual class path (aka. resource name) for API operations.  */
         field PublicName   as character serialize-name "Name"    /* Public name for resource, as used by the catalog generator. */
         field SourcePath   as character serialize-name "Source"  /* For all types, path to file on disk relative to propath.    */
@@ -171,7 +171,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         .
 
     define protected temp-table MethodInfo no-undo serialize-name "Operation"
-        field ResourceUUID    as character serialize-name "UUID"
+        field ResourceUUID    as character serialize-hidden
         field MethodName      as character serialize-name "Method"
         field PublicName      as character serialize-name "Name"
         field MethodURI       as character serialize-name "URI"
@@ -471,7 +471,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     pcResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
                     .
             end. /* progress.service.resource FILE */
-message pcPublicName ":" pcResourceURI.
+
             if valid-object(oProgram) and oProgram:Has("openapi.openedge.service") then do:
                 assign oSubObj = oProgram:GetJsonObject("openapi.openedge.service").
                 assign cNewService = oSubObj:GetCharacter("URI") when oSubObj:Has("URI").
@@ -514,7 +514,6 @@ message "Resource Security:" string(oProgram:GetJsonObject("openapi.openedge.res
                          where bMethod.ResourceUUID eq pcResourceUUID
                            and bMethod.MethodName eq cMethodName no-error.
                     if available(bMethod) then do:
-message iX ":" cMethodName.
                         extent(cAnnoNames) = ?.
                         assign
                             oMethod    = oMethods:GetJsonObject(cMethods[iX])
@@ -666,7 +665,7 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
             run value(bResource.SourcePath) persistent set hProcHandle.
             if valid-handle(hProcHandle) then do {&THROW}:
                 /* Load (or re-load) service procedure internal methods, as needed. */
-                this-object:registerProcedures( bResource.ServiceUUID,
+                this-object:registerProcedures( bResource.ResourceUUID,
                                                 bResource.ClassPath,
                                                 hProcHandle ).
 
@@ -975,7 +974,6 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
         /* Register the internal procedures for this resource. */
         do iCount = 1 to num-entries(cInternalEntries):
             assign cMethodName = entry(iCount, cInternalEntries).
-message iCount ":" cMethodName.
             this-object:setResourceProcedure( input pcResourceUUID,
                                               input cMethodName,
                                               input phProcHandle:get-signature(cMethodName) ).
@@ -1156,7 +1154,6 @@ message iCount ":" cMethodName.
                                           pcMethodName,
                                           "",
                                           "" ).
-message bService.ServiceURI ":" bResource.ClassPath.
         end. /* for first */
 
         assign oParamArr = new JsonArray().
@@ -1244,12 +1241,10 @@ message bService.ServiceURI ":" bResource.ClassPath.
         end. /* iX */
 
         /* Write the signature back to the method table using a format similar to class reflection. */
-message "ParamArr" oParamArr:length ":" pcResourceUUID ":" pcMethodName.
         if oParamArr:Length gt 0 then
             for first bMethod exclusive-lock
                 where bMethod.ResourceUUID eq pcResourceUUID
                   and bMethod.MethodName eq pcMethodName:
-message "Updating ProcSig:" string(oParamArr:GetJsonText()).
                 assign bMethod.MethodSignature = string(oParamArr:GetJsonText()).
             end. /* for first bMethod */
     end method. /* setResourceProcedure */
