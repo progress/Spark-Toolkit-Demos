@@ -95,11 +95,12 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         set.
 
     define protected variable cPreLoader   as character  no-undo.
-    define protected variable cDefaultURI  as character  no-undo.
+    define protected variable cDefaultUUID as character  no-undo.
     define protected variable lUseDebugs   as logical    no-undo initial false.
     define protected variable lHasOEBLBE   as logical    no-undo initial true.
     define protected variable oCatRegistry as JsonObject no-undo.
 
+    /* General settings for the catalog manager. */
     define protected temp-table GeneralParam no-undo serialize-name "General"
         field ApiVersion     as decimal   /* Expected version to be used with all API's.              */
         field CatalogService as character /* Service class for delivering catalog output for clients. */
@@ -112,53 +113,65 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         index idxEntity      is primary unique BusinessRoot
         .
 
+    /* Pre-defined services to be exposed via the catalog manager. */
     define protected temp-table ServiceList no-undo serialize-name "ServiceSource"
-        field ServiceName     as character               /* Name of the service as exposed via the catalog.   */
-        field ServiceURI      as character               /* Path for resources (relative to actual service).  */
-        field ClassPath       as character               /* Class path of related business entity classes.    */
-        field SendOnlyChanges as logical   initial false /* Only send the fields that change, not the record. */
-        field UseRequest      as logical   initial false /* Should invoke operations use request/response.    */
+        field ServiceUUID     as character serialize-hidden /* Unique ID for this service (Name + URI).          */
+        field ServiceName     as character                  /* Name of the service as exposed via any catalog.   */
+        field ServiceURI      as character                  /* Path for resources (relative to actual service).  */
+        field ClassPath       as character                  /* Class path of related business entity classes.    */
+        field SendOnlyChanges as logical   initial false    /* Only send the fields that change, not the record. */
+        field UseRequest      as logical   initial false    /* Should invoke operations use request/response.    */
         index idxPrimary      is primary unique ServiceName ServiceURI
         index idxClassPath    is         unique ClassPath
         .
 
+    /* Initial definitions or discovered resources to expose on a per-service basis. */
     define protected temp-table ResourceList no-undo serialize-name "ServiceResource"
-        field ServiceName as character serialize-hidden        /* Name of the service as exposed via the catalog.              */
+        field ServiceName as character serialize-hidden        /* Name of the service as will be exposed via any catalog.      */
+        field ServiceUUID as character serialize-hidden        /* Inherited UUID from the ServiceList.                         */
         field ClassPath   as character serialize-name "Object" /* Class package or procedure path or of this service resource. */
         index idxPrimary  is primary unique ClassPath
         .
 
+    /* The configuration dataset as used by the catalog.json manager configuration file. */
     define protected dataset dsConfig serialize-name "Config" for GeneralParam, ServiceList, ResourceList
         data-relation ServiceResource for ServiceList, ResourceList relation-fields(ServiceName,ServiceName) nested
         .
 
+    /**
+     * ServiceList is our primary service table, but because tables cannot exist in more than 1 dataset,
+     * we use this as a dummy for associating the ResourceInfo table and its children.
+     */
     define protected temp-table ServiceInfo no-undo serialize-name "Service"
         field ServiceName as character serialize-name "Name"
         field ServiceURI  as character serialize-name "URI"
+        field ServiceUUID as character serialize-hidden
         index idxPrimary  is primary unique ServiceURI
         index idxName     is         unique ServiceName
         .
 
     define protected temp-table ResourceInfo no-undo serialize-name "Resource"
-        field ServiceURI  as character serialize-name "Service" /* Relative URI for service (as a path) for API resources.     */
-        field ClassPath   as character serialize-name "Package" /* Actual class path (aka. resource name) for API operations.  */
-        field PublicName  as character serialize-name "Name"    /* Public name for resource, as used by the catalog generator. */
-        field SourcePath  as character serialize-name "Source"  /* For all types, path to file on disk relative to propath.    */
-        field ResourceURI as character serialize-hidden         /* Explicit path element for this resource's final URI.        */
-        field ProcHandle  as handle    serialize-hidden         /* For procedures, a handle to the procedure run as a super.   */
-        field IsClass     as logical   serialize-hidden         /* Denotes loaded resource is a class per rcode-info:is-class. */
-        field ValidClass  as logical   serialize-hidden         /* For classes, denotes a valid interface implementation.      */
-        field EntityName  as character serialize-hidden         /* For business entities, denotes the name of the dataset.     */
-        field EntityKeys  as character serialize-hidden         /* For business entities, denotes any primary key fields.      */
-        field ForeignKeys as character serialize-hidden         /* For business entities, denotes any foreign key fields.      */
-        field ClassSig    as character serialize-hidden         /* For business entities, holds full signature of class.       */
-        index idxPrimary  is primary unique ServiceURI ClassPath
-        index idxPublic   is         unique ServiceURI PublicName
+        field ServiceUUID  as character serialize-hidden         /* Identifier for service.                                     */
+        field ResourceUUID as character serialize-name "UUID"    /* Identifier for resource.                                    */
+        field ClassPath    as character serialize-name "Package" /* Actual class path (aka. resource name) for API operations.  */
+        field PublicName   as character serialize-name "Name"    /* Public name for resource, as used by the catalog generator. */
+        field SourcePath   as character serialize-name "Source"  /* For all types, path to file on disk relative to propath.    */
+        field ResourceURI  as character serialize-name "URI"     /* Explicit path element for this resource's final URI.        */
+        field ApiVersion   as character serialize-name "Version" /* Semantic version to be used for methods of this resource.   */
+        field ProcHandle   as handle    serialize-hidden         /* For procedures, a handle to the procedure run as a super.   */
+        field IsClass      as logical   serialize-hidden         /* Denotes loaded resource is a class per rcode-info:is-class. */
+        field ValidClass   as logical   serialize-hidden         /* For classes, denotes a valid interface implementation.      */
+        field EntityName   as character serialize-hidden         /* For business entities, denotes the name of the dataset.     */
+        field EntityKeys   as character serialize-hidden         /* For business entities, denotes any primary key fields.      */
+        field ForeignKeys  as character serialize-hidden         /* For business entities, denotes any foreign key fields.      */
+        field ClassSig     as character serialize-hidden         /* For business entities, holds full signature of class.       */
+        index idxPrimary   is primary unique ResourceUUID
+        index idxPublic    is         unique ServiceUUID ClassPath
+        index idxResource  is         unique ServiceUUID PublicName
         .
 
     define protected temp-table MethodInfo no-undo serialize-name "Operation"
-        field ServiceURI      as character serialize-name "Service"
-        field ClassPath       as character serialize-name "Package"
+        field ResourceUUID    as character serialize-name "UUID"
         field MethodName      as character serialize-name "Method"
         field PublicName      as character serialize-name "Name"
         field MethodURI       as character serialize-name "URI"
@@ -166,14 +179,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field OperationType   as character serialize-name "Operation"
         field OperationVerb   as character serialize-name "HttpVerb"
         field ContentType     as character serialize-name "MediaType" initial "application/json"
-        index idxPrimary      is primary unique ServiceURI ClassPath MethodName
-        index idxPublic       is         unique ServiceURI ClassPath PublicName
+        index idxPrimary      is primary unique ResourceUUID MethodName
+        index idxPublic       is         unique ResourceUUID PublicName
         .
 
     define protected temp-table ParameterInfo no-undo serialize-name "Parameter"
+        field ResourceUUID    as character serialize-hidden
         field ParamUUID       as int64     serialize-hidden
-        field ServiceURI      as character serialize-name "Service"
-        field ClassPath       as character serialize-name "Package"
         field MethodName      as character serialize-name "Method"
         field ParamName       as character serialize-name "Name"
         field PublicName      as character serialize-name "Alias"
@@ -181,17 +193,16 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field DataType        as character serialize-name "ABLType"
         field DataTypeExtent  as integer   serialize-name "Extent"  initial 0
         field ElementType     as character serialize-name "Element" initial "field"
-        index pukOrder        is primary unique ParamUUID
+        index pukOrder        is primary unique ParamUUID /* Must keep these in order of discovery. */
         .
 
     define protected temp-table ResourceProperty no-undo serialize-name "Annotation"
-        field ServiceURI    as character serialize-name "Service"   /* Associated service URI for resource.     */
-        field ClassPath     as character serialize-name "Package"   /* Full class path to business entity.      */
+        field ResourceUUID  as character serialize-hidden
         field OperationType as character serialize-name "Operation" /* Type: create, read, update, delete, etc. */
         field PropertyName  as character serialize-name "Property"  /* Resource annotation property name.       */
         field PropertyType  as character serialize-name "DataType"  /* Resource annotation property datatype.   */
         field PropertyValue as character serialize-name "Value"     /* Resource annotation property value(s).   */
-        index idxPrimary    is primary unique ServiceURI ClassPath OperationType PropertyName
+        index idxPrimary    is primary unique ResourceUUID OperationType PropertyName
         .
 
     define protected temp-table EntityProperty no-undo serialize-name "Entity"
@@ -204,27 +215,26 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     define protected dataset dsResource serialize-name "Mapping"
         for ServiceInfo, ResourceInfo, MethodInfo, ParameterInfo, ResourceProperty
         data-relation Service for ServiceInfo, ResourceInfo
-        relation-fields(ServiceURI, ServiceURI)
+        relation-fields(ServiceUUID, ServiceUUID)
         nested foreign-key-hidden
         data-relation Resource for ResourceInfo, MethodInfo
-        relation-fields(ServiceURI, ServiceURI, ClassPath, ClassPath)
+        relation-fields(ResourceUUID, ResourceUUID)
         nested foreign-key-hidden
         data-relation Operation for MethodInfo, ResourceProperty
-        relation-fields(ServiceURI, ServiceURI, ClassPath, ClassPath, OperationType, OperationType)
+        relation-fields(ResourceUUID, ResourceUUID, OperationType, OperationType)
         nested foreign-key-hidden
         data-relation Params for MethodInfo, ParameterInfo
-        relation-fields(ServiceURI, ServiceURI, ClassPath, ClassPath, MethodName, MethodName)
-        nested foreign-key-hidden.
+        relation-fields(ResourceUUID, ResourceUUID, MethodName, MethodName)
+        nested foreign-key-hidden
+        .
 
 
     /**************************** Protected Helper Methods *****************************/
 
 
-    method protected void clearResourceMethods ( input pcServiceURI as character,
-                                                 input pcClassPath  as character ):
+    method protected void clearResourceMethods ( input pcResourceUUID as character ):
         for each MethodInfo exclusive-lock
-           where MethodInfo.ServiceURI eq pcServiceURI
-             and MethodInfo.ClassPath eq pcClassPath:
+           where MethodInfo.ResourceUUID eq pcResourceUUID:
             assign MethodInfo.MethodSignature = "".
         end. /* for each */
     end method. /* clearResourceMethods */
@@ -280,7 +290,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getVerb */
 
 
-    method protected void getMethod ( input  pcServiceURI   as character,
+    method protected void getMethod ( input  pcServiceUUID  as character,
                                       input  pcResourceName as character,
                                       input  pcMethodName   as character,
                                       input  pcHttpMethod   as character,
@@ -288,7 +298,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                       output phProcHandle   as handle,
                                       output pcEntityName   as character ):
         assign /* Obtain the actual method name from the descriptors table. */
-            pcMethodName  = getMethodName(pcServiceURI, pcResourceName, pcMethodName, pcHttpMethod)
+            pcMethodName  = getMethodName(pcServiceUUID, pcResourceName, pcMethodName, pcHttpMethod)
             pcValidMethod = ""
             phProcHandle  = ?
             pcEntityName  = ""
@@ -299,7 +309,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
         find first bResource
              where not bResource.IsClass
-               and bResource.ServiceURI eq pcServiceURI
+               and bResource.ServiceUUID eq pcServiceUUID
                and bResource.ClassPath eq pcResourceName
                and valid-handle(bResource.ProcHandle) no-error.
         if available(bResource) then do:
@@ -315,7 +325,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         end. /* Procedure */
         else do:
             find first bResource
-                 where bResource.ServiceURI eq pcServiceURI
+                 where bResource.ServiceUUID eq pcServiceUUID
                    and bResource.PublicName eq pcResourceName
                    and bResource.ValidClass no-error.
             if available(bResource) then
@@ -327,34 +337,32 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getMethod */
 
 
-    method protected character getMethodName ( input pcServiceURI   as character,
+    method protected character getMethodName ( input pcServiceUUID  as character,
                                                input pcResourceName as character,
                                                input pcMethodName   as character,
                                                input pcHttpMethod   as character ):
-        define variable cClassPath as character no-undo.
-        assign cClassPath = getClassPath(pcServiceURI, pcResourceName).
+        define variable cResourceUUID as character no-undo.
+        define variable cClassPath    as character no-undo.
+        this-object:getClassPath(pcServiceUUID, pcResourceName, output cResourceUUID, cClassPath).
 
-        define buffer bMethod  for MethodInfo.
+        define buffer bMethod for MethodInfo.
 
         find first bMethod /* Find by public name and verb. */
-             where bMethod.ServiceURI eq pcServiceURI
-               and bMethod.ClassPath eq cClassPath
+             where bMethod.ResourceUUID eq cResourceUUID
                and bMethod.PublicName eq pcMethodName
                and bMethod.OperationVerb eq pcHttpMethod no-error.
         if available(bMethod) then
             return bMethod.MethodName.
 
         find first bMethod /* Find by actual name and verb. */
-             where bMethod.ServiceURI eq pcServiceURI
-               and bMethod.ClassPath eq cClassPath
+             where bMethod.ResourceUUID eq cResourceUUID
                and bMethod.MethodName eq pcMethodName
                and bMethod.OperationVerb eq pcHttpMethod no-error.
         if available(bMethod) then
             return bMethod.MethodName.
 
         find first bMethod /* Find by operation type and verb. */
-             where bMethod.ServiceURI eq pcServiceURI
-               and bMethod.ClassPath eq cClassPath
+             where bMethod.ResourceUUID eq cResourceUUID
                and bMethod.OperationType eq pcMethodName
                and bMethod.OperationVerb eq pcHttpMethod no-error.
         if available(bMethod) then
@@ -364,34 +372,40 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getMethodName */
 
 
-    method protected character getClassPath ( input pcServiceURI   as character,
-                                              input pcResourceName as character ):
+    method protected void getClassPath ( input  pcServiceUUID  as character,
+                                         input  pcResourceName as character,
+                                         output pcResourceUUID as character,
+                                         output pcClassPath    as character ):
         define buffer bResource for ResourceInfo.
 
         /* Locate classes by service URI and public name. */
         for first bResource
-            where bResource.ServiceURI eq pcServiceURI
+            where bResource.ServiceUUID eq pcServiceUUID
               and bResource.PublicName eq pcResourceName:
-            return bResource.ClassPath.
+            assign
+                pcResourceUUID = bResource.ResourceUUID
+                pcClassPath    = bResource.ClassPath
+                .
         end.
 
         /* Locate procedure by service URI and full path. */
         for first bResource
-            where bResource.ServiceURI eq pcServiceURI
+            where bResource.ServiceUUID eq pcServiceUUID
               and bResource.SourcePath eq pcResourceName:
-            return bResource.ClassPath.
+            assign
+                pcResourceUUID = bResource.ResourceUUID
+                pcClassPath    = bResource.ClassPath
+                .
         end.
-
-        return "".
     end method. /* getClassPath */
 
 
-    method protected character getResourcePath ( input pcServiceURI   as character,
+    method protected character getResourcePath ( input pcServiceUUID  as character,
                                                  input pcResClassPath as character ):
         define buffer bResource for ResourceInfo.
 
         for first bResource
-            where bResource.ServiceURI eq pcServiceURI
+            where bResource.ServiceUUID eq pcServiceUUID
               and bResource.ClassPath eq pcResClassPath:
             return bResource.SourcePath.
         end.
@@ -400,11 +414,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getResourcePath */
 
 
-    method protected void processAnnotations ( input  pcServiceURI  as character,
-                                               input  pcClassPath   as character,
-                                               input  pcSourcePath  as character,
-                                               output pcPublicName  as character,
-                                               output pcResourceURI as character ):
+    method protected void processAnnotations ( input  pcResourceUUID as character,
+                                               input  pcClassPath    as character,
+                                               input  pcSourcePath   as character,
+                                               output pcPublicName   as character,
+                                               output pcResourceURI  as character,
+                                               output poSemVersion   as SemanticVersion,
+                                               output pcNewService   as character ):
         define variable cAnnoName as character no-undo.
         define variable lIsClass  as logical   no-undo.
 
@@ -420,22 +436,25 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             .
 
         /* Get any annotations from this class and attempt to update any registered methods. */
-        if valid-object(this-object:Annotations) then do on error undo, throw:
-            define variable oAnnotation as JsonObject       no-undo.
-            define variable oProgram    as JsonObject       no-undo.
-            define variable oMethods    as JsonObject       no-undo.
-            define variable oMethod     as JsonObject       no-undo.
-            define variable oSubArr     as JsonArray        no-undo.
-            define variable oSubObj     as JsonObject       no-undo.
-            define variable cMethodName as character        no-undo.
-            define variable cMethods    as character extent no-undo.
-            define variable cAnnoNames  as character extent no-undo.
-            define variable cName       as character        no-undo.
-            define variable iX          as integer          no-undo.
-            define variable iY          as integer          no-undo.
-            define variable iZ          as integer          no-undo.
+        if valid-object(this-object:Annotations) then
+        do on error undo, throw:
+            define variable oAnnotation as JsonObject         no-undo.
+            define variable oProgram    as JsonObject         no-undo.
+            define variable oMethods    as JsonObject         no-undo.
+            define variable oMethod     as JsonObject         no-undo.
+            define variable oSubArr     as JsonArray          no-undo.
+            define variable oSubObj     as JsonObject         no-undo.
+            define variable cMethodName as character          no-undo.
+            define variable cMethods    as character extent   no-undo.
+            define variable cAnnoNames  as character extent   no-undo.
+            define variable cName       as character          no-undo.
+            define variable cNewService as character          no-undo.
+            define variable iVersion    as integer   extent 3 no-undo.
+            define variable iX          as integer            no-undo.
+            define variable iY          as integer            no-undo.
+            define variable iZ          as integer            no-undo.
 
-            if this-object:Annotations:Has(cAnnoName) then
+            if valid-object(this-object:Annotations) and this-object:Annotations:Has(cAnnoName) then
                 assign oAnnotation = this-object:Annotations:GetJsonObject(cAnnoName).
             else
                 return. /* There are no annotations for this resource. */
@@ -452,6 +471,27 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     pcResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
                     .
             end. /* progress.service.resource FILE */
+message pcPublicName ":" pcResourceURI.
+            if valid-object(oProgram) and oProgram:Has("openapi.openedge.service") then do:
+                assign oSubObj = oProgram:GetJsonObject("openapi.openedge.service").
+                assign cNewService = oSubObj:GetCharacter("URI") when oSubObj:Has("URI").
+message "New Service URI:" cNewService.
+            end. /* openapi.openedge.service */
+
+            if valid-object(oProgram) and oProgram:Has("openapi.openedge.resource.security") then do:
+message "Resource Security:" string(oProgram:GetJsonObject("openapi.openedge.resource.security"):GetJsonText()).
+            end. /* openapi.openedge.resource.security */
+
+            if valid-object(oProgram) and oProgram:Has("openapi.openedge.resource.version") then do:
+                assign oSubObj = oProgram:GetJsonObject("openapi.openedge.resource.version").
+                assign
+                    iVersion[1] = integer(oSubObj:GetCharacter("major")) when oSubObj:Has("major")
+                    iVersion[2] = integer(oSubObj:GetCharacter("minor")) when oSubObj:Has("minor")
+                    iVersion[3] = integer(oSubObj:GetCharacter("patch")) when oSubObj:Has("patch")
+                    .
+
+                assign poSemVersion = new SemanticVersion(iVersion[1], iVersion[2], iVersion[3]).
+            end. /* openapi.openedge.resource.version */
 
             /* Methods and Procedures should be mutually exclusive, but the annotation parsing is the same. */
             if (oAnnotation:Has("method") and oAnnotation:GetType("method") eq JsonDataType:object) or
@@ -471,10 +511,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                     /* Locate an existing method/procedure for the resource. */
                     find first bMethod exclusive-lock
-                         where bMethod.ServiceURI eq pcServiceURI
-                           and bMethod.ClassPath eq pcClassPath
+                         where bMethod.ResourceUUID eq pcResourceUUID
                            and bMethod.MethodName eq cMethodName no-error.
                     if available(bMethod) then do:
+message iX ":" cMethodName.
                         extent(cAnnoNames) = ?.
                         assign
                             oMethod    = oMethods:GetJsonObject(cMethods[iX])
@@ -493,6 +533,11 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                             bMethod.ContentType   = oSubObj:GetCharacter("mediaType") when oSubObj:Has("mediaType")
                                             .
                                 end. /* progress.service.resourceMapping */
+
+                                when "openapi.openedge.method.security" then do:
+                                    assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
+message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method.security"):GetJsonText()).
+                                end. /* openapi.openedge.method.security */
 
                                 when "openapi.openedge.method.property" then do:
                                     if oMethod:GetType(cAnnoNames[iY]) eq JsonDataType:Object then do:
@@ -519,8 +564,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                             .
 
                                         for first bParam exclusive-lock
-                                            where bParam.ServiceURI eq pcServiceURI
-                                              and bParam.ClassPath eq pcClassPath
+                                            where bParam.ResourceUUID eq pcResourceUUID
                                               and bParam.MethodName eq bMethod.MethodName
                                               and bParam.ParamName eq cName:
                                             assign
@@ -538,8 +582,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                                 .
 
                                             for first bParam exclusive-lock
-                                                where bParam.ServiceURI eq pcServiceURI
-                                                  and bParam.ClassPath eq pcClassPath
+                                                where bParam.ResourceUUID eq pcResourceUUID
                                                   and bParam.MethodName eq bMethod.MethodName
                                                   and bParam.ParamName eq cName:
                                                 assign
@@ -564,6 +607,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             end. /* has method */
 
             finally:
+                /* Always create and return a version for this resource, even if set as "0.0.0". */
+                if not valid-object(poSemVersion) then
+                    assign poSemVersion = new SemanticVersion(0, 0, 0).
+
                 delete object oAnnotation no-error.
                 delete object oProgram no-error.
                 delete object oMethods no-error.
@@ -580,18 +627,19 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* processAnnotations */
 
 
-    method protected void loadDynamicResource ( input pcServiceURI as character,
-                                                input pcClassPath  as character ):
-        define variable cPublicName  as character no-undo.
-        define variable cResourceURI as character no-undo.
+    method protected void loadDynamicResource ( input pcResourceUUID as character ):
+        define variable cPublicName  as character       no-undo.
+        define variable cResourceURI as character       no-undo.
+        define variable cNewService  as character       no-undo.
+        define variable oSemVersion  as SemanticVersion no-undo.
 
+        define buffer bService  for ServiceList.
         define buffer bResource for ResourceInfo.
 
         /* Destroy any previous procedure handles for this resource. */
         for each bResource exclusive-lock
            where not bResource.IsClass
-             and bResource.ServiceURI eq pcServiceURI
-             and bResource.ClassPath eq pcClassPath
+             and bResource.ResourceUUID eq pcResourceUUID
              and valid-handle(bResource.ProcHandle):
             apply "close" to bResource.ProcHandle.
             delete procedure bResource.ProcHandle no-error.
@@ -599,9 +647,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
         /* First attempt to locate an existing record by resource name. */
         find first bResource no-lock
-             where bResource.ServiceURI eq pcServiceURI
-               and bResource.ClassPath eq pcClassPath no-error.
+             where bResource.ResourceUUID eq pcResourceUUID no-error.
         if not available(bResource) then return.
+
+        /* First attempt to locate an existing service by UUID. */
+        find first bService no-lock
+             where bService.ServiceUUID eq bResource.ServiceUUID no-error.
+        if not available(bService) then return.
 
         if not bResource.IsClass and bResource.SourcePath gt "" then
         do on error undo, throw
@@ -614,17 +666,18 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             run value(bResource.SourcePath) persistent set hProcHandle.
             if valid-handle(hProcHandle) then do {&THROW}:
                 /* Load (or re-load) service procedure internal methods, as needed. */
-                this-object:registerProcedures( bResource.ServiceURI,
+                this-object:registerProcedures( bResource.ServiceUUID,
                                                 bResource.ClassPath,
                                                 hProcHandle ).
 
                 /* Check for annotations to help override certain aspects of this registered procedure. */
-                this-object:processAnnotations(pcServiceURI, bResource.ClassPath, bResource.SourcePath,
-                                               output cPublicName, cResourceURI).
+                this-object:processAnnotations(pcResourceUUID, bResource.ClassPath, bResource.SourcePath,
+                                               output cPublicName, cResourceURI, oSemVersion, cNewService).
 
                 /* Assign the procedure handle and other values to the resource record. */
                 find current bResource exclusive-lock.
                 assign
+                    bResource.ApiVersion  = oSemVersion:ToString()
                     bResource.ProcHandle  = hProcHandle
                     bResource.PublicName  = cPublicName
                     bResource.ResourceURI = cResourceURI
@@ -633,7 +686,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 if lUseDebugs and available(bResource) then
                     oLoggingManager:logMessage(substitute("Loaded &1 as '&2&3'",
                                                           bResource.SourcePath,
-                                                          bResource.ServiceURI,
+                                                          bService.ServiceURI,
                                                           bResource.ResourceURI), "SPARK-LOAD", 3).
             end. /* valid-handle */
             else
@@ -648,7 +701,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             define variable phDataSet  as handle              no-undo.
 
             /* Confirm whether the specified class is of type IDynamicEntity. */
-            assign oImplement = Progress.Lang.Class:GetClass(pcClassPath) no-error.
+            assign oImplement = Progress.Lang.Class:GetClass(bResource.ClassPath) no-error.
             if error-status:error then do:
                 /* If error is due to a missing super-class, and the OE.BL.BE is not available, then let's report that specifically. */
                 if error-status:get-number(1) eq 12932 and not lHasOEBLBE then
@@ -658,24 +711,25 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             end.
             else if not valid-object(oImplement) or
                  not (oImplement:IsA(get-class(IDynamicEntity)) or
-                      oImplement:IsA(get-class(IDynamicResource))) then do:              
+                      oImplement:IsA(get-class(IDynamicResource))) then do:
                 /**
                  * Load (or re-load) service class internal methods, using default assumptions:
                  * - All exposed methods will be of "invoke" type and use the "PUT" verb.
                  * - All names of methods and parameters will be used as-is from code.
                  */
-                this-object:registerMethods(pcServiceURI, pcClassPath).
+                this-object:registerMethods(pcResourceUUID).
 
                 /**
                  * Attempt to treat the class as annotated and proceed with registration of any methods.
                  * Should this class fail to have any annotations, then it will be ultimately skipped.
                  */
-                this-object:processAnnotations(pcServiceURI, pcClassPath, "",
-                                               output cPublicName, cResourceURI).
+                this-object:processAnnotations(pcResourceUUID, bResource.ClassPath, "",
+                                               output cPublicName, cResourceURI, oSemVersion, cNewService).
 
                 /* Assign the procedure handle and other values to the resource record. */
                 find current bResource exclusive-lock.
                 assign
+                    bResource.ApiVersion  = oSemVersion:ToString()
                     bResource.PublicName  = cPublicName
                     bResource.ResourceURI = cResourceURI
                     bResource.ValidClass  = true
@@ -683,9 +737,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                 if lUseDebugs then
                     oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2&3'",
-                                                          pcClassPath,
-                                                          pcServiceURI,
-                                                          cResourceURI), "SPARK-LOAD", 3).
+                                                          bResource.ClassPath,
+                                                          bService.ServiceURI,
+                                                          bResource.ResourceURI), "SPARK-LOAD", 3).
 
                 return. /* Do not proceed further, as we don't have a valid Spark-based class type to process. */
             end.
@@ -714,7 +768,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                     /* When an entity name has been provided, register and check for a dataset. */
                     if (oEntity:entityName gt "") eq true then do:
-                        describeEntity(pcServiceURI, pcClassPath, oEntity:entityName, oEntity:primaryKeys, oEntity:foreignKeys).
+                        this-object:describeEntity(pcResourceUUID, bResource.ClassPath, oEntity:entityName, oEntity:primaryKeys, oEntity:foreignKeys).
 
                         oEntity:getDataset(output dataset-handle phDataSet) no-error.
                         if error-status:error then
@@ -726,18 +780,18 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     end. /* entityName */
 
                     /* Load (or re-load) service class internal methods, as needed. */
-                    this-object:registerMethods(pcServiceURI, pcClassPath, oEntity:operations).
+                    this-object:registerMethods(pcResourceUUID, oEntity:operations).
 
                     /* Apply properties for the read operation, when they are present. */
                     if (oEntity:mappingType gt "") eq true then do:
                         /* Provide the name of the plugin to be used with the JSDO, aka the Mapping Type. */
-                        this-object:addProperty(pcServiceURI, pcClassPath, OperationEnum:read:toString(), "mappingType", "character", oEntity:mappingType).
+                        this-object:addProperty(pcResourceUUID, bResource.ClassPath, OperationEnum:read:toString(), "mappingType", "character", oEntity:mappingType).
 
                         /* Only when a mapping type is present, check if server-side capabilities exist. */
                         if (oEntity:capabilities gt "") eq true then
-                            this-object:addProperty(pcServiceURI, pcClassPath, OperationEnum:read:toString(), "capabilities", "character", oEntity:capabilities).
+                            this-object:addProperty(pcResourceUUID, bResource.ClassPath, OperationEnum:read:toString(), "capabilities", "character", oEntity:capabilities).
                         else
-                            this-object:addProperty(pcServiceURI, pcClassPath, OperationEnum:read:toString(), "capabilities", "character", "").
+                            this-object:addProperty(pcResourceUUID, bResource.ClassPath, OperationEnum:read:toString(), "capabilities", "character", "").
                     end. /* mappingType */
 
                     /* Load annotations and other prerequisite data through initialize method. */
@@ -746,7 +800,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     if lUseDebugs and available(bResource) then
                         oLoggingManager:logMessage(substitute("Loaded Entity &1 as '&2&3'",
                                                               bResource.ClassPath,
-                                                              bResource.ServiceURI,
+                                                              bService.ServiceURI,
                                                               bResource.ResourceURI), "SPARK-LOAD", 3).
                 end. /* valid-object */
             end. /* IDynamicEntity */
@@ -772,7 +826,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         .
 
                     /* Load (or re-load) service class internal methods, as needed. */
-                    this-object:registerMethods(pcServiceURI, pcClassPath).
+                    this-object:registerMethods(pcResourceUUID, bResource.ClassPath).
 
                     /* Load annotations and other prerequisite data. */
                     oResource:initialize().
@@ -780,7 +834,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     if lUseDebugs and available(bResource) then
                         oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2&3'",
                                                               bResource.ClassPath,
-                                                              bResource.ServiceURI,
+                                                              bService.ServiceURI,
                                                               bResource.ResourceURI), "SPARK-LOAD", 3).
                 end. /* valid-object */
             end. /* IDynamicResource */
@@ -794,6 +848,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         end. /* Non-Procedure */
 
         catch err as Error:
+            oLoggingManager:logError(substitute("Error loading resource '&1'", bResource.ClassPath), err, "SPARK-ERR", 0).
+
             /* Failure to load should mean removal from the list of resources. */
             if available(bResource) then do:
                 find current bResource exclusive-lock.
@@ -801,7 +857,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 delete bResource.
             end. /* Available bResource */
 
-            oLoggingManager:logError(substitute("Error loading resource '&1'", pcClassPath), err, "SPARK-ERR", 0).
             /* Do not throw error from this point, allow resource registration to fail with only logging. */
         end catch.
         finally:
@@ -810,15 +865,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* loadDynamicResource */
 
 
-    method protected void registerMethods ( input pcServiceURI   as character,
-                                            input pcResClassPath as character ):
+    method protected void registerMethods ( input pcServiceUUID  as character ):
         /* Call method with blank list of operations. Typical for the Dynamicresource class. */
-        this-object:registerMethods(pcServiceURI, pcResClassPath, "").
+        this-object:registerMethods(pcServiceUUID, "").
     end method. /* registerMethods */
 
 
-    method protected void registerMethods ( input pcServiceURI   as character,
-                                            input pcResClassPath as character,
+    method protected void registerMethods ( input pcResourceUUID as character,
                                             input pcOperations   as character ):
         define variable oParser   as ObjectModelParser no-undo.
         define variable oClassSig as JsonObject        no-undo.
@@ -830,29 +883,28 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         oParser = new ObjectModelParser().
 
         /* Remove previous method signatures. */
-        this-object:clearResourceMethods(pcServiceURI, pcResClassPath).
+        this-object:clearResourceMethods(pcResourceUUID).
 
         define buffer bResource for ResourceInfo.
 
         /* Register methods according to the Spark.Core.Service.IDynamicEntity class. */
         find first bResource
-             where bResource.ServiceURI eq pcServiceURI
-               and bResource.ClassPath eq pcResClassPath no-error.
+             where bResource.ResourceUUID eq pcResourceUUID no-error.
         if available(bResource) then do:
             /* Generate class signature (in JSON) using reflection. */
-            oClassSig = Reflection:getClassSignature(pcResClassPath).
+            oClassSig = Reflection:getClassSignature(bResource.ClassPath).
 
             if lUseDebugs then do:
                 assign cSigPath = substitute("&1/signatures", right-trim(OSTools:sparkConf, "/")).
                 file-info:file-name = cSigPath.
                 if file-info:full-pathname eq ? then
                     os-create-dir value(cSigPath).
-                oClassSig:WriteFile(substitute("&1/&2.json", cSigPath, pcResClassPath), true).
+                oClassSig:WriteFile(substitute("&1/&2.json", cSigPath, bResource.ClassPath), true).
             end.
 
             /* Extract the specific class signature from the file. */
-            if oClassSig:Has(pcResClassPath) then
-                oClassSig = oClassSig:GetJsonObject(pcResClassPath).
+            if oClassSig:Has(bResource.ClassPath) then
+                oClassSig = oClassSig:GetJsonObject(bResource.ClassPath).
 
             /* Register all methods for the current class. */
             if oClassSig:Has("methods") then do:
@@ -878,15 +930,14 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     end. /* Standard CRUD/Submit */
 
                     /* If not skipped by above code, register the resource method. */
-                    this-object:setResourceMethod( input pcServiceURI,
-                                                   input pcResClassPath,
+                    this-object:setResourceMethod( input pcResourceUUID,
                                                    input cMethods[iX],
                                                    input bResource.EntityName,
                                                    input oMethods:GetJsonObject(cMethods[ix]):GetJsonArray("params") ).
 
                     catch err as Progress.Lang.Error:
                         oLoggingManager:logError(substitute("Unable to register method '&1:&2'",
-                                                            pcResClassPath,
+                                                            bResource.ClassPath,
                                                             cMethods[iX]), err, "SPARK-ERR", 0).
                         undo, throw err.
                     end catch.
@@ -896,8 +947,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
         catch err as Progress.Lang.Error:
             oLoggingManager:logError(substitute("Unable to register &1 (&2) methods",
-                                                pcServiceURI,
-                                                pcResClassPath), err, "SPARK-ERR", 0).
+                                                pcResourceUUID,
+                                                bResource.ClassPath), err, "SPARK-ERR", 0).
             undo, throw err.
         end catch.
         finally:
@@ -908,7 +959,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* registerMethods */
 
 
-    method protected void registerProcedures ( input pcServiceURI   as character,
+    method protected void registerProcedures ( input pcResourceUUID as character,
                                                input pcResourceName as character,
                                                input phProcHandle   as handle ):
         define variable iCount           as integer   no-undo.
@@ -916,7 +967,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cInternalEntries as character no-undo.
 
         /* Remove previous method signatures. */
-        this-object:clearResourceMethods(pcServiceURI, pcResourceName).
+        this-object:clearResourceMethods(pcResourceUUID).
 
         cInternalEntries = phProcHandle:internal-entries.
         if (cInternalEntries gt "") ne true then return.
@@ -924,8 +975,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         /* Register the internal procedures for this resource. */
         do iCount = 1 to num-entries(cInternalEntries):
             assign cMethodName = entry(iCount, cInternalEntries).
-            this-object:setResourceProcedure( input pcServiceURI,
-                                              input pcResourceName,
+message iCount ":" cMethodName.
+            this-object:setResourceProcedure( input pcResourceUUID,
                                               input cMethodName,
                                               input phProcHandle:get-signature(cMethodName) ).
         end.
@@ -969,8 +1020,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* runPreloader */
 
 
-    method protected void setResourceMethod ( input pcServiceURI   as character,
-                                              input pcResourceName as character,
+    method protected void setResourceMethod ( input pcResourceUUID as character,
                                               input pcMethodName   as character,
                                               input pcEntityName   as character,
                                               input poMethodParams as JsonArray ):
@@ -979,23 +1029,30 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable iTotal     as integer    no-undo.
         define variable iParam     as integer    no-undo.
 
-        define buffer bMethod for MethodInfo.
-        define buffer bParam  for ParameterInfo.
+        define buffer bService  for ServiceList.
+        define buffer bResource for ResourceInfo.
+        define buffer bMethod   for MethodInfo.
+        define buffer bParam    for ParameterInfo.
 
-        /* Create a default description if none specified yet. */
-        this-object:describeResource( pcServiceURI,
-                                      pcResourceName,
-                                      pcMethodName,
-                                      "",
-                                      "",
-                                      "" ).
+
+        for first bResource no-lock
+            where bResource.ResourceUUID eq pcResourceUUID,
+            first bService no-lock
+            where bService.ServiceUUID eq bResource.ServiceUUID:
+            /* Create a default description if none specified yet. */
+            this-object:describeResource( bService.ServiceURI,
+                                          bResource.ClassPath,
+                                          pcMethodName,
+                                          "",
+                                          "",
+                                          "" ).
+        end. /* for first */
 
         /* No params, no update needed. Just leave. */
         if poMethodParams:Length eq 0 then return.
 
         for first bMethod exclusive-lock
-            where bMethod.ServiceURI eq pcServiceURI
-              and bMethod.ClassPath eq pcResourceName
+            where bMethod.ResourceUUID eq pcResourceUUID
               and bMethod.MethodName eq pcMethodName:
             assign iTotal = poMethodParams:length.
 
@@ -1008,8 +1065,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                         oParamObj:Add("publicName", pcEntityName).
                 end. /* do iParam */
 
-                /* Add default property to enable use of before-image for CRUD+Submit as necessary. */
-                this-object:addProperty(pcServiceURI, pcResourceName, bMethod.OperationType, "useBeforeImage", "logical", "true").
+                for first bResource no-lock
+                    where bResource.ResourceUUID eq bMethod.ResourceUUID,
+                    first bService no-lock
+                    where bService.ServiceUUID eq bResource.ServiceUUID:
+                    /* Add default property to enable use of before-image for CRUD+Submit as necessary. */
+                    this-object:addProperty(bService.ServiceURI, bResource.ClassPath, bMethod.OperationType, "useBeforeImage", "logical", "true").
+                end. /* for first */
             end. /* CRUD+Submit */
 
             /* Add the parameters as records in the ParameterInfo table. */
@@ -1021,17 +1083,15 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                 /* Don't proceed if a param already exists for this service/resource/method. */
                 if can-find(first bParam
-                            where bParam.ServiceURI eq pcServiceURI
-                              and bParam.ClassPath eq pcResourceName
-                              and bParam.MethodName eq pcMethodName
+                            where bParam.ResourceUUID eq bMethod.ResourceUUID
+                              and bParam.MethodName eq bMethod.MethodName
                               and bParam.ParamName eq cParamName no-lock) then next.
 
                 /* Create a parameter information record for this service/resource/method. */
                 create bParam.
                 assign
                     bParam.ParamUUID      = this-object:ParamUUID
-                    bParam.ServiceURI     = pcServiceURI
-                    bParam.ClassPath      = pcResourceName
+                    bParam.ResourceUUID   = bMethod.ResourceUUID
                     bParam.MethodName     = pcMethodName
                     bParam.ParamName      = cParamName
                     bParam.PublicName     = if oParamObj:Has("publicName") then oParamObj:GetCharacter("publicName") else cParamName
@@ -1070,8 +1130,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* setResourceMethod */
 
 
-    method protected void setResourceProcedure ( input pcServiceURI      as character,
-                                                 input pcResourceName    as character,
+    method protected void setResourceProcedure ( input pcResourceUUID    as character,
                                                  input pcMethodName      as character,
                                                  input pcMethodSignature as character ):
         define variable oParamArr as JsonArray  no-undo.
@@ -1081,16 +1140,24 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cParam2   as character  no-undo.
         define variable cParam3   as character  no-undo.
 
-        define buffer bMethod for MethodInfo.
-        define buffer bParam  for ParameterInfo.
+        define buffer bService  for ServiceList.
+        define buffer bResource for ResourceInfo.
+        define buffer bMethod   for MethodInfo.
+        define buffer bParam    for ParameterInfo.
 
-        /* Create a default description if none specified yet. */
-        this-object:describeResource( pcServiceURI,
-                                      pcResourceName,
-                                      pcMethodName,
-                                      pcMethodName,
-                                      "",
-                                      "" ).
+        for first bResource no-lock
+            where bResource.ResourceUUID eq pcResourceUUID,
+            first bService no-lock
+            where bService.ServiceUUID eq bResource.ServiceUUID:
+            /* Create a default description if none specified yet. */
+            this-object:describeResource( bService.ServiceURI,
+                                          bResource.ClassPath,
+                                          pcMethodName,
+                                          pcMethodName,
+                                          "",
+                                          "" ).
+message bService.ServiceURI ":" bResource.ClassPath.
+        end. /* for first */
 
         assign oParamArr = new JsonArray().
         do iX = 3 to num-entries(pcMethodSignature):
@@ -1102,10 +1169,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             /* Create a new ParameterInfo record. */
             create bParam.
             assign
-                bParam.ParamUUID  = this-object:ParamUUID
-                bParam.ServiceURI = pcServiceURI
-                bParam.ClassPath  = pcResourceName
-                bParam.MethodName = pcMethodName
+                bParam.ParamUUID    = this-object:ParamUUID
+                bParam.ResourceUUID = pcResourceUUID
+                bParam.MethodName   = pcMethodName
                 .
 
             if num-entries(cParamSig, " ") ge 3 then do {&THROW}:
@@ -1178,11 +1244,12 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         end. /* iX */
 
         /* Write the signature back to the method table using a format similar to class reflection. */
+message "ParamArr" oParamArr:length ":" pcResourceUUID ":" pcMethodName.
         if oParamArr:Length gt 0 then
             for first bMethod exclusive-lock
-                where bMethod.ServiceURI eq pcServiceURI
-                  and bMethod.ClassPath eq pcResourceName
+                where bMethod.ResourceUUID eq pcResourceUUID
                   and bMethod.MethodName eq pcMethodName:
+message "Updating ProcSig:" string(oParamArr:GetJsonText()).
                 assign bMethod.MethodSignature = string(oParamArr:GetJsonText()).
             end. /* for first bMethod */
     end method. /* setResourceProcedure */
@@ -1191,17 +1258,15 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     /***************************** Catalog Helper Methods *****************************/
 
 
-    method protected logical getBeforeImageFlag ( input pcServiceURI    as character,
-                                                  input pcClassPath     as character,
+    method protected logical getBeforeImageFlag ( input pcResourceUUID  as character,
                                                   input pcOperationType as character ):
         define buffer bResource for ResourceInfo.
         define buffer bProperty for ResourceProperty.
 
         for first bResource no-lock
-            where bResource.ServiceURI eq pcServiceURI
-              and bResource.ClassPath eq pcClassPath:
+            where bResource.ResourceUUID eq pcResourceUUID:
             find first bProperty no-lock
-                 where bProperty.ClassPath eq bResource.ClassPath
+                 where bProperty.ResourceUUID eq bResource.ResourceUUID
                    and bProperty.OperationType eq pcOperationType
                    and bProperty.PropertyName eq "useBeforeImage" no-error.
             if available(bProperty) then
@@ -1212,7 +1277,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getBeforeImageFlag */
 
 
-    method protected JsonArray getServices ( input pcServiceURI   as character,
+    method protected JsonArray getServices ( input pcServiceUUID  as character,
                                              input pcResourceName as character ):
         define variable serviceArr as JsonArray no-undo.
         assign serviceArr = new JsonArray().
@@ -1222,7 +1287,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         for each bService no-lock:
             /* If no service given (is blank) return all services for this webapp. */
             /* If incoming service URI without the WebApp name matches, use that. */
-            if pcServiceURI eq "" or bService.ServiceURI eq pcServiceURI then do:
+            if pcServiceUUID eq "" or bService.ServiceUUID eq pcServiceUUID then do:
                 /* Create a new service. */
                 define variable serviceObj  as JsonObject no-undo.
                 define variable settingsObj as JsonObject no-undo.
@@ -1248,7 +1313,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                 /* Add settings and resources for service. */
                 serviceObj:Add("settings", settingsObj).
-                serviceObj:Add("resources", this-object:getResources(bService.ServiceURI, pcResourceName)).
+                serviceObj:Add("resources", this-object:getResources(bService.ServiceUUID, pcResourceName)).
 
                 /* Add main service to array. */
                 serviceArr:Add(serviceObj).
@@ -1259,7 +1324,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getServices */
 
 
-    method protected JsonArray getResources ( input pcServiceURI   as character,
+    method protected JsonArray getResources ( input pcServiceUUID  as character,
                                               input pcResourceName as character ):
         define variable resourceArr as JsonArray  no-undo.
         define variable resourceObj as JsonObject no-undo.
@@ -1270,7 +1335,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         assign resourceArr = new JsonArray().
         if (pcResourceName gt "") eq true then
             for first bResource no-lock
-                where bResource.ServiceURI eq pcServiceURI
+                where bResource.ServiceUUID eq pcServiceUUID
                   and bResource.PublicName eq pcResourceName:
                 /* Break on unique resource name. */
                 assign resourceObj = new JsonObject().
@@ -1284,19 +1349,19 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 resourceObj:Add("displayName", bResource.PublicName).
 
                 /* Only return for the associated entity, which should always be on a ReadData method. */
-                resourceObj:Add("schema", this-object:getSchema(pcServiceURI, bResource.ClassPath, true)).
-                resourceObj:Add("relations", this-object:getRelations(pcServiceURI, bResource.ClassPath)).
+                resourceObj:Add("schema", this-object:getSchema(bResource.ResourceUUID, true)).
+                resourceObj:Add("relations", this-object:getRelations(bResource.ResourceUUID)).
 
                 /* Add operations for the resource. */
-                resourceObj:Add("operations", this-object:getOperations(pcServiceURI, bResource.ClassPath)).
+                resourceObj:Add("operations", this-object:getOperations(bResource.ResourceUUID)).
 
                 /* Add data definitions for invoke operations. */
-                resourceObj:Add("dataDefinitions", this-object:getDataDefs(pcServiceURI, bResource.ClassPath)).
+                resourceObj:Add("dataDefinitions", this-object:getDataDefs(bResource.ResourceUUID)).
                 resourceArr:Add(resourceObj).
             end. /* for first bResource (exact) */
         else
             for each bResource no-lock
-               where bResource.ServiceURI eq pcServiceURI
+               where bResource.ServiceUUID eq pcServiceUUID
                break by bResource.PublicName:
                 if first-of(bResource.PublicName) then do:
                     /* Break on unique resource name. */
@@ -1311,14 +1376,14 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     resourceObj:Add("displayName", bResource.PublicName).
 
                     /* Only return for the associated entity, which should always be on a ReadData method. */
-                    resourceObj:Add("schema", this-object:getSchema(pcServiceURI, bResource.ClassPath, true)).
-                    resourceObj:Add("relations", this-object:getRelations(pcServiceURI, bResource.ClassPath)).
+                    resourceObj:Add("schema", this-object:getSchema(bResource.ResourceUUID, true)).
+                    resourceObj:Add("relations", this-object:getRelations(bResource.ResourceUUID)).
 
                     /* Add operations for the resource. */
-                    resourceObj:Add("operations", this-object:getOperations(pcServiceURI, bResource.ClassPath)).
+                    resourceObj:Add("operations", this-object:getOperations(bResource.ResourceUUID)).
 
                     /* Add data definitions for invoke operations. */
-                    resourceObj:Add("dataDefinitions", this-object:getDataDefs(pcServiceURI, bResource.ClassPath)).
+                    resourceObj:Add("dataDefinitions", this-object:getDataDefs(bResource.ResourceUUID)).
                     resourceArr:Add(resourceObj).
                 end.
             end. /* for first bResource (all) */
@@ -1327,8 +1392,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getResources */
 
 
-    method protected JsonObject getSchema ( input pcServiceURI    as character,
-                                            input pcResClassPath  as character,
+    method protected JsonObject getSchema ( input pcResourceUUID  as character,
                                             input plPrimaryEntity as logical ):
         define variable oSchemaObj    as JsonObject no-undo.
         define variable oProperty     as JsonObject no-undo.
@@ -1348,12 +1412,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         if plPrimaryEntity then do:
             /* Meant for obtaining the primary entity (READ operation) for this resource. */
             for first bMethod no-lock
-                where bMethod.ServiceURI eq pcServiceURI
-                  and bMethod.ClassPath eq pcResClassPath
+                where bMethod.ResourceUUID eq pcResourceUUID
                   and bMethod.OperationType eq OperationEnum:read:toString():
                 for each bParam no-lock
-                   where bParam.ServiceURI eq pcServiceURI
-                     and bParam.ClassPath eq pcResClassPath
+                   where bParam.ResourceUUID eq pcResourceUUID
                      and bParam.MethodName eq bMethod.MethodName:
                     assign cParamName = bParam.PublicName.
 
@@ -1370,13 +1432,11 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         else do:
             /* Obtain all non-primary schema (eg. INVOKE operation tables and datasets). */
             for each bMethod no-lock
-               where bMethod.ServiceURI eq pcServiceURI
-                 and bMethod.ClassPath eq pcResClassPath
+               where bMethod.ResourceUUID eq pcResourceUUID
                  and bMethod.OperationType eq OperationEnum:invoke:toString()
                   by bMethod.MethodName:
                 for each bParam no-lock
-                   where bParam.ServiceURI eq pcServiceURI
-                     and bParam.ClassPath eq pcResClassPath
+                   where bParam.ResourceUUID eq pcResourceUUID
                      and bParam.MethodName eq bMethod.MethodName:
                     assign cParamName = bParam.PublicName.
 
@@ -1439,8 +1499,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     do iZ = 1 to num-entries(cTableList):
                         /* Obtain primary/foreign keys for table (by resource). */
                         for first bResource
-                            where bResource.ServiceURI eq pcServiceURI
-                              and bResource.ClassPath eq pcResClassPath
+                            where bResource.ResourceUUID eq pcResourceUUID
                               and bResource.EntityName eq cDataSetName:
                             do iY = 1 to num-entries(bResource.EntityKeys):
                                 if cPKName eq "" then do:
@@ -1471,8 +1530,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             do iX = 1 to num-entries(cTableNames):
                 /* Obtain primary key for table (by resource). */
                 for first bResource
-                    where bResource.ServiceURI eq pcServiceURI
-                      and bResource.ClassPath eq pcResClassPath:
+                    where bResource.ResourceUUID eq pcResourceUUID:
                     do iY = 1 to num-entries(bResource.EntityKeys):
                         if entry(iY, bResource.EntityKeys) begins (entry(iX, cTableNames) + ".") then
                             assign cPKName = substring(entry(iY, bResource.EntityKeys), length(entry(iX, cTableNames) + ".") + 1).
@@ -1497,8 +1555,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getSchema */
 
 
-    method protected JsonArray getRelations ( input pcServiceURI   as character,
-                                              input pcResClassPath as character ):
+    method protected JsonArray getRelations ( input pcResourceUUID as character ):
         define variable oRelationArr  as JsonArray  no-undo.
         define variable oRelationObj  as JsonObject no-undo.
         define variable oFieldArr     as JsonArray  no-undo.
@@ -1515,12 +1572,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         assign oRelationArr = new JsonArray().
 
         for first bMethod no-lock
-            where bMethod.ServiceURI eq pcServiceURI
-              and bMethod.ClassPath eq pcResClassPath
+            where bMethod.ResourceUUID eq pcResourceUUID
               and bMethod.OperationType eq OperationEnum:read:toString():
             for each bParam no-lock
-               where bParam.ServiceURI eq pcServiceURI
-                 and bParam.ClassPath eq pcResClassPath
+               where bParam.ResourceUUID eq pcResourceUUID
                  and bParam.MethodName eq bMethod.MethodName:
                 assign cParamName = bParam.PublicName.
 
@@ -1748,8 +1803,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getTable */
 
 
-    method protected JsonArray getOperations ( input pcServiceURI   as character,
-                                               input pcResourceName as character ):
+    method protected JsonArray getOperations ( input pcResourceUUID as character ):
         define variable operationArr as JsonArray  no-undo.
         define variable operationObj as JsonObject no-undo.
         define variable oParamArr    as JsonArray  no-undo.
@@ -1763,8 +1817,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         assign operationArr = new JsonArray().
 
         for each bMethod no-lock
-           where bMethod.ServiceURI eq pcServiceURI
-             and bMethod.ClassPath eq pcResourceName
+           where bMethod.ResourceUUID eq pcResourceUUID
               by bMethod.PublicName
               by bMethod.MethodName:
             assign operationObj = new JsonObject().
@@ -1784,8 +1837,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
             /* Look for additional properties to provide on this operation. */
             for each bProperty no-lock
-               where bProperty.ServiceURI eq pcServiceURI
-                 and bProperty.ClassPath eq pcResourceName
+               where bProperty.ResourceUUID eq pcResourceUUID
                  and bProperty.OperationType eq bMethod.OperationType:
                 if bProperty.PropertyType eq "logical" then do:
                     if operationObj:Has(bProperty.PropertyName) then
@@ -1811,8 +1863,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             /* Create a JSON array of parameters from the temp-table data. */
             assign oParamArr = new JsonArray().
             for each bParam no-lock
-               where bParam.ServiceURI eq pcServiceURI
-                 and bParam.ClassPath eq pcResourceName
+               where bParam.ResourceUUID eq pcResourceUUID
                  and bParam.MethodName eq bMethod.MethodName:
                 assign oParamObj = new JsonObject().
 
@@ -1870,12 +1921,11 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getOperations */
 
 
-    method protected JsonObject getDataDefs ( input pcServiceURI   as character,
-                                              input pcResClassPath as character):
+    method protected JsonObject getDataDefs ( input pcResourceUUID as character ):
         define variable oSchema as JsonObject no-undo.
 
         /* Obtain all non-primary schema (tables, datasets). */
-        assign oSchema = this-object:getSchema(pcServiceURI, pcResClassPath, false).
+        assign oSchema = this-object:getSchema(pcResourceUUID, false).
         if oSchema:Has("properties") then
             return oSchema:GetJsonObject("properties").
         else
@@ -1935,10 +1985,15 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         if (this-object:ServicePrefix gt "") ne true then
             this-object:ServicePrefix = "api".
 
+        /* Assign a unique ID for each service defined. */
+        for each ServiceList exclusive-lock:
+            assign ServiceList.ServiceUUID = substring(base64-encode(generate-uuid), 1, 22).
+        end. /* for each ServiceList */
+
         /* Obtain a default service name (first from list). */
         find first ServiceList no-error.
         if available(ServiceList) then
-            assign cDefaultURI = ServiceList.ServiceURI.
+            assign cDefaultUUID = ServiceList.ServiceUUID.
 
         /* Create the initial object to hold the catalog registry. */
         assign oCatRegistry = new JsonObject().
@@ -1997,9 +2052,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable oDirStruct as JsonArray no-undo.
 
         define buffer bGenParam for GeneralParam.
-        define buffer bResource for ResourceInfo.
         define buffer bService  for ServiceList.
         define buffer bSrvcRes  for ResourceList.
+        define buffer bResource for ResourceInfo.
 
         for first bGenParam no-lock:
             assign cRoot = "".
@@ -2009,10 +2064,12 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 oLoggingManager:logMessage(substitute("Discovering resource options from config file (&1).", bGenParam.BusinessRoot), "SPARK-LOAD", 3).
 
                 /* Value is blank or points to a PL, so we must use the given config data. */
-                for each bService:
+                for each bService no-lock:
                     /* Search through each listed service for available resources. */
-                    for each bSrvcRes
+                    for each bSrvcRes exclusive-lock
                        where bSrvcRes.ServiceName eq bService.ServiceName:
+                        assign bSrvcRes.ServiceUUID = bService.ServiceUUID.
+
                         /*
                          * Make sure any path ending in ".p" is changed to end in ".r"
                          * (we should expect to find compiled code only in a PL file).
@@ -2024,20 +2081,23 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
                         /* Create resource info about each found service resource. */
                         create bResource. /* ResourceInfo */
+                        assign
+                            bResource.ServiceUUID  = bService.ServiceUUID
+                            bResource.ResourceUUID = substring(base64-encode(generate-uuid), 1, 22)
+                            bResource.ServiceUUID  = bService.ServiceUUID
+                            .
                         if not (cClassPath matches "*.r") then
                             assign /* Create information about a class. */
-                                bResource.ServiceURI  = bService.ServiceURI
-                                bResource.ClassPath   = bSrvcRes.ClassPath
-                                bResource.PublicName  = entry(num-entries(bSrvcRes.ClassPath, "."), bSrvcRes.ClassPath, ".")
+                                bResource.ClassPath   = bSrvcRes.ClassPath /* Remains a class package. */
+                                bResource.PublicName  = entry(num-entries(bSrvcRes.ClassPath, "."), bSrvcRes.ClassPath, ".") /* Last element of class package. */
                                 bResource.ResourceURI = "/" + bResource.PublicName
                                 bResource.SourcePath  = replace(bSrvcRes.ClassPath, ".", "/") + ".cls" /* Convert to path to class file. */
                                 bResource.IsClass     = true
                                 .
                         else
                             assign /* Create information about a procedure. */
-                                bResource.ServiceURI  = bService.ServiceURI
                                 bResource.ClassPath   = this-object:stripFileExtensions(entry(num-entries(cClassPath, "/"), cClassPath, "/"))
-                                bResource.PublicName  = bResource.ClassPath
+                                bResource.PublicName  = bResource.ClassPath /* Remains the full path to procedure, for now. */
                                 bResource.ResourceURI = "/" + bResource.PublicName
                                 bResource.SourcePath  = cClassPath /* Use the path with .r extension. */
                                 bResource.IsClass     = false
@@ -2052,7 +2112,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 if file-info:full-pathname ne ? then do:
                     assign cRoot = replace(file-info:full-pathname, "~\", "/").
                     oLoggingManager:logMessage(substitute("Discovering resource options from filesystem (&1).", cRoot), "SPARK-LOAD", 3).
-                    leave.
+                    leave. /* Found our root, so leave. */
                 end.
             end. /* Physical Folders */
         end. /* for first */
@@ -2071,7 +2131,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             assign oDirStruct = Spark.Core.Util.OSTools:recurseDir(cRoot, true).
 
             DIRBLOCK:
-            do ix = 1 to oDirStruct:Length:
+            do ix = 1 to oDirStruct:Length on error undo, throw:
                 /* Inspect each file found. */
                 assign oFile = oDirStruct:GetJsonObject(ix).
 
@@ -2079,8 +2139,8 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                     cFileName = oFile:GetCharacter("FileName")
                     cFilePath = oFile:GetCharacter("FullPath")
                     cRootPath = replace(cRoot, "/" + bGenParam.BusinessRoot, "") + "/"
-                    cResource = ""
-                    cTempName = ""
+                    cResource = "" /* Reset on each iteration through the files. */
+                    cTempName = "" /* Reset on each iteration through the files. */
                     .
 
                 if error-status:error then leave DIRBLOCK. /* Leave if any error encountered so far. */
@@ -2101,46 +2161,67 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 assign cClassPath = trim(cClassPath, ".").
 
                 /* Class path may be part of 1 or more paths for a service. */
-                for first bService
+                for first bService no-lock
                     where bService.ClassPath eq cClassPath:
+
                     /* Create a record using the service and resource, if not present. */
-                    if (cResource gt "") eq true and
-                       not can-find(first bResource no-lock
-                                    where bResource.ServiceURI eq bService.ServiceURI
-                                      and bResource.ClassPath eq cResource) and
-                       not can-find(first bResource no-lock
-                                    where bResource.ServiceURI eq bService.ServiceURI
-                                      and bResource.ClassPath eq cTempName) then do:
-                        create bSrvcRes. /* ServiceResource, used for main config data. */
-                        create bResource. /* ResourceInfo, used for catalog metadata. */
+                    if (cResource gt "") eq true and (cTempName gt "") eq true then do:
+                       if can-find(first bSrvcRes no-lock
+                                   where bSrvcRes.ServiceUUID eq bService.ServiceUUID
+                                     and bSrvcRes.ClassPath eq cResource) or
+                          can-find(first bSrvcRes no-lock
+                                   where bSrvcRes.ServiceUUID eq bService.ServiceUUID
+                                     and bSrvcRes.ClassPath eq cTempName) or
+                          can-find(first bResource no-lock
+                                   where bResource.ServiceUUID eq bService.ServiceUUID
+                                     and bResource.ClassPath eq cResource) or
+                          can-find(first bResource no-lock
+                                   where bResource.ServiceUUID eq bService.ServiceUUID
+                                     and bResource.ClassPath eq cTempName) then
+                        next DIRBLOCK.
+
+                        /* ServiceResource, used for main config data. */
+                        create bSrvcRes.
+                        assign
+                            bSrvcRes.ServiceUUID = bService.ServiceUUID
+                            bSrvcRes.ServiceName = bService.ServiceName
+                            .
+
+                        /* ResourceInfo, used for catalog metadata. */
+                        create bResource.
+                        assign
+                            bResource.ResourceUUID = substring(base64-encode(generate-uuid), 1, 22)
+                            bResource.ServiceUUID  = bService.ServiceUUID
+                            .
 
                         if rcode-info:is-class or cFileName matches "*.cls" then
                             assign /* Create information about a class. */
-                                bSrvcRes.ServiceName  = bService.ServiceName
-                                bSrvcRes.ClassPath    = cResource
-                                bResource.ServiceURI  = bService.ServiceURI
-                                bResource.ClassPath   = cResource
-                                bResource.PublicName  = cTempName
-                                bResource.ResourceURI = "/" + cTempName
-                                bResource.SourcePath  = replace(cFilePath, cRootPath, "")
-                                bResource.IsClass     = true
+                                bSrvcRes.ClassPath     = cResource
+                                bResource.ClassPath    = cResource
+                                bResource.PublicName   = cTempName
+                                bResource.ResourceURI  = "/" + cTempName
+                                bResource.SourcePath   = replace(cFilePath, cRootPath, "")
+                                bResource.IsClass      = true
                                 .
                         else
                             assign /* Create information about a procedure. */
-                                bSrvcRes.ServiceName  = bService.ServiceName
-                                bSrvcRes.ClassPath    = replace(cFilePath, cRootPath, "")
-                                bResource.ServiceURI  = bService.ServiceURI
-                                bResource.ClassPath   = cTempName
-                                bResource.PublicName  = cTempName
-                                bResource.ResourceURI = "/" + cTempName
-                                bResource.SourcePath  = replace(cFilePath, cRootPath, "")
-                                bResource.IsClass     = false
+                                bSrvcRes.ClassPath     = replace(cFilePath, cRootPath, "")
+                                bResource.ClassPath    = cTempName
+                                bResource.PublicName   = cTempName
+                                bResource.ResourceURI  = "/" + cTempName
+                                bResource.SourcePath   = replace(cFilePath, cRootPath, "")
+                                bResource.IsClass      = false
                                 .
 
                         release bSrvcRes no-error.
                         release bResource no-error.
                     end. /* cResource */
                 end. /* bService */
+
+                catch err as Progress.Lang.Error:
+                    message substitute("Error Processing Found Resource: &1 [&2]", err:GetMessage(1), cFilePath).
+                    next DIRBLOCK.
+                end catch.
             end. /* do */
         end. /* cRoot */
     end method. /* checkForResources */
@@ -2148,7 +2229,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
     method public void loadResources ( ):
         empty temp-table ResourceInfo.
+        empty temp-table MethodInfo.
+        empty temp-table ParameterInfo.
         empty temp-table ResourceProperty.
+        empty temp-table EntityProperty.
 
         /* Confirm whether the necessary OE.BL.BE class exists for the current environment. */
         define variable oBusinessEntity as Progress.Lang.Object no-undo.
@@ -2156,26 +2240,31 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         if not valid-object(oBusinessEntity) then
             assign lHasOEBLBE = false. /* Signal that the required class was not found. */
 
-        /* Before loading the (dynamic) resources, run a preloader if configured. */
+        /* Before loading the (dynamic) resources run a preloader, if configured. */
         oLoggingManager:logMessage("Running Preloader...", "SPARK-LOAD", 4).
-        runPreloader().
+        this-object:runPreloader().
 
-        /* Look for any available entity classes at the expected */
+        /* Look for any available entity classes at the expected location(s). */
         oLoggingManager:logMessage("Checking Resources...", "SPARK-LOAD", 4).
-        checkForResources().
+        this-object:checkForResources().
 
         /* Load all dynamic resources as specified by config file. */
         for each ResourceInfo:
             oLoggingManager:logMessage(substitute("Loading Resource: '&1'", ResourceInfo.ClassPath), "SPARK-LOAD", 4).
-            this-object:loadDynamicResource(ResourceInfo.ServiceURI, ResourceInfo.ClassPath).
+            this-object:loadDynamicResource(ResourceInfo.ResourceUUID).
         end.
 
         if lUseDebugs then do:
+            /* Populate the ServiceInfo table with select data frmo the ServiceList. */
             empty temp-table ServiceInfo.
+
+            /* We do this to keep this table up to date before nesting the resource data. */
             for each ServiceList:
-                create ServiceInfo.
+                create ServiceInfo. /* Dummy table record incoming. */
                 buffer-copy ServiceList to ServiceInfo no-error.
-            end. /* for each */
+            end. /* for each ServiceList */
+
+            /* Write out our internal datsets for further debugging/confirmation. */
             dataset dsConfig:write-json("file", substitute("&1/CatalogDetail.json", this-object:TemporaryDir), true).
             dataset dsResource:write-json("file", substitute("&1/ResourceMetadata.json", this-object:TemporaryDir), true).
             oSchemaManager:dumpObjects().
@@ -2194,27 +2283,37 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                      input pcPropertyName  as character,
                                      input pcPropertyType  as character,
                                      input pcPropertyValue as character ):
+        define buffer bService  for ServiceList.
+        define buffer bResource for ResourceInfo.
         define buffer bMethod   for MethodInfo.
         define buffer bProperty for ResourceProperty.
 
         /* Use default service if none provided. */
-        if (pcServiceURI gt "") ne true then pcServiceURI = cDefaultURI.
+        if (pcServiceURI gt "") ne true then
+            find first bService no-lock
+                 where bService.ServiceUUID eq cDefaultUUID no-error.
+        else
+            find first bService no-lock
+                 where bService.ServiceURI eq pcServiceURI no-error.
 
-        if can-find(first bMethod no-lock
-                    where bMethod.ServiceURI eq pcServiceURI
-                      and bMethod.ClassPath eq pcClassPath
+        if available(bService) then
+            find first bResource no-lock
+                 where bResource.ServiceUUID eq bService.ServiceUUID
+                   and bResource.ClassPath eq pcClassPath no-error.
+
+        if available(bResource) and
+           can-find(first bMethod no-lock
+                    where bMethod.ResourceUUID eq bResource.ResourceUUID
                       and bMethod.OperationType eq pcOperationType) then do:
             /* Add/Update property only if resource+operation defined. */
             find first bProperty
-                 where bProperty.ServiceURI eq pcServiceURI
-                   and bProperty.ClassPath eq pcClassPath
+                 where bProperty.ResourceUUID eq bResource.ResourceUUID
                    and bProperty.OperationType eq pcOperationType
                    and bProperty.PropertyName eq pcPropertyName no-error.
             if not available(bProperty) then do:
                 create bProperty.
                 assign
-                    bProperty.ServiceURI    = pcServiceURI
-                    bProperty.ClassPath     = pcClassPath
+                    bProperty.ResourceUUID  = bResource.ResourceUUID
                     bProperty.OperationType = pcOperationType
                     bProperty.PropertyType  = pcPropertyType
                     bProperty.PropertyName  = pcPropertyName
@@ -2225,16 +2324,16 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* addProperty */
 
 
-    method public void describeEntity ( input pcServiceURI   as character,
+    method public void describeEntity ( input pcServiceUUID  as character,
                                         input pcResClassPath as character,
                                         input pcEntityName   as character,
                                         input pcPrimaryKeys  as character,
                                         input pcForeignKeys  as character ):
         /* Use default service if none provided. */
-        if (pcServiceURI gt "") ne true then pcServiceURI = cDefaultURI.
+        if (pcServiceUUID gt "") ne true then pcServiceUUID = cDefaultUUID.
 
         for first ResourceInfo
-            where ResourceInfo.ServiceURI eq pcServiceURI
+            where ResourceInfo.ServiceUUID eq pcServiceUUID
               and ResourceInfo.ClassPath eq pcResClassPath:
             assign
                 ResourceInfo.EntityName  = pcEntityName
@@ -2277,39 +2376,42 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                           input pcPublicName    as character,
                                           input pcOperationType as character,
                                           input pcOperationVerb as character ):
-        define variable cOpType as character no-undo.
-
+        define buffer bService  for ServiceList.
         define buffer bResource for ResourceInfo.
         define buffer bMethod   for MethodInfo.
 
         /* Use default service if none provided. */
-        if (pcServiceURI gt "") ne true then pcServiceURI = cDefaultURI.
+        if (pcServiceURI gt "") ne true then
+            find first bService no-lock
+                 where bService.ServiceUUID eq cDefaultUUID no-error.
+        else
+            find first bService no-lock
+                 where bService.ServiceURI eq pcServiceURI no-error.
 
-        find first bResource
-             where bResource.ServiceURI eq pcServiceURI
-               and bResource.ClassPath eq pcClassPath no-error.
+        if available(bService) then
+            find first bResource no-lock
+                 where bResource.ServiceUUID eq bService.ServiceUUID
+                   and bResource.ClassPath eq pcClassPath no-error.
+
         if available(bResource) then do:
             /* If another method for these particular operations exists, delete it first. */
             if can-do("create,read,update,delete,submit", pcOperationType) then
                 for first bMethod exclusive-lock
-                    where bMethod.ServiceURI eq pcServiceURI
-                      and bMethod.ClassPath eq pcClassPath
+                    where bMethod.ResourceUUID eq bResource.ResourceUUID
                       and bMethod.OperationType eq pcOperationType:
                     delete bMethod.
                 end. /* for first bMethod */
 
             find first bMethod exclusive-lock
-                 where bMethod.ServiceURI eq pcServiceURI
-                   and bMethod.ClassPath eq pcClassPath
+                 where bMethod.ResourceUUID eq bResource.ResourceUUID
                    and bMethod.MethodName eq pcMethodName no-error.
             if not available(bMethod) then do:
                 create bMethod.
                 assign
-                    bMethod.ServiceURI = pcServiceURI
-                    bMethod.ClassPath  = pcClassPath
-                    bMethod.MethodName = pcMethodName
-                    bMethod.PublicName = ""
-                    bMethod.MethodURI  = ""
+                    bMethod.ResourceUUID = bResource.ResourceUUID
+                    bMethod.MethodName   = pcMethodName
+                    bMethod.PublicName   = pcMethodName /* Default until overridden. */
+                    pcPublicName         = ""      /* Reset override on each method. */
                     .
 
                 /* Set default attributes for certain entity class methods. */
@@ -2346,7 +2448,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             .
                     otherwise
                         assign /* Default for all other operations. */
-                            pcPublicName          = pcMethodName when (pcPublicName eq "")
                             bMethod.OperationType = OperationEnum:invoke:toString()
                             bMethod.OperationVerb = MethodEnum:put:toString()
                             .
@@ -2359,8 +2460,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 bMethod.OperationType = pcOperationType when (pcOperationType gt "")
                 bMethod.OperationVerb = pcOperationVerb when (pcOperationVerb gt "")
                 .
-
-            assign cOpType = bMethod.OperationType.
             release bMethod no-error.
         end. /* available */
 
@@ -2377,6 +2476,11 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                                           input pcResourceName as character ):
         define variable cHash as character no-undo.
 
+        define buffer bService for ServiceList.
+
+        find first bService no-lock
+             where bService.ServiceURI eq pcServiceURI no-error.
+
         /* Use a simple hash to identify this combination of URI and Resource Name. */
         assign cHash = encode(pcServiceURI + pcResourceName).
 
@@ -2391,7 +2495,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             assign oCatalog = new JsonObject().
             oCatalog:Add("version", 1.5).
             oCatalog:Add("lastModified", now).
-            oCatalog:Add("services", this-object:getServices(pcServiceURI, pcResourceName)).
+            if available(bService) then
+                oCatalog:Add("services", this-object:getServices(bService.ServiceUUID, pcResourceName)).
+            else
+                oCatalog:Add("services", new JsonObject()).
 
             oLoggingManager:logMessage(substitute("Caching catalog data for URI '&1' Resource '&2'",
                                                   pcServiceURI, pcResourceName), "SPARK-CTLG", 3).
@@ -2480,17 +2587,16 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             oService:Catalog = this-object:getCatalog(bService.ServiceURI, "").
 
             for each bResource no-lock
-               where bResource.ServiceURI eq bService.ServiceURI,
+               where bResource.ServiceUUID eq bService.ServiceUUID,
                 each bMethod no-lock
-               where bMethod.ServiceURI eq bResource.ServiceURI
-                 and bMethod.ClassPath eq bResource.ClassPath:
+               where bMethod.ResourceUUID eq bResource.ResourceUUID:
                 /* Prepare the common values for this operation mapping. */
                 assign
                     cServiceURI  = (if (bMethod.MethodURI gt "") eq true then substitute("&1&2", bResource.ResourceURI, bMethod.MethodURI) else bResource.ResourceURI)
                     oHttpMethod  = MethodEnum:GetEnum(bMethod.OperationVerb) /* The HTTP verb to be used for URI access. */
                     cContentType = if (bMethod.ContentType gt "") then bMethod.ContentType else "application/json" /* MIME Type */
                     cTargetType  = (if bResource.IsClass then TargetTypeEnum:Class:ToString() else TargetTypeEnum:Procedure:ToString())
-                    cTargetName  = (if bResource.IsClass then bMethod.ClassPath else bResource.SourcePath)
+                    cTargetName  = (if bResource.IsClass then bResource.ClassPath else bResource.SourcePath)
                     cEntityType  = (if bResource.IsClass then "Progress.Lang.Object" else ?)
                     cFuncMethod  = bMethod.MethodName /* The class method or internal procedure to be run. */
                     iStatusCode  = integer(StatusCodeEnum:ok) /* Default to HTTP-200/OK */
@@ -2542,8 +2648,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 oOperation:name = bMethod.PublicName.
 
                 for each bParam no-lock
-                   where bParam.ServiceURI eq bResource.ServiceURI
-                     and bParam.ClassPath eq bResource.ClassPath
+                   where bParam.ResourceUUID eq bResource.ResourceUUID
                      and bParam.MethodName eq bMethod.MethodName:
                     assign
                         cParamName  = bParam.ParamName
@@ -2561,7 +2666,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             oSchemaManager:getDataset(cParamName, dataset-handle hSchema by-reference).
                             if valid-handle(hSchema) then do:
                                 oService:PutSchema(cParamName, hSchema). /* Add schema to service. Do not delete the hSchema handle! */
-                                oLoggingManager:logMessage(substitute("| schema: &1 as dataset", cParamName), "SPARK-SVC", 4).
+                                oLoggingManager:logMessage(substitute("| Schema: &1 as dataset", cParamName), "SPARK-SVC", 4).
                             end. /* valid-handle */
                             else
                                 oLoggingManager:logMessage(substitute("| Schema: no dataset handle for &1", cParamName), "SPARK-SVC", 2).
