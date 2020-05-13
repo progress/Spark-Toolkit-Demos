@@ -46,9 +46,89 @@
         "major": "1",
         "minor": "0",
         "patch": "0"
+      },
+      "openapi.openedge.export": {
+        "type": "REST",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resourceMapping": {
+        "type": "REST",
+        "operation": "invoke",
+        "URI": "\/hello",
+        "alias": "hello",
+        "mediaType": "application\/json"
       }
     },
-    "procedure": null,
+    "procedure": {
+      "sayHello": {
+        "program FILE": {
+          "name": "HelloProc.p",
+          "module": "AppServer"
+        },
+        "openapi.openedge.export FILE": {
+          "type": "REST",
+          "executionMode": "singleton",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resource FILE": {
+          "name": "HelloProc",
+          "URI": "\/helloworld",
+          "schemaName": "",
+          "schemaFile": ""
+        },
+        "openapi.openedge.service": {
+          "name": "tests",
+          "URI": "\/web\/api\/tests"
+        },
+        "openapi.openedge.resource.version": {
+          "major": "1",
+          "minor": "0",
+          "patch": "0"
+        },
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/hello",
+          "alias": "hello",
+          "mediaType": "application\/json"
+        }
+      },
+      "sayHello2Many": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/hello2Many",
+          "alias": "many",
+          "mediaType": "application\/json"
+        }
+      },
+      "sayHelloExtent": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/helloExtent",
+          "alias": "extent",
+          "mediaType": "application\/json"
+        }
+      }
+    },
     "function": null,
     "data": null,
     "user": null
@@ -99,7 +179,11 @@
         "OpenEdge.BusinessLogic.BusinessEntity"
       ]
     },
-    "program": null,
+    "program": {
+      "openapi.openedge.entity.primarykey": {
+        "fields": "SalesRep"
+      }
+    },
     "property": null,
     "event": null,
     "constructor": null,
@@ -122,7 +206,11 @@
         "OpenEdge.BusinessLogic.BusinessEntity"
       ]
     },
-    "program": null,
+    "program": {
+      "openapi.openedge.entity.primarykey": {
+        "fields": "EmpNum"
+      }
+    },
     "property": null,
     "event": null,
     "constructor": null,
@@ -145,7 +233,12 @@
         "OpenEdge.BusinessLogic.BusinessEntity"
       ]
     },
-    "program": null,
+    "program": {
+      "openapi.openedge.entity.primarykey": {
+        "fields": "EmpNum",
+        "RelativeName": null
+      }
+    },
     "property": null,
     "event": null,
     "constructor": null,
@@ -203,7 +296,12 @@
         "OpenEdge.BusinessLogic.BusinessEntity"
       ]
     },
-    "program": null,
+    "program": {
+      "openapi.openedge.entity.primarykey": {
+        "fields": "WebSessionID",
+        "ObjectName": null
+      }
+    },
     "property": null,
     "event": null,
     "constructor": null,
@@ -227,7 +325,12 @@
         "OpenEdge.BusinessLogic.BusinessEntity"
       ]
     },
-    "program": null,
+    "program": {
+      "openapi.openedge.entity.primarykey": {
+        "fields": "Username",
+        "DomainName": null
+      }
+    },
     "property": null,
     "event": null,
     "constructor": null,
@@ -251,7 +354,11 @@
         "OpenEdge.BusinessLogic.BusinessEntity"
       ]
     },
-    "program": null,
+    "program": {
+      "openapi.openedge.entity.primarykey": {
+        "fields": "RoleID"
+      }
+    },
     "property": null,
     "event": null,
     "constructor": null,
@@ -318,7 +425,42 @@
     "property": null,
     "event": null,
     "constructor": null,
-    "method": null,
+    "method": {
+      "testMessage(INPUT CHARACTER,OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/test",
+          "alias": "msgTest",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "post"
+        },
+        "openapi.openedge.method.parameter": [
+          {
+            "name": "messageType",
+            "type": "field",
+            "alias": "type"
+          },
+          {
+            "name": "messageText",
+            "type": "field",
+            "alias": "text"
+          }
+        ],
+        "openapi.openedge.method.security": {
+          "role": "'ROLE_PSCUser'",
+          "'ROLE_ANONYMOUS'": null
+        }
+      }
+    },
     "destructor": null,
     "data": null,
     "user": null
@@ -333,7 +475,11 @@
         "OpenEdge.BusinessLogic.BusinessEntity"
       ]
     },
-    "program": null,
+    "program": {
+      "openapi.openedge.entity.primarykey": {
+        "fields": "CustNum"
+      }
+    },
     "property": null,
     "event": null,
     "constructor": null,
@@ -475,7 +621,15 @@
         "OpenEdge.BusinessLogic.BusinessEntity"
       ]
     },
-    "program": null,
+    "program": {
+      "openapi.openedge.entity.primarykey": {
+        "fields": "IdentityName",
+        "ContextType": null,
+        "ContextViewID": null,
+        "ContextTitle": null,
+        "ContextSeqNo": null
+      }
+    },
     "property": null,
     "event": null,
     "constructor": null,
