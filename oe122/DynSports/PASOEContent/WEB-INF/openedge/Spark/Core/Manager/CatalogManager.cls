@@ -416,23 +416,26 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
     method protected void processAnnotations ( input  pcResourceUUID as character,
                                                input  pcClassPath    as character,
-                                               input  pcSourcePath   as character,
-                                               output pcPublicName   as character,
-                                               output pcResourceURI  as character,
-                                               output poSemVersion   as SemanticVersion,
-                                               output pcNewService   as character ):
-        define variable cAnnoName as character no-undo.
-        define variable lIsClass  as logical   no-undo.
+                                               input  pcSourcePath   as character ):
+        define variable cAnnoName       as character       no-undo.
+        define variable cPublicName     as character       no-undo.
+        define variable cResourceURI    as character       no-undo.
+        define variable cNewServiceURI  as character       no-undo.
+        define variable cNewServiceUUID as character       no-undo.
+        define variable oSemVersion     as SemanticVersion no-undo.
+        define variable lIsClass        as logical         no-undo.
 
-        define buffer bMethod for MethodInfo.
-        define buffer bParam  for ParameterInfo.
+        define buffer bService  for ServiceList.
+        define buffer bResource for ResourceInfo.
+        define buffer bMethod   for MethodInfo.
+        define buffer bParam    for ParameterInfo.
 
         /* Get a default name and URI. */
         assign
-            lIsClass      = (pcSourcePath gt "") ne true /* Is class when no source path is present. */
-            cAnnoName     = if lIsClass then pcClassPath else entry(num-entries(pcSourcePath, "/"), pcSourcePath, "/")
-            pcPublicName  = if lIsClass then entry(num-entries(pcClassPath, "."), pcClassPath, ".") else entry(1, cAnnoName, ".")
-            pcResourceURI = "/" + pcPublicName
+            lIsClass     = (pcSourcePath gt "") ne true /* Is class when no source path is present. */
+            cAnnoName    = if lIsClass then pcClassPath else entry(num-entries(pcSourcePath, "/"), pcSourcePath, "/")
+            cPublicName  = if lIsClass then entry(num-entries(pcClassPath, "."), pcClassPath, ".") else entry(1, cAnnoName, ".")
+            cResourceURI = "/" + cPublicName
             .
 
         /* Get any annotations from this class and attempt to update any registered methods. */
@@ -448,7 +451,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             define variable cMethods    as character extent   no-undo.
             define variable cAnnoNames  as character extent   no-undo.
             define variable cName       as character          no-undo.
-            define variable cNewService as character          no-undo.
             define variable iVersion    as integer   extent 3 no-undo.
             define variable iX          as integer            no-undo.
             define variable iY          as integer            no-undo.
@@ -467,15 +469,19 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             if valid-object(oProgram) and oProgram:Has("progress.service.resource FILE") then do:
                 assign oSubObj = oProgram:GetJsonObject("progress.service.resource FILE").
                 assign
-                    pcPublicName  = oSubObj:GetCharacter("name") when oSubObj:Has("name")
-                    pcResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
+                    cPublicName  = oSubObj:GetCharacter("name") when oSubObj:Has("name")
+                    cResourceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI")
                     .
             end. /* progress.service.resource FILE */
 
             if valid-object(oProgram) and oProgram:Has("openapi.openedge.service") then do:
                 assign oSubObj = oProgram:GetJsonObject("openapi.openedge.service").
-                assign cNewService = oSubObj:GetCharacter("URI") when oSubObj:Has("URI").
-message "New Service URI:" cNewService.
+                assign cNewServiceURI = oSubObj:GetCharacter("URI") when oSubObj:Has("URI").
+                find first bService no-lock
+                     where bService.ServiceURI eq cNewServiceURI no-error.
+                if available(bService) then
+                    assign cNewServiceUUID = bService.ServiceUUID.
+message "New Service URI:" cNewServiceURI ":" cNewServiceUUID.
             end. /* openapi.openedge.service */
 
             if valid-object(oProgram) and oProgram:Has("openapi.openedge.resource.security") then do:
@@ -490,7 +496,7 @@ message "Resource Security:" string(oProgram:GetJsonObject("openapi.openedge.res
                     iVersion[3] = integer(oSubObj:GetCharacter("patch")) when oSubObj:Has("patch")
                     .
 
-                assign poSemVersion = new SemanticVersion(iVersion[1], iVersion[2], iVersion[3]).
+                assign oSemVersion = new SemanticVersion(iVersion[1], iVersion[2], iVersion[3]).
             end. /* openapi.openedge.resource.version */
 
             /* Methods and Procedures should be mutually exclusive, but the annotation parsing is the same. */
@@ -607,9 +613,21 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
 
             finally:
                 /* Always create and return a version for this resource, even if set as "0.0.0". */
-                if not valid-object(poSemVersion) then
-                    assign poSemVersion = new SemanticVersion(0, 0, 0).
+                if not valid-object(oSemVersion) then
+                    assign oSemVersion = new SemanticVersion(0, 0, 0).
 
+                /* Make sure the resource is updated with any changes discovered above. */
+                for first bResource exclusive-lock
+                    where bResource.ResourceUUID eq pcResourceUUID:
+                    assign
+                        bResource.ServiceUUID = cNewServiceUUID when (cNewServiceUUID gt "") eq true
+                        bResource.PublicName  = cPublicName
+                        bResource.ResourceURI = cResourceURI
+                        bResource.ApiVersion  = oSemVersion:ToString()
+                        .
+                end. /* for first bResource */
+
+                delete object oSemVersion no-error.
                 delete object oAnnotation no-error.
                 delete object oProgram no-error.
                 delete object oMethods no-error.
@@ -627,10 +645,14 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
 
 
     method protected void loadDynamicResource ( input pcResourceUUID as character ):
+        define variable cClassPath   as character       no-undo.
+        define variable cSourcePath  as character       no-undo.
+        define variable cServiceUUID as character       no-undo.
+        define variable cServiceURI  as character       no-undo.
         define variable cPublicName  as character       no-undo.
         define variable cResourceURI as character       no-undo.
         define variable cNewService  as character       no-undo.
-        define variable oSemVersion  as SemanticVersion no-undo.
+        define variable lIsClass     as logical         no-undo.
 
         define buffer bService  for ServiceList.
         define buffer bResource for ResourceInfo.
@@ -648,13 +670,22 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
         find first bResource no-lock
              where bResource.ResourceUUID eq pcResourceUUID no-error.
         if not available(bResource) then return.
+        else
+            assign
+                cServiceUUID = bResource.ServiceUUID
+                cClassPath   = bResource.ClassPath
+                cSourcePath  = bResource.SourcePath
+                lIsClass     = bResource.IsClass
+                .
 
         /* First attempt to locate an existing service by UUID. */
         find first bService no-lock
-             where bService.ServiceUUID eq bResource.ServiceUUID no-error.
+             where bService.ServiceUUID eq cServiceUUID no-error.
         if not available(bService) then return.
+        else
+            assign cServiceURI = bService.ServiceURI.
 
-        if not bResource.IsClass and bResource.SourcePath gt "" then
+        if not lIsClass and cSourcePath gt "" then
         do on error undo, throw
            on stop  undo, retry:
             if retry then
@@ -662,34 +693,40 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
 
             /* Run procedures and save handle in resource table. */
             define variable hProcHandle as handle no-undo.
-            run value(bResource.SourcePath) persistent set hProcHandle.
+            run value(cSourcePath) persistent set hProcHandle.
             if valid-handle(hProcHandle) then do {&THROW}:
                 /* Load (or re-load) service procedure internal methods, as needed. */
-                this-object:registerProcedures( bResource.ResourceUUID,
-                                                bResource.ClassPath,
+                this-object:registerProcedures( pcResourceUUID,
+                                                cClassPath,
                                                 hProcHandle ).
 
                 /* Check for annotations to help override certain aspects of this registered procedure. */
-                this-object:processAnnotations(pcResourceUUID, bResource.ClassPath, bResource.SourcePath,
-                                               output cPublicName, cResourceURI, oSemVersion, cNewService).
+                this-object:processAnnotations(pcResourceUUID, cClassPath, cSourcePath ).
 
                 /* Assign the procedure handle and other values to the resource record. */
-                find current bResource exclusive-lock.
-                assign
-                    bResource.ApiVersion  = oSemVersion:ToString()
-                    bResource.ProcHandle  = hProcHandle
-                    bResource.PublicName  = cPublicName
-                    bResource.ResourceURI = cResourceURI
-                    .
+                for first bResource exclusive-lock
+                    where bResource.ResourceUUID eq pcResourceUUID:
+                    assign
+                        bResource.ProcHandle = hProcHandle
+                        cServiceUUID         = bResource.ServiceUUID
+                        cPublicName          = bResource.PublicName 
+                        cResourceURI         = bResource.ResourceURI
+                        .
 
-                if lUseDebugs and available(bResource) then
+                    for first bService no-lock
+                        where bService.ServiceUUID eq cServiceUUID:
+                        assign cServiceURI = bService.ServiceURI.
+                    end. /* for first bService */
+                end. /* for first bResource */
+
+                if lUseDebugs then
                     oLoggingManager:logMessage(substitute("Loaded &1 as '&2&3'",
-                                                          bResource.SourcePath,
-                                                          bService.ServiceURI,
-                                                          bResource.ResourceURI), "SPARK-LOAD", 3).
+                                                          cSourcePath,
+                                                          cServiceURI,
+                                                          cResourceURI), "SPARK-LOAD", 3).
             end. /* valid-handle */
             else
-                oLoggingManager:logMessage(substitute("Could not create persistent handle: '&1'", bResource.SourcePath), "SPARK-WARN", 2).
+                oLoggingManager:logMessage(substitute("Could not create persistent handle: '&1'", cSourcePath), "SPARK-WARN", 2).
         end. /* Procedures Only */
         else
         do on error undo, throw
@@ -700,7 +737,7 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
             define variable phDataSet  as handle              no-undo.
 
             /* Confirm whether the specified class is of type IDynamicEntity. */
-            assign oImplement = Progress.Lang.Class:GetClass(bResource.ClassPath) no-error.
+            assign oImplement = Progress.Lang.Class:GetClass(cClassPath) no-error.
             if error-status:error then do:
                 /* If error is due to a missing super-class, and the OE.BL.BE is not available, then let's report that specifically. */
                 if error-status:get-number(1) eq 12932 and not lHasOEBLBE then
@@ -722,23 +759,27 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
                  * Attempt to treat the class as annotated and proceed with registration of any methods.
                  * Should this class fail to have any annotations, then it will be ultimately skipped.
                  */
-                this-object:processAnnotations(pcResourceUUID, bResource.ClassPath, "",
-                                               output cPublicName, cResourceURI, oSemVersion, cNewService).
+                this-object:processAnnotations(pcResourceUUID, cClassPath, "" ).
 
-                /* Assign the procedure handle and other values to the resource record. */
-                find current bResource exclusive-lock.
-                assign
-                    bResource.ApiVersion  = oSemVersion:ToString()
-                    bResource.PublicName  = cPublicName
-                    bResource.ResourceURI = cResourceURI
-                    bResource.ValidClass  = true
-                    .
+                /* Assign values to the resource record. */
+                for first bResource exclusive-lock
+                    where bResource.ResourceUUID eq pcResourceUUID:
+                    assign
+                        bResource.ValidClass = true
+                        cServiceUUID         = bResource.ServiceUUID
+                        cPublicName          = bResource.PublicName
+                        cResourceURI         = bResource.ResourceURI
+                        .
+
+                    for first bService no-lock
+                        where bService.ServiceUUID eq cServiceUUID:
+                        assign cServiceURI = bService.ServiceURI.
+                    end. /* for first bService */
+                end. /* for first bResource */
 
                 if lUseDebugs then
                     oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2&3'",
-                                                          bResource.ClassPath,
-                                                          bService.ServiceURI,
-                                                          bResource.ResourceURI), "SPARK-LOAD", 3).
+                                                          cClassPath, cServiceURI, cResourceURI), "SPARK-LOAD", 3).
 
                 return. /* Do not proceed further, as we don't have a valid Spark-based class type to process. */
             end.
@@ -750,24 +791,29 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
                     undo, throw new AppError(GenTools:getAblError(), -500).
 
                 if valid-object(oEntity) then do:
-                    find current bResource exclusive-lock.
                     if (oEntity:resourceName gt "") ne true then do:
                         /* Do not keep resources that lack a public name. */
-                        oLoggingManager:logMessage(substitute("Removing resource '&1' due to missing public name.", bResource.ClassPath), "SPARK-LOAD", 3).
-                        delete bResource.
+                        oLoggingManager:logMessage(substitute("Removing resource '&1' due to missing public name.", cClassPath), "SPARK-LOAD", 3).
+                        for first bResource exclusive-lock
+                            where bResource.ResourceUUID eq pcResourceUUID:
+                            delete bResource.
+                        end. /* for first bResource */
                         leave.
                     end. /* No Resource Name */
 
                     /* Denote that this is a valid class. */
-                    assign
-                        bResource.PublicName  = oEntity:resourceName
-                        bResource.ResourceURI = "/" + oEntity:resourceName
-                        bResource.ValidClass  = true
-                        .
+                    for first bResource exclusive-lock
+                        where bResource.ResourceUUID eq pcResourceUUID:
+                        assign
+                            bResource.PublicName  = oEntity:resourceName
+                            bResource.ResourceURI = "/" + oEntity:resourceName
+                            bResource.ValidClass  = true
+                            .
+                    end. /* for first bResource */
 
                     /* When an entity name has been provided, register and check for a dataset. */
                     if (oEntity:entityName gt "") eq true then do:
-                        this-object:describeEntity(pcResourceUUID, bResource.ClassPath, oEntity:entityName, oEntity:primaryKeys, oEntity:foreignKeys).
+                        this-object:describeEntity(pcResourceUUID, cClassPath, oEntity:entityName, oEntity:primaryKeys, oEntity:foreignKeys).
 
                         oEntity:getDataset(output dataset-handle phDataSet) no-error.
                         if error-status:error then
@@ -784,23 +830,21 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
                     /* Apply properties for the read operation, when they are present. */
                     if (oEntity:mappingType gt "") eq true then do:
                         /* Provide the name of the plugin to be used with the JSDO, aka the Mapping Type. */
-                        this-object:addProperty(pcResourceUUID, bResource.ClassPath, OperationEnum:read:toString(), "mappingType", "character", oEntity:mappingType).
+                        this-object:addProperty(pcResourceUUID, cClassPath, OperationEnum:read:toString(), "mappingType", "character", oEntity:mappingType).
 
                         /* Only when a mapping type is present, check if server-side capabilities exist. */
                         if (oEntity:capabilities gt "") eq true then
-                            this-object:addProperty(pcResourceUUID, bResource.ClassPath, OperationEnum:read:toString(), "capabilities", "character", oEntity:capabilities).
+                            this-object:addProperty(pcResourceUUID, cClassPath, OperationEnum:read:toString(), "capabilities", "character", oEntity:capabilities).
                         else
-                            this-object:addProperty(pcResourceUUID, bResource.ClassPath, OperationEnum:read:toString(), "capabilities", "character", "").
+                            this-object:addProperty(pcResourceUUID, cClassPath, OperationEnum:read:toString(), "capabilities", "character", "").
                     end. /* mappingType */
 
                     /* Load annotations and other prerequisite data through initialize method. */
                     oEntity:initialize().
 
-                    if lUseDebugs and available(bResource) then
+                    if lUseDebugs then
                         oLoggingManager:logMessage(substitute("Loaded Entity &1 as '&2&3'",
-                                                              bResource.ClassPath,
-                                                              bService.ServiceURI,
-                                                              bResource.ResourceURI), "SPARK-LOAD", 3).
+                                                              cClassPath, cServiceURI, cResourceURI), "SPARK-LOAD", 3).
                 end. /* valid-object */
             end. /* IDynamicEntity */
             else if oImplement:IsA(get-class(IDynamicResource)) then do:
@@ -809,32 +853,35 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
                     undo, throw new AppError(GenTools:getAblError(), -500).
 
                 if valid-object(oResource) then do:
-                    find current bResource exclusive-lock.
                     if (oResource:resourceName gt "") ne true then do:
                         /* Do not keep resources that lack a public name. */
-                        oLoggingManager:logMessage(substitute("Removing resource '&1' due to missing public name.", bResource.ClassPath), "SPARK-LOAD", 3).
-                        delete bResource.
+                        oLoggingManager:logMessage(substitute("Removing resource '&1' due to missing public name.", cClassPath), "SPARK-LOAD", 3).
+                        for first bResource exclusive-lock
+                            where bResource.ResourceUUID eq pcResourceUUID:
+                            delete bResource.
+                        end. /* for first bResource */
                         leave.
                     end. /* No Resource Name */
 
                     /* Denote that this is a valid class. */
-                    assign
-                        bResource.PublicName  = oResource:resourceName
-                        bResource.ResourceURI = "/" + oResource:resourceName
-                        bResource.ValidClass  = true
-                        .
+                    for first bResource exclusive-lock
+                        where bResource.ResourceUUID eq pcResourceUUID:
+                        assign
+                            bResource.PublicName  = oResource:resourceName
+                            bResource.ResourceURI = "/" + oResource:resourceName
+                            bResource.ValidClass  = true
+                            .
+                    end. /* for first bResource */
 
                     /* Load (or re-load) service class internal methods, as needed. */
-                    this-object:registerMethods(pcResourceUUID, bResource.ClassPath).
+                    this-object:registerMethods(pcResourceUUID, cClassPath).
 
                     /* Load annotations and other prerequisite data. */
                     oResource:initialize().
 
-                    if lUseDebugs and available(bResource) then
+                    if lUseDebugs then
                         oLoggingManager:logMessage(substitute("Loaded Resource &1 as '&2&3'",
-                                                              bResource.ClassPath,
-                                                              bService.ServiceURI,
-                                                              bResource.ResourceURI), "SPARK-LOAD", 3).
+                                                              cClassPath, cServiceURI, cResourceURI), "SPARK-LOAD", 3).
                 end. /* valid-object */
             end. /* IDynamicResource */
 
@@ -847,20 +894,19 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
         end. /* Non-Procedure */
 
         catch err as Error:
-            oLoggingManager:logError(substitute("Error loading resource '&1'", bResource.ClassPath), err, "SPARK-ERR", 0).
+            oLoggingManager:logError(substitute("Error loading resource '&1'", cClassPath), err, "SPARK-ERR", 0).
 
             /* Failure to load should mean removal from the list of resources. */
             if available(bResource) then do:
-                find current bResource exclusive-lock.
-                oLoggingManager:logMessage(substitute("Removing resource '&1' due to loading error.", bResource.ClassPath), "SPARK-LOAD", 3).
-                delete bResource.
+                oLoggingManager:logMessage(substitute("Removing resource '&1' due to loading error.", cClassPath), "SPARK-LOAD", 3).
+                for first bResource exclusive-lock
+                    where bResource.ResourceUUID eq pcResourceUUID:
+                    delete bResource.
+                end. /* for first bResource */
             end. /* Available bResource */
 
             /* Do not throw error from this point, allow resource registration to fail with only logging. */
         end catch.
-        finally:
-            release bResource no-error.
-        end finally.
     end method. /* loadDynamicResource */
 
 
@@ -1266,7 +1312,7 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
                    and bProperty.PropertyName eq "useBeforeImage" no-error.
             if available(bProperty) then
                 return logical(bProperty.propertyValue).
-        end.
+        end. /* for first */
 
         return false.
     end method. /* getBeforeImageFlag */
