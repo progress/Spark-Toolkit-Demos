@@ -481,7 +481,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                      where bService.ServiceURI eq cNewServiceURI no-error.
                 if available(bService) then
                     assign cNewServiceUUID = bService.ServiceUUID.
-message "New Service URI:" cNewServiceURI ":" cNewServiceUUID.
             end. /* openapi.openedge.service */
 
             if valid-object(oProgram) and oProgram:Has("openapi.openedge.resource.security") then do:
