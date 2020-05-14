@@ -37,7 +37,7 @@ interface Spark.Core.Manager.ICatalogManager inherits Ccs.Common.IManager:
                                         input pcTableName  as character,
                                         input poFieldData  as JsonObject ).
 
-    method public void describeResource ( input pcServiceURI  as character,
+    method public void describeResource ( input pcServiceURI    as character,
                                           input pcResourceName  as character,
                                           input pcMethodName    as character,
                                           input pcPublicName    as character,
