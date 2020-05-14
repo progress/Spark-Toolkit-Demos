@@ -8,7 +8,7 @@
   ----------------------------------------------------------------------*/
 block-level on error undo, throw.
 
-using OpenEdge.Core.Util.XrefParser from propath.
+using OpenEdge.Core.Util.AnnotationWriter from propath.
 using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Collections.* from propath.
 using Spark.Util.* from propath.
@@ -17,7 +17,7 @@ define variable cStartDir    as character        no-undo.
 define variable cOutFolder   as character        no-undo initial "Deploy/Conf".
 define variable cXrefTemp    as character        no-undo.
 define variable oAnnotations as JsonObject       no-undo.
-define variable oParser      as XrefParser       no-undo.
+define variable oWriter      as AnnotationWriter no-undo.
 define variable oFileMap     as IStringStringMap no-undo.
 define variable oOptMap      as IStringStringMap no-undo.
 define variable oIter        as IIterator        no-undo.
@@ -69,8 +69,8 @@ end function. /* getSourceFiles */
 file-info:file-name = ".".
 assign cStartDir = file-info:full-pathname.
 
-assign oParser = new XrefParser().
-oParser:Initialize().
+assign oWriter = new AnnotationWriter().
+oWriter:Initialize().
 
 assign oFileMap = getSourceFiles().
 assign oIter = oFileMap:EntrySet:Iterator().
@@ -82,7 +82,7 @@ do while oIter:HasNext() on error undo, throw:
     compile value(string(oFile:Value)) xref-xml value(cXrefTemp) no-error.
 
     /* Process each XREF file and create an annotations JSON file. */
-    oParser:ParseXref(cXrefTemp).
+    oWriter:ParseXref(cXrefTemp).
 
     finally:
         os-delete value(cXrefTemp) no-error.
@@ -102,9 +102,14 @@ oOptMap:Put("openapi.openedge.resource.version", "program").
 oOptMap:Put("openapi.openedge.resource.security", "program").
 
 /* Generate a singular annotation file from all the XREF files parsed. */
-assign oAnnotations = oParser:GetAnnotations(oOptMap).
+assign oAnnotations = oWriter:GetAnnotations(oOptMap).
 oAnnotations:WriteFile(substitute("&1/&2/annotations.json", cStartDir, cOutFolder), yes).
 
+catch err as Progress.Lang.Error:
+    message substitute("Error: &1", err:GetMessage(1)).
+    if session:error-stack-trace then
+        message err:CallStack.
+end catch.
 finally:
     return. /* Use this so that ANT scripts can return gracefully when finished. */
 end finally.
