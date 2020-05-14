@@ -135,7 +135,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
     /* The configuration dataset as used by the catalog.json manager configuration file. */
     define protected dataset dsConfig serialize-name "Config" for GeneralParam, ServiceList, ResourceList
-        data-relation ServiceResource for ServiceList, ResourceList relation-fields(ServiceName,ServiceName) nested
+        data-relation ServiceResource for ServiceList, ResourceList relation-fields(ServiceName, ServiceName) nested
         .
 
     /**
@@ -165,6 +165,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field EntityKeys   as character serialize-hidden         /* For business entities, denotes any primary key fields.      */
         field ForeignKeys  as character serialize-hidden         /* For business entities, denotes any foreign key fields.      */
         field ClassSig     as character serialize-hidden         /* For business entities, holds full signature of class.       */
+        field Security     as character serialize-hidden         /* Experimental Feature: Stores info about URI security.       */
         index idxPrimary   is primary unique ResourceUUID
         index idxPublic    is         unique ServiceUUID ClassPath
         index idxResource  is         unique ServiceUUID PublicName
@@ -179,6 +180,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         field OperationType   as character serialize-name "Operation"
         field OperationVerb   as character serialize-name "HttpVerb"
         field ContentType     as character serialize-name "MediaType" initial "application/json"
+        field Security        as character serialize-hidden
         index idxPrimary      is primary unique ResourceUUID MethodName
         index idxPublic       is         unique ResourceUUID PublicName
         .
@@ -414,18 +416,16 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
     end method. /* getResourcePath */
 
 
-    method protected void processAnnotations ( input  pcResourceUUID as character,
-                                               input  pcClassPath    as character,
-                                               input  pcSourcePath   as character ):
-        define variable cAnnoName       as character       no-undo.
-        define variable cPublicName     as character       no-undo.
-        define variable cResourceURI    as character       no-undo.
-        define variable cNewServiceURI  as character       no-undo.
-        define variable cNewServiceUUID as character       no-undo.
-        define variable oSemVersion     as SemanticVersion no-undo.
-        define variable lIsClass        as logical         no-undo.
+    method protected void processAnnotations ( input pcResourceUUID as character,
+                                               input pcClassPath    as character,
+                                               input pcSourcePath   as character ):
+        define variable cAnnoName    as character no-undo.
+        define variable cPublicName  as character no-undo.
+        define variable cResourceURI as character no-undo.
+        define variable lIsClass     as logical   no-undo.
 
         define buffer bService  for ServiceList.
+        define buffer bSrvcRes  for ResourceList.
         define buffer bResource for ResourceInfo.
         define buffer bMethod   for MethodInfo.
         define buffer bParam    for ParameterInfo.
@@ -435,26 +435,31 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             lIsClass     = (pcSourcePath gt "") ne true /* Is class when no source path is present. */
             cAnnoName    = if lIsClass then pcClassPath else entry(num-entries(pcSourcePath, "/"), pcSourcePath, "/")
             cPublicName  = if lIsClass then entry(num-entries(pcClassPath, "."), pcClassPath, ".") else entry(1, cAnnoName, ".")
-            cResourceURI = "/" + cPublicName
+            cResourceURI = "/" + cPublicName /* Set a default for URI using the derived public name. */
             .
 
         /* Get any annotations from this class and attempt to update any registered methods. */
         if valid-object(this-object:Annotations) then
         do on error undo, throw:
-            define variable oAnnotation as JsonObject         no-undo.
-            define variable oProgram    as JsonObject         no-undo.
-            define variable oMethods    as JsonObject         no-undo.
-            define variable oMethod     as JsonObject         no-undo.
-            define variable oSubArr     as JsonArray          no-undo.
-            define variable oSubObj     as JsonObject         no-undo.
-            define variable cMethodName as character          no-undo.
-            define variable cMethods    as character extent   no-undo.
-            define variable cAnnoNames  as character extent   no-undo.
-            define variable cName       as character          no-undo.
-            define variable iVersion    as integer   extent 3 no-undo.
-            define variable iX          as integer            no-undo.
-            define variable iY          as integer            no-undo.
-            define variable iZ          as integer            no-undo.
+            define variable oAnnotation       as JsonObject         no-undo.
+            define variable oProgram          as JsonObject         no-undo.
+            define variable oMethods          as JsonObject         no-undo.
+            define variable oMethod           as JsonObject         no-undo.
+            define variable oSubArr           as JsonArray          no-undo.
+            define variable oSubObj           as JsonObject         no-undo.
+            define variable cMethodName       as character          no-undo.
+            define variable cMethods          as character extent   no-undo.
+            define variable cAnnoNames        as character extent   no-undo.
+            define variable cName             as character          no-undo.
+            define variable cNewServiceURI    as character          no-undo.
+            define variable cNewServiceName   as character          no-undo.
+            define variable cNewServiceUUID   as character          no-undo.
+            define variable cResourceSecurity as character          no-undo.
+            define variable iVersion          as integer   extent 3 no-undo.
+            define variable iX                as integer            no-undo.
+            define variable iY                as integer            no-undo.
+            define variable iZ                as integer            no-undo.
+            define variable oSemVersion       as SemanticVersion    no-undo.
 
             if valid-object(this-object:Annotations) and this-object:Annotations:Has(cAnnoName) then
                 assign oAnnotation = this-object:Annotations:GetJsonObject(cAnnoName).
@@ -480,11 +485,14 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 find first bService no-lock
                      where bService.ServiceURI eq cNewServiceURI no-error.
                 if available(bService) then
-                    assign cNewServiceUUID = bService.ServiceUUID.
+                    assign
+                        cNewServiceName = bService.ServiceName
+                        cNewServiceUUID = bService.ServiceUUID
+                        .
             end. /* openapi.openedge.service */
 
             if valid-object(oProgram) and oProgram:Has("openapi.openedge.resource.security") then do:
-message "Resource Security:" string(oProgram:GetJsonObject("openapi.openedge.resource.security"):GetJsonText()).
+                assign cResourceSecurity = string(oProgram:GetJsonObject("openapi.openedge.resource.security"):GetJsonText()).
             end. /* openapi.openedge.resource.security */
 
             if valid-object(oProgram) and oProgram:Has("openapi.openedge.resource.version") then do:
@@ -540,7 +548,7 @@ message "Resource Security:" string(oProgram:GetJsonObject("openapi.openedge.res
 
                                 when "openapi.openedge.method.security" then do:
                                     assign oSubObj = oMethod:GetJsonObject(cAnnoNames[iY]).
-message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method.security"):GetJsonText()).
+                                    assign bMethod.Security = string(oSubObj:GetJsonText()).
                                 end. /* openapi.openedge.method.security */
 
                                 when "openapi.openedge.method.property" then do:
@@ -618,11 +626,37 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
                 /* Make sure the resource is updated with any changes discovered above. */
                 for first bResource exclusive-lock
                     where bResource.ResourceUUID eq pcResourceUUID:
+
+                    /* Check if there has been a change in service, and modify accordingly. */
+                    if (cNewServiceUUID gt "") eq true then do:
+                        if lIsClass then
+                            for first bSrvcRes exclusive-lock
+                                where bSrvcRes.ServiceUUID eq bResource.ServiceUUID
+                                  and bSrvcRes.ClassPath eq bResource.ClassPath:
+                                assign
+                                    bSrvcRes.ServiceName = cNewServiceName
+                                    bSrvcRes.ServiceUUID = cNewServiceUUID
+                                    .
+                            end. /* for first bSrvcRes */
+                        else
+                            for first bSrvcRes exclusive-lock
+                                where bSrvcRes.ServiceUUID eq bResource.ServiceUUID
+                                  and bSrvcRes.ClassPath eq bResource.SourcePath:
+                                assign
+                                    bSrvcRes.ServiceName = cNewServiceName
+                                    bSrvcRes.ServiceUUID = cNewServiceUUID
+                                    .
+                            end. /* for first bSrvcRes */
+
+                        assign bResource.ServiceUUID = cNewServiceUUID.
+                    end. /* cNewServiceUUID */
+
+                    /* Make sure the service resource is updated with any changes discovered above. */
                     assign
-                        bResource.ServiceUUID = cNewServiceUUID when (cNewServiceUUID gt "") eq true
                         bResource.PublicName  = cPublicName
                         bResource.ResourceURI = cResourceURI
                         bResource.ApiVersion  = oSemVersion:ToString()
+                        bResource.Security    = cResourceSecurity.
                         .
                 end. /* for first bResource */
 
@@ -708,7 +742,7 @@ message "Method Security:" string(oSubObj:GetJsonObject("openapi.openedge.method
                     assign
                         bResource.ProcHandle = hProcHandle
                         cServiceUUID         = bResource.ServiceUUID
-                        cPublicName          = bResource.PublicName 
+                        cPublicName          = bResource.PublicName
                         cResourceURI         = bResource.ResourceURI
                         .
 
