@@ -2,6 +2,11 @@
 
 ## OpenEdge 11.7.5 and 12.1
 
+### v5.1.0
+
+- Adding new ability for CatalogManager to read an annotations.json config file, when present (file generation TBD).
+- Adds support for annotated classes/procedures in addition to the Dynamic\* classes provided by Spark-Toolkit natively.
+
 ### v5.0.2
 
 - Critical fixes, notably in error handling by the DOHEventHandler and updates to Business Entity examples.
@@ -14,7 +19,7 @@
 
 ### v5.0.0
 
-- Removes all local overrides of the OpenEdge.* classes which are now provided in the minimum OE versions required: 11.7.5 and 12.1.
+- Removes all local overrides of the OpenEdge.\* classes which are now provided in the minimum OE versions required: 11.7.5 and 12.1.
 
 
 ## OpenEdge 11.7.4 and 12.0
