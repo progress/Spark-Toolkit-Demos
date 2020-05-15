@@ -60,18 +60,18 @@
 			<taskdef resource="com/progress/openedge/pdt/ant/ablwebapp/ablwebapps.properties">
 				<classpath>
 					<pathelement location="${javaHome}/ant-ablwebapp.jar" />
-					
+
 					<!-- ABLWebApp Dependencies -->
 					<pathelement location="${javaHome}/ant-libs/ablwebapp.jar" />
 					<pathelement location="${javaHome}/ant-libs/ablwebapp-dependencies.jar" />
-					
+
 					<!-- CodeModel Dependencies -->
 					<pathelement location="${javaHome}/ant-libs/codemodel-dependencies.jar" />
-					
+
 					<!-- AST and its Dependencies -->
 					<pathelement location="${javaHome}/ant-libs/ast.jar" />
 					<pathelement location="${javaHome}/ant-libs/ast-dependencies.jar" />
-					
+
 					<!-- Additional Dependencies -->
 					<pathelement location="${javaHome}/ant-libs/velocity-1.7.jar" />
 					<pathelement location="${javaHome}/ant-libs/velocity-1.7-dep.jar" />
@@ -115,4 +115,5 @@
 
         <ABLWebAppPackage srcdir="${src.dir}" dlc="${dlcHome}" verbose="true" isIncremental="false" webAppName="${webapp}" destdir="${dest.dir}"/>
     </target>
+
 </project>

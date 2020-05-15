@@ -29,8 +29,12 @@ class Business.UnitTest.RunCode inherits Spark.Core.Service.DynamicResource:
 
     method public void lookBusy ( input  busyTime as integer,
                                   output elapsed  as integer ):
-        /* If no time specified (or is negative) default to 1000 milliseconds. */
-        if busyTime eq ? or busyTime le 0 then assign busyTime = 1000.
+        /* If no time specified then default to 1000 milliseconds. */
+        if busyTime eq ? then assign busyTime = 1000.
+
+        if busyTime lt 0 then /* Throw an error if the provided value is negative; SEE allows changing of the response code. */
+            undo, throw new OpenEdge.Web.SendExceptionError(OpenEdge.Net.HTTP.StatusCodeEnum:BadRequest,
+                                                            "Busy Time parameter cannot be less than zero.").
 
         /* Run a wait loop for some period to imitate long-running code. */
         define variable iStart as datetime no-undo.
