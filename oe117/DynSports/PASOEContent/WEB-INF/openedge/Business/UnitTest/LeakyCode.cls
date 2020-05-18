@@ -77,11 +77,14 @@ class Business.UnitTest.LeakyCode inherits Spark.Core.Service.DynamicResource:
         /* DO NOT clean up the persistent handle, but instead let it linger. */
     end method. /* badHandle */
 
-    method public void badMemptr ( output pointerSize as integer ):
+    method public void badMemptr ( output pointerSize  as integer,
+                                   output pointerValue as int64 ):
         define variable mPtr as memptr no-undo.
 
-        set-size(mPtr) = 100. /* Set a size, but DO NOT reset to 0 after use.*/
+        /* Set a size, but DO NOT reset to 0 after use.*/
+        set-size(mPtr) = random(100, 200).
         assign pointerSize = get-size(mPtr).
+        assign pointerValue = get-pointer-value(mPtr).
     end method. /* badMemptr */
 
     method public void badObject ( output arrayLength as integer ):

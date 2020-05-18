@@ -5,14 +5,14 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <!-- Load Styles -->
-    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.3.911/styles/kendo.common.min.css"/>
-    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.3.911/styles/kendo.bootstrap.min.css"/>
-    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.3.911/styles/kendo.default.min.css"/>
+    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2020.1.219/styles/kendo.common.min.css"/>
+    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2020.1.219/styles/kendo.bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2020.1.219/styles/kendo.default.min.css"/>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
     <!-- Framework Libraries -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="https://kendo.cdn.telerik.com/2018.3.911/js/kendo.web.min.js"></script>
+    <script type="text/javascript" src="https://kendo.cdn.telerik.com/2020.1.219/js/kendo.web.min.js"></script>
     <!-- Application Libraries -->
     <script type="text/javascript">
         $.extend({
@@ -429,8 +429,9 @@
                         // Parse parameters for this operation and extract any needed data.
                         $.each(operationObj.params, function(i, param){
                             var dataType = param.ablType || param.xType;
+                            var isExtent = (param.extent == null || (parseInt(param.extent || 0, 10) > 0));
                             if (param.type.indexOf("QUERY") > -1) {
-                                queryParams += "<li>" + param.name + (dataType ? " [" + dataType + "]" : "") + "</li>";
+                                queryParams += "<li>" + param.name + (dataType ? (" [" + dataType + (isExtent ? " extent" : "") + "]") : "") + "</li>";
                                 var sample = {}; // Holder for our sample request data, to be populated as necessary.
 
                                 // Prepare a proper sample given the type of operation being executed.
@@ -446,7 +447,7 @@
                                 sampleRequest[param.name] = sample;
                             } else if (param.type.indexOf("BODY") > -1) {
                                 if (param.type.indexOf("REQUEST") > -1) {
-                                    requestParams += "<li>" + param.name + (dataType ? " [" + dataType + "]" : "") + "</li>";
+                                    requestParams += "<li>" + param.name + (dataType ? (" [" + dataType + (isExtent ? " extent" : "") + "]") : "") + "</li>";
                                     if (schemaData.sampleData[param.name]) {
                                         // Use generated sample from schema if present.
                                         sampleRequest[param.name] = schemaData.sampleData[param.name];
@@ -456,10 +457,10 @@
                                     }
                                 }
                                 if (param.type.indexOf("RESPONSE") > -1) {
-                                    responseParams += "<li>" + param.name + (dataType ? " [" + dataType + "]" : "") + "</li>";
+                                    responseParams += "<li>" + param.name + (dataType ? (" [" + dataType + (isExtent ? " extent" : "") + "]") : "") + "</li>";
                                 }
                             } else {
-                                paramInfo += "<li>" + param.name + (dataType ? " [" + dataType + "] (" : " (") + param.type + ")</li>";
+                                paramInfo += "<li>" + param.name + (dataType ? (" [" + dataType + (isExtent ? " extent" : "") + "] (") : " (") + param.type + ")</li>";
                             }
                         });
 

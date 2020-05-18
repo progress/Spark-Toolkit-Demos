@@ -71,11 +71,14 @@ class Business.UnitTest.LeakyCode use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/memptr", alias="memptr", mediaType="application/json").
-    method public void badMemptr ( output pointerSize as integer ):
+    method public void badMemptr ( output pointerSize  as integer,
+                                   output pointerValue as int64 ):
         define variable mPtr as memptr no-undo.
 
-        set-size(mPtr) = 100. /* Set a size, but DO NOT reset to 0 after use.*/
+        /* Set a size, but DO NOT reset to 0 after use.*/
+        set-size(mPtr) = random(100, 200).
         assign pointerSize = get-size(mPtr).
+        assign pointerValue = get-pointer-value(mPtr).
     end method. /* badMemptr */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").

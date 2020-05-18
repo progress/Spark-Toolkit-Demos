@@ -133,8 +133,9 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use
             VALIDATEBLK:
             do while lAvail:
                 if bhBefore:row-state eq row-deleted then do:
-                    /* This will return an error to indicate delete is not allowed. */
-                    undo, throw new AppError("Delete operation is not allowed.", -500).
+                    /* This will return an error (as HTTP 405) to indicate delete is not allowed. */
+                     undo, throw new OpenEdge.Web.SendExceptionError(OpenEdge.Net.HTTP.StatusCodeEnum:MethodNotAllowed,
+                                                                     "Delete operation is not allowed for Customers.").
 
                     /* If delete IS allowed, then this method should return blank. */
                     /* return "". */
@@ -236,7 +237,7 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use
 
     method protected override void postCommitLogic ( input pcAction as character,
                                                      input-output dataset-handle phDataset ):
-        /* When explicitly a delete and primary key available, delete child records. */
+        /* When explicitly a delete action and primary key is available, delete child records. */
         if pcAction eq "Delete" and (iCustNum ne ? and iCustNum gt 0) then do:
             message substitute("Removing related records for customer &1.", iCustNum).
             for each Order exclusive-lock

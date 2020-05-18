@@ -10,7 +10,7 @@
 
 @openapi.openedge.entity.primarykey(fields="EmpNum").
 
-define temp-table ttEmployee no-undo serialize-name "associate" before-table bttEmployee
+define temp-table ttEmployee no-undo before-table bttEmployee
     field id               as character
     field seq              as integer   initial ?
     field EmpNum           as integer   label "Emp No"

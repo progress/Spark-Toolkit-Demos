@@ -63,8 +63,9 @@ class Business.UserContext inherits Spark.Core.Service.SparkEntity use-widget-po
             VALIDATEBLK:
             do while lAvail:
                 if bhBefore:row-state eq row-deleted then do:
-                    /* This will return an error to indicate delete is not allowed. */
-                    undo, throw new AppError("Delete operation is not allowed.", -500).
+                    /* This will return an error (as HTTP 405) to indicate delete is not allowed. */
+                    undo, throw new OpenEdge.Web.SendExceptionError(OpenEdge.Net.HTTP.StatusCodeEnum:MethodNotAllowed,
+                                                                    "Delete operation is not allowed.").
 
                     /* If delete IS allowed, then this method should return blank. */
                     /* return "". */

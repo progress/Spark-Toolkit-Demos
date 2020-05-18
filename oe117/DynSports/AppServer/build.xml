@@ -14,6 +14,9 @@
         <echo message="    -Dablapp=[INSTANCE_NAME] = default ABL App name (Default: {alias})"/>
         <echo message="${line.separator}ant enable_oerealm - Enable use of OERealm by copying config files"/>
         <echo message="    -Dalias=[INSTANCE_NAME] = new instance name (Default: ${alias})"/>
+        <echo message="${line.separator}Location Assumptions:"/>
+        <echo message="    DLC Environment: ${dlcHome}"/>
+        <echo message="    PAS Instance: ${pas.path}"/>
     </target>
 
     <target name="create">
@@ -81,7 +84,7 @@
     		<property name="pas.root" value="${path}"/>
 	        <property name="pas.path" value="${pas.root}/${alias}"/>
 	        <property name="pas.bin" value="${pas.path}/bin"/>
-            <property name="pas.conf.spark" value="spark"/>
+            <property name="pas.conf.spark" value="sports"/>
     	</sequential>
     </macrodef>
 
@@ -154,9 +157,9 @@
         </copy>
 
         <!-- Copy initial configuration files to the PAS instance. -->
-        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/sports"/>
-        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/sports/signatures"/>
-        <copy toDir="${pas.path}/conf/${pas.conf.spark}/sports" verbose="true">
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}"/>
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/signatures"/>
+        <copy toDir="${pas.path}/conf/${pas.conf.spark}" verbose="true">
             <fileset dir="${deploy}">
                 <include name="*.cp"/>
                 <include name="*.json"/>

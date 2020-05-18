@@ -79,14 +79,21 @@ class tests.SparkUnit abstract:
                 profiler:description  = "Spark ABLUnit Output"
                 profiler:listings     = true /* Note: Requires source code. */
                 profiler:directory    = cListDir
-                profiler:trace-filter = "*":u
-                profiler:tracing      = "":u
+                /* As of OE 12.2 you cannot enable tracing without the -zproftmpf startup flag. */
+                /*profiler:trace-filter = "":u*/
+                /*profiler:tracing      = "":u*/
                 profiler:coverage     = true
                 profiler:statistics   = true
                 .
         end. /* UseProfiler */
 
         catch err as Progress.Lang.Error:
+            /* Set up a custom log file if not already configured. */
+            if log-manager:logfile-name eq ? then
+                log-manager:logfile-name = session:temp-directory + "server.log".
+
+            /* Report the error to a log file and raise an error for the test. */
+            log-manager:write-message(substitute("Error during SparkUnit startup: &1", err:GetMessage(1))).
     		OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
         end catch.
         finally:
@@ -111,6 +118,12 @@ class tests.SparkUnit abstract:
         end. /* profiler:enabled */
 
         catch err as Progress.Lang.Error:
+            /* Set up a custom log file if not already configured. */
+            if log-manager:logfile-name eq ? then
+                log-manager:logfile-name = session:temp-directory + "server.log".
+
+            /* Report the error to a log file and raise an error for the test. */
+            log-manager:write-message(substitute("Error during SparkUnit shutdown: &1", err:GetMessage(1))).
             OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
         end catch.
     end method. /* StopSpark */

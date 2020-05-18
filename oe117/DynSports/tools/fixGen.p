@@ -71,6 +71,10 @@ function loadData returns JsonObject ( input pcFilePath as character ):
     assign oGenData = cast(oParser:parseFile(pcFilePath), JsonObject).
 
     return oGenData.
+
+    finally:
+        delete object oParser no-error.
+    end finally.
 end function. /* loadData */
 
 function fixCatalog returns logical ( input pcServiceName as character ):
@@ -258,7 +262,7 @@ do while oIter:HasNext():
     /* Load data from the file and fix values. */
     assign cPath = substring(string(oFile:value), 1, length(string(oFile:value)) - length(string(oFile:key))).
     message substitute("Loading Mapping: &1", string(oFile:key)).
-    assign oData = loadData(string(oFile:value)).    
+    assign oData = loadData(string(oFile:value)).
     assign lFixed = fixData(input-output oData).
 
     /* Output to a new .map file. */

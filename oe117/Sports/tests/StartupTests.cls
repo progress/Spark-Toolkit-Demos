@@ -110,17 +110,6 @@ class tests.StartupTests inherits tests.SparkUnit:
     ------------------------------------------------------------------------------*/
 
     /*------------------------------------------------------------------------------
-        Purpose: Confirm the ConnectionManager is present and valid.
-        Notes:
-    ------------------------------------------------------------------------------*/
-    @Test.
-    method public void testConnectionManager ( ):
-        define variable oManager as Progress.Lang.Object no-undo.
-        assign oManager = this-object:GetManager("Spark.Core.Manager.IConnectionManager").
-        OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
-    end method.
-
-    /*------------------------------------------------------------------------------
         Purpose: Confirm the LoggingManager is present and valid.
         Notes:
     ------------------------------------------------------------------------------*/
