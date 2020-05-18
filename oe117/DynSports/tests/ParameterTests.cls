@@ -100,7 +100,7 @@ class tests.ParameterTests inherits tests.SparkUnit:
         hCPO:set-property("ATTR_EXPIRED", "false").
         hCPO:seal("{&domain_passkey}").
 
-        OpenEdge.Core.Assert:IsTrue(hCPO:validate-seal(security-policy:encode-domain-access-code("{&domain_passkey}"))).
+        OpenEdge.Core.Assert:IsTrue(hCPO:validate-seal(audit-policy:encrypt-audit-mac-key("{&domain_passkey}"))).
     end method.
 
     /*------------------------------------------------------------------------------
