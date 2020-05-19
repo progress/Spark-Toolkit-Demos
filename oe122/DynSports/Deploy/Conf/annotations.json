@@ -202,8 +202,10 @@
     "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
-        "fields": "EmpNum",
-        "RelativeName": null
+        "fields": [
+          "EmpNum",
+          "RelativeName"
+        ]
       }
     },
     "user": null
@@ -263,8 +265,10 @@
     "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
-        "fields": "WebSessionID",
-        "ObjectName": null
+        "fields": [
+          "WebSessionID",
+          "ObjectName"
+        ]
       }
     },
     "user": null
@@ -288,8 +292,10 @@
     "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
-        "fields": "Username",
-        "DomainName": null
+        "fields": [
+          "Username",
+          "DomainName"
+        ]
       }
     },
     "user": null
@@ -357,7 +363,7 @@
       "progress.service.resource FILE": {
         "name": "annotatedTest",
         "URI": "\/annotated",
-        "schemaName": "",
+        "schemaName": "dsOrder",
         "schemaFile": ""
       },
       "openapi.openedge.service": {
@@ -406,12 +412,40 @@
           }
         ],
         "openapi.openedge.method.security": {
-          "role": "ROLE_PSCUser|ROLE_ANONYMOUS"
+          "role": [
+            "ROLE_PSCUser",
+            "ROLE_ANONYMOUS"
+          ]
         }
       }
     },
     "destructor": null,
-    "data": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "fields": [
+          "ttOrder.OrderNum",
+          "ttOrderLine.OrderNum"
+        ]
+      },
+      "openapi.openedge.entity.field.property": [
+        {
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        }
+      ],
+      "openapi.openedge.entity.foreignkey": {
+        "name": "ttSalesrepFK",
+        "fields": "SalesRep",
+        "parent": "salesrep.ttSalesrep",
+        "parentFields": "SalesRep"
+      }
+    },
     "user": null
   },
   "Business.UnitTest.CustomerBE": {
@@ -583,11 +617,13 @@
     "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
-        "fields": "IdentityName",
-        "ContextType": null,
-        "ContextViewID": null,
-        "ContextTitle": null,
-        "ContextSeqNo": null
+        "fields": [
+          "IdentityName",
+          "ContextType",
+          "ContextViewID",
+          "ContextTitle",
+          "ContextSeqNo"
+        ]
       }
     },
     "user": null

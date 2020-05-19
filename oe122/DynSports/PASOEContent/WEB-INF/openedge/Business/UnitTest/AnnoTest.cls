@@ -10,7 +10,7 @@
 
 @program FILE(name="AnnoTest.cls", module="AppServer").
 @openapi.openedge.export FILE(type="REST", executionMode="singleton", useReturnValue="false", writeDataSetBeforeImage="false").
-@progress.service.resource FILE(name="annotatedTest", URI="/annotated", schemaName="", schemaFile="").
+@progress.service.resource FILE(name="annotatedTest", URI="/annotated", schemaName="dsOrder", schemaFile="").
 
 /* Proposed annotations for service assignment and API versioning. */
 @openapi.openedge.service(name="tests").
@@ -26,6 +26,11 @@ block-level on error undo, throw.
 
 class Business.UnitTest.AnnoTest use-widget-pool: 
 
+    @openapi.openedge.entity.primarykey(fields="ttOrder.OrderNum,ttOrderLine.OrderNum").
+    @openapi.openedge.entity.field.property(field="id", name="semanticType", value="Internal").
+    @openapi.openedge.entity.field.property(field="seq", name="semanticType", value="Internal").
+    @openapi.openedge.entity.foreignkey(name="ttSalesrepFK", fields="SalesRep", parent="salesrep.ttSalesrep", parentFields="SalesRep").
+
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/test", alias="msgTest", mediaType="application/json").
     @openapi.openedge.method.property(name="verb", value="post").
@@ -35,7 +40,7 @@ class Business.UnitTest.AnnoTest use-widget-pool:
     @openapi.openedge.method.parameter(name="messageText", type="field", alias="text").
 
     /* Proposed annotation to set distinct security options on this method only. */
-    @openapi.openedge.method.security(role="ROLE_PSCUser|ROLE_ANONYMOUS").
+    @openapi.openedge.method.security(role="ROLE_PSCUser,ROLE_ANONYMOUS").
     method public void testMessage ( input  messageType as character,
                                      output messageText as character ):
         assign messageText = "no type".
