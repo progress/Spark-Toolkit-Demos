@@ -364,53 +364,64 @@ class OpenEdge.Core.Util.AnnotationWriter implements ISupportInitialize:
                                // don't TRIM; we only want to remove the last single ) paren
                                annoVals  = substring(lbReference.Object-identifier, pos + 1)
                                annoVals  = substring(annoVals, 1, length(annoVals) - 1)
-                               cnt       = num-entries(annoVals)
+                               cnt       = num-entries(annoVals) /* Get a count, which may be inaccurate... */
                                .
                         do loop = 1 to cnt:
-                            assign annoKvp   = entry(loop, annoVals)
-                                   pos       = index(annoKvp, '=':u)
-                                   annoKey   = trim(entry(1, annoKvp, '=':u))
-                                   annoValue = trim(substring(annoKvp, pos + 1))
+                            /**
+                             * Annotations with multiple properties (key-value pairs) should be separated with commas.
+                             * Values may also contain comma-delimited values. However, because the annotations have
+                             * all quotes removed from the string it's difficult to know when a comma-delimited list
+                             * of values ends and the next key-value pair begins. Therefore, we should only change the
+                             * key value IF we've encountered a portion of the annotation whcih contains an "=" symbol.
+                             * By doign this we should keep the old key name and the code will automatically add any
+                             * additional items for a key by changing the object to an array.
+                             */
+                            assign annoKvp = entry(loop, annoVals)
+                                   pos     = index(annoKvp, '=':u)
+                                   .
+                            /* Broke this up as we need the values set above, first. */
+                            assign annoKey   = trim(entry(1, annoKvp, '=':u)) when num-entries(annoKvp, '=':u) eq 2
+                                   annoValue = trim(substring(annoKvp, pos + 1)) /* Remainder of KVP string */
                                    .
                             if valueData:Has(annoKey) then
-                            case valueData:GetType(annoKey):
-                                when JsonDataType:NULL then
-                                do:
-                                    assign valueSet = new JsonArray().
-                                    valueSet:AddNull().
-                                    if pos eq 0 then
+                                case valueData:GetType(annoKey):
+                                    when JsonDataType:NULL then
+                                    do:
+                                        assign valueSet = new JsonArray().
                                         valueSet:AddNull().
-                                    else
-                                        valueSet:Add(annoValue).
-                                    
-                                    valueData:Set(annoKey, valueSet).
-                                end.
-                                
-                                when JsonDataType:STRING then
-                                do:
-                                    assign valueSet = new JsonArray().
-                                    valueSet:Add(valueData:GetCharacter(annoKey)).
-                                    if pos eq 0 then
-                                        valueSet:AddNull().
-                                    else
-                                        valueSet:Add(annoValue).
-                                    valueData:Set(annoKey, valueSet).
-                                end.
-                                
-                                when JsonDataType:ARRAY then
-                                do:
-                                    assign valueSet = valueData:GetJsonArray(annoKey).
-                                    if pos eq 0 then
-                                        valueSet:AddNull().
-                                    else
-                                        valueSet:Add(annoValue).
-                                end.
-                            end.
+                                        if pos eq 0 and annoValue eq "" then
+                                            valueSet:AddNull(). /* Don't add blank values, just null. */
+                                        else
+                                            valueSet:Add(annoValue).
+
+                                        valueData:Set(annoKey, valueSet).
+                                    end.
+
+                                    when JsonDataType:STRING then
+                                    do:
+                                        assign valueSet = new JsonArray().
+                                        valueSet:Add(valueData:GetCharacter(annoKey)).
+                                        if pos eq 0 and annoValue eq "" then
+                                            valueSet:AddNull(). /* Don't add blank values, just null. */
+                                        else
+                                            valueSet:Add(annoValue).
+                                        valueData:Set(annoKey, valueSet).
+                                    end.
+
+                                    when JsonDataType:ARRAY then
+                                    do:
+                                        assign valueSet = valueData:GetJsonArray(annoKey).
+                                        if pos eq 0 and annoValue eq "" then
+                                            valueSet:AddNull(). /* Don't add blank values, just null. */
+                                        else
+                                            valueSet:Add(annoValue).
+                                    end.
+                                end. /* case */
                             else
-                            if pos eq 0 then
-                                valueData:AddNull(annoKey).
-                            else
-                                valueData:Add(annoKey, annoValue).
+                                if pos eq 0 and annoValue eq "" then
+                                    valueData:AddNull(annoKey). /* Just add a null value for this key. */
+                                else
+                                    valueData:Add(annoKey, annoValue).
                         end.
                     end.
                     
