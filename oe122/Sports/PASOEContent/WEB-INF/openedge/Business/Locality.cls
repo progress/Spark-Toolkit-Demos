@@ -23,6 +23,7 @@ class Business.Locality inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/stateProvince", alias="stateProvince", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void getStateProvince ( input  country as character,
                                           output table for states ):
         if (country gt "") ne true then assign country = "usa".
@@ -40,6 +41,7 @@ class Business.Locality inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/provinces", alias="provinces", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void getProvinces ( output table for states ):
         define variable oMap  as StringStringMap no-undo.
         define variable oIter as IIterator       no-undo.
@@ -85,6 +87,7 @@ class Business.Locality inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/states", alias="states", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void getStates ( output table for states ):
         empty temp-table states.
 
