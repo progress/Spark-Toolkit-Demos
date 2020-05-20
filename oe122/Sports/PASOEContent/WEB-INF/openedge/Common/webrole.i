@@ -8,9 +8,9 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="RoleID").
-@openapi.openedge.entity.field.property(field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(field="seq", name="semanticType", value="Internal").
+@openapi.openedge.entity.primarykey(table="ttWebRole", fields="RoleID").
+@openapi.openedge.entity.field.property(table="ttWebRole", field="id", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttWebRole", field="seq", name="semanticType", value="Internal").
 
 define temp-table ttWebRole no-undo before-table bttWebRole
     field id          as character

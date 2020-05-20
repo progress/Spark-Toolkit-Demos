@@ -1,0 +1,1922 @@
+{
+  "Business.Dashboard": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Dashboard.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "Dashboard.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "dashboard",
+        "URI": "\/dashboard",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "getStats(INPUT INTEGER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/statistics",
+          "alias": "statistics",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  },
+  "HelloProc.p": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\HelloProc.p"
+    },
+    "program": {
+      "program FILE": {
+        "name": "HelloProc.p",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "HelloProc",
+        "URI": "\/helloworld",
+        "schemaName": "",
+        "schemaFile": ""
+      },
+      "openapi.openedge.service": {
+        "name": "tests",
+        "URI": "\/web\/api\/tests"
+      },
+      "openapi.openedge.resource.version": {
+        "major": "1",
+        "minor": "0",
+        "patch": "0"
+      }
+    },
+    "procedure": {
+      "sayHello": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/hello",
+          "alias": "hello",
+          "mediaType": "application\/json"
+        }
+      },
+      "sayHello2Many": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/hello2Many",
+          "alias": "many",
+          "mediaType": "application\/json"
+        }
+      },
+      "sayHelloExtent": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/helloExtent",
+          "alias": "extent",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "function": null,
+    "data": null,
+    "user": null
+  },
+  "Business.Locality": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Locality.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "Locality.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "locality",
+        "URI": "\/locality",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "getStateProvince(INPUT CHARACTER,OUTPUT TABLE)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/stateProvince",
+          "alias": "stateProvince",
+          "mediaType": "application\/json"
+        }
+      },
+      "getProvinces(OUTPUT TABLE)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/provinces",
+          "alias": "provinces",
+          "mediaType": "application\/json"
+        }
+      },
+      "getStates(OUTPUT TABLE)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/states",
+          "alias": "states",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "table": "states",
+        "fields": "Abbrev"
+      }
+    },
+    "user": null
+  },
+  "Business.Ordering.CustomerBE": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Ordering\\CustomerBE.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "CustomerBE.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "customer",
+        "URI": "\/customer",
+        "schemaName": "dsCustomer",
+        "schemaFile": "Sports\/PASOEContent\/WEB-INF\/openedge\/Common\/customer.i"
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "ReadCustomer(INPUT CHARACTER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "read",
+          "URI": "?filter={filter}",
+          "alias": "",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": [
+          {
+            "name": "mappingType",
+            "value": "AFP"
+          },
+          {
+            "name": "capabilities",
+            "value": [
+              "filter",
+              "top",
+              "skip",
+              "id",
+              "sort",
+              "orderBy"
+            ]
+          }
+        ]
+      },
+      "SubmitCustomer(INPUT-OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "submit",
+          "URI": "\/submit",
+          "alias": "submit",
+          "mediaType": "application\/json"
+        }
+      },
+      "getCount(INPUT CHARACTER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "count",
+          "URI": "\/count?filter={filter}",
+          "alias": "count",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "table": "ttCustomer",
+        "fields": "CustNum"
+      },
+      "openapi.openedge.entity.field.property": [
+        {
+          "table": "ttCustomer",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttCustomer",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttCustomer",
+          "field": "Name",
+          "name": "editable",
+          "value": "false"
+        },
+        {
+          "table": "ttCustomer",
+          "field": "Phone",
+          "name": "semanticType",
+          "value": "PhoneNumber"
+        },
+        {
+          "table": "ttCustomer",
+          "field": "Balance",
+          "name": "semanticType",
+          "value": "Currency"
+        },
+        {
+          "table": "ttCustomer",
+          "field": "CreditLimit",
+          "name": "semanticType",
+          "value": "Currency"
+        }
+      ],
+      "openapi.openedge.entity.foreignkey": {
+        "name": "SalesrepFK",
+        "fields": "SalesRep",
+        "parent": "salesrep.ttSalesrep",
+        "parentFields": "SalesRep"
+      }
+    },
+    "user": null
+  },
+  "Business.Ordering.OrderBE": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Ordering\\OrderBE.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "OrderBE.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "order",
+        "URI": "\/order",
+        "schemaName": "dsOrder",
+        "schemaFile": "Sports\/PASOEContent\/WEB-INF\/openedge\/Common\/order.i"
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "ReadOrder(INPUT CHARACTER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "read",
+          "URI": "?filter={filter}",
+          "alias": "",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": [
+          {
+            "name": "mappingType",
+            "value": "AFP"
+          },
+          {
+            "name": "capabilities",
+            "value": [
+              "filter",
+              "top",
+              "skip",
+              "id",
+              "sort",
+              "orderBy"
+            ]
+          }
+        ]
+      },
+      "SubmitOrder(INPUT-OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "submit",
+          "URI": "\/submit",
+          "alias": "submit",
+          "mediaType": "application\/json"
+        }
+      },
+      "getCount(INPUT CHARACTER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "count",
+          "URI": "\/count?filter={filter}",
+          "alias": "count",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": [
+        {
+          "table": "ttOrder",
+          "fields": "Ordernum"
+        },
+        {
+          "table": "ttOrderLine",
+          "fields": "Ordernum"
+        }
+      ],
+      "openapi.openedge.entity.field.property": [
+        {
+          "table": "ttOrder",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttOrder",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttOrderLine",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttOrderLine",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        }
+      ],
+      "openapi.openedge.entity.foreignkey": {
+        "name": "SalesrepFK",
+        "fields": "SalesRep",
+        "parent": "salesrep.ttSalesrep",
+        "parentFields": "SalesRep"
+      }
+    },
+    "user": null
+  },
+  "Business.Ordering.SalesrepBE": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Ordering\\SalesrepBE.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "SalesrepBE.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writedatasetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "salesrep",
+        "URI": "\/salesrep",
+        "schemaName": "dsSalesrep",
+        "schemaFile": "Sports\/PASOEContent\/WEB-INF\/openedge\/Common\/salesrep.i"
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "ReadSalesrep(INPUT CHARACTER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "read",
+          "URI": "?filter={filter}",
+          "alias": "",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": [
+          {
+            "name": "mappingType",
+            "value": "AFP"
+          },
+          {
+            "name": "capabilities",
+            "value": [
+              "filter",
+              "top",
+              "skip",
+              "id",
+              "sort",
+              "orderBy"
+            ]
+          }
+        ]
+      },
+      "SubmitSalesrep(INPUT-OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "submit",
+          "URI": "\/submit",
+          "alias": "submit",
+          "mediaType": "application\/json"
+        }
+      },
+      "getCount(INPUT CHARACTER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "count",
+          "URI": "\/count?filter={filter}",
+          "alias": "count",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "table": "ttSalesrep",
+        "fields": "SalesRep"
+      },
+      "openapi.openedge.entity.field.property": [
+        {
+          "table": "ttSalesrep",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttSalesrep",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttSalesrep",
+          "field": "MonthQuota",
+          "name": "semanticType",
+          "value": "Currency"
+        }
+      ]
+    },
+    "user": null
+  },
+  "Business.Personnel.EmployeeBE": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Personnel\\EmployeeBE.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "EmployeeBE.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "employee",
+        "URI": "\/employee",
+        "schemaName": "dsEmployee",
+        "schemaFile": "Sports\/PASOEContent\/WEB-INF\/openedge\/Common\/employee.i"
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "ReadEmployee(INPUT CHARACTER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "read",
+          "URI": "?filter={filter}",
+          "alias": "",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": [
+          {
+            "name": "mappingType",
+            "value": "AFP"
+          },
+          {
+            "name": "capabilities",
+            "value": [
+              "filter",
+              "top",
+              "skip",
+              "id",
+              "sort",
+              "orderBy"
+            ]
+          }
+        ]
+      },
+      "SubmitEmployee(INPUT-OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "submit",
+          "URI": "\/submit",
+          "alias": "submit",
+          "mediaType": "application\/json"
+        }
+      },
+      "getCount(INPUT CHARACTER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "count",
+          "URI": "\/count?filter={filter}",
+          "alias": "count",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "table": "ttCustomer",
+        "fields": "EmpNum"
+      },
+      "openapi.openedge.entity.field.property": [
+        {
+          "table": "ttCustomer",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttCustomer",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        }
+      ]
+    },
+    "user": null
+  },
+  "Business.Personnel.FamilyBE": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Personnel\\FamilyBE.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "FamilyBE.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "family",
+        "URI": "\/family",
+        "schemaName": "dsFamily",
+        "schemaFile": "Sports\/PASOEContent\/WEB-INF\/openedge\/Common\/family.i"
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "ReadFamily(INPUT CHARACTER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "read",
+          "URI": "?filter={filter}",
+          "alias": "",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": [
+          {
+            "name": "mappingType",
+            "value": "AFP"
+          },
+          {
+            "name": "capabilities",
+            "value": [
+              "filter",
+              "top",
+              "skip",
+              "id",
+              "sort",
+              "orderBy"
+            ]
+          }
+        ]
+      },
+      "SubmitFamily(INPUT-OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "submit",
+          "URI": "\/submit",
+          "alias": "submit",
+          "mediaType": "application\/json"
+        }
+      },
+      "getCount(INPUT CHARACTER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "count",
+          "URI": "\/count?filter={filter}",
+          "alias": "count",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "table": "ttFamily",
+        "fields": [
+          "EmpNum",
+          "RelativeName"
+        ]
+      },
+      "openapi.openedge.entity.field.property": [
+        {
+          "table": "ttFamily",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttFamily",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        }
+      ]
+    },
+    "user": null
+  },
+  "Business.System.Access": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\Access.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "Access.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "access",
+        "URI": "\/access",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "getInterceptRules(OUTPUT PROGRESS.JSON.OBJECTMODEL.JSONARRAY)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/rules",
+          "alias": "rules",
+          "mediaType": "application\/json"
+        }
+      },
+      "setInterceptRules(INPUT PROGRESS.JSON.OBJECTMODEL.JSONARRAY,OUTPUT LOGICAL)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/apply",
+          "alias": "apply",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  },
+  "Business.System.WebData": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\WebData.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "WebData.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "webdata",
+        "URI": "\/webdata",
+        "schemaName": "dsWebDataStore",
+        "schemaFile": "Sports\/PASOEContent\/WEB-INF\/openedge\/Common\/webdatastore.i"
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "ReadWebData(INPUT CHARACTER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "read",
+          "URI": "?filter={filter}",
+          "alias": "",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": [
+          {
+            "name": "mappingType",
+            "value": "AFP"
+          },
+          {
+            "name": "capabilities",
+            "value": [
+              "filter",
+              "top",
+              "skip",
+              "id",
+              "sort",
+              "orderBy"
+            ]
+          }
+        ]
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "table": "ttWebDataStore",
+        "fields": [
+          "WebSessionID",
+          "ObjectName"
+        ]
+      },
+      "openapi.openedge.entity.field.property": [
+        {
+          "table": "ttWebDataStore",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttWebDataStore",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        }
+      ]
+    },
+    "user": null
+  },
+  "Business.System.WebProfileBE": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\WebProfileBE.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "WebProfile.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "webprofile",
+        "URI": "\/webprofile",
+        "schemaName": "dsWebProfile",
+        "schemaFile": "Sports\/PASOEContent\/WEB-INF\/openedge\/Common\/webprofile.i"
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "ReadWebProfile(INPUT CHARACTER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "read",
+          "URI": "?filter={filter}",
+          "alias": "",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": [
+          {
+            "name": "mappingType",
+            "value": "AFP"
+          },
+          {
+            "name": "capabilities",
+            "value": [
+              "filter",
+              "top",
+              "skip",
+              "id",
+              "sort",
+              "orderBy"
+            ]
+          }
+        ]
+      },
+      "SubmitWebProfile(INPUT-OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "submit",
+          "URI": "\/submit",
+          "alias": "submit",
+          "mediaType": "application\/json"
+        }
+      },
+      "getCount(INPUT CHARACTER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "count",
+          "URI": "\/count?filter={filter}",
+          "alias": "count",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "table": "ttWebProfile",
+        "fields": [
+          "Username",
+          "DomainName"
+        ]
+      },
+      "openapi.openedge.entity.field.property": [
+        {
+          "table": "ttWebProfile",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttWebProfile",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttWebProfile",
+          "field": "HomePhone",
+          "name": "semanticType",
+          "value": "PhoneNumber"
+        },
+        {
+          "table": "ttWebProfile",
+          "field": "WorkPhone",
+          "name": "semanticType",
+          "value": "PhoneNumber"
+        }
+      ]
+    },
+    "user": null
+  },
+  "Business.System.WebRoleBE": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\System\\WebRoleBE.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "WebRole.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "webrole",
+        "URI": "\/webrole",
+        "schemaName": "dsWebRole",
+        "schemaFile": "Sports\/PASOEContent\/WEB-INF\/openedge\/Common\/webrole.i"
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "ReadWebRole(INPUT CHARACTER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "read",
+          "URI": "?filter={filter}",
+          "alias": "",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": [
+          {
+            "name": "mappingType",
+            "value": "AFP"
+          },
+          {
+            "name": "capabilities",
+            "value": [
+              "filter",
+              "top",
+              "skip",
+              "id",
+              "sort",
+              "orderBy"
+            ]
+          }
+        ]
+      },
+      "getCount(INPUT CHARACTER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "count",
+          "URI": "\/count?filter={filter}",
+          "alias": "count",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "table": "ttWebRole",
+        "fields": "RoleID"
+      },
+      "openapi.openedge.entity.field.property": [
+        {
+          "table": "ttWebRole",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttWebRole",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        }
+      ]
+    },
+    "user": null
+  },
+  "Business.TwoFactor": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\TwoFactor.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "TwoFactor.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "tfa",
+        "URI": "\/tfa",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "clientLogin(INPUT CHARACTER,INPUT CHARACTER,OUTPUT LOGICAL)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/login",
+          "alias": "login",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  },
+  "ApsvTest.p": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\ApsvTest.p"
+    },
+    "program": null,
+    "procedure": null,
+    "function": null,
+    "data": null,
+    "user": null
+  },
+  "Business.UnitTest.LeakyCode": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\LeakyCode.cls",
+      "inherits": null,
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "LeakyCode.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "leakycode",
+        "URI": "\/leakycode",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "badBuffer(OUTPUT LOGICAL)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/buffer",
+          "alias": "buffer",
+          "mediaType": "application\/json"
+        }
+      },
+      "badHandle(OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/handle",
+          "alias": "handle",
+          "mediaType": "application\/json"
+        }
+      },
+      "badMemptr(OUTPUT INTEGER,OUTPUT INT64)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/memptr",
+          "alias": "memptr",
+          "mediaType": "application\/json"
+        }
+      },
+      "badObject(OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/object",
+          "alias": "object",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  },
+  "Business.UnitTest.Messages": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Messages.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "Messages.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "message",
+        "URI": "\/message",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "testMessage(INPUT CHARACTER,OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/test",
+          "alias": "test",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  },
+  "Business.UnitTest.Params": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Params.cls",
+      "inherits": null,
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "BadObjects.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "params",
+        "URI": "\/params",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "testPrimitives(INPUT CHARACTER,INPUT DECIMAL,INPUT INTEGER,INPUT DATE,INPUT DATETIME,INPUT DATETIME-TZ,OUTPUT CHARACTER,OUTPUT DECIMAL,OUTPUT INTEGER,OUTPUT DATE,OUTPUT DATETIME,OUTPUT DATETIME-TZ)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/primitives",
+          "alias": "primitives",
+          "mediaType": "application\/json"
+        }
+      },
+      "testTable(INPUT TABLE,OUTPUT TABLE)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/table",
+          "alias": "table",
+          "mediaType": "application\/json"
+        }
+      },
+      "testDataset(INPUT DATASET,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/dataset",
+          "alias": "dataset",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  },
+  "Business.UnitTest.RunCode": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\RunCode.cls",
+      "inherits": null,
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "RunCode.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "runcode",
+        "URI": "\/runcode",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "lookBusy(INPUT INTEGER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/busy",
+          "alias": "busy",
+          "mediaType": "application\/json"
+        }
+      },
+      "stopCode(OUTPUT LOGICAL)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/stop",
+          "alias": "stop",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  },
+  "Business.UserContext": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UserContext.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "WebContext.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "context",
+        "URI": "\/context",
+        "schemaName": "dsWebContext",
+        "schemaFile": "Sports\/PASOEContent\/WEB-INF\/openedge\/Common\/webcontext.i"
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "ReadContext(INPUT CHARACTER,OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "read",
+          "URI": "?filter={filter}",
+          "alias": "",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": [
+          {
+            "name": "mappingType",
+            "value": "AFP"
+          },
+          {
+            "name": "capabilities",
+            "value": [
+              "filter",
+              "top",
+              "skip",
+              "id",
+              "sort",
+              "orderBy"
+            ]
+          }
+        ]
+      },
+      "SubmitContext(INPUT-OUTPUT DATASET)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "true"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "submit",
+          "URI": "\/submit",
+          "alias": "submit",
+          "mediaType": "application\/json"
+        }
+      },
+      "getCount(INPUT CHARACTER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "count",
+          "URI": "\/count?filter={filter}",
+          "alias": "count",
+          "mediaType": "application\/json"
+        }
+      },
+      "clearContext(INPUT CHARACTER,INPUT CHARACTER,INPUT CHARACTER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/clear",
+          "alias": "clear",
+          "mediaType": "application\/json"
+        }
+      },
+      "getRoles(INPUT CHARACTER,OUTPUT PROGRESS.JSON.OBJECTMODEL.JSONARRAY)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/roles",
+          "alias": "roles",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": {
+      "openapi.openedge.entity.primarykey": {
+        "table": "ttWebContext",
+        "fields": [
+          "IdentityName",
+          "ContextType",
+          "ContextViewID",
+          "ContextTitle",
+          "ContextSeqNo"
+        ]
+      },
+      "openapi.openedge.entity.field.property": [
+        {
+          "table": "ttWebContext",
+          "field": "id",
+          "name": "semanticType",
+          "value": "Internal"
+        },
+        {
+          "table": "ttWebContext",
+          "field": "seq",
+          "name": "semanticType",
+          "value": "Internal"
+        }
+      ]
+    },
+    "user": null
+  },
+  "Business.UserData": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UserData.cls",
+      "inherits": [
+        "Spark.Core.Service.SparkEntity",
+        "OpenEdge.BusinessLogic.BusinessEntity"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "UserData.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "user",
+        "URI": "\/user",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "sendResetCode(INPUT CHARACTER,INPUT CHARACTER,OUTPUT LOGICAL,OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/sendResetCode",
+          "alias": "sendResetCode",
+          "mediaType": "application\/json"
+        }
+      },
+      "resetPassword(INPUT CHARACTER,INPUT CHARACTER,INPUT CHARACTER,OUTPUT LOGICAL,OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/resetPassword",
+          "alias": "resetPassword",
+          "mediaType": "application\/json"
+        }
+      },
+      "changePassword(INPUT CHARACTER,INPUT CHARACTER,OUTPUT LOGICAL,OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/password",
+          "alias": "password",
+          "mediaType": "application\/json"
+        }
+      },
+      "getMenu(OUTPUT PROGRESS.JSON.OBJECTMODEL.JSONARRAY)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/menu",
+          "alias": "menu",
+          "mediaType": "application\/json"
+        }
+      },
+      "getSessionInfo(OUTPUT LOGICAL,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT DATETIME-TZ,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT DATETIME-TZ,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/session",
+          "alias": "session",
+          "mediaType": "application\/json"
+        }
+      },
+      "getTranslations(INPUT CHARACTER,OUTPUT CHARACTER,OUTPUT PROGRESS.JSON.OBJECTMODEL.JSONOBJECT)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/translations",
+          "alias": "translations",
+          "mediaType": "application\/json"
+        }
+      },
+      "getProfile(OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT LOGICAL,OUTPUT CHARACTER,OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/getProfile",
+          "alias": "getProfile",
+          "mediaType": "application\/json"
+        }
+      },
+      "setProfile(INPUT CHARACTER,INPUT CHARACTER,INPUT CHARACTER,INPUT CHARACTER,INPUT CHARACTER,INPUT LOGICAL,INPUT CHARACTER,OUTPUT LOGICAL)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/setProfile",
+          "alias": "setProfile",
+          "mediaType": "application\/json"
+        }
+      },
+      "setLocale(INPUT CHARACTER,INPUT CHARACTER,OUTPUT PROGRESS.JSON.OBJECTMODEL.JSONARRAY)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/locale",
+          "alias": "locale",
+          "mediaType": "application\/json"
+        }
+      },
+      "contextFetch(INPUT CHARACTER,OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/contextFetch",
+          "alias": "",
+          "mediaType": "application\/json"
+        }
+      },
+      "contextStore(INPUT CHARACTER,INPUT CHARACTER,OUTPUT LOGICAL)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/contextStore",
+          "alias": "",
+          "mediaType": "application\/json"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  }
+}

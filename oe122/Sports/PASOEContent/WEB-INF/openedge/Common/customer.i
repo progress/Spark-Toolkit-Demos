@@ -8,13 +8,13 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="CustNum").
-@openapi.openedge.entity.field.property(field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(field="seq", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(field="Name", name="editable", value="false").
-@openapi.openedge.entity.field.property(field="Phone", name="semanticType", value="PhoneNumber").
-@openapi.openedge.entity.field.property(field="Balance", name="semanticType", value="Currency").
-@openapi.openedge.entity.field.property(field="CreditLimit", name="semanticType", value="Currency").
+@openapi.openedge.entity.primarykey(table="ttCustomer", fields="CustNum").
+@openapi.openedge.entity.field.property(table="ttCustomer", field="id", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttCustomer", field="seq", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttCustomer", field="Name", name="editable", value="false").
+@openapi.openedge.entity.field.property(table="ttCustomer", field="Phone", name="semanticType", value="PhoneNumber").
+@openapi.openedge.entity.field.property(table="ttCustomer", field="Balance", name="semanticType", value="Currency").
+@openapi.openedge.entity.field.property(table="ttCustomer", field="CreditLimit", name="semanticType", value="Currency").
 @openapi.openedge.entity.foreignkey(name="SalesrepFK", fields="SalesRep", parent="salesrep.ttSalesrep", parentFields="SalesRep").
 
 define temp-table ttCustomer no-undo before-table bttCustomer
