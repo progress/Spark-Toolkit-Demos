@@ -1,6 +1,6 @@
 {
   "name": "Spark",
-  "version": "4.2.0",
+  "version": "5.1.0",
   "license": "MIT",
   "ignore": [
     "**/.*",

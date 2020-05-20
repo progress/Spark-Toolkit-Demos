@@ -5,8 +5,8 @@
         }],
         "Domains": [{
             "domain": "spark",
-            "accessCode": "oech1::23222e35397562",
-            "description": "Default Framework Domain"
+            "accessCode": "odeb0::kTXbQ\/a0eljVVnvBVAiKwfTpc9ekIvWg9d24cIES4cmaE23SOwc1KcCCvgj4Cf5C",
+            "description": "External Realm Domain"
         }]
     }
 }

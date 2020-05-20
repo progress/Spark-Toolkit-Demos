@@ -14,7 +14,7 @@
             "Implementation": "Spark.Core.Manager.TranslationManager"
         }, {
             "Manager": "Spark.Core.Manager.IStateManager",
-            "Implementation": "Sports.Spark.Core.Manager.StateManager"
+            "Implementation": "Spark.Core.Manager.StateManager"
         }]
     }
 }
