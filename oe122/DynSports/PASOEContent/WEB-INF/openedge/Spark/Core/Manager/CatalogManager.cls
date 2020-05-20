@@ -390,91 +390,153 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 do iX = 1 to extent(cAnnoNames):
                     case cAnnoNames[iX]:
                         when "openapi.openedge.entity.primarykey" then do:
-                            assign
-                                oSubObj = oData:GetJsonObject(cAnnoNames[iX])
-                                cFields = ""
-                                .
-
-                            if oSubObj:Has("fields") and oSubObj:GetType("fields") eq JsonDataType:Array then do:
-                                assign oSubArr = oSubObj:GetJsonArray("fields").
-                                do iY = 1 to oSubArr:Length:
-                                    /* Turn the array of fields into a comma-delimited list. */
-                                    assign cFields = trim(substitute("&1,&2", cFields, oSubArr:GetCharacter(iY)), ",").
-                                end.
-                            end.
-                            else if oSubObj:Has("fields") and oSubObj:GetType("fields") eq JsonDataType:String then
-                                assign cFields = oSubObj:GetCharacter("fields").
-
-                            for first bResource exclusive-lock
-                                where bResource.ResourceUUID eq pcResourceUUID:
+                            if (cSchemaName gt "") eq true then do:
                                 assign
-                                    bResource.EntityName = cSchemaName
-                                    bResource.EntityKeys = cFields
+                                    oSubObj = oData:GetJsonObject(cAnnoNames[iX])
+                                    cFields = ""
                                     .
-                                message bResource.EntityName "AnnoPK:" bResource.EntityKeys.
-                            end. /* for first bResource */
+
+                                if oSubObj:Has("fields") and oSubObj:GetType("fields") eq JsonDataType:Array then do:
+                                    assign oSubArr = oSubObj:GetJsonArray("fields").
+                                    do iY = 1 to oSubArr:Length:
+                                        /* Turn the array of fields into a comma-delimited list. */
+                                        assign cFields = trim(substitute("&1,&2", cFields, oSubArr:GetCharacter(iY)), ",").
+                                    end.
+                                end.
+                                else if oSubObj:Has("fields") and oSubObj:GetType("fields") eq JsonDataType:String then
+                                    assign cFields = oSubObj:GetCharacter("fields").
+
+                                if (cFields gt "") eq true then
+                                    for first bResource exclusive-lock
+                                        where bResource.ResourceUUID eq pcResourceUUID:
+                                        assign
+                                            bResource.EntityName = cSchemaName
+                                            bResource.EntityKeys = cFields
+                                            .
+                                    end. /* for first bResource */
+                            end. /* cSchemaName */
                         end. /* openapi.openedge.entity.primarykey */
 
                         when "openapi.openedge.entity.foreignkey" then do:
-                            define variable oFKeys as JsonArray  no-undo.
-                            define variable oFKey  as JsonObject no-undo.
+                            if (cSchemaName gt "") eq true then do:
+                                define variable oFKeys as JsonArray  no-undo.
+                                define variable oFKey  as JsonObject no-undo.
 
-                            assign
-                                oSubObj = oData:GetJsonObject(cAnnoNames[iX])
-                                oFKeys  = new JsonArray()
-                                oFKey   = new JsonObject()
-                                .
-
-                            oFKey:Add("name", oSubObj:GetCharacter("name")).
-                            oFKey:Add("fields", new JsonArray()).
-                            oFKey:Add("parent", new JsonObject()).
-
-                            if oSubObj:Has("fields") and oSubObj:GetType("fields") eq JsonDataType:Array then do:
-                                assign oSubArr = oSubObj:GetJsonArray("fields").
-                                do iY = 1 to oSubArr:Length:
-                                    oFKey:GetJsonArray("fields"):Add(oSubArr:GetCharacter(iY)).
-                                end.
-                            end.
-                            else if oSubObj:Has("fields") and oSubObj:GetType("fields") eq JsonDataType:String then
-                                oFKey:GetJsonArray("fields"):Add(oSubObj:GetCharacter("fields")).
-
-                            if oSubObj:Has("parent") and oSubObj:GetType("parent") eq JsonDataType:String then
-                                oFKey:GetJsonObject("parent"):Add("name", oSubObj:GetCharacter("parent")).
-
-                            oFKey:GetJsonObject("parent"):Add("fields", new JsonArray()).
-                            if oSubObj:Has("parentFields") and oSubObj:GetType("parentFields") eq JsonDataType:Array then do:
-                                assign oSubArr = oSubObj:GetJsonArray("parentFields").
-                                do iY = 1 to oSubArr:Length:
-                                    oFKey:GetJsonObject("parent"):GetJsonArray("fields"):Add(oSubArr:GetCharacter(iY)).
-                                end.
-                            end.
-                            else if oSubObj:Has("parentFields") and oSubObj:GetType("parentFields") eq JsonDataType:String then
-                                oFKey:GetJsonObject("parent"):GetJsonArray("fields"):Add(oSubObj:GetCharacter("parentFields")).
-
-                            oFKeys:Add(oFKey).
-                            for first bResource exclusive-lock
-                                where bResource.ResourceUUID eq pcResourceUUID:
                                 assign
-                                    bResource.EntityName  = cSchemaName
-                                    bResource.ForeignKeys = string(oFKeys:GetJsonText())
+                                    oSubObj = oData:GetJsonObject(cAnnoNames[iX])
+                                    oFKeys  = new JsonArray()
+                                    oFKey   = new JsonObject()
                                     .
-                                message bResource.EntityName "AnnoFK:" bResource.ForeignKeys.
-                            end. /* for first bResource */
+
+                                /* Create an FK array as expected by the CatalogManager from Spark.Core.Util.ForeignKey. */
+                                if oSubObj:Has("name") and oSubObj:GetType("name") eq JsonDataType:String then do:
+                                    oFKey:Add("name", oSubObj:GetCharacter("name")).
+                                    oFKey:Add("fields", new JsonArray()).
+                                    oFKey:Add("parent", new JsonObject()).
+    
+                                    if oSubObj:Has("fields") and oSubObj:GetType("fields") eq JsonDataType:Array then do:
+                                        assign oSubArr = oSubObj:GetJsonArray("fields").
+                                        do iY = 1 to oSubArr:Length:
+                                            oFKey:GetJsonArray("fields"):Add(oSubArr:GetCharacter(iY)).
+                                        end.
+                                    end.
+                                    else if oSubObj:Has("fields") and oSubObj:GetType("fields") eq JsonDataType:String then
+                                        oFKey:GetJsonArray("fields"):Add(oSubObj:GetCharacter("fields")).
+    
+                                    if oSubObj:Has("parent") and oSubObj:GetType("parent") eq JsonDataType:String then
+                                        oFKey:GetJsonObject("parent"):Add("name", oSubObj:GetCharacter("parent")).
+    
+                                    oFKey:GetJsonObject("parent"):Add("fields", new JsonArray()).
+                                    if oSubObj:Has("parentFields") and oSubObj:GetType("parentFields") eq JsonDataType:Array then do:
+                                        assign oSubArr = oSubObj:GetJsonArray("parentFields").
+                                        do iY = 1 to oSubArr:Length:
+                                            oFKey:GetJsonObject("parent"):GetJsonArray("fields"):Add(oSubArr:GetCharacter(iY)).
+                                        end.
+                                    end.
+                                    else if oSubObj:Has("parentFields") and oSubObj:GetType("parentFields") eq JsonDataType:String then
+                                        oFKey:GetJsonObject("parent"):GetJsonArray("fields"):Add(oSubObj:GetCharacter("parentFields")).
+    
+                                    oFKeys:Add(oFKey).
+                                    for first bResource exclusive-lock
+                                        where bResource.ResourceUUID eq pcResourceUUID:
+                                        assign
+                                            bResource.EntityName  = cSchemaName
+                                            bResource.ForeignKeys = string(oFKeys:GetJsonText())
+                                            .
+                                    end. /* for first bResource */
+                                end.
+
+                                delete object oFKeys no-error.
+                                delete object oFKey no-error.
+                            end. /* cSchemaName */
                         end. /* openapi.openedge.entity.foreignkey */
 
                         when "openapi.openedge.entity.field.property" then do:
-                            /* name="", fields="", parent="", parentFields="" */
+                            define variable oProps  as JsonObject no-undo.
+                            define variable cTables as character  no-undo extent.
+                            define variable cTable  as character  no-undo.
+                            define variable cField  as character  no-undo.
+                            define variable cValue  as character  no-undo.
+
+                            assign oProps = new JsonObject().
+
                             if oData:GetType(cAnnoNames[iX]) eq JsonDataType:Object then do:
-                                assign oSubObj = oData:GetJsonObject(cAnnoNames[iX]).
-                                message cAnnoNames[iX] ":" string(oSubObj:GetJsonText()).
+                                assign
+                                    oSubObj = oData:GetJsonObject(cAnnoNames[iX])
+                                    cTable  = ""
+                                    cField  = ""
+                                    cName   = ""
+                                    cValue  = ""
+                                    .
+
+                                assign
+                                    cTable  = oSubObj:GetCharacter("table") when oSubObj:Has("table")
+                                    cField  = oSubObj:GetCharacter("field") when oSubObj:Has("field")
+                                    cName   = oSubObj:GetCharacter("name") when oSubObj:Has("name")
+                                    cValue  = oSubObj:GetCharacter("value") when oSubObj:Has("value")
+                                    .
+
+                                if (cTable gt "") eq true then do:
+                                    if not oProps:Has(cTable) then
+                                        oProps:Add(cTable, new JsonObject()).
+                                    oProps:GetJsonObject(cTable):Add(cField, new JsonObject()).
+                                    oProps:GetJsonObject(cTable):GetJsonObject(cField):Add(cName, cValue).
+                                end.
                             end. /* Annotation Object */
                             else if oData:GetType(cAnnoNames[iX]) eq JsonDataType:Array then do:
                                 assign oSubArr = oData:GetJsonArray(cAnnoNames[iX]).
                                 do iY = 1 to oSubArr:Length:
-                                    assign oSubObj = oSubArr:GetJsonObject(iY).
-                                    message cAnnoNames[iX] ":" iY "=" string(oSubObj:GetJsonText()).
+                                    assign
+                                        oSubObj = oSubArr:GetJsonObject(iY)
+                                        cTable  = ""
+                                        cField  = ""
+                                        cName   = ""
+                                        cValue  = ""
+                                        .
+    
+                                    assign
+                                        cTable  = oSubObj:GetCharacter("table") when oSubObj:Has("table")
+                                        cField  = oSubObj:GetCharacter("field") when oSubObj:Has("field")
+                                        cName   = oSubObj:GetCharacter("name") when oSubObj:Has("name")
+                                        cValue  = oSubObj:GetCharacter("value") when oSubObj:Has("value")
+                                        .
+
+                                    if (cTable gt "") eq true then do:
+                                        if not oProps:Has(cTable) then
+                                            oProps:Add(cTable, new JsonObject()).
+                                        oProps:GetJsonObject(cTable):Add(cField, new JsonObject()).
+                                        oProps:GetJsonObject(cTable):GetJsonObject(cField):Add(cName, cValue).
+                                    end.
                                 end. /* Annotation Array */
                             end.
+
+                            extent(cTables) = ?.
+                            assign cTables = oProps:GetNames().
+                            do iZ = 1 to extent(cTables):
+                                this-object:describeFields(cSchemaName, cTable, oProps:GetJsonObject(cTable)).
+                            end.
+
+                            delete object oProps no-error.
                         end. /* openapi.openedge.entity.field.property */
                     end case.
                 end. /* do iX cAnnoNames */
@@ -2393,8 +2455,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
 
         /* Use default service if none provided. */
         if (pcServiceUUID gt "") ne true then pcServiceUUID = cDefaultUUID.
-message pcEntityName "PK:" pcPrimaryKeys.
-message pcEntityName "FK:" pcForeignKeys.
+
         for first ResourceInfo
             where ResourceInfo.ServiceUUID eq pcServiceUUID
               and ResourceInfo.ClassPath eq pcResClassPath:
@@ -2412,7 +2473,7 @@ message pcEntityName "FK:" pcForeignKeys.
                                         input poFieldData  as JsonObject ):
         /* Resource Discovery Process */
         define buffer bEntity for EntityProperty.
-message pcEntityName ":" pcTableName ":" string(poFieldData:GetJsonText()).
+
         if (pcEntityName gt "") eq true and (pcTableName gt "") eq true then do:
             find first bEntity exclusive-lock
                  where bEntity.EntityName eq pcEntityName

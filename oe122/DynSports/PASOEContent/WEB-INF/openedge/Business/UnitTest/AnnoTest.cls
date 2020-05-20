@@ -27,8 +27,8 @@ block-level on error undo, throw.
 class Business.UnitTest.AnnoTest use-widget-pool: 
 
     @openapi.openedge.entity.primarykey(fields="ttOrder.OrderNum,ttOrderLine.OrderNum").
-    @openapi.openedge.entity.field.property(field="id", name="semanticType", value="Internal").
-    @openapi.openedge.entity.field.property(field="seq", name="semanticType", value="Internal").
+    @openapi.openedge.entity.field.property(table="ttOrder", field="id", name="semanticType", value="Internal").
+    @openapi.openedge.entity.field.property(table="ttOrder", field="seq", name="semanticType", value="Internal").
     @openapi.openedge.entity.foreignkey(name="ttSalesrepFK", fields="SalesRep", parent="salesrep.ttSalesrep", parentFields="SalesRep").
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").

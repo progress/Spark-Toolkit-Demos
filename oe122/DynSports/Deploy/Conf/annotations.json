@@ -429,11 +429,13 @@
       },
       "openapi.openedge.entity.field.property": [
         {
+          "table": "ttOrder",
           "field": "id",
           "name": "semanticType",
           "value": "Internal"
         },
         {
+          "table": "ttOrder",
           "field": "seq",
           "name": "semanticType",
           "value": "Internal"
