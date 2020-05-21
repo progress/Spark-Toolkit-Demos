@@ -48,7 +48,7 @@
           }
         },
         "\/access\/rules": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,

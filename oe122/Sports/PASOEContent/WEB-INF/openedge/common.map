@@ -75,7 +75,7 @@
           }
         },
         "\/user\/session": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -294,7 +294,7 @@
           }
         },
         "\/user\/menu": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -759,7 +759,7 @@
         "\/locality": {
         },
         "\/locality\/provinces": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -784,7 +784,7 @@
           }
         },
         "\/locality\/states": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -950,7 +950,7 @@
           }
         },
         "\/context\/count": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false
@@ -1018,7 +1018,7 @@
         "\/services": {
         },
         "\/services\/mapping": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -1043,7 +1043,7 @@
           }
         },
         "\/services\/openapi": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -1068,7 +1068,7 @@
           }
         },
         "\/services\/catalog": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,

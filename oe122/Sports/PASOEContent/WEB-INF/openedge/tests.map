@@ -244,7 +244,7 @@
         "\/leakycode": {
         },
         "\/leakycode\/buffer": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -269,7 +269,7 @@
           }
         },
         "\/leakycode\/memptr": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -303,7 +303,7 @@
           }
         },
         "\/leakycode\/handle": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -328,7 +328,7 @@
           }
         },
         "\/leakycode\/object": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
@@ -355,7 +355,7 @@
         "\/runcode": {
         },
         "\/runcode\/stop": {
-          "PUT": {
+          "GET": {
             "contentType": "application\/json",
             "options": {
               "writeBI": false,
