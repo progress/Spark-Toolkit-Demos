@@ -41,6 +41,7 @@ class Business.UnitTest.RunCode use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/stop", alias="stop", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void stopCode ( output completed as logical ):
         stop. /* Trigger a stop condition for this code. */
 

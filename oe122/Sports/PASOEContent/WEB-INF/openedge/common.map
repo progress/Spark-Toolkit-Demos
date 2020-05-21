@@ -970,7 +970,7 @@
                 },
                 {
                   "ablName": "numRecs",
-                  "ablType": "INTEGER",
+                  "ablType": "INT64",
                   "ioMode": "OUTPUT",
                   "msgElem": {
                     "type": "field",
@@ -1009,6 +1009,83 @@
                   "msgElem": {
                     "type": "field",
                     "name": "allowedRoles"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/services": {
+        },
+        "\/services\/mapping": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.Services",
+              "function": "getMappings",
+              "arg": [
+                {
+                  "ablName": "bodyOutput",
+                  "ablType": "class Progress.Json.ObjectModel.JsonObject",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "bodyOutput"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/services\/openapi": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.Services",
+              "function": "getOpenAPI",
+              "arg": [
+                {
+                  "ablName": "bodyOutput",
+                  "ablType": "class Progress.Json.ObjectModel.JsonObject",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "bodyOutput"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "\/services\/catalog": {
+          "PUT": {
+            "contentType": "application\/json",
+            "options": {
+              "writeBI": false,
+              "requestEnvelope": false,
+              "responseEnvelope": false
+            },
+            "entity": {
+              "name": "Business.Services",
+              "function": "getCatalog",
+              "arg": [
+                {
+                  "ablName": "bodyOutput",
+                  "ablType": "class Progress.Json.ObjectModel.JsonObject",
+                  "ioMode": "OUTPUT",
+                  "msgElem": {
+                    "type": "field",
+                    "name": "bodyOutput"
                   }
                 }
               ]

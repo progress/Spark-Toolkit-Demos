@@ -3,10 +3,7 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Dashboard.cls",
-      "inherits": [
-        "Spark.Core.Service.SparkEntity",
-        "OpenEdge.BusinessLogic.BusinessEntity"
-      ],
+      "inherits": null,
       "implements": null
     },
     "program": {
@@ -134,10 +131,7 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Locality.cls",
-      "inherits": [
-        "Spark.Core.Service.SparkEntity",
-        "OpenEdge.BusinessLogic.BusinessEntity"
-      ],
+      "inherits": null,
       "implements": null
     },
     "program": {
@@ -174,10 +168,6 @@
           "URI": "\/stateProvince",
           "alias": "stateProvince",
           "mediaType": "application\/json"
-        },
-        "openapi.openedge.method.property": {
-          "name": "verb",
-          "value": "get"
         }
       },
       "getProvinces(OUTPUT TABLE)": {
@@ -864,6 +854,94 @@
     },
     "user": null
   },
+  "Business.Services": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Services.cls",
+      "inherits": null,
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "Services.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "services",
+        "URI": "\/services",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "getCatalog(OUTPUT PROGRESS.JSON.OBJECTMODEL.JSONOBJECT)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/catalog",
+          "alias": "catalog",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
+        }
+      },
+      "getOpenAPI(OUTPUT PROGRESS.JSON.OBJECTMODEL.JSONOBJECT)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/openapi",
+          "alias": "openapi",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
+        }
+      },
+      "getMappings(OUTPUT PROGRESS.JSON.OBJECTMODEL.JSONOBJECT)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/mapping",
+          "alias": "mapping",
+          "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  },
   "Business.System.Access": {
     "meta": {
       "version": "1.0.0",
@@ -908,6 +986,10 @@
           "URI": "\/rules",
           "alias": "rules",
           "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
         }
       },
       "setInterceptRules(INPUT PROGRESS.JSON.OBJECTMODEL.JSONARRAY,OUTPUT LOGICAL)": {
@@ -1254,10 +1336,7 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\TwoFactor.cls",
-      "inherits": [
-        "Spark.Core.Service.SparkEntity",
-        "OpenEdge.BusinessLogic.BusinessEntity"
-      ],
+      "inherits": null,
       "implements": null
     },
     "program": {
@@ -1353,6 +1432,10 @@
           "URI": "\/buffer",
           "alias": "buffer",
           "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
         }
       },
       "badHandle(OUTPUT CHARACTER)": {
@@ -1367,6 +1450,10 @@
           "URI": "\/handle",
           "alias": "handle",
           "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
         }
       },
       "badMemptr(OUTPUT INTEGER,OUTPUT INT64)": {
@@ -1381,6 +1468,10 @@
           "URI": "\/memptr",
           "alias": "memptr",
           "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
         }
       },
       "badObject(OUTPUT INTEGER)": {
@@ -1395,6 +1486,10 @@
           "URI": "\/object",
           "alias": "object",
           "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
         }
       }
     },
@@ -1584,6 +1679,10 @@
           "URI": "\/stop",
           "alias": "stop",
           "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
         }
       }
     },
@@ -1668,7 +1767,7 @@
           "mediaType": "application\/json"
         }
       },
-      "getCount(INPUT CHARACTER,OUTPUT INTEGER)": {
+      "getCount(INPUT CHARACTER,OUTPUT INT64)": {
         "openapi.openedge.export": {
           "type": "REST",
           "useReturnValue": "false",
@@ -1680,6 +1779,10 @@
           "URI": "\/count?filter={filter}",
           "alias": "count",
           "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
         }
       },
       "clearContext(INPUT CHARACTER,INPUT CHARACTER,INPUT CHARACTER,OUTPUT INTEGER)": {
@@ -1826,6 +1929,10 @@
           "URI": "\/menu",
           "alias": "menu",
           "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
         }
       },
       "getSessionInfo(OUTPUT LOGICAL,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT DATETIME-TZ,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT DATETIME-TZ,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER,OUTPUT CHARACTER)": {
@@ -1840,6 +1947,10 @@
           "URI": "\/session",
           "alias": "session",
           "mediaType": "application\/json"
+        },
+        "openapi.openedge.method.property": {
+          "name": "verb",
+          "value": "get"
         }
       },
       "getTranslations(INPUT CHARACTER,OUTPUT CHARACTER,OUTPUT PROGRESS.JSON.OBJECTMODEL.JSONOBJECT)": {

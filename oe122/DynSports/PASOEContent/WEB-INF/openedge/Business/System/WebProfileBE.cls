@@ -16,7 +16,7 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use
     {Common/webprofile.i}
 
     define public override property serviceURI as character
-        initial "/web/api/common" no-undo get.
+        initial "/web/api/system" no-undo get.
         protected set.
 
     define public override property resourceName as character

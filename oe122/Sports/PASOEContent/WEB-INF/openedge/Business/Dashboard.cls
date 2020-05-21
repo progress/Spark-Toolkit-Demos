@@ -15,7 +15,7 @@ using Spark.Core.Manager.ISchemaManager from propath.
 
 block-level on error undo, throw.
 
-class Business.Dashboard inherits Spark.Core.Service.SparkEntity use-widget-pool:
+class Business.Dashboard use-widget-pool:
 
     {Common/dashboard.i}
 

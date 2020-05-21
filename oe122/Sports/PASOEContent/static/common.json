@@ -1,6 +1,6 @@
 {
   "version": "1.4",
-  "lastModified": "Wed May 20 09:31:28 EDT 2020",
+  "lastModified": "Wed May 20 20:46:39 EDT 2020",
   "services": [
     {
       "name": "common",
@@ -46,7 +46,7 @@
               "path": "\/session",
               "useBeforeImage": false,
               "type": "invoke",
-              "verb": "put",
+              "verb": "get",
               "params": [
                 {
                   "name": "anonymous",
@@ -149,7 +149,7 @@
               "path": "\/menu",
               "useBeforeImage": false,
               "type": "invoke",
-              "verb": "put",
+              "verb": "get",
               "params": [
                 {
                   "name": "menuData",
@@ -391,7 +391,7 @@
               "path": "\/provinces",
               "useBeforeImage": false,
               "type": "invoke",
-              "verb": "put",
+              "verb": "get",
               "params": [
                 {
                   "name": "states",
@@ -404,7 +404,7 @@
               "path": "\/states",
               "useBeforeImage": false,
               "type": "invoke",
-              "verb": "put",
+              "verb": "get",
               "params": [
                 {
                   "name": "states",
@@ -611,6 +611,52 @@
                 },
                 {
                   "name": "allowedRoles",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "services",
+          "path": "\/services",
+          "autoSave": true,
+          "operations": [
+            {
+              "name": "mapping",
+              "path": "\/mapping",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "get",
+              "params": [
+                {
+                  "name": "bodyOutput",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "openapi",
+              "path": "\/openapi",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "get",
+              "params": [
+                {
+                  "name": "bodyOutput",
+                  "type": "RESPONSE_BODY"
+                }
+              ]
+            },
+            {
+              "name": "catalog",
+              "path": "\/catalog",
+              "useBeforeImage": false,
+              "type": "invoke",
+              "verb": "get",
+              "params": [
+                {
+                  "name": "bodyOutput",
                   "type": "RESPONSE_BODY"
                 }
               ]

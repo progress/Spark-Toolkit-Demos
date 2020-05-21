@@ -239,6 +239,7 @@ class Business.UserData inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/menu", alias="menu", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void getMenu ( output menuData as JsonArray ):
         define variable oParser as ObjectModelParser no-undo.
 
@@ -295,6 +296,7 @@ class Business.UserData inherits Spark.Core.Service.SparkEntity use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/session", alias="session", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void getSessionInfo ( output anonymous        as logical,
                                         output dateFormat       as character,
                                         output decimalPoint     as character,

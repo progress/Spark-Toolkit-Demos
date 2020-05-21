@@ -47,6 +47,7 @@ class Business.UnitTest.LeakyCode use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/buffer", alias="buffer", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void badBuffer ( output completed as logical ):
         /* Create a buffer that will not be cleaned up. */
         define variable hDS as handle.
@@ -60,6 +61,7 @@ class Business.UnitTest.LeakyCode use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/handle", alias="handle", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void badHandle ( output textMessage as character ):
         define variable hProc as handle no-undo.
 
@@ -71,6 +73,7 @@ class Business.UnitTest.LeakyCode use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/memptr", alias="memptr", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void badMemptr ( output pointerSize  as integer,
                                    output pointerValue as int64 ):
         define variable mPtr as memptr no-undo.
@@ -83,6 +86,7 @@ class Business.UnitTest.LeakyCode use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/object", alias="object", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void badObject ( output arrayLength as integer ):
         this-object:LoadArray(). /* Add data to the class-scoped array. */
         assign arrayLength = this-object:oArray:Length.

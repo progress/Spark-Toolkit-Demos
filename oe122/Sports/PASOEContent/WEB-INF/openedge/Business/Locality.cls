@@ -17,13 +17,12 @@ block-level on error undo, throw.
 
 {Common/config.i}
 
-class Business.Locality inherits Spark.Core.Service.SparkEntity use-widget-pool:
+class Business.Locality use-widget-pool:
 
     {Common/state.i}
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/stateProvince", alias="stateProvince", mediaType="application/json").
-    @openapi.openedge.method.property(name="verb", value="get").
     method public void getStateProvince ( input  country as character,
                                           output table for states ):
         if (country gt "") ne true then assign country = "usa".

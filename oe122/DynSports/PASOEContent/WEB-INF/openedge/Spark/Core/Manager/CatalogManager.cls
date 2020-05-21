@@ -291,6 +291,9 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
         define variable cAnnoName    as character no-undo.
         define variable cPublicName  as character no-undo.
         define variable cResourceURI as character no-undo.
+        define variable cExecMode    as character no-undo.
+        define variable lUseReturn   as logical   no-undo.
+        define variable lWriteBI     as logical   no-undo.
         define variable lIsClass     as logical   no-undo.
 
         define buffer bService  for ServiceList.
@@ -342,6 +345,15 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             /* Look for a valid "program" grouping of annotations, which might be in the "user" grouping. */
             if oAnnotation:Has("program") and oAnnotation:GetType("program") eq JsonDataType:Object then
                 assign oProgram = oAnnotation:GetJsonObject("program").
+
+            if valid-object(oProgram) and oProgram:Has("openapi.openedge.export FILE") then do:
+                assign oSubObj = oProgram:GetJsonObject("openapi.openedge.export FILE").
+                assign
+                    cExecMode  = oSubObj:GetCharacter("executionMode") when oSubObj:Has("executionMode")
+                    lUseReturn = can-do("true,yes,1", oSubObj:GetCharacter("useReturnValue")) when oSubObj:Has("useReturnValue")
+                    lWriteBI   = can-do("true,yes,1", oSubObj:GetCharacter("writeDataSetBeforeImage")) when oSubObj:Has("writeDataSetBeforeImage")
+                    .
+            end. /* openapi.openedge.export FILE */
 
             /* Parse annotations for this resource (program). */
             if valid-object(oProgram) and oProgram:Has("progress.service.resource FILE") then do:
@@ -2554,7 +2566,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 for first bMethod exclusive-lock
                     where bMethod.ResourceUUID eq bResource.ResourceUUID
                       and bMethod.OperationType eq pcOperationType:
-                    delete bMethod.
+                    delete bMethod. /* Remove the method as we'll re-create it. */
                 end. /* for first bMethod */
 
             find first bMethod exclusive-lock
@@ -2615,6 +2627,10 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 bMethod.OperationType = lc(pcOperationType) when (pcOperationType gt "")
                 bMethod.OperationVerb = lc(pcOperationVerb) when (pcOperationVerb gt "")
                 .
+            
+            if pcOperationType eq "read" then
+                assign bMethod.MethodURI = "?filter=~{filter~}".
+
             release bMethod no-error.
         end. /* available */
 

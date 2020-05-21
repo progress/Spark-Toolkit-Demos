@@ -14,7 +14,7 @@ class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity use-wi
     {Common/webrole.i}
 
     define public override property serviceURI as character
-        initial "/web/api/common" no-undo get.
+        initial "/web/api/system" no-undo get.
         protected set.
 
     define public override property resourceName as character
