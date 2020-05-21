@@ -8,11 +8,6 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(table="ttSalesrep", fields="SalesRep").
-@openapi.openedge.entity.field.property(table="ttSalesrep", field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(table="ttSalesrep", field="seq", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(table="ttSalesrep", field="MonthQuota", name="semanticType", value="Currency").
-
 define temp-table ttSalesrep no-undo before-table bttSalesrep
     field id           as character
     field seq          as integer   initial ?

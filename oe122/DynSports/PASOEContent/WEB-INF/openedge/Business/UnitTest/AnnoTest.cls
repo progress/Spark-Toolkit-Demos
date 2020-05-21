@@ -24,7 +24,15 @@ using Spark.Core.Util.ApplicationError from propath.
 
 block-level on error undo, throw.
 
-class Business.UnitTest.AnnoTest use-widget-pool: 
+class Business.UnitTest.AnnoTest inherits Spark.Core.Service.Service use-widget-pool: 
+
+    method public override void initialize ( ):
+        message "Ran Initialize".
+    end method. /* initialize */
+
+    method public override void dispose ( ):
+        message "Dispose".
+    end method. /* dispose */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/test", alias="msgTest", mediaType="application/json").

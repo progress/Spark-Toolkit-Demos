@@ -8,6 +8,7 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
+using Spark.Core.Util.FieldInfo from propath.
 
 block-level on error undo, throw.
 
@@ -51,6 +52,14 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity use-widget-
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "clearContext", "clear", "put").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getRoles", "roles", "put").
+
+        /* Describe any properties to be added the entity tables. */
+        define variable oFieldProps as FieldInfo no-undo.
+        assign oFieldProps = new FieldInfo("dsWebContext", "ttWebContext").
+        oFieldProps:addProperty("id", "semanticType", "Internal").
+        oFieldProps:addProperty("seq", "semanticType", "Internal").
+        Spark.Core.Util.Annotate:describeFields(oFieldProps).
+        delete object oFieldProps no-error.
     end method. /* initialize */
 
 

@@ -15,7 +15,13 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class Business.UnitTest.LeakyCode use-widget-pool:
+class Business.UnitTest.LeakyCode inherits Spark.Core.Service.Service use-widget-pool:
+
+    method public override void initialize ( ):
+    end method. /* initialize */
+
+    method public override void dispose ( ):
+    end method. /* dispose */
 
     /* Will be used to demonstrate a hanging buffer. */
     define temp-table tt1

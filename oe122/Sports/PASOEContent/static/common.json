@@ -1,6 +1,6 @@
 {
   "version": "1.4",
-  "lastModified": "Wed May 20 20:46:39 EDT 2020",
+  "lastModified": "Thu May 21 09:55:11 EDT 2020",
   "services": [
     {
       "name": "common",
@@ -586,7 +586,7 @@
               "path": "\/count?filter={filter}",
               "useBeforeImage": false,
               "type": "count",
-              "verb": "put",
+              "verb": "get",
               "params": [
                 {
                   "name": "filter",

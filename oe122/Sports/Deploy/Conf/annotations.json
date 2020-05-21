@@ -3,7 +3,9 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Dashboard.cls",
-      "inherits": null,
+      "inherits": [
+        "Spark.Core.Service.Service"
+      ],
       "implements": null
     },
     "program": {
@@ -131,7 +133,9 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Locality.cls",
-      "inherits": null,
+      "inherits": [
+        "Spark.Core.Service.Service"
+      ],
       "implements": null
     },
     "program": {
@@ -329,9 +333,27 @@
         },
         {
           "table": "ttCustomer",
-          "field": "Name",
+          "field": "CustNum",
           "name": "editable",
           "value": "false"
+        },
+        {
+          "table": "ttCustomer",
+          "field": "CustName",
+          "name": "validation",
+          "value": "required"
+        },
+        {
+          "table": "ttCustomer",
+          "field": "Country",
+          "name": "defaultValue",
+          "value": "United States"
+        },
+        {
+          "table": "ttCustomer",
+          "field": "Phone",
+          "name": "mask",
+          "value": "000-000-0000"
         },
         {
           "table": "ttCustomer",
@@ -341,13 +363,13 @@
         },
         {
           "table": "ttCustomer",
-          "field": "Balance",
+          "field": "CreditLimit",
           "name": "semanticType",
           "value": "Currency"
         },
         {
           "table": "ttCustomer",
-          "field": "CreditLimit",
+          "field": "Balance",
           "name": "semanticType",
           "value": "Currency"
         }
@@ -477,6 +499,18 @@
           "field": "seq",
           "name": "semanticType",
           "value": "Internal"
+        },
+        {
+          "table": "ttOrder",
+          "field": "OrderNum",
+          "name": "editable",
+          "value": "false"
+        },
+        {
+          "table": "ttOrder",
+          "field": "CustNum",
+          "name": "validation",
+          "value": "required"
         },
         {
           "table": "ttOrderLine",
@@ -858,7 +892,9 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\Services.cls",
-      "inherits": null,
+      "inherits": [
+        "Spark.Core.Service.Service"
+      ],
       "implements": null
     },
     "program": {
@@ -1096,6 +1132,18 @@
           "field": "seq",
           "name": "semanticType",
           "value": "Internal"
+        },
+        {
+          "table": "ttWebDataStore",
+          "field": "WebSessionID",
+          "name": "editable",
+          "value": "false"
+        },
+        {
+          "table": "ttWebDataStore",
+          "field": "ObjectName",
+          "name": "editable",
+          "value": "false"
         }
       ]
     },
@@ -1217,9 +1265,39 @@
         },
         {
           "table": "ttWebProfile",
+          "field": "UserNum",
+          "name": "editable",
+          "value": "false"
+        },
+        {
+          "table": "ttWebProfile",
+          "field": "Username",
+          "name": "validation",
+          "value": "required"
+        },
+        {
+          "table": "ttWebProfile",
+          "field": "Password",
+          "name": "validation",
+          "value": "required"
+        },
+        {
+          "table": "ttWebProfile",
+          "field": "HomePhone",
+          "name": "mask",
+          "value": "000-000-0000"
+        },
+        {
+          "table": "ttWebProfile",
           "field": "HomePhone",
           "name": "semanticType",
           "value": "PhoneNumber"
+        },
+        {
+          "table": "ttWebProfile",
+          "field": "WorkPhone",
+          "name": "mask",
+          "value": "000-000-0000"
         },
         {
           "table": "ttWebProfile",
@@ -1336,7 +1414,9 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\TwoFactor.cls",
-      "inherits": null,
+      "inherits": [
+        "Spark.Core.Service.Service"
+      ],
       "implements": null
     },
     "program": {
@@ -1395,7 +1475,9 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\LeakyCode.cls",
-      "inherits": null,
+      "inherits": [
+        "Spark.Core.Service.Service"
+      ],
       "implements": null
     },
     "program": {
@@ -1552,7 +1634,9 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Params.cls",
-      "inherits": null,
+      "inherits": [
+        "Spark.Core.Service.Service"
+      ],
       "implements": null
     },
     "program": {
@@ -1628,7 +1712,9 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\RunCode.cls",
-      "inherits": null,
+      "inherits": [
+        "Spark.Core.Service.Service"
+      ],
       "implements": null
     },
     "program": {

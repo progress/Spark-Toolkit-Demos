@@ -7,10 +7,6 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(table="ttCustomer", fields="CustNum").
-@openapi.openedge.entity.field.property(table="ttCustomer", field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(table="ttCustomer", field="seq", name="semanticType", value="Internal").
-
 define temp-table ttCustomer no-undo before-table bttCustomer
     field id           as character
     field seq          as integer   initial ?

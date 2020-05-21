@@ -8,12 +8,6 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(table="ttWebProfile", fields="Username,DomainName").
-@openapi.openedge.entity.field.property(table="ttWebProfile", field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(table="ttWebProfile", field="seq", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(table="ttWebProfile", field="HomePhone", name="semanticType", value="PhoneNumber").
-@openapi.openedge.entity.field.property(table="ttWebProfile", field="WorkPhone", name="semanticType", value="PhoneNumber").
-
 define temp-table ttWebProfile no-undo before-table bttWebProfile
     field id               as character
     field seq              as integer    initial ?

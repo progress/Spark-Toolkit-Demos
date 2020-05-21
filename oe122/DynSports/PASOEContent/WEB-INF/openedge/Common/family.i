@@ -8,10 +8,6 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(table="ttFamily", fields="EmpNum,RelativeName").
-@openapi.openedge.entity.field.property(table="ttFamily", field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(table="ttFamily", field="seq", name="semanticType", value="Internal").
-
 define temp-table ttFamily no-undo before-table bttFamily
     field id                as character
     field seq               as integer   initial ?

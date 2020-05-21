@@ -12,10 +12,11 @@
 
 using Progress.Lang.* from propath.
 using Spark.Core.Manager.ISchemaManager from propath.
+using Spark.Core.Manager.ISchemaManager from propath.
 
 block-level on error undo, throw.
 
-class Business.UnitTest.Params:
+class Business.UnitTest.Params inherits Spark.Core.Service.Service use-widget-pool:
 
     define temp-table ttInParam no-undo
         field cString  as character
@@ -36,6 +37,23 @@ class Business.UnitTest.Params:
         field dDTimeTZ as datetime-tz
         .
     define dataset dsOutParam for ttOutParam.
+
+    method public override void initialize ( ):
+        define variable hDataset as handle no-undo.
+
+        /* Describe schema for any temp-tables to be exposed. */
+        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerTempTable(input temp-table ttInParam:handle).
+        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerTempTable(input temp-table ttOutParam:handle).
+
+        /* Describe schema for any datasets to be exposed. */
+        assign hDataset = dataset dsInParam:handle.
+        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerDataset(input hDataset).
+        assign hDataset = dataset dsOutParam:handle.
+        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerDataset(input hDataset).
+    end method. /* initialize */
+
+    method public override void dispose ( ):
+    end method. /* dispose */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/primitives", alias="primitives", mediaType="application/json").

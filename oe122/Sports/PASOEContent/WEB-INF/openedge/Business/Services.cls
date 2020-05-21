@@ -21,7 +21,13 @@ using Progress.Json.ObjectModel.* from propath.
 
 block-level on error undo, throw.
 
-class Business.Services use-widget-pool:
+class Business.Services inherits Spark.Core.Service.Service use-widget-pool:
+
+    method public override void initialize ( ):
+    end method. /* initialize */
+
+    method public override void dispose ( ):
+    end method. /* dispose */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/catalog", alias="catalog", mediaType="application/json").

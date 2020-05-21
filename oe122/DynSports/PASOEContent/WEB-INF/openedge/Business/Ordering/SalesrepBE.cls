@@ -52,7 +52,9 @@ class Business.Ordering.SalesrepBE inherits Spark.Core.Service.DynamicEntity use
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.
         assign oFieldProps = new FieldInfo("dsSalesrep", "ttSalesrep").
+        oFieldProps:addProperty("id", "semanticType", "Internal").
         oFieldProps:addProperty("seq", "semanticType", "Internal").
+        oFieldProps:addProperty("MonthQuota", "semanticType", "Currency").
         Spark.Core.Util.Annotate:describeFields(oFieldProps).
         delete object oFieldProps no-error.
     end method. /* initialize */

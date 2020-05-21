@@ -17,7 +17,13 @@ using Spark.Core.Security.TOTP from propath.
 
 block-level on error undo, throw.
 
-class Business.TwoFactor use-widget-pool:
+class Business.TwoFactor inherits Spark.Core.Service.Service use-widget-pool:
+
+    method public override void initialize ( ):
+    end method. /* initialize */
+
+    method public override void dispose ( ):
+    end method. /* dispose */
 
     method private logical sendChallenge ( input pcEmail as character,
                                            input pcToken as character ):

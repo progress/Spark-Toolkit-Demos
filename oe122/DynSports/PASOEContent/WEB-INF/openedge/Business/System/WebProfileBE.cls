@@ -52,6 +52,8 @@ class Business.System.WebProfileBE inherits Spark.Core.Service.DynamicEntity use
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.
         assign oFieldProps = new FieldInfo("dsWebProfile", "ttWebProfile").
+        oFieldProps:addProperty("id", "semanticType", "Internal").
+        oFieldProps:addProperty("seq", "semanticType", "Internal").
         oFieldProps:addProperty("UserNum", "editable", false).
         oFieldProps:makeRequired("Username"). /* Add "required" Validator */
         oFieldProps:makeRequired("Password"). /* Add "required" Validator */

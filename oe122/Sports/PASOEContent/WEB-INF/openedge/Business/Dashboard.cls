@@ -15,9 +15,20 @@ using Spark.Core.Manager.ISchemaManager from propath.
 
 block-level on error undo, throw.
 
-class Business.Dashboard use-widget-pool:
+class Business.Dashboard inherits Spark.Core.Service.Service use-widget-pool:
 
     {Common/dashboard.i}
+
+    method public override void initialize ( ):
+        /* Describe any properties about invoke methods to be exposed. */
+        define variable hDataset as handle no-undo.
+        assign hDataset = dataset dashboardData:handle.
+        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerDataset(input hDataset).
+        delete object hDataset no-error.
+    end method. /* initialize */
+
+    method public override void dispose ( ):
+    end method. /* dispose */
 
     define private temp-table ttTopCust no-undo
         field CustNum  as integer

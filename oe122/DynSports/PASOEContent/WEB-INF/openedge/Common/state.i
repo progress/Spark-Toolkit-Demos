@@ -7,8 +7,6 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(table="states", fields="Abbrev").
-
 define temp-table states no-undo
     field Abbrev   as character
     field FullName as character

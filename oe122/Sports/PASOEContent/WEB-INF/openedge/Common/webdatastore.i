@@ -11,6 +11,8 @@
 @openapi.openedge.entity.primarykey(table="ttWebDataStore", fields="WebSessionID,ObjectName").
 @openapi.openedge.entity.field.property(table="ttWebDataStore", field="id", name="semanticType", value="Internal").
 @openapi.openedge.entity.field.property(table="ttWebDataStore", field="seq", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttWebDataStore", field="WebSessionID", name="editable", value="false").
+@openapi.openedge.entity.field.property(table="ttWebDataStore", field="ObjectName", name="editable", value="false").
 
 define temp-table ttWebDataStore no-undo
     field id           as character

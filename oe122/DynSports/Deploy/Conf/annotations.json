@@ -112,12 +112,7 @@
     "constructor": null,
     "method": null,
     "destructor": null,
-    "data": {
-      "openapi.openedge.entity.primarykey": {
-        "table": "states",
-        "fields": "Abbrev"
-      }
-    },
+    "data": null,
     "user": null
   },
   "Business.Ordering.OrderBE": {
@@ -138,30 +133,12 @@
     "method": null,
     "destructor": null,
     "data": {
-      "openapi.openedge.entity.primarykey": [
-        {
-          "table": "ttOrder",
-          "fields": "Ordernum"
-        },
-        {
-          "table": "ttOrderLine",
-          "fields": "Ordernum"
-        }
-      ],
+      "openapi.openedge.entity.primarykey": {
+        "table": "ttOrderLine",
+        "fields": "Ordernum"
+      },
       "openapi.openedge.entity.field.property": [
         {
-          "table": "ttOrder",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttOrder",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
           "table": "ttOrderLine",
           "field": "id",
           "name": "semanticType",
@@ -173,13 +150,7 @@
           "name": "semanticType",
           "value": "Internal"
         }
-      ],
-      "openapi.openedge.entity.foreignkey": {
-        "name": "SalesrepFK",
-        "fields": "SalesRep",
-        "parent": "salesrep.ttSalesrep",
-        "parentFields": "SalesRep"
-      }
+      ]
     },
     "user": null
   },
@@ -200,32 +171,7 @@
     "constructor": null,
     "method": null,
     "destructor": null,
-    "data": {
-      "openapi.openedge.entity.primarykey": {
-        "table": "ttSalesrep",
-        "fields": "SalesRep"
-      },
-      "openapi.openedge.entity.field.property": [
-        {
-          "table": "ttSalesrep",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttSalesrep",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttSalesrep",
-          "field": "MonthQuota",
-          "name": "semanticType",
-          "value": "Currency"
-        }
-      ]
-    },
+    "data": null,
     "user": null
   },
   "Business.Personnel.EmployeeBE": {
@@ -245,26 +191,7 @@
     "constructor": null,
     "method": null,
     "destructor": null,
-    "data": {
-      "openapi.openedge.entity.primarykey": {
-        "table": "ttCustomer",
-        "fields": "EmpNum"
-      },
-      "openapi.openedge.entity.field.property": [
-        {
-          "table": "ttCustomer",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttCustomer",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
-        }
-      ]
-    },
+    "data": null,
     "user": null
   },
   "Business.Personnel.FamilyBE": {
@@ -284,29 +211,7 @@
     "constructor": null,
     "method": null,
     "destructor": null,
-    "data": {
-      "openapi.openedge.entity.primarykey": {
-        "table": "ttFamily",
-        "fields": [
-          "EmpNum",
-          "RelativeName"
-        ]
-      },
-      "openapi.openedge.entity.field.property": [
-        {
-          "table": "ttFamily",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttFamily",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
-        }
-      ]
-    },
+    "data": null,
     "user": null
   },
   "Business.Services": {
@@ -362,29 +267,7 @@
     "constructor": null,
     "method": null,
     "destructor": null,
-    "data": {
-      "openapi.openedge.entity.primarykey": {
-        "table": "ttWebDataStore",
-        "fields": [
-          "WebSessionID",
-          "ObjectName"
-        ]
-      },
-      "openapi.openedge.entity.field.property": [
-        {
-          "table": "ttWebDataStore",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttWebDataStore",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
-        }
-      ]
-    },
+    "data": null,
     "user": null
   },
   "Business.System.WebProfileBE": {
@@ -404,41 +287,7 @@
     "constructor": null,
     "method": null,
     "destructor": null,
-    "data": {
-      "openapi.openedge.entity.primarykey": {
-        "table": "ttWebProfile",
-        "fields": [
-          "Username",
-          "DomainName"
-        ]
-      },
-      "openapi.openedge.entity.field.property": [
-        {
-          "table": "ttWebProfile",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttWebProfile",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttWebProfile",
-          "field": "HomePhone",
-          "name": "semanticType",
-          "value": "PhoneNumber"
-        },
-        {
-          "table": "ttWebProfile",
-          "field": "WorkPhone",
-          "name": "semanticType",
-          "value": "PhoneNumber"
-        }
-      ]
-    },
+    "data": null,
     "user": null
   },
   "Business.System.WebRoleBE": {
@@ -458,26 +307,7 @@
     "constructor": null,
     "method": null,
     "destructor": null,
-    "data": {
-      "openapi.openedge.entity.primarykey": {
-        "table": "ttWebRole",
-        "fields": "RoleID"
-      },
-      "openapi.openedge.entity.field.property": [
-        {
-          "table": "ttWebRole",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttWebRole",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
-        }
-      ]
-    },
+    "data": null,
     "user": null
   },
   "Business.TwoFactor": {
@@ -502,7 +332,9 @@
     "meta": {
       "version": "1.0.0",
       "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\DynSports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\AnnoTest.cls",
-      "inherits": null,
+      "inherits": [
+        "Spark.Core.Service.Service"
+      ],
       "implements": null
     },
     "program": {
@@ -596,56 +428,7 @@
     "constructor": null,
     "method": null,
     "destructor": null,
-    "data": {
-      "openapi.openedge.entity.primarykey": {
-        "table": "ttCustomer",
-        "fields": "CustNum"
-      },
-      "openapi.openedge.entity.field.property": [
-        {
-          "table": "ttCustomer",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttCustomer",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttCustomer",
-          "field": "Name",
-          "name": "editable",
-          "value": "false"
-        },
-        {
-          "table": "ttCustomer",
-          "field": "Phone",
-          "name": "semanticType",
-          "value": "PhoneNumber"
-        },
-        {
-          "table": "ttCustomer",
-          "field": "Balance",
-          "name": "semanticType",
-          "value": "Currency"
-        },
-        {
-          "table": "ttCustomer",
-          "field": "CreditLimit",
-          "name": "semanticType",
-          "value": "Currency"
-        }
-      ],
-      "openapi.openedge.entity.foreignkey": {
-        "name": "SalesrepFK",
-        "fields": "SalesRep",
-        "parent": "salesrep.ttSalesrep",
-        "parentFields": "SalesRep"
-      }
-    },
+    "data": null,
     "user": null
   },
   "Business.UnitTest.Email": {
@@ -791,32 +574,7 @@
     "constructor": null,
     "method": null,
     "destructor": null,
-    "data": {
-      "openapi.openedge.entity.primarykey": {
-        "table": "ttWebContext",
-        "fields": [
-          "IdentityName",
-          "ContextType",
-          "ContextViewID",
-          "ContextTitle",
-          "ContextSeqNo"
-        ]
-      },
-      "openapi.openedge.entity.field.property": [
-        {
-          "table": "ttWebContext",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttWebContext",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
-        }
-      ]
-    },
+    "data": null,
     "user": null
   },
   "Business.UserData": {
