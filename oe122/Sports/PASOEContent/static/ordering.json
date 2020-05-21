@@ -1,6 +1,6 @@
 {
     "version": "1.4",
-    "lastModified": "Thu May 21 09:55:15 EDT 2020",
+    "lastModified": "Thu May 21 17:06:46 EDT 2020",
     "services": [{
         "name": "ordering",
         "address": "\/web\/pdo\/ordering",
@@ -64,8 +64,7 @@
                                         "ablType": "CHARACTER",
                                         "default": "",
                                         "title": "Name",
-                                        "origName": "Name",
-                                        "editable": "false"
+                                        "origName": "Name"
                                     },
                                     "Address": {
                                         "type": "string",
@@ -115,8 +114,8 @@
                                         "ablType": "CHARACTER",
                                         "default": "",
                                         "title": "Phone",
-                                        "semanticType": "PhoneNumber",
-                                        "mask": "000-000-0000"
+                                        "mask": "000-000-0000",
+                                        "semanticType": "PhoneNumber"
                                     },
                                     "SalesRep": {
                                         "type": "string",
@@ -410,7 +409,8 @@
                                             "type": "integer",
                                             "ablType": "INTEGER",
                                             "default": 0,
-                                            "title": "Cust Num"
+                                            "title": "Cust Num",
+                                            "validation": "required"
                                         },
                                         "OrderDate": {
                                             "type": "string",

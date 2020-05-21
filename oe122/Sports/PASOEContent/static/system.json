@@ -1,6 +1,6 @@
 {
   "version": "1.4",
-  "lastModified": "Thu May 21 09:55:20 EDT 2020",
+  "lastModified": "Thu May 21 17:06:57 EDT 2020",
   "services": [
     {
       "name": "system",
@@ -189,7 +189,8 @@
                           "type": "string",
                           "ablType": "CHARACTER",
                           "default": "",
-                          "title": "Username"
+                          "title": "Username",
+                          "validation": "required"
                         },
                         "DomainName": {
                           "type": "string",
@@ -201,7 +202,8 @@
                           "type": "string",
                           "ablType": "CHARACTER",
                           "default": "",
-                          "title": "Password"
+                          "title": "Password",
+                          "validation": "required"
                         },
                         "ResetCode": {
                           "type": "string",
@@ -280,16 +282,16 @@
                           "ablType": "CHARACTER",
                           "default": "",
                           "title": "Home Phone",
-                          "semanticType": "PhoneNumber",
-                          "mask": "000-000-0000"
+                          "mask": "000-000-0000",
+                          "semanticType": "PhoneNumber"
                         },
                         "WorkPhone": {
                           "type": "string",
                           "ablType": "CHARACTER",
                           "default": "",
                           "title": "Work Phone",
-                          "semanticType": "PhoneNumber",
-                          "mask": "000-000-0000"
+                          "mask": "000-000-0000",
+                          "semanticType": "PhoneNumber"
                         },
                         "MobilePhone": {
                           "type": "string",
