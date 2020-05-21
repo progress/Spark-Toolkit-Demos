@@ -73,6 +73,7 @@ class Business.Ordering.OrderBE inherits Spark.Core.Service.DynamicEntity use-wi
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.
         assign oFieldProps = new FieldInfo("dsOrder", "ttOrder").
+        oFieldProps:addProperty("id", "semanticType", "Internal").
         oFieldProps:addProperty("seq", "semanticType", "Internal").
         oFieldProps:addProperty("OrderNum", "editable", false).
         oFieldProps:makeRequired("CustNum"). /* Add "required" Validator */

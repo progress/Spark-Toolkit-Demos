@@ -43,8 +43,6 @@ define temp-table ttOrder no-undo before-table bttOrder
     .
 
 @openapi.openedge.entity.primarykey(table="ttOrderLine", fields="Ordernum").
-@openapi.openedge.entity.field.property(table="ttOrderLine", field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(table="ttOrderLine", field="seq", name="semanticType", value="Internal").
 
 define temp-table ttOrderLine no-undo before-table bttOrderLine
     field OrderNum        as integer   initial "0" label "Order Num"

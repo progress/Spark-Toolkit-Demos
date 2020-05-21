@@ -8,9 +8,9 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(table="ttCustomer", fields="EmpNum").
-@openapi.openedge.entity.field.property(table="ttCustomer", field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(table="ttCustomer", field="seq", name="semanticType", value="Internal").
+@openapi.openedge.entity.primarykey(table="ttEmployee", fields="EmpNum").
+@openapi.openedge.entity.field.property(table="ttEmployee", field="id", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttEmployee", field="seq", name="semanticType", value="Internal").
 
 define temp-table ttEmployee no-undo before-table bttEmployee
     field id               as character

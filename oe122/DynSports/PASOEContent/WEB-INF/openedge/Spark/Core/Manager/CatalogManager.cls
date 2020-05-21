@@ -325,6 +325,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             define variable cAnnoNames        as character extent   no-undo.
             define variable cFields           as character          no-undo.
             define variable cName             as character          no-undo.
+            define variable cOldServiceURI    as character          no-undo.
             define variable cNewServiceURI    as character          no-undo.
             define variable cNewServiceName   as character          no-undo.
             define variable cNewServiceUUID   as character          no-undo.
@@ -341,6 +342,13 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                 assign oAnnotation = this-object:Annotations:GetJsonObject(cAnnoName).
             else
                 return. /* There are no annotations for this resource. */
+
+            for first bResource no-lock
+                where bResource.ResourceUUID eq pcResourceUUID,
+                first bService no-lock
+                where bService.ServiceUUID eq bResource.ServiceUUID:
+                assign cOldServiceURI = bService.ServiceURI.
+            end. /* first bResource, bService */
 
             /* Look for a valid "program" grouping of annotations, which might be in the "user" grouping. */
             if oAnnotation:Has("program") and oAnnotation:GetType("program") eq JsonDataType:Object then
@@ -540,7 +548,6 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
                             extent(cTables) = ?.
                             assign cTables = oProps:GetNames().
                             do iZ = 1 to extent(cTables):
-message cTable ":" string(oProps:GetJsonObject(cTable):GetJsonText()).
                                 this-object:describeFields(cSchemaName, cTable, oProps:GetJsonObject(cTable)).
                             end.
 
@@ -638,9 +645,18 @@ message cTable ":" string(oProps:GetJsonObject(cTable):GetJsonText()).
                                                 bMethod.OperationVerb = lc(MethodEnum:put:toString())
                                                 .
                                     end case. /* bMethod.OperationType */
-message cMethodName ":" bMethod.OperationType "| WriteBI:" lWriteBI.
-                                    if lWriteBI and can-do("read,create,update,delete,submit", bMethod.OperationType) then
-                                        this-object:addProperty(cNewServiceURI, pcClassPath, bMethod.OperationType, "useBeforeImage", "logical", "true").
+
+                                    if lWriteBI and can-do("read,create,update,delete,submit", bMethod.OperationType) then do:
+                                        if (cNewServiceURI gt "") then
+                                            find first bService no-lock
+                                                 where bService.ServiceURI eq cNewServiceURI no-error.
+                                        else
+                                            find first bService no-lock
+                                                 where bService.ServiceURI eq cOldServiceURI no-error.
+
+                                        if available(bService) then
+                                            this-object:addProperty(bService.ServiceURI, pcClassPath, bMethod.OperationType, "useBeforeImage", "logical", "true").
+                                    end.
                                 end. /* progress.service.resourceMapping */
 
                                 when "openapi.openedge.method.security" then do:
@@ -2039,7 +2055,7 @@ message cMethodName ":" bMethod.OperationType "| WriteBI:" lWriteBI.
             end. /* CRUD */
 
             /* Supply default property for special methods. */
-            if can-do("read,create,update,delete,submit,invoke", bMethod.OperationType) then
+            if can-do("read,create,update,delete,submit,invoke,count", bMethod.OperationType) then
                 operationObj:Add("useBeforeImage", this-object:getBeforeImageFlag(bMethod.ResourceUUID, bMethod.OperationType)).
 
             /* Look for additional properties to provide on this operation. */

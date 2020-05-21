@@ -52,6 +52,7 @@ class Business.Personnel.EmployeeBE inherits Spark.Core.Service.DynamicEntity us
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.
         assign oFieldProps = new FieldInfo("dsEmployee", "ttEmployee").
+        oFieldProps:addProperty("id", "semanticType", "Internal").
         oFieldProps:addProperty("seq", "semanticType", "Internal").
         Spark.Core.Util.Annotate:describeFields(oFieldProps).
         delete object oFieldProps no-error.

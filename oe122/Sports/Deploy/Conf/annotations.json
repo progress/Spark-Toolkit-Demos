@@ -511,18 +511,6 @@
           "field": "CustNum",
           "name": "validation",
           "value": "required"
-        },
-        {
-          "table": "ttOrderLine",
-          "field": "id",
-          "name": "semanticType",
-          "value": "Internal"
-        },
-        {
-          "table": "ttOrderLine",
-          "field": "seq",
-          "name": "semanticType",
-          "value": "Internal"
         }
       ],
       "openapi.openedge.entity.foreignkey": {
@@ -750,18 +738,18 @@
     "destructor": null,
     "data": {
       "openapi.openedge.entity.primarykey": {
-        "table": "ttCustomer",
+        "table": "ttEmployee",
         "fields": "EmpNum"
       },
       "openapi.openedge.entity.field.property": [
         {
-          "table": "ttCustomer",
+          "table": "ttEmployee",
           "field": "id",
           "name": "semanticType",
           "value": "Internal"
         },
         {
-          "table": "ttCustomer",
+          "table": "ttEmployee",
           "field": "seq",
           "name": "semanticType",
           "value": "Internal"
