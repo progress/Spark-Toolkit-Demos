@@ -5,7 +5,7 @@
             "Implementation": "Sports.Spark.Core.Manager.ClientContext"
         }, {
             "Service": "Spark.Core.Service.ICatalog",
-            "Implementation": "Sports.Spark.Core.Service.Catalog"
+            "Implementation": "Spark.Core.Service.Catalog"
         }, {
             "Service": "OpenEdge.Web.DataObject.IServiceRegistry",
             "Implementation": "OpenEdge.Web.DataObject.ServiceRegistryImpl"
@@ -14,7 +14,7 @@
             "Implementation": "OpenEdge.Web.DataObject.DataObjectHandler"
         }],
         "ServiceLifeCycle": [{
-            "ServiceMatch": "Sports.Spark.Core.Service.Catalog",
+            "ServiceMatch": "Spark.Core.Service.Catalog",
             "LifeCycle": "Session"
         }, {
             "ServiceMatch": "OpenEdge.Web.DataObject.ServiceRegistryImpl",
