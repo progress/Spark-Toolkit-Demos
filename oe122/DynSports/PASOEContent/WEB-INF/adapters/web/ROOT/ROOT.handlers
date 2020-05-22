@@ -1,0 +1,35 @@
+{
+    "version": "2.0",
+    "serviceName": "",
+    "handlers": [{
+            "uri": "/api",
+            "class": "OpenEdge.Web.DataObject.DataObjectHandler",
+            "enabled": true
+        },
+        {
+            "uri": "/catalog/openapi",
+            "class": "OpenEdge.Web.DataObject.DataObjectHandler",
+            "enabled": true
+        },
+        {
+            "uri": "/catalog",
+            "class": "OpenEdge.Web.DataObject.DataObjectHandler",
+            "enabled": true
+        },
+        {
+            "uri": "/upload",
+            "class": "Sports.Handler.FileUpload",
+            "enabled": true
+        },
+        {
+            "uri": "/_oeping",
+            "class": "OpenEdge.Web.PingWebHandler",
+            "enabled": true
+        },
+        {
+            "uri": "/status/{type}",
+            "class": "Spark.Core.Handler.StatusHandler",
+            "enabled": true
+        }
+    ]
+}

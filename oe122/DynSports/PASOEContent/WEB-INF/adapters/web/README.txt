@@ -14,7 +14,7 @@ inside the JSON Object with the below format.
 For ROOT WebApp, ROOT.handlers should be placed inside the "ROOT" folder with no service name
 in the handlers file.
 
-Here is an example of a handlers file
+Here is an example of a handlers file (version 2.0 is preferred long-term):
 
 {
   "version": "2.0",
@@ -30,5 +30,5 @@ Here is an example of a handlers file
 The URL to access the service should be in the format of /web/<ServiceName>/<ServiceURI>
 So, for the above example it would be - /web/PingService/_oeping
 
-
-
+Read more via the OpenEdge Information Hub:
+https://docs.progress.com/bundle/pas-for-openedge-admin/page/Deploy-web-handler-services.html
