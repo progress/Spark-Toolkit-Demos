@@ -10,6 +10,7 @@
 
 /* ***************************  Definitions  ************************** */
 &GLOBAL-DEFINE USE_INVOKE_ENVELOPE FALSE
+&GLOBAL-DEFINE OVERRIDE_WITH_GET "/context/count,/locality/provinces,/locality/states,/user/menu,/user/session,/services/catalog,/services/openapi,/services/mapping,/access/rules,/leakycode/buffer,/leakycode/handle,/leakycode/memptr,/leakycode/object,/runcode/stop"
 
 block-level on error undo, throw.
 
@@ -242,6 +243,15 @@ function fixData returns logical ( input-output poGenData as JsonObject ):
                         end. /* ia */
                     end. /* Has arg */
                 end. /* Has entity */
+
+                if valid-object(oMethod) and cMethods[iz] eq "PUT"
+                   and can-do({&OVERRIDE_WITH_GET}, cOperations[iy]) then do:
+                    if not oMethods:Has("GET") then do:
+                        message substitute("Changing Operation '&1' from PUT to GET", cOperations[iy]).
+                        oMethods:Add("GET", cast(oMethod:Clone(), JsonObject)).
+                        oMethods:Remove("PUT").
+                    end.
+                end. /* Change to GET */
             end. /* iz */
             extent(cMethods) = ?.
         end. /* iy */
