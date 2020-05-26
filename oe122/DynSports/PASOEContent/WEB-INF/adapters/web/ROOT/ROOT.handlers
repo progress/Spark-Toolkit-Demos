@@ -25,11 +25,6 @@
             "uri": "/_oeping",
             "class": "OpenEdge.Web.PingWebHandler",
             "enabled": true
-        },
-        {
-            "uri": "/status/{type}",
-            "class": "Spark.Core.Handler.StatusHandler",
-            "enabled": true
         }
     ]
 }
