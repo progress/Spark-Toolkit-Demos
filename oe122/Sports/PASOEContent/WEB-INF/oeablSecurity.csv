@@ -6,7 +6,7 @@
 "/apsv/**","POST","permitAll()"
 
 ############## Intercept-url definitions for the REST transport URIs ###############
-"/rest/_oeping","*","permitAll()"
+"/rest/_oeping","GET","permitAll()"
 "/rest/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the SOAP transport URIs ###############

@@ -1,0 +1,10 @@
+{
+    "version": "2.0",
+    "serviceName": "api",
+    "handlers": [{
+            "uri": "/",
+            "class": "OpenEdge.Web.DataObject.DataObjectHandler",
+            "enabled": true
+        }
+    ]
+}
