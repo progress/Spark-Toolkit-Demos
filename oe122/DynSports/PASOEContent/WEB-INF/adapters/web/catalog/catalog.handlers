@@ -2,14 +2,13 @@
     "version": "2.0",
     "serviceName": "catalog",
     "handlers": [{
-            "uri": "/openapi",
-            "class": "OpenEdge.Web.DataObject.DataObjectHandler",
-            "enabled": true
-        },
-        {
-            "uri": "/",
-            "class": "OpenEdge.Web.DataObject.DataObjectHandler",
-            "enabled": true
-        }
-    ]
+        "uri": "/openapi",
+        "class": "OpenEdge.Web.DataObject.DataObjectHandler",
+        "enabled": true
+    },
+    {
+        "uri": "/",
+        "class": "OpenEdge.Web.DataObject.DataObjectHandler",
+        "enabled": true
+    }]
 }

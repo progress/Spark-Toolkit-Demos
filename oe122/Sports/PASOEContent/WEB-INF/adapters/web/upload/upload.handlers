@@ -5,6 +5,5 @@
             "uri": "/",
             "class": "Sports.Handler.FileUpload",
             "enabled": true
-        }
-    ]
+    }]
 }
