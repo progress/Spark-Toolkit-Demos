@@ -1448,17 +1448,6 @@
     "data": null,
     "user": null
   },
-  "ApsvTest.p": {
-    "meta": {
-      "version": "1.0.0",
-      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\ApsvTest.p"
-    },
-    "program": null,
-    "procedure": null,
-    "function": null,
-    "data": null,
-    "user": null
-  },
   "Business.UnitTest.LeakyCode": {
     "meta": {
       "version": "1.0.0",
@@ -1757,6 +1746,56 @@
         "openapi.openedge.method.property": {
           "name": "verb",
           "value": "get"
+        }
+      }
+    },
+    "destructor": null,
+    "data": null,
+    "user": null
+  },
+  "Business.UnitTest.Token": {
+    "meta": {
+      "version": "1.0.0",
+      "fileName": "D:\\OpenSource\\Spark-Toolkit-Demos\\oe122\\Sports\\PASOEContent\\WEB-INF\\openedge\\Business\\UnitTest\\Token.cls",
+      "inherits": [
+        "Spark.Core.Service.DynamicResource"
+      ],
+      "implements": null
+    },
+    "program": {
+      "program FILE": {
+        "name": "Token.cls",
+        "module": "AppServer"
+      },
+      "openapi.openedge.export FILE": {
+        "type": "REST",
+        "executionMode": "singleton",
+        "useReturnValue": "false",
+        "writeDataSetBeforeImage": "false"
+      },
+      "progress.service.resource FILE": {
+        "name": "runcode",
+        "URI": "\/token",
+        "schemaName": "",
+        "schemaFile": ""
+      }
+    },
+    "property": null,
+    "event": null,
+    "constructor": null,
+    "method": {
+      "testTokens(INPUT CHARACTER,OUTPUT DATETIME-TZ,OUTPUT CHARACTER,OUTPUT CHARACTER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/tokens",
+          "alias": "tokens",
+          "mediaType": "application\/json"
         }
       }
     },
