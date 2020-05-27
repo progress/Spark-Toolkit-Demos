@@ -592,7 +592,7 @@ class OpenEdge.Core.Json.JsonConverter:
                 when JsonDataType:STRING  then
                     dynamic-invoke(pTarget, methodName, propName, pSource:GetJsonText(propName)).
                 when JsonDataType:NUMBER  then
-                    dynamic-invoke(pTarget, methodName + 'Number':u, propName, pSource:GetJsonText(propName)).
+                    dynamic-invoke(pTarget, methodName + 'Number':u, propName, string(pSource:GetJsonText(propName))).
             end case. 
         end.
     end method.
