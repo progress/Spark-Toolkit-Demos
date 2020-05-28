@@ -1618,7 +1618,7 @@
     },
     "program": {
       "program FILE": {
-        "name": "BadObjects.cls",
+        "name": "Params.cls",
         "module": "AppServer"
       },
       "openapi.openedge.export FILE": {

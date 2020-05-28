@@ -6,12 +6,11 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-@program FILE(name="BadObjects.cls", module="AppServer").
+@program FILE(name="Params.cls", module="AppServer").
 @openapi.openedge.export FILE(type="REST", executionMode="singleton", useReturnValue="false", writeDataSetBeforeImage="false").
 @progress.service.resource FILE(name="params", URI="/params", schemaName="", schemaFile="").
 
 using Progress.Lang.* from propath.
-using Spark.Core.Manager.ISchemaManager from propath.
 using Spark.Core.Manager.ISchemaManager from propath.
 
 block-level on error undo, throw.

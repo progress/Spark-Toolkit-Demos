@@ -1,5 +1,5 @@
 /* *************************************************************************************************************************
-Copyright (c) 2019 by Progress Software Corporation and/or one of its subsidiaries or affiliates. All rights reserved.
+Copyright (c) 2019-2020 by Progress Software Corporation and/or one of its subsidiaries or affiliates. All rights reserved.
 ************************************************************************************************************************** */
 /*------------------------------------------------------------------------
     File        : JsonConverter
@@ -590,10 +590,13 @@ class OpenEdge.Core.Json.JsonConverter:
                 when JsonDataType:OBJECT  then
                     dynamic-invoke(pTarget, methodName, propName, pSource:GetJsonObject(propName)).
                 when JsonDataType:STRING  then
+                    // The Add/Set methods have overloads that accept longchar, so we won't run into the AddNumber issue
                     dynamic-invoke(pTarget, methodName, propName, pSource:GetJsonText(propName)).
                 when JsonDataType:NUMBER  then
+                    // Because GetJsonText() returns a LONGCHAR, the reflection fails. It is extremely unlikely
+                    // that a number would have >2GB's worth of digits, so just STRING() it.
                     dynamic-invoke(pTarget, methodName + 'Number':u, propName, string(pSource:GetJsonText(propName))).
-            end case. 
+            end case.
         end.
     end method.
 
@@ -771,7 +774,6 @@ class OpenEdge.Core.Json.JsonConverter:
                    - iso-date
                    - memptr / base64-encoded value
                 */
-                
                 assign strValue = pArray:GetJsonText(pIdx)
                        cnt      = length(strValue, 'raw':u)
                        pos      = index(strValue, '-':u)
@@ -837,7 +839,7 @@ class OpenEdge.Core.Json.JsonConverter:
                 // base64-encoded
                 if substring(strValue, cnt - 2) eq '==':u then
                 do on error undo, throw:
-                    assign mData = base64-decode (strValue)
+                    assign mData = base64-decode(strValue)
                            no-error.
                     if not error-status:error then
                         return new OpenEdge.Core.Memptr(mData).
