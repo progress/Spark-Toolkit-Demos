@@ -1,13 +1,14 @@
 {
     "Config": {
         "General": [{
-            "ApiVersion": 5.1,
+            "ApiVersion": 6.0,
             "CatalogService": "Spark.Core.Service.ICatalog",
             "BusinessRoot": "Business",
             "IdProperty": "id",
             "PreLoader": "",
             "ReadFilter": "filter",
-            "ServicePrefix": "api"
+            "ServicePrefix": "api",
+            "EnableDebugs": false
         }],
         "ServiceSource": [{
             "ServiceName": "common",
