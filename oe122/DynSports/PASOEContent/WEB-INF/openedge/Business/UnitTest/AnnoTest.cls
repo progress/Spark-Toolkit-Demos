@@ -31,7 +31,7 @@ class Business.UnitTest.AnnoTest inherits Spark.Core.Service.Service use-widget-
     end method. /* initialize */
 
     method public override void dispose ( ):
-        message "Dispose".
+        message "Ran Dispose".
     end method. /* dispose */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").

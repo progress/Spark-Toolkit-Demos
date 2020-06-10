@@ -46,6 +46,45 @@ class Business.UnitTest.RunCode inherits Spark.Core.Service.Service use-widget-p
     end method. /* lookBusy */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
+    @progress.service.resourceMapping(type="REST", operation="invoke", URI="/busydo", alias="busydo", mediaType="application/json").
+    method public void doBusy ( input  busyTime as integer,
+                                output elapsed  as integer ):
+        /* If no time specified then default to 1000 milliseconds. */
+        if busyTime eq ? then assign busyTime = 1000.
+
+        if busyTime lt 0 then /* Throw an error if the provided value is negative; SEE allows changing of the response code. */
+            undo, throw new OpenEdge.Web.SendExceptionError(OpenEdge.Net.HTTP.StatusCodeEnum:BadRequest,
+                                                            "Busy Time parameter cannot be less than zero.").
+
+        /* Run a do loop for some period to imitate long-running code. */
+        define variable dStart as datetime  no-undo.
+        define variable dNow   as datetime  no-undo.
+        define variable oArr   as JsonArray no-undo.
+        define variable iCount as int64     no-undo.
+
+        assign dStart = now.
+        assign oArr = new JsonArray().
+        
+        repeat:
+            assign iCount = iCount + 1.
+            assign dNow = now.
+            if oArr:length eq 0 then
+                oArr:Add(dNow).
+            else if dNow ne oArr:GetDatetime(oArr:length) then
+                oArr:Add(dNow).
+            if interval(now, dStart, "milliseconds") ge busyTime then leave.
+        end.
+
+        finally:
+            /* Confirm that execution paused for the time stated. */
+            assign elapsed = interval(now, dStart, "milliseconds").
+            if log-manager:logging-level ge 4 then
+                oArr:WriteFile(session:temp-directory + "/busy.json", true).
+            delete object oArr no-error.
+        end finally.
+    end method. /* doBusy */
+
+    @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/stop", alias="stop", mediaType="application/json").
     @openapi.openedge.method.property(name="verb", value="get").
     method public void stopCode ( output completed as logical ):
