@@ -17,7 +17,7 @@
 @openapi.openedge.resource.version(major="1", minor="0", patch="1").
 
 /* Proposed annotation to set security options for this resource overall. */
-@openapi.openedge.resource.security(denyAll="true").
+@openapi.openedge.resource.access(role="PSC_Admin").
 
 using Progress.Lang.*.
 using Spark.Core.Util.ApplicationError from propath.
@@ -43,7 +43,7 @@ class Business.UnitTest.AnnoTest inherits Spark.Core.Service.Service use-widget-
     @openapi.openedge.method.parameter(name="messageText", type="field", alias="text").
 
     /* Proposed annotation to set distinct security options on this method only. */
-    @openapi.openedge.method.security(role="ROLE_PSCUser,ROLE_ANONYMOUS").
+    @openapi.openedge.method.access(role="ROLE_PSCUser,ROLE_ANONYMOUS").
     method public void testMessage ( input  messageType as character,
                                      output messageText as character ):
         assign messageText = "no type".

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <propath version="12.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="schema/propath.xsd">
-    <propathentry env="all" kind="src" path="@{ROOT}\PASOEContent\WEB-INF\openedge" platform="All"/>
+    <propathentry env="all" kind="src" output="@{ROOT}\PASOEContent\WEB-INF\openedge" path="@{ROOT}\PASOEContent\WEB-INF\openedge" platform="All"/>
     <propathentry env="all" kind="lib" path="@{ROOT}\AppServer\Spark.pl" platform="All"/>
     <propathentry env="all" kind="src" path="@{ROOT}\AppServer" platform="All"/>
     <propathentry env="all" kind="dir" path="@{ROOT}\tools" platform="All"/>
