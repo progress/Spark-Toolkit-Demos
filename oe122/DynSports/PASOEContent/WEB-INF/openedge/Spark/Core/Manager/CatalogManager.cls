@@ -329,7 +329,7 @@ class Spark.Core.Manager.CatalogManager inherits Spark.Core.Manager.Manager impl
             define variable cOldServiceURI    as character          no-undo.
             define variable cNewServiceURI    as character          no-undo.
             define variable cNewServiceName   as character          no-undo.
-            define variable cNewServiceUUID   as character          no-undo.            
+            define variable cNewServiceUUID   as character          no-undo.
             define variable cSchemaName       as character          no-undo.
             define variable iVersion          as integer   extent 3 no-undo.
             define variable iX                as integer            no-undo.
