@@ -131,6 +131,7 @@
                 <include name="**/*.i"/>
                 <include name="**/*.cls"/>
                 <include name="**/*.p"/>
+				<include name="**/*.r"/>
             </fileset>
         </copy>
 
