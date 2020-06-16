@@ -362,8 +362,8 @@
         "minor": "0",
         "patch": "1"
       },
-      "openapi.openedge.resource.security": {
-        "denyAll": "true"
+      "openapi.openedge.resource.access": {
+        "role": "PSC_Admin"
       }
     },
     "property": null,
@@ -399,7 +399,7 @@
             "alias": "text"
           }
         ],
-        "openapi.openedge.method.security": {
+        "openapi.openedge.method.access": {
           "role": [
             "ROLE_PSCUser",
             "ROLE_ANONYMOUS"
