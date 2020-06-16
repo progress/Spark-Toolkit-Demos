@@ -52,6 +52,8 @@ class Business.UnitTest.AnnoTest inherits Spark.Core.Service.Service use-widget-
             assign messageText = messageType.
 
             case messageType:
+                when "Hello" then
+                    assign messageText = "Hello World".
                 when "Teapot" then
                     undo, throw new AppError("I'm a teapot", -418).
                 when "AppError" then
