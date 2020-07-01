@@ -94,6 +94,7 @@ class OpenEdge.Core.Util.AnnotationWriter implements ISupportInitialize:
         assign file-info:file-name = pFilename.
         if not file-info:full-pathname eq ?
            and index(file-info:file-type, 'F':u) gt 0
+           and index(file-info:file-type, 'R':u) gt 0
         then
             ParseXref(pFilename).
     end constructor.

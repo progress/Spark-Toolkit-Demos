@@ -151,6 +151,9 @@ class OpenEdge.Core.String serializable
     /** Splits the value of this string into an array using
         a specified delmiter 
         
+        If the delimiter does not appear in the string, and the string is not unknown,
+        then the array has an extent of 1 and contains the string.
+        
         @param OpenEdge.Core.String A value to split
         @param character A delimter used to split the string
         @return Array  An array object of strings */
@@ -160,9 +163,17 @@ class OpenEdge.Core.String serializable
         define variable iLoop as integer no-undo.
         define variable iMax as integer no-undo.
         
-        assign iMax = num-entries(poValue:mUTF8Value, pcDelimiter)
-               oArray = new Array(iMax)
-               .
+        Assert:NotNull(pcDelimiter, 'Delimiter').
+        
+        assign iMax = num-entries(poValue:mUTF8Value, pcDelimiter).
+        if iMax eq ? then
+            return oArray.
+        
+        assign oArray = new Array(iMax).
+        
+        if iMax eq 0 then
+            oArray:Add(poValue).
+        
         do iLoop = 1 to iMax:
             oArray:SetValue(new OpenEdge.Core.String(entry(iLoop, poValue:mUTF8Value, pcDelimiter)),
                             iLoop).
@@ -183,7 +194,10 @@ class OpenEdge.Core.String serializable
     end method.
             
     /** Splits the value of this string into an array using
-        a specified delimiter 
+        a specified delimiter.
+        
+        If the delimiter does not appear in the string, and the string is not unknown,
+        then the array has an extent of 1 and contains the string.
         
         @param longchar A value to split
         @param character A delimter used to split the string
@@ -194,13 +208,19 @@ class OpenEdge.Core.String serializable
         define variable iLoop as integer no-undo.
         define variable iMax as integer no-undo.
         
+        Assert:NotNull(pcDelimiter, 'Delimiter').
+        
         assign iMax = num-entries(pcValue, pcDelimiter).
-        if iMax eq 0
-        or iMax eq ?
-        then
+        if iMax eq ? then
             return cArray.
-            
-        assign extent(cArray) = iMax.
+        
+        if iMax eq 0 then
+            assign extent(cArray) = 1
+                   // this should only happen of value and delimiter are empty
+                   cArray[1]      = pcValue
+                   .
+        else
+            assign extent(cArray) = iMax.
         do iLoop = 1 to iMax:
             assign cArray[iLoop] = entry(iLoop, pcValue, pcDelimiter).
         end. 
