@@ -1730,6 +1730,20 @@
           "mediaType": "application\/json"
         }
       },
+      "doBusy(INPUT INTEGER,OUTPUT INTEGER)": {
+        "openapi.openedge.export": {
+          "type": "REST",
+          "useReturnValue": "false",
+          "writeDataSetBeforeImage": "false"
+        },
+        "progress.service.resourceMapping": {
+          "type": "REST",
+          "operation": "invoke",
+          "URI": "\/busydo",
+          "alias": "busydo",
+          "mediaType": "application\/json"
+        }
+      },
       "stopCode(OUTPUT LOGICAL)": {
         "openapi.openedge.export": {
           "type": "REST",
