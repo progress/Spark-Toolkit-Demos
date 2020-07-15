@@ -38,12 +38,14 @@ define variable oAgent    as JsonObject    no-undo.
 define variable oProps    as JsonObject    no-undo.
 define variable oSessions as JsonArray     no-undo.
 define variable oClients  as JsonArray     no-undo.
+define variable oClSess   as JsonArray     no-undo.
 define variable iLoop     as integer       no-undo.
 define variable iLoop2    as integer       no-undo.
 define variable iTotSess  as integer       no-undo.
 define variable iIdle     as integer       no-undo.
 define variable iMaxSess  as integer       no-undo.
 define variable iClients  as integer       no-undo.
+define variable iSessions as integer       no-undo.
 define variable cScheme   as character     no-undo.
 define variable cHost     as character     no-undo.
 define variable cPort     as character     no-undo.
@@ -136,6 +138,7 @@ do:
         if cast(oEntity, JsonObject):Has("result") then do:
             oProps = cast(oEntity, JsonObject):GetJsonObject("result").
             assign iMaxSess = integer(oProps:GetCharacter("maxABLSessionsPerAgent")).
+            message substitute("&1 Max ABLSessions", iMaxSess).
         end.
     end.
 
@@ -153,7 +156,25 @@ do:
         if cast(oEntity, JsonObject):Has("result") then do:
             oClients = cast(oEntity, JsonObject):GetJsonObject("result"):GetJsonArray("ClientConnection").
             assign iClients = oClients:Length.
-            message substitute("&1 of &2 Client Connections (ABLSessions)", iClients, iMaxSess).
+            message substitute("&1 Client Connections", iClients).
+        end.
+    end.
+
+    /* Get a count of client (http) sessions. */
+    assign cHttpUrl = substitute("&1://&2:&3/oemanager/applications/&4/sessions", cScheme, cHost, cPort, cAblApp).
+    oReq = RequestBuilder
+        :Get(cHttpUrl)
+        :ContentType("application/vnd.progress+json")
+        :UsingBasicAuthentication(oCreds)
+        :Request.
+    oResp = HttpClient:Instance():Execute(oReq).
+    oEntity = oResp:Entity.
+    if type-of(oEntity, JsonObject) then
+    do:
+        if cast(oEntity, JsonObject):Has("result") then do:
+            oClSess = cast(oEntity, JsonObject):GetJsonObject("result"):GetJsonArray("OEABLSession").
+            assign iSessions = oClSess:Length.
+            message substitute("&1 Client Sessions", iSessions).
         end.
     end.
 end. /* Valid Entity */

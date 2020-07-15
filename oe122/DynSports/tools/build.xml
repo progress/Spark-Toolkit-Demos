@@ -15,29 +15,6 @@
             </fail>
             <property name="dlcHome" value="${env.DLC}"/>
             <echo message="DLC Home: ${dlcHome}"/>
-
-            <!-- Determine current operating system in use. -->
-            <echo message="OS Arch: ${os.arch}"/>
-            <condition property="isWin64">
-                <os family="windows"/>
-            </condition>
-            <condition property="isUnix">
-                <os family="unix"/>
-            </condition>
-
-            <!-- Determine script suffix, database location, and PAS root. -->
-            <condition property="scriptSuffix" value="sh" else="bat">
-                <os family="unix"/>
-            </condition>
-            <condition property="path" value="/usr/databases" else="C:\Databases">
-                <os family="unix"/>
-            </condition>
-            <condition property="pas.root" value="/usr/pas" else="C:/PASOE">
-                <os family="unix"/>
-            </condition>
-
-            <!-- Add the ANT-Contrib library to this environment (present in 11.7.4+ and 12.0+). -->
-            <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
         </sequential>
     </macrodef>
 
