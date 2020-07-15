@@ -49,7 +49,7 @@ if hServer:connected() then do:
     hCPO:seal("spark01").
     hServer:request-info:SetClientPrincipal(hCPO).
 
-    do stop-after 20 on stop undo, leave:
+    do stop-after 30 on stop undo, leave:
         run Business/HelloProc.p on server hServer single-run set hProc no-error.
         if error-status:error then
             message "Error, Return-Value:" return-value view-as alert-box.
