@@ -34,4 +34,20 @@
         </PCTRun>
     </target>
 
+    <target name="trim">
+        <init_env/>
+
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="trimSessions.p">
+            <propath>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+        </PCTRun>
+    </target>
+
 </project>
