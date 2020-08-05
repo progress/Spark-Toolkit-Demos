@@ -60,6 +60,7 @@ assign
     cAblApp   = "SportsPASOE"
     .
 
+/* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
     assign
         cScheme   = entry(1, session:parameter)
@@ -71,6 +72,15 @@ if num-entries(session:parameter) ge 6 then
         .
 else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
+else
+    assign
+        cScheme   = dynamic-function("getParameter" in source-procedure, "Scheme") when dynamic-function("getParameter" in source-procedure, "Scheme") gt ""
+        cHost     = dynamic-function("getParameter" in source-procedure, "Host") when dynamic-function("getParameter" in source-procedure, "Host") gt ""
+        cPort     = dynamic-function("getParameter" in source-procedure, "Port") when dynamic-function("getParameter" in source-procedure, "Port") gt ""
+        cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
+        cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
+        cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
+        .
 
 assign oClient = ClientBuilder:Build():Client.
 assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).

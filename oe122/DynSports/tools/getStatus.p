@@ -8,6 +8,8 @@
  *   UserId   [tomcat]
  *   Password [tomcat]
  *   ABL App  [SportsPASOE]
+ *
+ * Reference: https://knowledgebase.progress.com/articles/Article/P89737
  */
 
 using OpenEdge.Core.Assert.
@@ -45,7 +47,6 @@ define variable iLoop     as integer       no-undo.
 define variable iLoop2    as integer       no-undo.
 define variable iTotSess  as integer       no-undo.
 define variable iBusySess as integer       no-undo.
-define variable iMaxSess  as integer       no-undo.
 define variable iClients  as integer       no-undo.
 define variable iSessions as integer       no-undo.
 define variable cScheme   as character     no-undo.
@@ -64,6 +65,7 @@ assign
     cAblApp   = "SportsPASOE"
     .
 
+/* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
     assign
         cScheme   = entry(1, session:parameter)
@@ -75,6 +77,15 @@ if num-entries(session:parameter) ge 6 then
         .
 else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
+else
+    assign
+        cScheme   = dynamic-function("getParameter" in source-procedure, "Scheme") when dynamic-function("getParameter" in source-procedure, "Scheme") gt ""
+        cHost     = dynamic-function("getParameter" in source-procedure, "Host") when dynamic-function("getParameter" in source-procedure, "Host") gt ""
+        cPort     = dynamic-function("getParameter" in source-procedure, "Port") when dynamic-function("getParameter" in source-procedure, "Port") gt ""
+        cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
+        cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
+        cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
+        .
 
 assign oClient = ClientBuilder:Build():Client.
 assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).
@@ -82,7 +93,9 @@ assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword)
 /* Initial URL to obtain a list of all agents for an ABL Application. */
 assign cHttpUrl = substitute("&1://&2:&3/oemanager/applications/&4/agents", cScheme, cHost, cPort, cAblApp).
 
-message substitute("Looking for agents of &1...", cAblApp).
+message substitute("PASOE Instance: &1://&2:&3", cScheme, cHost, cPort).
+
+message substitute("ABL Application: &1", cAblApp).
 
 oReq = RequestBuilder
         :Get(cHttpUrl)
@@ -115,22 +128,32 @@ do:
         if type-of(oEntity, JsonObject) then
         do:
             if cast(oEntity, JsonObject):Has("result") then do:
+                message substitute("~nAgent PID &1: &2", oAgent:GetCharacter("pid"), oAgent:GetCharacter("state")).
+                message "~n~tSESSION ID~tSTATE~tSTARTED~t~t~t~tMEMORY".
+
                 oSessions = cast(oEntity, JsonObject):GetJsonObject("result"):GetJsonArray("AgentSession").
                 assign
                     iTotSess  = oSessions:Length
                     iBusySess = 0
                     .
+
                 do iLoop2 = 1 to iTotSess:
                     if oSessions:GetJsonObject(iLoop2):GetCharacter("SessionState") ne "IDLE" then
                         assign iBusySess = iBusySess + 1.
+
+                    message substitute("~t~t&1~t&2~t&3~t&4 KB",
+                                        oSessions:GetJsonObject(iLoop2):GetInteger("SessionId"),
+                                        oSessions:GetJsonObject(iLoop2):GetCharacter("SessionState"),
+                                        oSessions:GetJsonObject(iLoop2):GetCharacter("StartTime"),
+                                        trim(string(round(oSessions:GetJsonObject(iLoop2):GetInt64("SessionMemory") / 1024, 0), ">>>,>>>,>>>,>>9"))).
                 end.
-                message substitute("Agent &1 [&2]: &3% Busy", oAgent:GetCharacter("pid"), oAgent:GetCharacter("state"), round((iBusySess / iTotSess) * 100, 1)).
-                message substitute("Agent &1, Total Sessions: &2", oAgent:GetCharacter("pid"), iTotSess).
+
+                message substitute("~tTotal Agent-Sessions: &1 (&2% Busy)", iTotSess, round((iBusySess / iTotSess) * 100, 1)).
             end.
         end.
     end. /* iLoop */
 
-    /* Get the configured max for ABLSessions. */
+    /* Get the configured max for ABLSessions/Connections per agent, along with min/max/initial agents. */
     assign cHttpUrl = substitute("&1://&2:&3/oemanager/applications/&4/properties", cScheme, cHost, cPort, cAblApp).
     oReq = RequestBuilder
         :Get(cHttpUrl)
@@ -143,8 +166,40 @@ do:
     do:
         if cast(oEntity, JsonObject):Has("result") then do:
             oProps = cast(oEntity, JsonObject):GetJsonObject("result").
-            assign iMaxSess = integer(oProps:GetCharacter("maxABLSessionsPerAgent")).
-            message substitute("&1 Max ABLSessions", iMaxSess).
+            message "~n". /* Empty Line */
+
+            if oProps:Has("minAgents") then
+                message substitute("Min Agents: &1", integer(oProps:GetCharacter("minAgents"))).
+            if oProps:Has("maxAgents") then
+                message substitute("Max Agents: &1", integer(oProps:GetCharacter("maxAgents"))).
+            if oProps:Has("numInitialAgents") then
+                message substitute("Initial Agents: &1", integer(oProps:GetCharacter("numInitialAgents"))).
+            if oProps:Has("maxConnectionsPerAgent") then
+                message substitute("Max Connections/Agent: &1", integer(oProps:GetCharacter("maxConnectionsPerAgent"))).
+            if oProps:Has("maxABLSessionsPerAgent") then
+                message substitute("Max ABLSessions/Agent: &1", integer(oProps:GetCharacter("maxABLSessionsPerAgent"))).
+        end.
+    end.
+
+    /* Get the configured initial number of sessions along with the min available sessions. */
+    assign cHttpUrl = substitute("&1://&2:&3/oemanager/applications/&4/agents/properties", cScheme, cHost, cPort, cAblApp).
+    oReq = RequestBuilder
+        :Get(cHttpUrl)
+        :ContentType("application/vnd.progress+json")
+        :UsingBasicAuthentication(oCreds)
+        :Request.
+    oResp = oClient:Execute(oReq).
+    oEntity = oResp:Entity.
+    if type-of(oEntity, JsonObject) then
+    do:
+        if cast(oEntity, JsonObject):Has("result") then do:
+            oProps = cast(oEntity, JsonObject):GetJsonObject("result").
+            message "~n". /* Empty Line */
+
+            if oProps:Has("numInitialSessions") then
+                message substitute("Initial Sessions/Agent: &1", integer(oProps:GetCharacter("numInitialSessions"))).
+            if oProps:Has("minAvailableABLSessions") then
+                message substitute("Min Avail Sessions/Agent: &1", integer(oProps:GetCharacter("minAvailableABLSessions"))).
         end.
     end.
 
@@ -161,8 +216,29 @@ do:
     do:
         if cast(oEntity, JsonObject):Has("result") then do:
             oClients = cast(oEntity, JsonObject):GetJsonObject("result"):GetJsonArray("ClientConnection").
+
             assign iClients = oClients:Length.
-            message substitute("&1 Client Connections", iClients).
+            if iClients gt 0 then
+                message "~n~tCLIENT~t~tADAPTER~tREQUEST START~t~t~tELAPSED~tPROCEDURE~t~t~t~t~tURL".
+
+            do iLoop2 = 1 to iClients:
+                /* Return the same data as /pas/pasconnections.jsp */
+                message substitute("~t&1~t&2~t&3~t&4~t&5~t&6",
+                                   oClients:GetJsonObject(iLoop2):GetCharacter("clientName"),
+                                   oClients:GetJsonObject(iLoop2):GetCharacter("adapterType"),
+                                   oClients:GetJsonObject(iLoop2):GetCharacter("reqStartTimeStr"),
+                                   oClients:GetJsonObject(iLoop2):GetInt64("elapsedTimeMs"),
+                                   oClients:GetJsonObject(iLoop2):GetCharacter("requestProcedure"),
+                                   oClients:GetJsonObject(iLoop2):GetCharacter("requestUrl")).
+
+                /* oClients:GetJsonObject(iLoop2):GetCharacter("requestID")        */
+                /* oClients:GetJsonObject(iLoop2):GetCharacter("sessionID")        */
+                /* oClients:GetJsonObject(iLoop2):GetCharacter("executerThreadId") */
+                /* oClients:GetJsonObject(iLoop2):GetCharacter("httpSessionId")    */
+            end.
+
+            if iClients gt 0 then
+                message substitute("~tClient Connections: &1", iClients).
         end.
     end.
 
@@ -173,15 +249,38 @@ do:
         :ContentType("application/vnd.progress+json")
         :UsingBasicAuthentication(oCreds)
         :Request.
-/*    oResp = HttpClient:Instance():Execute(oReq).*/
     oResp = oClient:Execute(oReq).
     oEntity = oResp:Entity.
     if type-of(oEntity, JsonObject) then
     do:
         if cast(oEntity, JsonObject):Has("result") then do:
             oClSess = cast(oEntity, JsonObject):GetJsonObject("result"):GetJsonArray("OEABLSession").
+
             assign iSessions = oClSess:Length.
-            message substitute("&1 Client Sessions", iSessions).
+            if iSessions gt 0 then
+                message "~n~tREQ. STATE~tBOUND~tELAPSED~tSTATE~t~tSESS TYPE~tADAPTER~tLAST ACCESS".
+
+            do iLoop2 = 1 to iSessions:
+                /* Return the same data as /pas/passessions.jsp */
+                message substitute("~t&1~t~t&2~t&3~t&4~t&5~t&6~t&7",
+                                   oClSess:GetJsonObject(iLoop2):GetCharacter("requestState"),
+                                   STRING(oClSess:GetJsonObject(iLoop2):GetLogical("bound"), "YES/NO"),
+                                   oClSess:GetJsonObject(iLoop2):GetInt64("elapsedTimeMs"),
+                                   oClSess:GetJsonObject(iLoop2):GetCharacter("sessionState"),
+                                   oClSess:GetJsonObject(iLoop2):GetCharacter("sessionType"),
+                                   oClSess:GetJsonObject(iLoop2):GetCharacter("adapterType"),
+                                   oClSess:GetJsonObject(iLoop2):GetCharacter("lastAccessStr")).
+
+                /* oClSess:GetJsonObject(iLoop2):GetCharacter("sessionID")     */
+                /* oClSess:GetJsonObject(iLoop2):GetCharacter("requestID")     */
+                /* oClSess:GetJsonObject(iLoop2):GetCharacter("sessionPoolID") */
+                /* oClSess:GetJsonObject(iLoop2):GetCharacter("ablSessionID")  */
+                /* oClSess:GetJsonObject(iLoop2):GetCharacter("agentID")       */
+                                   
+            end.
+
+            if iSessions gt 0 then
+                message substitute("~tClient (HTTP) Sessions: &1", iSessions).
         end.
     end.
 end. /* Valid Entity */
