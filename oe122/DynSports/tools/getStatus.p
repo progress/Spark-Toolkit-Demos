@@ -49,21 +49,12 @@ define variable iTotSess  as integer       no-undo.
 define variable iBusySess as integer       no-undo.
 define variable iClients  as integer       no-undo.
 define variable iSessions as integer       no-undo.
-define variable cScheme   as character     no-undo.
-define variable cHost     as character     no-undo.
-define variable cPort     as character     no-undo.
-define variable cUserId   as character     no-undo.
-define variable cPassword as character     no-undo.
-define variable cAblApp   as character     no-undo.
-
-assign
-    cScheme   = "http"
-    cHost     = "localhost"
-    cPort     = "8820"
-    cUserId   = "tomcat"
-    cPassword = "tomcat"
-    cAblApp   = "SportsPASOE"
-    .
+define variable cScheme   as character     no-undo initial "http".
+define variable cHost     as character     no-undo initial "localhost".
+define variable cPort     as character     no-undo initial "8810".
+define variable cUserId   as character     no-undo initial "tomcat".
+define variable cPassword as character     no-undo initial "tomcat".
+define variable cAblApp   as character     no-undo initial "oepas1".
 
 /* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
@@ -218,27 +209,20 @@ do:
             oClients = cast(oEntity, JsonObject):GetJsonObject("result"):GetJsonArray("ClientConnection").
 
             assign iClients = oClients:Length.
+            message substitute("~nClient Connections: &1", iClients).
+
             if iClients gt 0 then
-                message "~n~tCLIENT~t~tADAPTER~tREQUEST START~t~t~tELAPSED~tPROCEDURE~t~t~t~t~tURL".
+                message "~tADAPTER~tREQUEST START~t~t~tELAPSED~tPROCEDURE~t~t~t~t~tREQUEST ID".
 
             do iLoop2 = 1 to iClients:
-                /* Return the same data as /pas/pasconnections.jsp */
+                /* Return similar data as /pas/pasconnections.jsp */
                 message substitute("~t&1~t&2~t&3~t&4~t&5~t&6",
-                                   oClients:GetJsonObject(iLoop2):GetCharacter("clientName"),
                                    oClients:GetJsonObject(iLoop2):GetCharacter("adapterType"),
                                    oClients:GetJsonObject(iLoop2):GetCharacter("reqStartTimeStr"),
                                    oClients:GetJsonObject(iLoop2):GetInt64("elapsedTimeMs"),
                                    oClients:GetJsonObject(iLoop2):GetCharacter("requestProcedure"),
-                                   oClients:GetJsonObject(iLoop2):GetCharacter("requestUrl")).
-
-                /* oClients:GetJsonObject(iLoop2):GetCharacter("requestID")        */
-                /* oClients:GetJsonObject(iLoop2):GetCharacter("sessionID")        */
-                /* oClients:GetJsonObject(iLoop2):GetCharacter("executerThreadId") */
-                /* oClients:GetJsonObject(iLoop2):GetCharacter("httpSessionId")    */
+                                   oClients:GetJsonObject(iLoop2):GetCharacter("requestID")).
             end.
-
-            if iClients gt 0 then
-                message substitute("~tClient Connections: &1", iClients).
         end.
     end.
 
@@ -257,30 +241,29 @@ do:
             oClSess = cast(oEntity, JsonObject):GetJsonObject("result"):GetJsonArray("OEABLSession").
 
             assign iSessions = oClSess:Length.
+            message substitute("~nClient (HTTP) Sessions: &1", iSessions).
+
             if iSessions gt 0 then
-                message "~n~tREQ. STATE~tBOUND~tELAPSED~tSTATE~t~tSESS TYPE~tADAPTER~tLAST ACCESS".
+                message "~tSTATE~tLAST ACCESS~t~t~tELAPSED~tBOUND~tSESS STATE~tSESS TYPE~tADAPTER~tREQUEST ID".
 
             do iLoop2 = 1 to iSessions:
-                /* Return the same data as /pas/passessions.jsp */
-                message substitute("~t&1~t~t&2~t&3~t&4~t&5~t&6~t&7",
+                /* Return similar data as /pas/passessions.jsp */
+                message substitute("~t&1~t&2~t&3~t&4~t&5~t&6~t&7~t&8",
                                    oClSess:GetJsonObject(iLoop2):GetCharacter("requestState"),
-                                   STRING(oClSess:GetJsonObject(iLoop2):GetLogical("bound"), "YES/NO"),
+                                   oClSess:GetJsonObject(iLoop2):GetCharacter("lastAccessStr"),
                                    oClSess:GetJsonObject(iLoop2):GetInt64("elapsedTimeMs"),
+                                   STRING(oClSess:GetJsonObject(iLoop2):GetLogical("bound"), "YES/NO"),
                                    oClSess:GetJsonObject(iLoop2):GetCharacter("sessionState"),
                                    oClSess:GetJsonObject(iLoop2):GetCharacter("sessionType"),
                                    oClSess:GetJsonObject(iLoop2):GetCharacter("adapterType"),
-                                   oClSess:GetJsonObject(iLoop2):GetCharacter("lastAccessStr")).
+                                   oClSess:GetJsonObject(iLoop2):GetCharacter("requestID")).
 
                 /* oClSess:GetJsonObject(iLoop2):GetCharacter("sessionID")     */
-                /* oClSess:GetJsonObject(iLoop2):GetCharacter("requestID")     */
                 /* oClSess:GetJsonObject(iLoop2):GetCharacter("sessionPoolID") */
                 /* oClSess:GetJsonObject(iLoop2):GetCharacter("ablSessionID")  */
                 /* oClSess:GetJsonObject(iLoop2):GetCharacter("agentID")       */
                                    
             end.
-
-            if iSessions gt 0 then
-                message substitute("~tClient (HTTP) Sessions: &1", iSessions).
         end.
     end.
 end. /* Valid Entity */

@@ -44,21 +44,12 @@ define variable oClSess   as JsonArray     no-undo.
 define variable iLoop     as integer       no-undo.
 define variable iLoop2    as integer       no-undo.
 define variable iTotSess  as integer       no-undo.
-define variable cScheme   as character     no-undo.
-define variable cHost     as character     no-undo.
-define variable cPort     as character     no-undo.
-define variable cUserId   as character     no-undo.
-define variable cPassword as character     no-undo.
-define variable cAblApp   as character     no-undo.
-
-assign
-    cScheme   = "http"
-    cHost     = "localhost"
-    cPort     = "8820"
-    cUserId   = "tomcat"
-    cPassword = "tomcat"
-    cAblApp   = "SportsPASOE"
-    .
+define variable cScheme   as character     no-undo initial "http".
+define variable cHost     as character     no-undo initial "localhost".
+define variable cPort     as character     no-undo initial "8810".
+define variable cUserId   as character     no-undo initial "tomcat".
+define variable cPassword as character     no-undo initial "tomcat".
+define variable cAblApp   as character     no-undo initial "oepas1".
 
 /* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
