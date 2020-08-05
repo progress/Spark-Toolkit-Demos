@@ -16,8 +16,9 @@ using OpenEdge.Core.AssertionFailedError.
 using OpenEdge.Core.JsonDataTypeEnum.
 using OpenEdge.Core.String.
 using OpenEdge.Core.WidgetHandle.
+using OpenEdge.Net.HTTP.ClientBuilder.
 using OpenEdge.Net.HTTP.Credentials.
-using OpenEdge.Net.HTTP.HttpClient.
+using OpenEdge.Net.HTTP.IHttpClient.
 using OpenEdge.Net.HTTP.IHttpRequest.
 using OpenEdge.Net.HTTP.IHttpResponse.
 using OpenEdge.Net.HTTP.RequestBuilder.
@@ -30,6 +31,7 @@ define variable oReq      as IHttpRequest  no-undo.
 define variable oResp     as IHttpResponse no-undo.
 define variable oEntity   as Object        no-undo.
 define variable lcEntity  as longchar      no-undo.
+define variable oClient   as IHttpClient   no-undo.
 define variable oCreds    as Credentials   no-undo.
 define variable cHttpUrl  as character     no-undo.
 define variable oJsonResp as JsonObject    no-undo.
@@ -70,7 +72,10 @@ if num-entries(session:parameter) ge 6 then
 else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
 
+assign oClient = ClientBuilder:Build():Client.
 assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).
+
+/* Initial URL to obtain a list of all agents for an ABL Application. */
 assign cHttpUrl = substitute("&1://&2:&3/oemanager/applications/&4/agents", cScheme, cHost, cPort, cAblApp).
 
 message substitute("Looking for agents of &1...", cAblApp).
@@ -80,7 +85,7 @@ oReq = RequestBuilder
         :ContentType("application/vnd.progress+json")
         :UsingBasicAuthentication(oCreds)
         :Request.
-oResp = HttpClient:Instance():Execute(oReq).
+oResp = oClient:Execute(oReq).
 oEntity = oResp:Entity.
 
 if type-of(oEntity, JsonObject) then
@@ -101,7 +106,7 @@ do:
             :ContentType("application/vnd.progress+json")
             :UsingBasicAuthentication(oCreds)
             :Request.
-        oResp = HttpClient:Instance():Execute(oReq).
+        oResp = oClient:Execute(oReq).
         oEntity = oResp:Entity.
         if type-of(oEntity, JsonObject) then
         do:
@@ -122,7 +127,7 @@ do:
                             :ContentType("application/vnd.progress+json")
                             :UsingBasicAuthentication(oCreds)
                             :Request.
-                        oResp = HttpClient:Instance():Execute(oReq).
+                        oResp = oClient:Execute(oReq).
                     end.
                 end.
             end.
