@@ -7,7 +7,7 @@
                         http://www.springframework.org/schema/security
                         http://www.springframework.org/schema/security/spring-security.xsd">
 
-	<!-- Sequence of external property sources that can be referenced via ${xxx} variables
+    <!-- Sequence of external property sources that can be referenced via ${xxx} variables
          in the configuration files.
          The precedence order is:
             1) local properties definitions (via the Spring bean reference "localProperties")
@@ -19,7 +19,7 @@
          Note: properties may be recursive in that one property declaration's value
                may be another property variable
     -->
-	<b:bean id="propertyConfigurator"
+    <b:bean id="propertyConfigurator"
             class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
       <b:property name="LocalOverride" value="true" />
       <b:property name="properties" ref="localProperties" />

@@ -11,14 +11,14 @@
                         http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
                         http://www.springframework.org/schema/util
                         http://www.springframework.org/schema/util/spring-util.xsd">
-    
+
 
     <!-- This Spring Security configuration file fragment holds all of the
          security process filter bean definitions for all login models and
-         AuthenticationManagers.  The bean definitions all obtain their property 
-         values from the oeablSecurity.properties files loaded by the 
-         properties-loader.xml configuration file. 
-         
+         AuthenticationManagers.  The bean definitions all obtain their property
+         values from the oeablSecurity.properties files loaded by the
+         properties-loader.xml configuration file.
+
          ALL CONFIGURATION SHOULD BE CONTROLLED VIA THE oeablSecurity.properties
          FILE.  IF THIS FILE MUST BE EDITED, USE PROPERTY VARIABLES AND
          ADD A CORRESPONDING ENTRY INTO oeablSecurity.properties.   -->
@@ -45,25 +45,25 @@
              <b:property name="validateClientDomain" value="${OEClientPrincipalFilter.validateClientDomain:false}" />
              <b:property name="properties" >
                 <b:map>
-                     <b:entry key="${OEClientPrincipalFilter.properties.1.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.1.key}"
                               value="${OEClientPrincipalFilter.properties.1.value}"/>
-                     <b:entry key="${OEClientPrincipalFilter.properties.2.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.2.key}"
                               value="${OEClientPrincipalFilter.properties.2.value}"/>
-                     <b:entry key="${OEClientPrincipalFilter.properties.3.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.3.key}"
                               value="${OEClientPrincipalFilter.properties.3.value}"/>
-                     <b:entry key="${OEClientPrincipalFilter.properties.4.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.4.key}"
                               value="${OEClientPrincipalFilter.properties.4.value}"/>
-                     <b:entry key="${OEClientPrincipalFilter.properties.5.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.5.key}"
                               value="${OEClientPrincipalFilter.properties.5.value}"/>
-                     <b:entry key="${OEClientPrincipalFilter.properties.6.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.6.key}"
                               value="${OEClientPrincipalFilter.properties.6.value}"/>
-                     <b:entry key="${OEClientPrincipalFilter.properties.7.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.7.key}"
                               value="${OEClientPrincipalFilter.properties.7.value}"/>
-                     <b:entry key="${OEClientPrincipalFilter.properties.8.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.8.key}"
                               value="${OEClientPrincipalFilter.properties.8.value}"/>
-                     <b:entry key="${OEClientPrincipalFilter.properties.9.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.9.key}"
                               value="${OEClientPrincipalFilter.properties.9.value}"/>
-                     <b:entry key="${OEClientPrincipalFilter.properties.10.key}" 
+                     <b:entry key="${OEClientPrincipalFilter.properties.10.key}"
                               value="${OEClientPrincipalFilter.properties.10.value}"/>
                 </b:map>
              </b:property>
@@ -84,10 +84,10 @@
              <b:property name="messageHeaders" value="${OECORSFilter.messageHeaders}" />
              <b:property name="supportCredentials" value="${OECORSFilter.supportCredentials}" />
              <b:property name="maxAge" value="${OECORSFilter.maxAge}" />
-    </b:bean>                
+    </b:bean>
 
     <!-- This bean is called when executing the HTTP BASIC login model and
-         the validation of the Authorization header fails.  It will produce 
+         the validation of the Authorization header fails.  It will produce
          a HTTP response for browsers (html) or REST (json) according to the
          accept header. -->
     <b:bean id="OEAuthenticationEntryPoint"
@@ -103,13 +103,13 @@
         <b:property name="realmName" value="OE" />
     </b:bean>
 
-    <b:bean id="authenticationLoggerSink"   
+    <b:bean id="authenticationLoggerSink"
         class="com.progress.appserv.services.security.OEAuthenticationLogger" />
 
-    <b:bean id="authorizationLoggerSink"   
+    <b:bean id="authorizationLoggerSink"
         class="com.progress.appserv.services.security.OEAuthorizationLogger" />
 
-    <b:bean id="RequestsIDGenerator"   
+    <b:bean id="RequestsIDGenerator"
         class="com.progress.appserv.services.security.OERequestIDFactory" />
 
     <b:bean id="MDCPrimaryFilter"

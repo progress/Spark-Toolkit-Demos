@@ -103,7 +103,7 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
              * This is because we'll check if a valid field buffer exists, or roll on to
              * checking each field in the table (in the case of a serialized name).
              */
-			assign bhField = phTable:buffer-field(pcFieldName) no-error. /* Must keep this no-error! */
+            assign bhField = phTable:buffer-field(pcFieldName) no-error. /* Must keep this no-error! */
             if valid-handle(bhField) then
                 return bhField.
 

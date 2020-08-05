@@ -1,14 +1,14 @@
-<%@ page language="java" 
-         contentType="text/html;charset=UTF-8" 
-         pageEncoding="UTF-8" 
+<%@ page language="java"
+         contentType="text/html;charset=UTF-8"
+         pageEncoding="UTF-8"
          session="false"
-         isErrorPage="true" 
+         isErrorPage="true"
          trimDirectiveWhitespaces="true"
          errorPage="/WEB-INF/jsp/exceptionPage.jsp"
          import="java.io.*"
          import="java.util.*"
          import="java.system.*" %>
- <%-- Java scriptlet to cleanup raw input properties and attributes used as tokens 
+ <%-- Java scriptlet to cleanup raw input properties and attributes used as tokens
       by the HTML template found at the end of this file. --%>
  <%
     // Generate the dynamic body content
@@ -54,8 +54,8 @@
         }
 
         // Load any specific detailLevel from the web application env
-        try { 
-            String sdetailLevel = application.getInitParameter("detailLevel"); 
+        try {
+            String sdetailLevel = application.getInitParameter("detailLevel");
             if ( sdetailLevel != null ) {
                 int cfgDetailLevel = Integer.parseInt(sdetailLevel);
                 if ( cfgDetailLevel > 0 ) {
@@ -72,7 +72,7 @@
              cp.length() > 0) {
             webAppName = cp;
         }
-        
+
         // Bundle together the error information for writing to the page
         if(pageContext != null) {
             ErrorData       errctx = null;
@@ -85,7 +85,7 @@
                 // Sometimes this call causes a NullPointerException (PageContext.java:514)
                 // Catch and ignore it.. it effectively means we can't use the ErrorData
             }
-            
+
             // Prepare error report
             if(errctx != null) {
                 // Unload the basic error object fields
@@ -100,20 +100,20 @@
                 if ( requrl == null ) requrl = "/";
                 if (transport == null ) transport = "default";
 
-                // The building of the error information is divided into 
+                // The building of the error information is divided into
                 // HTTP status codes and Exceptions
                 if ( appException != null ) {
                     StringBuilder   sb = new StringBuilder();
                     // Handle application excpetions here
-                    if(appException.getMessage() != null && 
+                    if(appException.getMessage() != null &&
                        appException.getMessage().indexOf("Exception in JSP") != -1) {
-                        sb = new StringBuilder("An error occurred in a JSP file ...\n\n<pre>" + 
+                        sb = new StringBuilder("An error occurred in a JSP file ...\n\n<pre>" +
                                     appException.getMessage() + "</pre>");
                     } else {
                         String ecls = "";
                         if ( detailLevel > 1 ) {
                             ecls = appException.getClass().getName() + " ; ";
-                        } 
+                        }
                         sb = new StringBuilder( ecls + appException.getMessage());
                     }
                     errorDetail = sb.toString().trim();
@@ -146,19 +146,19 @@
                     // access the exception built-in object
                     exceptionName = appException.getClass().getName();
                     exceptionMessage = appException.getMessage();
-                } 
-               
+                }
+
                 // Now load error description based on the status code and
                 // write it to the page
                 if ( errorCode == 0 ) {
                     // Sometimes the error object does not include the
-                    // status code ( returns zero ), so try the 
+                    // status code ( returns zero ), so try the
                     // built-in servlet attributes
                     errcodeStr = (String)request.getAttribute("javax.servlet.error.status_code");
                     if ( errcodeStr != null ) {
                         errorCode = Integer.parseInt(errcodeStr);
                     } else {
-                        String pageErrorCode = request.getParameter("statusCode"); 
+                        String pageErrorCode = request.getParameter("statusCode");
                         if ( pageErrorCode != null ) {
                             errorCode = Integer.parseInt(pageErrorCode);
                         }
@@ -176,21 +176,21 @@
                         descFile = "/WEB-INF/jsp/httpCodeDesc-terse.properties";
                     } else {
                         descFile = "/WEB-INF/jsp/httpCodeDesc-verbose.properties";
-                    } 
+                    }
                     // Open properties file and load the static
                     // error code text
-                    InputStream stream = 
+                    InputStream stream =
                             application.getResourceAsStream(descFile);
                     Properties props = new Properties();
                     props.load(stream);
                     statusDetail = props.getProperty(errcodeStr);
-                    // if the error code text is not found, then get 
+                    // if the error code text is not found, then get
                     // the default error code zero (0)
                     if ( statusDetail == null ) {
                         String tmpDetail = props.getProperty("code0");
                         if ( tmpDetail == null ) {
                             tmpDetail = "undefined status code ";
-                        } 
+                        }
                         statusDetail = tmpDetail + errorCode;
                     }
                 } catch ( Throwable thr ) {
@@ -203,10 +203,10 @@
                 if (detailLevel < 2 ) {
                     request.setAttribute( "psc.as.attr.errorMessage", statusDetail.trim() );
                 } else {
-                    request.setAttribute( "psc.as.attr.errorMessage", errorCode + " - " + 
+                    request.setAttribute( "psc.as.attr.errorMessage", errorCode + " - " +
                             statusDetail.trim() + " - " + request.getMethod() + " " + requrl);
-                } 
-                
+                }
+
                 // Set all the other attributes that are accessible via JSP tags
                 request.setAttribute("psc.as.attr.detailLevel", detailLevel);
                 request.setAttribute("psc.as.attr.product", product);

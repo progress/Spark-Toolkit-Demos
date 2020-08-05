@@ -15,7 +15,7 @@ define variable k as integer initial 0.
 
 /* Check to see if the user changed the Order Number */
 
-if Order.OrderNum ne oldOrder.OrderNum then 
+if Order.OrderNum ne oldOrder.OrderNum then
 do:
     /* If user changed the Order Number, find related order lines and */
     /* change their order numbers.                                    */

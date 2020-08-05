@@ -1,7 +1,7 @@
 <project name="ServerCreation" basedir="." default="usage">
 
     <target name="usage" description="Usage Instructions">
-    	<init_env/>
+        <init_env/>
 
         <echo message="${line.separator}Usage Instructions:"/>
         <echo message="${line.separator}ant create - Build a new PAS instance with Spark"/>
@@ -23,14 +23,14 @@
     </target>
 
     <target name="create">
-    	<init_env/>
+        <init_env/>
 
         <!-- Begin by creating an instance. -->
         <antcall target="_create_instance"/>
     </target>
 
     <target name="upgrade">
-    	<init_env/>
+        <init_env/>
 
         <!-- Tailor the instance using the deployment directory. -->
         <antcall target="_tailor_instance"/>
@@ -40,17 +40,17 @@
     </target>
 
     <target name="enable_oerealm">
-    	<init_env/>
+        <init_env/>
 
         <!-- Copy files for use with OERealm security. -->
         <mkdir dir="${pas.path}/conf/spark"/>
         <copy file="${deploy}/Realm/SparkRealm.cp" toDir="${pas.path}/common/lib"/>
         <copy file="${deploy}/Realm/SparkRealm.json" toDir="${pas.path}/conf/spark"/>
-    	<copy file="${deploy}/Realm/ABLDomainRegistry.keystore" toDir="${pas.path}/conf"/>
+        <copy file="${deploy}/Realm/ABLDomainRegistry.keystore" toDir="${pas.path}/conf"/>
     </target>
 
     <macrodef name="init_env">
-    	<sequential>
+        <sequential>
             <property environment="env"/>
 
             <!-- Define distinct variables for this environment. -->
@@ -84,21 +84,21 @@
 
             <!-- Define standard variables for this environment. -->
             <condition property="pas.exec" value="pasman" else="pasman.bat">
-            	<os family="unix"/>
+                <os family="unix"/>
             </condition>
             <condition property="path" value="/usr/pas" else="C:/PASOE">
-            	<os family="unix"/>
+                <os family="unix"/>
             </condition>
             <condition property="scriptSuffix" value=".sh" else=".bat">
-            	<os family="unix"/>
+                <os family="unix"/>
             </condition>
             <property name="ablapp" value="${alias}"/>
             <property name="deploy" value="${basedir}/../Deploy/Conf"/>
-    		<property name="pas.root" value="${path}"/>
-	        <property name="pas.path" value="${pas.root}/${alias}"/>
-	        <property name="pas.bin" value="${pas.path}/bin"/>
+            <property name="pas.root" value="${path}"/>
+            <property name="pas.path" value="${pas.root}/${alias}"/>
+            <property name="pas.bin" value="${pas.path}/bin"/>
             <property name="pas.conf.spark" value="spark"/>
-    	</sequential>
+        </sequential>
     </macrodef>
 
     <macrodef name="require">
@@ -165,7 +165,7 @@
             <fileset dir="${basedir}">
                 <include name="*.pl"/>
                 <include name="*.pf"/>
-            	<include name="*.config"/>
+                <include name="*.config"/>
             </fileset>
         </copy>
 

@@ -15,7 +15,7 @@ feature as of that release. (Though a hotfix is available for use with 11.7.2).
 
 To begin controlling the output, a JSON object must be created with a "logger"
 property, set to another JSON object. Within this object you may add a unique
-property and options (also as JSON object) for each class you wish to control. 
+property and options (also as JSON object) for each class you wish to control.
 
     {
         "logger": {
@@ -28,7 +28,7 @@ where a partial path represents the prefix of all other classes below it (for
 example, setting to "OpenEdge" will cause all classes that utilize the new
 ILogWriter class to be output using the same options. Within the object is an
 overall logging level and a list of filters, where the latter can affect the
-format of the log messages as well as the naming and location of the output. 
+format of the log messages as well as the naming and location of the output.
 
     "<full_or_partial_class_path": {
         "logLevel": "TRACE",

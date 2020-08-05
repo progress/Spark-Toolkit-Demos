@@ -1,7 +1,7 @@
-<%@ page language="java" 
-         contentType="text/html;charset=UTF-8" 
-         pageEncoding="UTF-8" 
-         session="false" 
+<%@ page language="java"
+         contentType="text/html;charset=UTF-8"
+         pageEncoding="UTF-8"
+         session="false"
          errorPage="/WEB-INF/jsp/errorPage.jsp"%>
 <html>
 <head>
@@ -11,7 +11,7 @@
 <body>
 <%@ include file="/static/commonPageHeader.html" %>
     <hr>
-    <b> Progress Applicaiton Server user login: </b>
+    <b> Progress Application Server user login: </b>
     <br>
 <%
     String lmodel = (String)application.getAttribute("oeablLoginModel");

@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
     File        : AnnoTest
-    Purpose     : 
-    Syntax      : 
-    Description : 
+    Purpose     :
+    Syntax      :
+    Description :
     Author(s)   : Dustin Grau
     Created     : Wed May 06 13:12:28 EDT 2020
-    Notes       : 
+    Notes       :
   ----------------------------------------------------------------------*/
 
 @program FILE(name="AnnoTest.cls", module="AppServer").
@@ -24,7 +24,7 @@ using Spark.Core.Util.ApplicationError from propath.
 
 block-level on error undo, throw.
 
-class Business.UnitTest.AnnoTest use-widget-pool: 
+class Business.UnitTest.AnnoTest use-widget-pool:
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/test", alias="msgTest", mediaType="application/json").

@@ -7,11 +7,11 @@
 ## from Progress Software Corporation.                                  ##
 ##                                                                      ##
 ##########################################################################
- 
+
 This README describes contents of the parent folder "soap". The contents
 of parent "soap" folder is used by the runtime to initialize SOAP transport
 for the oeabl service. The [.wsad, .wsdl, .props] files are per-soap-service
-and are created by the SOAP transport runtime during the deployment process 
+and are created by the SOAP transport runtime during the deployment process
 as explained later.
 
 1) DeployedServices.ds
@@ -20,7 +20,7 @@ as explained later.
 
 2) default.props
    Property file containing default values of runtime properties.
-   Each deployed SOAP service will inherit property values for its own copy 
+   Each deployed SOAP service will inherit property values for its own copy
    of runtime properties from this file.
 
 3) <ServiceName>.wsad [WSAD]
@@ -30,27 +30,27 @@ as explained later.
 
 4) <ServiceName>.wsdl [WSDL]
    Web Services Description Language.
-   The file contains the web services definition information. The 
-   Application Programmer ( soap service consumer ) uses the WSDL file 
-   to create client interface based on the WSDL. 
+   The file contains the web services definition information. The
+   Application Programmer ( soap service consumer ) uses the WSDL file
+   to create client interface based on the WSDL.
 
 5) <ServiceName>.props [PROPERTY]
    Runtime Property file.
-   The file contains configurable runtime properties for connection with 
+   The file contains configurable runtime properties for connection with
    the PAS Server. The property is per application so that each service
    can independently cofigure the way it talks to the Application Server.
 
 
-Deploying a WSM (Web Service Mapping) in an OEABL Appliction for PAS Server. 
+Deploying a WSM (Web Service Mapping) in an OEABL Appliction for PAS Server.
 ===========================================================================
 
 The WSM maps the Progress 4GL procedures that run on the Application Server.
 Deployment of WSM can be performed using:
 
 1) deploySOAP.sh/deploySOAP.bat utility:
-   
+
    - The utility reside in the PAS instance's bin folder i.e. {CATALINA_BASE}/bin.
-   
+
    - General syntax to deploy a wsm is:
      Examples:
        Deploy test.wsm to OEABL WebApp named ROOT
@@ -58,13 +58,13 @@ Deployment of WSM can be performed using:
 
        Undeploy an existing SOAP service named test from OEABL WebApp ROOT
        # $CATALINA_BASE/bin/deploySOAP.sh test ROOT -undeploy
-   
-   - While using the utility ensure that the SOAP transport is ENABLED for the 
+
+   - While using the utility ensure that the SOAP transport is ENABLED for the
      target OEABL Service
-   
-   - Once deployed, the above mentioned files [.props, .wsad, .wsdl] will be 
-     created in the $CATALINA_BASE/webapps/<OEABL WebApp>/WEB-INF/adapters/soap 
-     
+
+   - Once deployed, the above mentioned files [.props, .wsad, .wsdl] will be
+     created in the $CATALINA_BASE/webapps/<OEABL WebApp>/WEB-INF/adapters/soap
+
 
 2) REST webservice call to oemanager webapp:
 
@@ -73,19 +73,19 @@ Deployment of WSM can be performed using:
    - General syntax to deploy a wsm is:
      Examples: ( using curl client. You may wish to use any HTTP client )
        Deploy test.wsm to OEABL WebApp named ROOT
-        # curl -X POST --data-binary @test.wsm 
+        # curl -X POST --data-binary @test.wsm
         # http://<PASHostName>:<PASPortNum>/oemanager/applications/<InstanceName>/webapps/ROOT/transports/soap/oeservices
-        # -H "Accept: application/vnd.progress+json" 
-        # -H "Content-Type: application/vnd.progress.wsm+xml" 
-        # -H "Content-Disposition: attachment; filename=test.wsm" -v 
+        # -H "Accept: application/vnd.progress+json"
+        # -H "Content-Type: application/vnd.progress.wsm+xml"
+        # -H "Content-Disposition: attachment; filename=test.wsm" -v
 
        Undeploy an existing SOAP service named test from OEABL WebApp ROOT
         # curl -X POST
         # http://<PASHostName>:<PASPortNum>/oemanager/applications/<InstanceName>/webapps/ROOT/transports/soap/oeservices/test
-   
-   - While using the utility ensure that the SOAP transport is ENABLED for the 
+
+   - While using the utility ensure that the SOAP transport is ENABLED for the
      target OEABL Service
-   
-   - Once deployed, the above mentioned files [.props, .wsad, .wsdl] will be 
-     created in the $CATALINA_BASE/webapps/<OEABL WebApp>/WEB-INF/adapters/soap 
- 
+
+   - Once deployed, the above mentioned files [.props, .wsad, .wsdl] will be
+     created in the $CATALINA_BASE/webapps/<OEABL WebApp>/WEB-INF/adapters/soap
+

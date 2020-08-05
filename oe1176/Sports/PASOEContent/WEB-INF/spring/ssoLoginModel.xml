@@ -42,21 +42,21 @@
      -->
 
     <!-- The HTTP BASIC security for REST is disabled for a SSO pure configuration. -->
-    <b:import resource="apsv-none-extern.xml"/> 
+    <b:import resource="apsv-none-extern.xml"/>
 
     <!-- The HTTP BASIC security for SOAP is disabled for a SSO pure configuration. -->
     <b:import resource="soap-none-extern.xml"/>
 
     <!-- This HTTP security space represents the public REST application URI
-         space and controle the authentication/authorization process to its 
-         dynamic/static content.  
+         space and controle the authentication/authorization process to its
+         dynamic/static content.
      -->
     <http pattern="/rest/**"
           auto-config="false"
-          use-expressions="true" 
-          create-session="stateless" 
-          disable-url-rewriting="true" 
-          authentication-manager-ref="nullApplicationAuth" 
+          use-expressions="true"
+          create-session="stateless"
+          disable-url-rewriting="true"
+          authentication-manager-ref="nullApplicationAuth"
           entry-point-ref="OEAuthenticationEntryPoint"
           realm="${http.rest.realm}" >
 
@@ -65,15 +65,15 @@
         <expression-handler ref="DefaultWebExpressionHandler" />
 
         <!-- OpenEdge MDC primary filter  -->
-        <custom-filter before="CHANNEL_FILTER" 
+        <custom-filter before="CHANNEL_FILTER"
                        ref="MDCPrimaryFilter" />
 
         <!-- OpenEdge MDC secondary filter  -->
-        <custom-filter after="SESSION_MANAGEMENT_FILTER" 
+        <custom-filter after="SESSION_MANAGEMENT_FILTER"
                        ref="MDCSecondaryFilter" />
 
         <!-- OpenEdge PRE AUTH Filter  -->
-        <custom-filter position="PRE_AUTH_FILTER" 
+        <custom-filter position="PRE_AUTH_FILTER"
                        ref="OEPreauthfilter" />
 
         <!-- OpenEdge SSO Authorization header Filter -->
@@ -85,39 +85,39 @@
                        ref="customAuthorizationFilter" />
 
          <!-- OpenEdge ClientPrincipal SSO Filter -->
-        <custom-filter position="SWITCH_USER_FILTER" 
+        <custom-filter position="SWITCH_USER_FILTER"
                        ref="OEClientPrincipalFilter" />
 
         <!-- OpenEdge CORS Filter -->
-        <custom-filter before="SECURITY_CONTEXT_FILTER" 
+        <custom-filter before="SECURITY_CONTEXT_FILTER"
                        ref="OECORSFilter" />
 
-        <!-- URL access controls 
+        <!-- URL access controls
              NOTE: this filter MUST occur BEFORE the
                    default security-interceptor inserted by the
                    <http auto-config> attribute -->
         <custom-filter ref="restFilterSecurityInterceptor"
                        before="FILTER_SECURITY_INTERCEPTOR" />
-        
+
         <!-- NOTE:  all XML <intercept-url> elements have been
              replaced by the 'restFilterSecurityInterceptor' and
              the oeablSecurity.csv configuration file.
-            <intercept-url pattern="/rest/**" 
+            <intercept-url pattern="/rest/**"
                        access="hasAnyRole('ROLE_PSCUser')"/>
-        --> 
+        -->
 
         <!-- logout is not normally part of basic authentication, but is
               used by OpenEdge Mobile to end any sessions that may have
               been created -->
         <logout logout-url="${http.logout.url}"
                 success-handler-ref="OELogoutSuccessHandler"
-                invalidate-session="true" 
+                invalidate-session="true"
                 delete-cookies="${http.logout.deletecookie}" />
-        
+
         <headers defaults-disabled="false"
                  disabled="false" />
 
-        <!-- login session controls 
+        <!-- login session controls
              note: comment out if session-creation is stateless -->
         <!--session-management session-fixation-protection="none" /-->
 
@@ -126,17 +126,17 @@
 
         <access-denied-handler ref="OEAccessDeniedHandler" />
     </http>
-    
-  
+
+
     <!-- This HTTP security space represents the public WSPD URI
-         space and controle the authentication/authorization process to its 
-         dynamic/static content.  
+         space and controle the authentication/authorization process to its
+         dynamic/static content.
      -->
     <http pattern="/web/**"
-          auto-config="false" 
-          use-expressions="true" 
-          create-session="stateless" 
-          disable-url-rewriting="true" 
+          auto-config="false"
+          use-expressions="true"
+          create-session="stateless"
+          disable-url-rewriting="true"
           authentication-manager-ref="nullApplicationAuth"
           entry-point-ref="OEAuthenticationEntryPoint"
           realm="${http.web.realm}" >
@@ -146,15 +146,15 @@
         <expression-handler ref="DefaultWebExpressionHandler" />
 
         <!-- OpenEdge MDC primary filter  -->
-        <custom-filter before="CHANNEL_FILTER" 
+        <custom-filter before="CHANNEL_FILTER"
                        ref="MDCPrimaryFilter" />
 
         <!-- OpenEdge MDC secondary filter  -->
-        <custom-filter after="SESSION_MANAGEMENT_FILTER" 
+        <custom-filter after="SESSION_MANAGEMENT_FILTER"
                        ref="MDCSecondaryFilter" />
 
         <!-- OpenEdge PRE AUTH Filter  -->
-        <custom-filter position="PRE_AUTH_FILTER" 
+        <custom-filter position="PRE_AUTH_FILTER"
                        ref="OEPreauthfilter" />
 
         <!-- OpenEdge SSO Authorization header Filter -->
@@ -166,11 +166,11 @@
                        ref="customAuthorizationFilter" />
 
          <!-- OpenEdge ClientPrincipal SSO Filter -->
-        <custom-filter position="SWITCH_USER_FILTER" 
+        <custom-filter position="SWITCH_USER_FILTER"
                        ref="OEClientPrincipalFilter" />
 
         <!-- OpenEdge CORS Filter -->
-        <custom-filter before="SECURITY_CONTEXT_FILTER" 
+        <custom-filter before="SECURITY_CONTEXT_FILTER"
                        ref="OECORSFilter" />
 
         <!-- URL access controls
@@ -183,14 +183,14 @@
         <!-- NOTE:  all XML <intercept-url> elements have been
              replaced by the 'webFilterSecurityInterceptor' and
              the oeablSecurity.csv configuration file.
-            <intercept-url pattern="/web/**"  
+            <intercept-url pattern="/web/**"
                        access="hasAnyRole('ROLE_PSCUser')"/>
         -->
 
         <headers defaults-disabled="false"
                  disabled="false" />
 
-        <!-- login session controls 
+        <!-- login session controls
              note: comment out if session-creation is stateless -->
         <!--session-management session-fixation-protection="none" /-->
 
@@ -201,19 +201,19 @@
     </http>
 
     <!-- This HTTP security space represents the default public URI
-         space and controls the authentication/authorization process to its 
-         dynamic/static content.  
+         space and controls the authentication/authorization process to its
+         dynamic/static content.
      -->
     <http pattern="/**"
-          auto-config="false" 
-          use-expressions="true" 
-          create-session="stateless" 
-          disable-url-rewriting="true" 
+          auto-config="false"
+          use-expressions="true"
+          create-session="stateless"
+          disable-url-rewriting="true"
           authentication-manager-ref="nullApplicationAuth"
           entry-point-ref="OEAuthenticationEntryPoint"
           realm="${http.realm}" >
 
-        <!-- Standard web-application root for public data like index.html 
+        <!-- Standard web-application root for public data like index.html
              DO NOT grant /** permitAll() access  -->
 
         <!-- Spring access expression handler for
@@ -221,15 +221,15 @@
         <expression-handler ref="DefaultWebExpressionHandler" />
 
         <!-- OpenEdge MDC primary filter  -->
-        <custom-filter before="CHANNEL_FILTER" 
+        <custom-filter before="CHANNEL_FILTER"
                        ref="MDCPrimaryFilter" />
 
         <!-- OpenEdge MDC secondary filter  -->
-        <custom-filter after="SESSION_MANAGEMENT_FILTER" 
+        <custom-filter after="SESSION_MANAGEMENT_FILTER"
                        ref="MDCSecondaryFilter" />
 
         <!-- OpenEdge CORS Filter -->
-        <custom-filter before="SECURITY_CONTEXT_FILTER" 
+        <custom-filter before="SECURITY_CONTEXT_FILTER"
                        ref="OECORSFilter" />
 
         <!-- OpenEdge SSO Authorization header Filter -->
@@ -240,22 +240,22 @@
         <custom-filter after="BASIC_AUTH_FILTER"
                        ref="customAuthorizationFilter" />
 
-        <!-- URL access controls 
+        <!-- URL access controls
              NOTE: this filter MUST occur BEFORE the
                    default security-interceptor inserted by the
                    <http auto-config> attribute -->
         <custom-filter ref="defaultFilterSecurityInterceptor"
                        before="FILTER_SECURITY_INTERCEPTOR" />
 
-        <!-- NOTE: All <intercept-url> elments have been replaced by 
-             'defaultFilterSecurityInterceptor' and the 
+        <!-- NOTE: All <intercept-url> elments have been replaced by
+             'defaultFilterSecurityInterceptor' and the
              oeablSecurity.csv configuration file. -->
 
 
         <headers defaults-disabled="false"
                  disabled="false" />
 
-        <!-- login session controls 
+        <!-- login session controls
              note: comment out if session-creation is stateless -->
         <!--session-management session-fixation-protection="none" /-->
 
@@ -267,16 +267,16 @@
 
     <!-- Import the Spring Security configuration file fragment that contains
          all of the explict bean declarations for the security process, and
-         allows that process to manage the HTTP requests/responses and 
-         invoking the user authentication process. --> 
-    <b:import resource="authFilters.xml"/> 
+         allows that process to manage the HTTP requests/responses and
+         invoking the user authentication process. -->
+    <b:import resource="authFilters.xml"/>
 
     <!-- Import the Spring Security configuration file fragment that contains
          all of the explict bean declarations for all AuthenticationManagers
          invoked by the security process.  The AuthenticationManager definitions
          will perform physical connections to the source of user accounts, validate
          the account exists, its state, and whether the account secret is valid.
-         --> 
-    <b:import resource="authManagers.xml"/> 
+         -->
+    <b:import resource="authManagers.xml"/>
 
 </b:beans>

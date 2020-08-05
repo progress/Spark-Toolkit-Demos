@@ -15,7 +15,7 @@ define variable k as integer initial 0.
 
 /* Check to see if the user changed the Customer Number */
 
-if Customer.CustNum ne oldCustomer.CustNum then 
+if Customer.CustNum ne oldCustomer.CustNum then
 do:
     /* If user changed the Customer Number, find related orders and change  */
     /* their customer numbers.                                              */
@@ -61,7 +61,7 @@ do:
         Outstanding = Outstanding + ( Amount - ( TotalPaid + Adjustment )).
     end.
 
-    if Customer.CreditLimit < Outstanding then 
+    if Customer.CreditLimit < Outstanding then
     do:
         message "This Customer has an outstanding balance of: " Outstanding ". The Credit Limit MUST exceed this amount!"
             view-as alert-box information buttons ok.

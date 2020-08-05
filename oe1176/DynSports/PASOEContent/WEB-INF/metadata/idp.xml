@@ -35,10 +35,10 @@
 
 <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
 
-<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" 
+<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
     Location="https://dev-830549.oktapreview.com/app/progresssoftwaredev830549_openedgetest1_1/exkd1yc6bhllsxFNc0h7/sso/saml"/>
-    
-<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" 
+
+<md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
     Location="https://dev-830549.oktapreview.com/app/progresssoftwaredev830549_openedgetest1_1/exkd1yc6bhllsxFNc0h7/sso/saml"/>
 
 </md:IDPSSODescriptor>

@@ -1,14 +1,14 @@
-<%@ page language="java" 
-         contentType="text/html;charset=UTF-8" 
-         pageEncoding="UTF-8" 
+<%@ page language="java"
+         contentType="text/html;charset=UTF-8"
+         pageEncoding="UTF-8"
          session="false"
-         isErrorPage="true" 
+         isErrorPage="true"
          trimDirectiveWhitespaces="true"
          errorPage="/WEB-INF/jsp/exceptionPage.jsp"
          import="java.io.*"
          import="java.util.*"
          import="java.system.*" %>
- <%-- Java scriptlet to cleanup raw input properties and attributes used as 
+ <%-- Java scriptlet to cleanup raw input properties and attributes used as
       psc.as.attr.xxxxx tokens by the HTML template found in this file. --%>
 <%@  include file="loadErrorData.jsp" %>
 

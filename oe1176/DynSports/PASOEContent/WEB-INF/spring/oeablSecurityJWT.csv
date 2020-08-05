@@ -14,13 +14,13 @@
 
 "/*","GET","permitAll()"
 
-"/static/*","GET","permitAll()" 
+"/static/*","GET","permitAll()"
 
 "/static/error/*","GET","permitAll()"
 
-"/static/images/*","GET","permitAll()" 
+"/static/images/*","GET","permitAll()"
 
-"/static/auth/*","GET","permitAll()" 
+"/static/auth/*","GET","permitAll()"
 
 "/static/**","GET","#oauth2.hasAnyScope('PSCUser')"
 

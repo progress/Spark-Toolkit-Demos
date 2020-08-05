@@ -3,16 +3,16 @@
        xmlns:p="http://www.springframework.org/schema/p"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
                            http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/context 
+                           http://www.springframework.org/schema/context
                            http://www.springframework.org/schema/context/spring-context.xsd
                            http://www.springframework.org/schema/mvc
                            http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
     <mvc:annotation-driven />
 
-    <mvc:view-controller path="/" view-name="index" /> 
+    <mvc:view-controller path="/" view-name="index" />
 
     <mvc:resources mapping="/static/**" location="/static/" />
 
@@ -28,5 +28,5 @@
     <mvc:default-servlet-handler/>
 
 </beans>
-                
+
 

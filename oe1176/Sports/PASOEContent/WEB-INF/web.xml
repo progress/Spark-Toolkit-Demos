@@ -3,8 +3,8 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
                       http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
-   metadata-complete="true" 
-   id="WebApp_ID" 
+   metadata-complete="true"
+   id="WebApp_ID"
    version="3.1">
   <display-name>Progress Application Server for OpenEdge</display-name>
 
@@ -12,10 +12,10 @@
 
   <distributable/>
 
-  <!-- Define the location of this PASOE web application's logging 
+  <!-- Define the location of this PASOE web application's logging
        configuration that applies to all server Spring, SesisonManager,
-       transport, and other Java components.  
-       Note: the multi-session agent (i.e. ABL session) logging is controlled 
+       transport, and other Java components.
+       Note: the multi-session agent (i.e. ABL session) logging is controlled
              via the conf/openedge.properties file -->
   <env-entry>
     <env-entry-name>logback/configuration-resource</env-entry-name>
@@ -25,28 +25,28 @@
 
   <!-- The 'detailLevel' context parameter is used to control
        the level of detail inserted into the body of a dynamically
-       generated JSP error and exception HTML pages.  The valid 
+       generated JSP error and exception HTML pages.  The valid
        numeric values are:
-            0               Use default values based on the 
+            0               Use default values based on the
                             production/development product types
-            1       Terse   override the product type defaults and 
-                            supply terse static error code 
+            1       Terse   override the product type defaults and
+                            supply terse static error code
                             descriptions/excption reason information
             2       Verbose override the product type defaults and use
-                            verbose static error code 
+                            verbose static error code
                             descriptions/exception stack trace information
-            3       Debug   override the product type defaults and add 
-                            jsp page debugging information to the Verbose 
+            3       Debug   override the product type defaults and add
+                            jsp page debugging information to the Verbose
                             output
   -->
-  <context-param>    
+  <context-param>
     <param-name>detailLevel</param-name>
     <param-value>0</param-value>
   </context-param>
 
 <!-- BEGIN:Spring security.definition  -->
     <!--
-      - Location of the Spring Security XML configuration file that 
+      - Location of the Spring Security XML configuration file that
         defines the which security model this web application should
         employ. The configuration is loaded and applied by the
         ContextLoaderListener.
@@ -56,16 +56,16 @@
 
         <!-- All previous Spring Security configuration templates
              have been retired and replaced by the single definition
-             below.  All Spring Security configuration, including 
+             below.  All Spring Security configuration, including
              the client login model and user account source is now
              configured in the WEB-INF/oeablSecurity.properties file's
              http.all.authmanager & client.login.model properties
 
-            NOTE: Please keep the param value in this format to enable 
+            NOTE: Please keep the param value in this format to enable
                   external administration
 
                 <param-value>/WEB-INF/oeablSecurity.xml</param-value>
-                
+
         -->
         <param-value>/WEB-INF/oeablSecurity.xml</param-value>
 
@@ -76,7 +76,7 @@
     <context-param>
         <param-name>contextInitializerClasses</param-name>
         <param-value>com.progress.appserv.services.security.OESpringPropertySource</param-value>
-    </context-param> 
+    </context-param>
 
     <!-- This listener needs to be first for logging of the web application
          startup operations. -->
@@ -97,7 +97,7 @@
             org.springframework.security.web.session.HttpSessionEventPublisher
         </listener-class>
     </listener>
- 
+
     <!--
       - Loads the web application's context at startup.
       - The application context is then available via
@@ -123,16 +123,16 @@
 
     <listener>
       <listener-class>com.progress.appserv.adapters.web.OEWebServletContextListener</listener-class>
-    </listener>  
+    </listener>
 
-    <listener> 
-      <listener-class>com.progress.appserv.clientrt.broker.SessionLifeCycleListener</listener-class> 
-    </listener> 
+    <listener>
+      <listener-class>com.progress.appserv.clientrt.broker.SessionLifeCycleListener</listener-class>
+    </listener>
 
    <!-- This section sets up the Spring Security requst filter that
         is mapped to the entire web application's URI space.  All
         requests will now be controlled by Spring Security.
-        DO NOT CHANGE or you will compromise the web application's 
+        DO NOT CHANGE or you will compromise the web application's
         security. -->
     <filter>
       <filter-name>springSecurityFilterChain</filter-name>
@@ -157,7 +157,7 @@
     </servlet>
 
 <!-- END:Spring security.definition  -->
-    
+
 <!-- BEGIN:CXF definition for the REST transport -->
     <!-- location of REST transport's spring xml files -->
     <context-param>
@@ -165,7 +165,7 @@
       <param-value>WEB-INF/adapters/rest/</param-value>
     </context-param>
 
-    <!-- USER EDIT: comma separated list of REST service [.paar] files 
+    <!-- USER EDIT: comma separated list of REST service [.paar] files
                     deployed in this REST application -->
 
     <!-- This is a comma separated list of individual REST  services
@@ -193,20 +193,20 @@
 
     <!-- Certificate jar location when using SSL/TLS network connections
          to external servers.  -->
-    <!--   
+    <!--
     <context-param>
       <param-name>certlocation</param-name>
       <param-value>C:/Progress/dlc/certs/psccerts.jar</param-value>
     </context-param>
     -->
 
-    <!-- USER EDIT: uncomment OERequestDumperFilter section to enable 
+    <!-- USER EDIT: uncomment OERequestDumperFilter section to enable
          debugging of HTTP Request/Response by dumping the request data
          into the web application's log file.  -->
 
-    <!-- NOTE You must also add RequestDumperFilter Configuration section in 
+    <!-- NOTE You must also add RequestDumperFilter Configuration section in
          $CATALINA_HOME/conf/logging.properties file to redirect the debug messages to a log file -->
-    <!--   
+    <!--
     <filter>
       <display-name>OERequestDumperFilter</display-name>
       <filter-name>OERequestDumperFilter</filter-name>
@@ -217,7 +217,7 @@
        <url-pattern>/*</url-pattern>
     </filter-mapping>
     -->
-	
+
     <!-- Filter class uses for the web application's file logger -->
     <filter>
       <filter-name>LoggerContextFilter</filter-name>
@@ -258,14 +258,14 @@
      and the transports. -->
 
     <!-- USER EDIT: uncomment the <session-config> element below to
-         control these HTTP session run-time attributes. PASOE does 
-		 not support a tracking-mode of URL as this is considered
-		 a security vulnerability.
+         control these HTTP session run-time attributes. PASOE does
+         not support a tracking-mode of URL as this is considered
+         a security vulnerability.
 
         <http-only> {true|false} Block cookie access to JavaScript
         <secure>    {true|false} Require HTTPS for transmitting cookie
         <tracking-mode> {COOKIE|SSL} How session id is communicated to client
-        <session-timeout> {minutes}  How many minutes for a session to be 
+        <session-timeout> {minutes}  How many minutes for a session to be
                     idle before deletion
     -->
     <!--
@@ -282,9 +282,9 @@
 <!-- BEGIN:container.security when using the Spring Security policy
      configuration oeablSecurity-container.xml -->
 
-    <!-- USER EDIT: uncomment and configure container security ONLY if 
-         oeablSecurity-container.xml is configured for the Spring 
-         security above 
+    <!-- USER EDIT: uncomment and configure container security ONLY if
+         oeablSecurity-container.xml is configured for the Spring
+         security above
          The <auth-constraint> element needs to define the roles
          returned by the Java container's authentication.  Those
          Same role names need to be configured in oeablSecurity-container.xml
@@ -344,8 +344,8 @@
       <servlet-name>apsv</servlet-name>
       <servlet-class>com.progress.appserv.adapters.aia.Aia</servlet-class>
       <init-param>
-	    <param-name>instanceName</param-name>
-	    <param-value>Aia1</param-value>
+        <param-name>instanceName</param-name>
+        <param-value>Aia1</param-value>
       </init-param>
       <load-on-startup>2</load-on-startup>
     </servlet>
@@ -354,13 +354,13 @@
       <servlet-name>apsv</servlet-name>
       <url-pattern>/apsv/*</url-pattern>
     </servlet-mapping>
-   
+
     <!-- Define the REST transport used by HTTP clients to execute
-         RESTful resources that are mapped to ABL application RPC 
+         RESTful resources that are mapped to ABL application RPC
          procedures and classes -->
     <servlet>
       <servlet-name>OERestAdapter</servlet-name>
-      <servlet-class>com.progress.appserv.adapters.rest.OERestCXFNonSpringServlet</servlet-class> 
+      <servlet-class>com.progress.appserv.adapters.rest.OERestCXFNonSpringServlet</servlet-class>
         <init-param>
           <param-name>redirects-list</param-name>
           <param-value>
@@ -383,19 +383,19 @@
         </init-param>
         <load-on-startup>3</load-on-startup>
     </servlet>
-	
+
 
     <servlet-mapping>
       <servlet-name>OERestAdapter</servlet-name>
       <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 
-	   <!-- Define the OEWeb transport that supplies HTTP client access
+       <!-- Define the OEWeb transport that supplies HTTP client access
             to classic WebSpeed application code and the expanded support
             supplied by the Web Handlers of PASOE.  -->
     <servlet>
       <servlet-name>OEWebServlet</servlet-name>
-      <servlet-class>com.progress.appserv.adapters.web.OEWeb</servlet-class> 
+      <servlet-class>com.progress.appserv.adapters.web.OEWeb</servlet-class>
       <init-param>
            <param-name>redirects-list</param-name>
            <param-value>
@@ -420,15 +420,15 @@
            <param-name>OEWebHandlerClass</param-name>
            <param-value>Progress.Web.InternalWebHandler</param-value>
        </init-param>
-	   <load-on-startup>4</load-on-startup>
+       <load-on-startup>4</load-on-startup>
     </servlet>
 
-	<!-- The context parameter and URL mapping must be consistent if 
+    <!-- The context parameter and URL mapping must be consistent if
          you are looking to modify the URL space -->
     <context-param>
         <param-name>OEWebURL</param-name>
         <param-value>/web</param-value>
-	</context-param>
+    </context-param>
     <servlet-mapping>
       <servlet-name>OEWebServlet</servlet-name>
       <url-pattern>/web/*</url-pattern>
@@ -441,8 +441,8 @@
       <servlet-name>wsa</servlet-name>
       <servlet-class>com.progress.appserv.adapters.soap.WsaServlet</servlet-class>
       <init-param>
-	    <param-name>instanceName</param-name>
-	    <param-value>wsa1</param-value>
+        <param-name>instanceName</param-name>
+        <param-value>wsa1</param-value>
       </init-param>
       <load-on-startup>5</load-on-startup>
     </servlet>
@@ -476,21 +476,21 @@
 
       <error-page>
         <error-code>403</error-code>
-        <location>/WEB-INF/jsp/errorPage403.jsp</location> 
+        <location>/WEB-INF/jsp/errorPage403.jsp</location>
       </error-page>
    -->
 
   <error-page>
-    <location>/WEB-INF/jsp/errorPage.jsp</location> 
+    <location>/WEB-INF/jsp/errorPage.jsp</location>
   </error-page>
 
   <!-- The following is catch-all JSP excpetion handling page that
        will get triggered for any JAVA excpetions that are not
-       handled by the transport servlets/filters 
+       handled by the transport servlets/filters
    -->
   <error-page>
     <exception-type>java.lang.Throwable</exception-type>
-    <location>/WEB-INF/jsp/exceptionPage.jsp</location> 
+    <location>/WEB-INF/jsp/exceptionPage.jsp</location>
   </error-page>
 
 <!-- END: container managed http error and welcome pages -->

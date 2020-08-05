@@ -1,7 +1,7 @@
-<%@ page language="java" 
-         contentType="text/html;charset=UTF-8" 
-         pageEncoding="UTF-8" 
-         session="false" 
+<%@ page language="java"
+         contentType="text/html;charset=UTF-8"
+         pageEncoding="UTF-8"
+         session="false"
          trimDirectiveWhitespaces="true"
          errorPage="/WEB-INF/jsp/errorPage.jsp"%>
 <html>
@@ -24,7 +24,7 @@
 <tr><td><b>ServerName:</b></td> <td><%= request.getServerName()%> </td> </tr>
 <br>
 <%
-    String lmodel = application.getInitParameter("contextConfigLocation"); 
+    String lmodel = application.getInitParameter("contextConfigLocation");
     if ( ! lmodel.matches(".*oeablSecurity-anonymous.*") ) {
 %>
 <%-- Include login/logout info only for non-anonymous model policies --%>

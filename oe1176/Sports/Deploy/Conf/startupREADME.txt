@@ -34,23 +34,23 @@ The bare minimum schema for these tables is listed as follows:
       AREA "Data Area"
       DESCRIPTION "Temporary storage area for large text objects (such as serialized temp-tables or datasets)"
       DUMP-NAME "webdatastore"
-    
-    ADD FIELD "WebSessionID" OF "WebDataStore" AS character 
+
+    ADD FIELD "WebSessionID" OF "WebDataStore" AS character
       FORMAT "X(40)"
       INITIAL ""
       LABEL "Session ID"
       MAX-WIDTH 80
       ORDER 10
-    
-    ADD FIELD "ObjectName" OF "WebDataStore" AS character 
+
+    ADD FIELD "ObjectName" OF "WebDataStore" AS character
       FORMAT "x(20)"
       INITIAL ""
       LABEL "Object Name"
       MAX-WIDTH 40
       COLUMN-LABEL "Name"
       ORDER 20
-    
-    ADD FIELD "ObjectData" OF "WebDataStore" AS clob 
+
+    ADD FIELD "ObjectData" OF "WebDataStore" AS clob
       FORMAT "x(8)"
       INITIAL ?
       LOB-AREA "LOB Area"
@@ -60,115 +60,115 @@ The bare minimum schema for these tables is listed as follows:
       CLOB-COLLATION "basic"
       CLOB-TYPE 2
       ORDER 30
-    
-    ADD FIELD "add_dt" OF "WebDataStore" AS date 
+
+    ADD FIELD "add_dt" OF "WebDataStore" AS date
       DESCRIPTION "Date record was added"
       FORMAT "99/99/9999"
       INITIAL ?
       MAX-WIDTH 4
       ORDER 40
-    
-    ADD FIELD "add_time" OF "WebDataStore" AS integer 
+
+    ADD FIELD "add_time" OF "WebDataStore" AS integer
       DESCRIPTION "Time this record was added"
       FORMAT "99999"
       INITIAL "0"
       MAX-WIDTH 4
       ORDER 50
-    
-    ADD FIELD "add_userid" OF "WebDataStore" AS character 
+
+    ADD FIELD "add_userid" OF "WebDataStore" AS character
       DESCRIPTION "User ID of the person who added this record."
       FORMAT "X(30)"
       INITIAL ""
       MAX-WIDTH 60
       ORDER 60
-    
-    ADD FIELD "chg_dt" OF "WebDataStore" AS date 
+
+    ADD FIELD "chg_dt" OF "WebDataStore" AS date
       DESCRIPTION "Date record was changed"
       FORMAT "99/99/9999"
       INITIAL ?
       MAX-WIDTH 4
       ORDER 70
-    
-    ADD FIELD "chg_time" OF "WebDataStore" AS integer 
+
+    ADD FIELD "chg_time" OF "WebDataStore" AS integer
       DESCRIPTION "Time this record was added"
       FORMAT "99999"
       INITIAL "0"
       MAX-WIDTH 4
       ORDER 80
-    
-    ADD FIELD "chg_userid" OF "WebDataStore" AS character 
+
+    ADD FIELD "chg_userid" OF "WebDataStore" AS character
       DESCRIPTION "User ID of the person who last changed this record."
       FORMAT "X(30)"
       INITIAL ""
       MAX-WIDTH 60
       ORDER 90
-    
-    ADD INDEX "pkDataStore" ON "WebDataStore" 
+
+    ADD INDEX "pkDataStore" ON "WebDataStore"
       AREA "Index Area"
       UNIQUE
       PRIMARY
-      INDEX-FIELD "WebSessionID" ASCENDING 
+      INDEX-FIELD "WebSessionID" ASCENDING
       INDEX-FIELD "ObjectName" ASCENDING
-    
+
     ADD TABLE "WebSession"
       AREA "Data Area"
       DESCRIPTION "One record for each session over the web."
       DUMP-NAME "websession"
-    
-    ADD FIELD "WebSessionID" OF "WebSession" AS character 
+
+    ADD FIELD "WebSessionID" OF "WebSession" AS character
       FORMAT "X(40)"
       INITIAL ""
       MAX-WIDTH 80
       ORDER 10
-    
-    ADD FIELD "StartDate" OF "WebSession" AS date 
+
+    ADD FIELD "StartDate" OF "WebSession" AS date
       FORMAT "99/99/9999"
       INITIAL ?
       MAX-WIDTH 4
       ORDER 20
-    
-    ADD FIELD "LastDate" OF "WebSession" AS date 
+
+    ADD FIELD "LastDate" OF "WebSession" AS date
       FORMAT "99/99/9999"
       INITIAL ?
       MAX-WIDTH 4
       ORDER 30
-    
-    ADD FIELD "StartTime" OF "WebSession" AS integer 
+
+    ADD FIELD "StartTime" OF "WebSession" AS integer
       FORMAT "->,>>>,>>9"
       INITIAL "0"
       MAX-WIDTH 4
       ORDER 40
-    
-    ADD FIELD "LastTime" OF "WebSession" AS integer 
+
+    ADD FIELD "LastTime" OF "WebSession" AS integer
       FORMAT "->,>>>,>>9"
       INITIAL "0"
       MAX-WIDTH 4
       ORDER 50
 
-    ADD FIELD "SessionActive" OF "WebSession" AS logical 
+    ADD FIELD "SessionActive" OF "WebSession" AS logical
       DESCRIPTION "Whether or not the session is still active and can receive hits."
       FORMAT "yes/no"
       INITIAL "yes"
       MAX-WIDTH 1
       ORDER 60
 
-    ADD INDEX "pkWebSession" ON "WebSession" 
+    ADD INDEX "pkWebSession" ON "WebSession"
       AREA "Index Area"
       UNIQUE
       PRIMARY
       DESCRIPTION "Primary Unique Index of the WebSession Table"
-      INDEX-FIELD "WebSessionID" ASCENDING 
-    
-    ADD INDEX "idxLastDateTime" ON "WebSession" 
+      INDEX-FIELD "WebSessionID" ASCENDING
+
+    ADD INDEX "idxLastDateTime" ON "WebSession"
       AREA "Index Area"
-      INDEX-FIELD "LastDate" ASCENDING 
-      INDEX-FIELD "LastTime" ASCENDING 
-    
-    ADD INDEX "idxSessionActive" ON "WebSession" 
+      INDEX-FIELD "LastDate" ASCENDING
+      INDEX-FIELD "LastTime" ASCENDING
+
+    ADD INDEX "idxSessionActive" ON "WebSession"
       AREA "Index Area"
-      INDEX-FIELD "SessionActive" ASCENDING 
-    
-    ADD INDEX "idxStartDateTime" ON "WebSession" 
+      INDEX-FIELD "SessionActive" ASCENDING
+
+    ADD INDEX "idxStartDateTime" ON "WebSession"
       AREA "Index Area"
-      INDEX-FIELD "StartDate" ASCENDING 
-      INDEX-FIELD "StartTime" ASCENDING 
+      INDEX-FIELD "StartDate" ASCENDING
+      INDEX-FIELD "StartTime" ASCENDING

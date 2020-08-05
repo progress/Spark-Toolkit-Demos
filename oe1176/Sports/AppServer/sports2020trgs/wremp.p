@@ -16,7 +16,7 @@ define variable k as integer initial 0.
 
 /* Check to see if the user changed the Employee Number */
 
-if Employee.EmpNum ne oldEmployee.EmpNum and oldEmployee.EmpNum gt 0 then 
+if Employee.EmpNum ne oldEmployee.EmpNum and oldEmployee.EmpNum gt 0 then
 do:
     /* If user changed the Employee Number, find related benefits and */
     /* change their employee numbers.                                 */
