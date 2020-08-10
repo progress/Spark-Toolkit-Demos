@@ -27,29 +27,26 @@ using Progress.Lang.Object.
 using Progress.Json.ObjectModel.ObjectModelParser.
 using Progress.Json.ObjectModel.JsonArray.
 
-define variable oReq      as IHttpRequest  no-undo.
-define variable oResp     as IHttpResponse no-undo.
-define variable oEntity   as Object        no-undo.
-define variable lcEntity  as longchar      no-undo.
-define variable oClient   as IHttpClient   no-undo.
-define variable oCreds    as Credentials   no-undo.
-define variable cHttpUrl  as character     no-undo.
-define variable oJsonResp as JsonObject    no-undo.
-define variable oAgents   as JsonArray     no-undo.
-define variable oAgent    as JsonObject    no-undo.
-define variable oProps    as JsonObject    no-undo.
-define variable oSessions as JsonArray     no-undo.
-define variable oClients  as JsonArray     no-undo.
-define variable oClSess   as JsonArray     no-undo.
-define variable iLoop     as integer       no-undo.
-define variable iLoop2    as integer       no-undo.
-define variable iTotSess  as integer       no-undo.
-define variable cScheme   as character     no-undo initial "http".
-define variable cHost     as character     no-undo initial "localhost".
-define variable cPort     as character     no-undo initial "8810".
-define variable cUserId   as character     no-undo initial "tomcat".
-define variable cPassword as character     no-undo initial "tomcat".
-define variable cAblApp   as character     no-undo initial "oepas1".
+define variable oClient   as IHttpClient no-undo.
+define variable oCreds    as Credentials no-undo.
+define variable cHttpUrl  as character   no-undo.
+define variable cInstance as character   no-undo.
+define variable oJsonResp as JsonObject  no-undo.
+define variable oAgents   as JsonArray   no-undo.
+define variable oAgent    as JsonObject  no-undo.
+define variable oProps    as JsonObject  no-undo.
+define variable oSessions as JsonArray   no-undo.
+define variable oClients  as JsonArray   no-undo.
+define variable oClSess   as JsonArray   no-undo.
+define variable iLoop     as integer     no-undo.
+define variable iLoop2    as integer     no-undo.
+define variable iTotSess  as integer     no-undo.
+define variable cScheme   as character   no-undo initial "http".
+define variable cHost     as character   no-undo initial "localhost".
+define variable cPort     as character   no-undo initial "8810".
+define variable cUserId   as character   no-undo initial "tomcat".
+define variable cPassword as character   no-undo initial "tomcat".
+define variable cAblApp   as character   no-undo initial "oepas1".
 
 /* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
@@ -75,24 +72,37 @@ else
 
 assign oClient = ClientBuilder:Build():Client.
 assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).
+assign cInstance = substitute("&1://&2:&3", cScheme, cHost, cPort).
 
-/* Initial URL to obtain a list of all agents for an ABL Application. */
-assign cHttpUrl = substitute("&1://&2:&3/oemanager/applications/&4/agents", cScheme, cHost, cPort, cAblApp).
+function MakeRequest RETURNS JsonObject ( input pcHttpUrl as character ):
+    define variable oReq  as IHttpRequest  no-undo.
+    define variable oResp as IHttpResponse no-undo.
 
-message substitute("Looking for agents of &1...", cAblApp).
-
-oReq = RequestBuilder
-        :Get(cHttpUrl)
+    oReq = RequestBuilder
+        :Get(pcHttpUrl)
         :ContentType("application/vnd.progress+json")
         :UsingBasicAuthentication(oCreds)
         :Request.
-oResp = oClient:Execute(oReq).
-oEntity = oResp:Entity.
+    oResp = oClient:Execute(oReq).
+    if valid-object(oResp) and type-of(oResp:Entity, JsonObject) then do:
+        return cast(oResp:Entity, JsonObject).
+    end. /* Valid Entity */
+    else do:
+        if valid-object(oResp) and type-of(oResp:Entity, JsonObject) then
+            message substitute("Error executing oemanager request: &1", cast(oResp:Entity, JsonObject):GetJsonText()).
+        else
+            message substitute("Non-JSON response from &1", pcHttpUrl).
 
-if type-of(oEntity, JsonObject) then
-do:
-    oJsonResp = cast(oEntity, JsonObject).
-    oJsonResp:Write(input-output lcEntity, true).
+        return new JsonObject().
+    end. /* failure */
+end function. /* MakeRequest */
+
+message substitute("Looking for agents of &1...", cAblApp).
+
+/* Initial URL to obtain a list of all agents for an ABL Application. */
+assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents", cInstance, cAblApp).
+assign oJsonResp = MakeRequest(cHttpUrl).
+if valid-object(oJsonResp) then do:
     oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
     if oAgents:Length eq 0 then
         message "No agents running".
@@ -101,47 +111,32 @@ do:
         oAgent = oAgents:GetJsonObject(iLoop).
 
         /* Get sessions and count non-idle states. */
-        assign cHttpUrl = substitute("&1://&2:&3/oemanager/applications/&4/agents/&5/sessions", cScheme, cHost, cPort, cAblApp, oAgent:GetCharacter("pid")).
-        oReq = RequestBuilder
-            :Get(cHttpUrl)
-            :ContentType("application/vnd.progress+json")
-            :UsingBasicAuthentication(oCreds)
-            :Request.
-        oResp = oClient:Execute(oReq).
-        oEntity = oResp:Entity.
-        if type-of(oEntity, JsonObject) then
-        do:
-            if cast(oEntity, JsonObject):Has("result") then do:
+        assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents/&3/sessions", cInstance, cAblApp, oAgent:GetCharacter("pid")).
+        assign oJsonResp = MakeRequest(cHttpUrl). 
+        if valid-object(oJsonResp) then do:
+            if oJsonResp:Has("result") then do:
                 message substitute("Found Agent PID &1", oAgent:GetCharacter("pid")).
 
-                oSessions = cast(oEntity, JsonObject):GetJsonObject("result"):GetJsonArray("AgentSession").
+                oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentSession").
                 assign iTotSess = oSessions:Length.
                 do iLoop2 = 1 to iTotSess:
                     if oSessions:GetJsonObject(iLoop2):GetCharacter("SessionState") eq "IDLE" then do:
                         message substitute("Terminating Idle Session: &1", oSessions:GetJsonObject(iLoop2):GetInteger("SessionId")).
 
-                        assign cHttpUrl = substitute("&1://&2:&3/oemanager/applications/&4/agents/&5/sessions/&6",
-                                                     cScheme, cHost, cPort, cAblApp, oAgent:GetCharacter("pid"),
+                        assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents/&3/sessions/&4",
+                                                     cInstance, cAblApp, oAgent:GetCharacter("pid"),
                                                      oSessions:GetJsonObject(iLoop2):GetInteger("SessionId")).
-                        oReq = RequestBuilder
-                            :Delete(cHttpUrl)
-                            :ContentType("application/vnd.progress+json")
-                            :UsingBasicAuthentication(oCreds)
-                            :Request.
-                        oResp = oClient:Execute(oReq).
+                        oClient:Execute(RequestBuilder
+                                        :Delete(cHttpUrl)
+                                        :ContentType("application/vnd.progress+json")
+                                        :UsingBasicAuthentication(oCreds)
+                                        :Request).
                     end.
-                end.
+                end. /* iLoop2 - session */
             end.
         end.
-    end. /* iLoop */
-end. /* Valid Entity */
-else do:
-    if valid-object(oResp) then
-        message substitute("Error executing oemanager request. [&1]", oResp:ToString()).
-    else
-        message "Undefined response".
-end.
+    end. /* iLoop - agent */
+end. /* agents */
 
 /* Return value expected by PCT Ant task. */
 return string(0).
-
