@@ -155,7 +155,7 @@ if valid-object(oJsonResp) then do:
         message substitute("~nAgent PID &1: &2", oAgent:GetCharacter("pid"), oAgent:GetCharacter("state")).
 
 &IF {&MIN_VERSION_12_2} &THEN
-        /* Get the dynamic value for the available sessions (available only in 12.2 and later). */
+        /* Get the dynamic value for the available sessions of this agent (available only in 12.2 and later). */
         assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents/&3/dynamicSessionLimit", cInstance, cAblApp, oAgent:GetCharacter("pid")).
         assign oJsonResp = MakeRequest(cHttpUrl). 
         if valid-object(oJsonResp) then do:
@@ -165,12 +165,20 @@ if valid-object(oJsonResp) then do:
                     if oSessions:Length eq 1 and oSessions:GetJsonObject(1):Has("ABLOutput") then do:
                         oSessInfo = oSessions:GetJsonObject(1):GetJsonObject("ABLOutput").
 
+                        /**
+                         * The numABLSessions and numAvailableSession are just calculations of how many total sessions are running vs. those
+                         * that are not busy. We shouldn't be concerned with these values as the data may change by the time we make the
+                         * API call to get the actual session info. So it's best to just leave these off the display as #'s might not match up.
+                         */
+                        /**
                         if oSessInfo:Has("numABLSessions") then
-                            message substitute("~t# of ABL Sessions:~t&1", oSessInfo:GetInteger("numABLSessions")).
+                            message substitute("~tTotal ABL Sessions:~t&1", oSessInfo:GetInteger("numABLSessions")).
                         if oSessInfo:Has("numAvailableSessions") then
                             message substitute("~tAvail ABL Sessions:~t&1", oSessInfo:GetInteger("numAvailableSessions")).
+                        **/
+
                         if oSessInfo:Has("dynmaxablsessions") then
-                            message substitute("~tDynMax ABL Sessions:~t&1", oSessInfo:GetInteger("dynmaxablsessions")).
+                            message substitute("~tDynMax ABL Sessions: &1", oSessInfo:GetInteger("dynmaxablsessions")).
                     end.
                 end.
             end. /* result */
@@ -247,7 +255,7 @@ if valid-object(oJsonResp) then do:
 
         do iLoop = 1 to iSessions:
             /* Return similar data as /pas/passessions.jsp */
-            message substitute("~t&1~t&2~t&3~t&4~t&5~t&6~t&7~t&8",
+            message substitute("~t&1~t&2~t&3~t&4~t&5~t&6~t&7~t&8~t&9",
                                string(oClSess:GetJsonObject(iLoop):GetCharacter("requestState"), "x(8)"),
                                oClSess:GetJsonObject(iLoop):GetCharacter("lastAccessStr"),
                                string(oClSess:GetJsonObject(iLoop):GetInt64("elapsedTimeMs") / 1000, ">>>,>>>,>>9"),
@@ -255,7 +263,8 @@ if valid-object(oJsonResp) then do:
                                string(oClSess:GetJsonObject(iLoop):GetCharacter("sessionState"), "x(10)"),
                                oClSess:GetJsonObject(iLoop):GetCharacter("sessionType"),
                                oClSess:GetJsonObject(iLoop):GetCharacter("adapterType"),
-                               oClSess:GetJsonObject(iLoop):GetCharacter("requestID")).                              
+                               oClSess:GetJsonObject(iLoop):GetCharacter("requestID"),
+                               oClSess:GetJsonObject(iLoop):GetCharacter("sessionID")).                              
         end. /* iLoop */
     end. /* result */
 end. /* client sessions */
