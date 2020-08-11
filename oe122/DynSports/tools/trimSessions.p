@@ -27,26 +27,27 @@ using Progress.Lang.Object.
 using Progress.Json.ObjectModel.ObjectModelParser.
 using Progress.Json.ObjectModel.JsonArray.
 
-define variable oClient   as IHttpClient no-undo.
-define variable oCreds    as Credentials no-undo.
-define variable cHttpUrl  as character   no-undo.
-define variable cInstance as character   no-undo.
-define variable oJsonResp as JsonObject  no-undo.
-define variable oAgents   as JsonArray   no-undo.
-define variable oAgent    as JsonObject  no-undo.
-define variable oProps    as JsonObject  no-undo.
-define variable oSessions as JsonArray   no-undo.
-define variable oClients  as JsonArray   no-undo.
-define variable oClSess   as JsonArray   no-undo.
-define variable iLoop     as integer     no-undo.
-define variable iLoop2    as integer     no-undo.
-define variable iTotSess  as integer     no-undo.
-define variable cScheme   as character   no-undo initial "http".
-define variable cHost     as character   no-undo initial "localhost".
-define variable cPort     as character   no-undo initial "8810".
-define variable cUserId   as character   no-undo initial "tomcat".
-define variable cPassword as character   no-undo initial "tomcat".
-define variable cAblApp   as character   no-undo initial "oepas1".
+define variable oDelResp  as IHttpResponse no-undo.
+define variable oClient   as IHttpClient   no-undo.
+define variable oCreds    as Credentials   no-undo.
+define variable cHttpUrl  as character     no-undo.
+define variable cInstance as character     no-undo.
+define variable oJsonResp as JsonObject    no-undo.
+define variable oAgents   as JsonArray     no-undo.
+define variable oAgent    as JsonObject    no-undo.
+define variable oProps    as JsonObject    no-undo.
+define variable oSessions as JsonArray     no-undo.
+define variable oClients  as JsonArray     no-undo.
+define variable oClSess   as JsonArray     no-undo.
+define variable iLoop     as integer       no-undo.
+define variable iLoop2    as integer       no-undo.
+define variable iTotSess  as integer       no-undo.
+define variable cScheme   as character     no-undo initial "http".
+define variable cHost     as character     no-undo initial "localhost".
+define variable cPort     as character     no-undo initial "8810".
+define variable cUserId   as character     no-undo initial "tomcat".
+define variable cPassword as character     no-undo initial "tomcat".
+define variable cAblApp   as character     no-undo initial "oepas1".
 
 /* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
@@ -126,11 +127,15 @@ if valid-object(oJsonResp) then do:
                         assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents/&3/sessions/&4",
                                                      cInstance, cAblApp, oAgent:GetCharacter("pid"),
                                                      oSessions:GetJsonObject(iLoop2):GetInteger("SessionId")).
-                        oClient:Execute(RequestBuilder
-                                        :Delete(cHttpUrl)
-                                        :ContentType("application/vnd.progress+json")
-                                        :UsingBasicAuthentication(oCreds)
-                                        :Request).
+                        oDelResp = oClient:Execute(RequestBuilder
+                                                   :Delete(cHttpUrl)
+                                                   :ContentType("application/vnd.progress+json")
+                                                   :UsingBasicAuthentication(oCreds)
+                                                   :Request).
+                        if type-of(oDelResp:Entity, JsonObject) then do:
+                            assign oJsonResp = cast(oDelResp:Entity, JsonObject).
+                            message substitute("~t&1: &2", oJsonResp:GetCharacter("operation"), oJsonResp:GetCharacter("outcome")).
+                        end.
                     end.
                 end. /* iLoop2 - session */
             end.

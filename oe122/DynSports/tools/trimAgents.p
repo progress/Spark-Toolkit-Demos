@@ -1,5 +1,5 @@
 /**
- * Deletes (trims) all running agents from PASOE instance.
+ * Deletes (kills) all running agents of an ABLApp.
  * Usage: trimAgents.p <params>
  *  Parameter Default/Allowed
  *   Scheme   [http|https]
@@ -32,7 +32,6 @@ define variable oClient   as IHttpClient   no-undo.
 define variable oCreds    as Credentials   no-undo.
 define variable cHttpUrl  as character     no-undo.
 define variable cInstance as character     no-undo.
-define variable lcEntity  as longchar      no-undo.
 define variable oJsonResp as JsonObject    no-undo.
 define variable oAgents   as JsonArray     no-undo.
 define variable oAgent    as JsonObject    no-undo.
@@ -105,16 +104,17 @@ if valid-object(oJsonResp) then do:
     else
     do iLoop = 1 to oAgents:Length:
         oAgent = oAgents:GetJsonObject(iLoop).
-        message substitute("Trimming agent &1", oAgent:GetCharacter("agentId")).
+
+        message substitute("Stopping Agent PID &1", oAgent:GetCharacter("pid")).
+
         oDelResp = oClient:Execute(RequestBuilder
-                                   :Delete(substitute("&1/&2?waitToFinish=120000~&waitAfterStop=60000", cHttpUrl, oAgent:GetCharacter("agentId")))
+                                   :Delete(substitute("&1/&2", cHttpUrl, oAgent:GetCharacter("agentId")) + "?waitToFinish=120000&waitAfterStop=60000")
                                    :ContentType("application/vnd.progress+json")
                                    :UsingBasicAuthentication(oCreds)
                                    :Request).
         if type-of(oDelResp:Entity, JsonObject) then do:
-            lcEntity = "".
-            cast(oDelResp:Entity, JsonObject):Write(input-output lcEntity, true).
-            message string(lcEntity).
+            assign oJsonResp = cast(oDelResp:Entity, JsonObject).
+            message substitute("~t&1: &2", oJsonResp:GetCharacter("operation"), oJsonResp:GetCharacter("outcome")).
         end.
     end. /* iLoop - agent */
 end. /* agents */
