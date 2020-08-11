@@ -29,8 +29,9 @@
         <init_env/>
 
         <echo message="${line.separator}Usage Instructions:"/>
-        <echo message="${line.separator}ant status - Obtain status information for ABL App"/>
-        <echo message="${line.separator}ant trim - Trim all IDLE sessions for an ABL App"/>
+        <echo message="${line.separator} [proant|ant] status - Obtain status information for ABL App"/>
+        <echo message="${line.separator} [proant|ant] trim - Trim all IDLE sessions for an ABL App"/>
+    	<echo message="${line.separator} [proant|ant] kill - Stops all MSAS agents for an ABL App"/>
         <echo message="${line.separator}Available Parameters with Defaults:"/>
         <echo message="  -Dscheme=${scheme}"/>
         <echo message="    -Dhost=${host}"/>

@@ -67,4 +67,7 @@ finally:
     delete object hProc no-error.
     hServer:disconnect().
     delete object hServer no-error.
+
+    /* Return value expected by PCT Ant task. */
+    return string(0).
 end.

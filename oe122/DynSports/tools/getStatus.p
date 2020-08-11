@@ -166,11 +166,11 @@ if valid-object(oJsonResp) then do:
                         oSessInfo = oSessions:GetJsonObject(1):GetJsonObject("ABLOutput").
 
                         if oSessInfo:Has("numABLSessions") then
-                            message substitute("~t# of ABL Sessions:~t&1", integer(oSessInfo:GetInteger("numABLSessions"))).
+                            message substitute("~t# of ABL Sessions:~t&1", oSessInfo:GetInteger("numABLSessions")).
                         if oSessInfo:Has("numAvailableSessions") then
-                            message substitute("~tAvail ABL Sessions:~t&1", integer(oSessInfo:GetInteger("numAvailableSessions"))).
+                            message substitute("~tAvail ABL Sessions:~t&1", oSessInfo:GetInteger("numAvailableSessions")).
                         if oSessInfo:Has("dynmaxablsessions") then
-                            message substitute("~tDynMax ABL Sessions:~t&1", integer(oSessInfo:GetInteger("dynmaxablsessions"))).
+                            message substitute("~tDynMax ABL Sessions:~t&1", oSessInfo:GetInteger("dynmaxablsessions")).
                     end.
                 end.
             end. /* result */
@@ -182,7 +182,7 @@ if valid-object(oJsonResp) then do:
         assign oJsonResp = MakeRequest(cHttpUrl). 
         if valid-object(oJsonResp) then do:
             if oJsonResp:Has("result") then do:
-                message "~n~tSESSION ID~tSTATE~tSTARTED~t~t~t~tMEMORY".
+                message "~n~tSESSION ID~tSTATE~t~tSTARTED~t~t~t~t~tMEMORY".
 
                 oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentSession").
                 assign
@@ -195,8 +195,8 @@ if valid-object(oJsonResp) then do:
                         assign iBusySess = iBusySess + 1.
 
                     message substitute("~t~t&1~t&2~t&3~t&4 KB",
-                                        oSessions:GetJsonObject(iLoop2):GetInteger("SessionId"),
-                                        oSessions:GetJsonObject(iLoop2):GetCharacter("SessionState"),
+                                        string(oSessions:GetJsonObject(iLoop2):GetInteger("SessionId"), ">>>9"),
+                                        string(oSessions:GetJsonObject(iLoop2):GetCharacter("SessionState"), "x(10)"),
                                         oSessions:GetJsonObject(iLoop2):GetCharacter("StartTime"),
                                         trim(string(round(oSessions:GetJsonObject(iLoop2):GetInt64("SessionMemory") / 1024, 0), ">>>,>>>,>>>,>>9"))).
                 end.
@@ -218,16 +218,16 @@ if valid-object(oJsonResp) then do:
         message substitute("~nClient Connections: &1", iClients).
 
         if iClients gt 0 then
-            message "~tADAPTER~tREQUEST START~t~t~tELAPSED~tPROCEDURE~t~t~t~t~tREQUEST ID".
+            message "~tADAPTER~tREQUEST START~t~t~tELAPSED (S)~tREQUEST ID~t~tPROCEDURE".
 
         do iLoop = 1 to iClients:
             /* Return similar data as /pas/pasconnections.jsp */
             message substitute("~t&1~t&2~t&3~t&4~t&5~t&6",
                                oClients:GetJsonObject(iLoop):GetCharacter("adapterType"),
                                oClients:GetJsonObject(iLoop):GetCharacter("reqStartTimeStr"),
-                               oClients:GetJsonObject(iLoop):GetInt64("elapsedTimeMs"),
-                               oClients:GetJsonObject(iLoop):GetCharacter("requestProcedure"),
-                               oClients:GetJsonObject(iLoop):GetCharacter("requestID")).
+                               string(oClients:GetJsonObject(iLoop):GetInt64("elapsedTimeMs") / 1000, ">>>,>>>,>>9"),
+                               oClients:GetJsonObject(iLoop):GetCharacter("requestID"),
+                               oClients:GetJsonObject(iLoop):GetCharacter("requestProcedure")).
         end. /* iLoop */
     end. /* result */
 end. /* client connections */
@@ -243,16 +243,16 @@ if valid-object(oJsonResp) then do:
         message substitute("~nClient (HTTP) Sessions: &1", iSessions).
 
         if iSessions gt 0 then
-            message "~tSTATE~tLAST ACCESS~t~t~tELAPSED~tBOUND~tSESS STATE~tSESS TYPE~tADAPTER~tREQUEST ID".
+            message "~tSTATE~t~tLAST ACCESS~t~t~tELAPSED (S)~tBOUND~tSESS STATE~tSESS TYPE~tADAPTER~tREQUEST ID".
 
         do iLoop = 1 to iSessions:
             /* Return similar data as /pas/passessions.jsp */
             message substitute("~t&1~t&2~t&3~t&4~t&5~t&6~t&7~t&8",
-                               oClSess:GetJsonObject(iLoop):GetCharacter("requestState"),
+                               string(oClSess:GetJsonObject(iLoop):GetCharacter("requestState"), "x(8)"),
                                oClSess:GetJsonObject(iLoop):GetCharacter("lastAccessStr"),
-                               oClSess:GetJsonObject(iLoop):GetInt64("elapsedTimeMs"),
-                               STRING(oClSess:GetJsonObject(iLoop):GetLogical("bound"), "YES/NO"),
-                               oClSess:GetJsonObject(iLoop):GetCharacter("sessionState"),
+                               string(oClSess:GetJsonObject(iLoop):GetInt64("elapsedTimeMs") / 1000, ">>>,>>>,>>9"),
+                               string(oClSess:GetJsonObject(iLoop):GetLogical("bound"), "YES/NO"),
+                               string(oClSess:GetJsonObject(iLoop):GetCharacter("sessionState"), "x(10)"),
                                oClSess:GetJsonObject(iLoop):GetCharacter("sessionType"),
                                oClSess:GetJsonObject(iLoop):GetCharacter("adapterType"),
                                oClSess:GetJsonObject(iLoop):GetCharacter("requestID")).                              
