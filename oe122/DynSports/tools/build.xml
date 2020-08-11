@@ -40,6 +40,28 @@
         <echo message="  -Dablapp=${ablapp}"/>
     </target>
 
+    <target name="compile">
+        <init_env/>
+
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <PCTCompile
+               destDir="${basedir}"
+               dlcHome="${dlcHome}">
+            <propath>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <fileset dir="${basedir}">
+                <include name="getStatus.p"/>
+                <include name="trimAgents.p"/>
+            	<include name="trimSessions.p"/>
+            </fileset>
+        </PCTCompile>
+
+    	<delete dir="${basedir}/.pct" quiet="true"/>
+    </target>
+
     <target name="status">
         <init_env/>
 
@@ -72,6 +94,28 @@
                dlcHome="${dlcHome}"
                graphicalMode="false"
                procedure="trimSessions">
+            <propath>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+        </PCTRun>
+    </target>
+
+    <target name="kill">
+        <init_env/>
+
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="trimAgents">
             <propath>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
