@@ -26,16 +26,18 @@ using OpenEdge.Net.HTTP.IHttpClient.
 using OpenEdge.Net.HTTP.IHttpRequest.
 using OpenEdge.Net.HTTP.IHttpResponse.
 using OpenEdge.Net.HTTP.RequestBuilder.
-using Progress.Json.ObjectModel.JsonObject.
 using Progress.Lang.Object.
 using Progress.Json.ObjectModel.ObjectModelParser.
+using Progress.Json.ObjectModel.JsonObject.
 using Progress.Json.ObjectModel.JsonArray.
+using Progress.Json.ObjectModel.JsonDataType.
 
 define variable oClient   as IHttpClient no-undo.
 define variable oCreds    as Credentials no-undo.
 define variable cHttpUrl  as character   no-undo.
 define variable cInstance as character   no-undo.
 define variable oJsonResp as JsonObject  no-undo.
+define variable oResult   as JsonObject  no-undo.
 define variable oAgents   as JsonArray   no-undo.
 define variable oAgent    as JsonObject  no-undo.
 define variable oSessInfo as JsonObject  no-undo.
@@ -159,9 +161,10 @@ if valid-object(oJsonResp) then do:
         assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents/&3/dynamicSessionLimit", cInstance, cAblApp, oAgent:GetCharacter("pid")).
         assign oJsonResp = MakeRequest(cHttpUrl). 
         if valid-object(oJsonResp) then do:
-            if oJsonResp:Has("result") then do:
-                if oJsonResp:GetJsonObject("result"):Has("AgentSessionInfo") then do:
-                    oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentSessionInfo").
+            if oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
+                oResult = oJsonResp:GetJsonObject("result").
+                if oResult:Has("AgentSessionInfo") then do:
+                    oSessions = oResult:GetJsonArray("AgentSessionInfo").
                     if oSessions:Length eq 1 and oSessions:GetJsonObject(1):Has("ABLOutput") then do:
                         oSessInfo = oSessions:GetJsonObject(1):GetJsonObject("ABLOutput").
 
@@ -189,7 +192,7 @@ if valid-object(oJsonResp) then do:
         assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents/&3/sessions", cInstance, cAblApp, oAgent:GetCharacter("pid")).
         assign oJsonResp = MakeRequest(cHttpUrl). 
         if valid-object(oJsonResp) then do:
-            if oJsonResp:Has("result") then do:
+            if oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
                 message "~n~tSESSION ID~tSTATE~t~tSTARTED~t~t~t~t~tMEMORY".
 
                 oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentSession").
@@ -219,7 +222,7 @@ end. /* agents */
 assign cHttpUrl = substitute("&1/oemanager/applications/&2/clients", cInstance, cAblApp).
 assign oJsonResp = MakeRequest(cHttpUrl). 
 if valid-object(oJsonResp) then do:
-    if oJsonResp:Has("result") then do:
+    if oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
         oClients = oJsonResp:GetJsonObject("result"):GetJsonArray("ClientConnection").
 
         assign iClients = oClients:Length.
@@ -244,7 +247,7 @@ end. /* client connections */
 assign cHttpUrl = substitute("&1/oemanager/applications/&2/sessions", cInstance, cAblApp).
 assign oJsonResp = MakeRequest(cHttpUrl). 
 if valid-object(oJsonResp) then do:
-    if oJsonResp:Has("result") then do:
+    if oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
         oClSess = oJsonResp:GetJsonObject("result"):GetJsonArray("OEABLSession").
 
         assign iSessions = oClSess:Length.

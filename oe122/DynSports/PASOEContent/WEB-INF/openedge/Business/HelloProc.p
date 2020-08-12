@@ -23,6 +23,8 @@ procedure sayHello:
     define input  parameter toWhom   as character no-undo.
     define output parameter greeting as character no-undo.
 
+    pause 5.
+
     assign greeting = substitute("Hello &1", toWhom).
 end procedure.
 

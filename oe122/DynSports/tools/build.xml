@@ -29,9 +29,10 @@
         <init_env/>
 
         <echo message="${line.separator}Usage Instructions:"/>
-        <echo message="${line.separator} [proant|ant] status - Obtain status information for ABL App"/>
-        <echo message="${line.separator} [proant|ant] trim - Trim all IDLE sessions for an ABL App"/>
-    	<echo message="${line.separator} [proant|ant] kill - Stops all MSAS agents for an ABL App"/>
+        <echo message="${line.separator} [proant|ant] status - Obtain agent/connection status information for an ABL App"/>
+        <echo message="${line.separator} [proant|ant] trim - Trim all IDLE sessions for each MSAS agent for an ABL App"/>
+    	<echo message="${line.separator} [proant|ant] refresh - Terminates all sessions for each MSAS agent for an ABL App"/>
+    	<echo message="${line.separator} [proant|ant] kill - Gracefully stops all MSAS agents for an ABL App"/>
         <echo message="${line.separator}Available Parameters with Defaults:"/>
         <echo message="  -Dscheme=${scheme}"/>
         <echo message="    -Dhost=${host}"/>
@@ -117,6 +118,28 @@
                dlcHome="${dlcHome}"
                graphicalMode="false"
                procedure="trimAgents">
+            <propath>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+        </PCTRun>
+    </target>
+
+    <target name="refresh">
+        <init_env/>
+
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="refreshAgents">
             <propath>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>

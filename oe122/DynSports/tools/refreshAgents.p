@@ -1,6 +1,6 @@
 /**
- * Deletes (kills) all running agents of an ABLApp.
- * Usage: trimAgents.p <params>
+ * Refreshes all agents of an ABLApp by terminating all sessions.
+ * Usage: refreshAgents.p <params>
  *  Parameter Default/Allowed
  *   Scheme   [http|https]
  *   Hostname [localhost]
@@ -105,10 +105,10 @@ if valid-object(oJsonResp) then do:
     do iLoop = 1 to oAgents:Length:
         oAgent = oAgents:GetJsonObject(iLoop).
 
-        message substitute("Stopping Agent PID &1", oAgent:GetCharacter("pid")).
+        message substitute("Refreshing Agent PID &1", oAgent:GetCharacter("pid")).
 
         oDelResp = oClient:Execute(RequestBuilder
-                                   :Delete(substitute("&1/&2", cHttpUrl, oAgent:GetCharacter("agentId")) + "?waitToFinish=120000&waitAfterStop=60000")
+                                   :Delete(substitute("&1/&2/sessions", cHttpUrl, oAgent:GetCharacter("agentId")))
                                    :ContentType("application/vnd.progress+json")
                                    :UsingBasicAuthentication(oCreds)
                                    :Request).
