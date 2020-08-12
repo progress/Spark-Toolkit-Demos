@@ -107,6 +107,7 @@ if valid-object(oJsonResp) then do:
 
         message substitute("Refreshing Agent PID &1", oAgent:GetCharacter("pid")).
 
+        /* Terminate all sessions for each agent. */
         oDelResp = oClient:Execute(RequestBuilder
                                    :Delete(substitute("&1/&2/sessions", cHttpUrl, oAgent:GetCharacter("agentId")))
                                    :ContentType("application/vnd.progress+json")

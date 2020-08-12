@@ -107,6 +107,7 @@ if valid-object(oJsonResp) then do:
 
         message substitute("Stopping Agent PID &1", oAgent:GetCharacter("pid")).
 
+        /* Gracefully stop each agent. */
         oDelResp = oClient:Execute(RequestBuilder
                                    :Delete(substitute("&1/&2", cHttpUrl, oAgent:GetCharacter("agentId")) + "?waitToFinish=120000&waitAfterStop=60000")
                                    :ContentType("application/vnd.progress+json")
