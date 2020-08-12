@@ -23,7 +23,7 @@ procedure sayHello:
     define input  parameter toWhom   as character no-undo.
     define output parameter greeting as character no-undo.
 
-    pause 5.
+    pause 0.2. /* Just add a bit of fake think-time. */
 
     assign greeting = substitute("Hello &1", toWhom).
 end procedure.
@@ -41,6 +41,8 @@ procedure sayHello2Many:
             assign greeting = substitute("&1, Hello &2", greeting, recipients:GetCharacter(ix)).
     end.
 
+    pause 0.2. /* Just add a bit of fake think-time. */
+
     assign greeting = trim(left-trim(greeting, ",")).
 end procedure.
 
@@ -54,6 +56,8 @@ procedure sayHelloExtent:
     do ix = 1 to extent(recipients):
         assign greeting = substitute("&1, Hello &2", greeting, recipients[ix]).
     end.
+
+    pause 0.2. /* Just add a bit of fake think-time. */
 
     assign greeting = trim(left-trim(greeting, ",")).
 end procedure.

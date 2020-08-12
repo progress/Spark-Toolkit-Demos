@@ -4,10 +4,10 @@
  *  Parameter Default/Allowed
  *   Scheme   [http|https]
  *   Hostname [localhost]
- *   PAS Port [8820]
+ *   PAS Port [8810]
  *   UserId   [tomcat]
  *   Password [tomcat]
- *   ABL App  [SportsPASOE]
+ *   ABL App  [oepas1]
  */
 
 using OpenEdge.Core.Assert.
@@ -26,6 +26,7 @@ using Progress.Lang.Object.
 using Progress.Json.ObjectModel.ObjectModelParser.
 using Progress.Json.ObjectModel.JsonObject.
 using Progress.Json.ObjectModel.JsonArray.
+using Progress.Json.ObjectModel.JsonDataType.
 
 define variable oDelResp  as IHttpResponse no-undo.
 define variable oClient   as IHttpClient   no-undo.
@@ -37,8 +38,6 @@ define variable oAgents   as JsonArray     no-undo.
 define variable oAgent    as JsonObject    no-undo.
 define variable oProps    as JsonObject    no-undo.
 define variable oSessions as JsonArray     no-undo.
-define variable oClients  as JsonArray     no-undo.
-define variable oClSess   as JsonArray     no-undo.
 define variable iLoop     as integer       no-undo.
 define variable iLoop2    as integer       no-undo.
 define variable iTotSess  as integer       no-undo.
@@ -111,10 +110,10 @@ if valid-object(oJsonResp) then do:
     do iLoop = 1 to oAgents:Length:
         oAgent = oAgents:GetJsonObject(iLoop).
 
-        /* Get sessions and count non-idle states. */
+        /* Get sessions and determine non-idle states. */
         assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents/&3/sessions", cInstance, cAblApp, oAgent:GetCharacter("pid")).
         assign oJsonResp = MakeRequest(cHttpUrl). 
-        if valid-object(oJsonResp) then do:
+        if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
             if oJsonResp:Has("result") then do:
                 message substitute("Found Agent PID &1", oAgent:GetCharacter("pid")).
 

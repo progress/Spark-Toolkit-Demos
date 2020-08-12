@@ -4,10 +4,10 @@
  *  Parameter Default/Allowed
  *   Scheme   [http|https]
  *   Hostname [localhost]
- *   PAS Port [8820]
+ *   PAS Port [8810]
  *   UserId   [tomcat]
  *   Password [tomcat]
- *   ABL App  [SportsPASOE]
+ *   ABL App  [oepas1]
  *
  * Reference: https://knowledgebase.progress.com/articles/Article/P89737
  */

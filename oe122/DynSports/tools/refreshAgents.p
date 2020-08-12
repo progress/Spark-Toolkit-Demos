@@ -4,10 +4,10 @@
  *  Parameter Default/Allowed
  *   Scheme   [http|https]
  *   Hostname [localhost]
- *   PAS Port [8820]
+ *   PAS Port [8810]
  *   UserId   [tomcat]
  *   Password [tomcat]
- *   ABL App  [SportsPASOE]
+ *   ABL App  [oepas1]
  */
 
 using OpenEdge.Core.Assert.
@@ -26,6 +26,7 @@ using Progress.Lang.Object.
 using Progress.Json.ObjectModel.ObjectModelParser.
 using Progress.Json.ObjectModel.JsonObject.
 using Progress.Json.ObjectModel.JsonArray.
+using Progress.Json.ObjectModel.JsonDataType.
 
 define variable oDelResp  as IHttpResponse no-undo.
 define variable oClient   as IHttpClient   no-undo.
@@ -97,7 +98,7 @@ message substitute("Looking for agents of &1...", cAblApp).
 /* Initial URL to obtain a list of all agents for an ABL Application. */
 assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents", cInstance, cAblApp).
 assign oJsonResp = MakeRequest(cHttpUrl).
-if valid-object(oJsonResp) then do:
+if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
     oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
     if oAgents:Length eq 0 then
         message "No agents running".
