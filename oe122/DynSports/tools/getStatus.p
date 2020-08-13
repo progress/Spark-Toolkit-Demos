@@ -116,16 +116,21 @@ assign oJsonResp = MakeRequest(cHttpUrl).
 if valid-object(oJsonResp) then do:
     if oJsonResp:Has("result") then do:
         oProps = oJsonResp:GetJsonObject("result").
-        if oProps:Has("minAgents") then
-            message substitute("Minimum Agents: &1", integer(oProps:GetCharacter("minAgents"))).
-        if oProps:Has("maxAgents") then
-            message substitute("Maximum Agents: &1", integer(oProps:GetCharacter("maxAgents"))).
-        if oProps:Has("numInitialAgents") then
-            message substitute("Initial Agents: &1", integer(oProps:GetCharacter("numInitialAgents"))).
-        if oProps:Has("maxConnectionsPerAgent") then
-            message substitute("Max. Connections/Agent: &1", integer(oProps:GetCharacter("maxConnectionsPerAgent"))).
-        if oProps:Has("maxABLSessionsPerAgent") then
-            message substitute("Max. ABLSessions/Agent: &1", integer(oProps:GetCharacter("maxABLSessionsPerAgent"))).
+
+        if oProps:Has("maxAgents") and oProps:GetType("maxAgents") eq JsonDataType:String then
+            message substitute("Maximum Agents: &1", oProps:GetCharacter("maxAgents")).
+
+        if oProps:Has("minAgents") and oProps:GetType("minAgents") eq JsonDataType:String then
+            message substitute("Minimum Agents: &1", oProps:GetCharacter("minAgents")).
+
+        if oProps:Has("numInitialAgents") and oProps:GetType("numInitialAgents") eq JsonDataType:String then
+            message substitute("Initial Agents: &1", oProps:GetCharacter("numInitialAgents")).
+
+        if oProps:Has("maxConnectionsPerAgent") and oProps:GetType("maxConnectionsPerAgent") eq JsonDataType:String then
+            message substitute("Max. Connections/Agent: &1", oProps:GetCharacter("maxConnectionsPerAgent")).
+
+        if oProps:Has("maxABLSessionsPerAgent") and oProps:GetType("maxABLSessionsPerAgent") eq JsonDataType:String then
+            message substitute("Max. ABLSessions/Agent: &1", oProps:GetCharacter("maxABLSessionsPerAgent")).
     end. /* result */
 end. /* session manager properties */
 
@@ -136,10 +141,11 @@ if valid-object(oJsonResp) then do:
     if oJsonResp:Has("result") then do:
         oProps = oJsonResp:GetJsonObject("result").
 
-        if oProps:Has("numInitialSessions") then
-            message substitute("Initial Sessions/Agent: &1", integer(oProps:GetCharacter("numInitialSessions"))).
-        if oProps:Has("minAvailableABLSessions") then
-            message substitute("Min Avail Sessions/Agent: &1", integer(oProps:GetCharacter("minAvailableABLSessions"))).
+        if oProps:Has("numInitialSessions") and oProps:GetType("numInitialSessions") eq JsonDataType:String then
+            message substitute("Initial Sessions/Agent: &1", oProps:GetCharacter("numInitialSessions")).
+
+        if oProps:Has("minAvailableABLSessions") and oProps:GetType("minAvailableABLSessions") eq JsonDataType:String then
+            message substitute("Min. Avail. Sess/Agent: &1", oProps:GetCharacter("minAvailableABLSessions")).
     end. /* result */
 end. /* agent manager properties */
 
@@ -165,7 +171,8 @@ if valid-object(oJsonResp) then do:
                 oResult = oJsonResp:GetJsonObject("result").
                 if oResult:Has("AgentSessionInfo") then do:
                     oSessions = oResult:GetJsonArray("AgentSessionInfo").
-                    if oSessions:Length eq 1 and oSessions:GetJsonObject(1):Has("ABLOutput") then do:
+                    if oSessions:Length eq 1 and oSessions:GetJsonObject(1):Has("ABLOutput") and
+                       oSessions:GetJsonObject(1):GetType("ABLOutput") eq JsonDataType:Object then do:
                         oSessInfo = oSessions:GetJsonObject(1):GetJsonObject("ABLOutput").
 
                         /**
@@ -180,7 +187,7 @@ if valid-object(oJsonResp) then do:
                             message substitute("~tAvail ABL Sessions:~t&1", oSessInfo:GetInteger("numAvailableSessions")).
                         **/
 
-                        if oSessInfo:Has("dynmaxablsessions") then
+                        if oSessInfo:Has("dynmaxablsessions") and oSessInfo:GetType("dynmaxablsessions") eq JsonDataType:Number then
                             message substitute("~tDynMax ABL Sessions: &1", oSessInfo:GetInteger("dynmaxablsessions")).
                     end.
                 end.
@@ -213,6 +220,7 @@ if valid-object(oJsonResp) then do:
                 end.
 
                 message substitute("~tTotal Agent-Sessions: &1 (&2% Busy)", iTotSess, round((iBusySess / iTotSess) * 100, 1)).
+                message substitute("~tAvail Agent-Sessions: &1", iTotSess - iBusySess).
             end. /* result */
         end. /* response */
     end. /* iLoop */
