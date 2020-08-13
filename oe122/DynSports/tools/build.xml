@@ -57,10 +57,10 @@
             </propath>
             <fileset dir="${basedir}">
                 <include name="getStatus.p"/>
+            	<include name="refreshAgents.p"/>
+            	<include name="trimAgents.p"/>
+            	<include name="trimAgentSessions.p"/>
             	<include name="trimSessions.p"/>
-            	<include name="trimABLSessions.p"/>
-                <include name="refreshAgents.p"/>
-                <include name="trimAgents.p"/>
             </fileset>
         </PCTCompile>
 
@@ -98,7 +98,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimSessions">
+               procedure="trimAgentSessions">
             <propath>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
@@ -120,7 +120,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimABLSessions">
+               procedure="trimSessions">
             <propath>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
