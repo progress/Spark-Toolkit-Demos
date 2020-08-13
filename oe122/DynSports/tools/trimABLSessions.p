@@ -38,6 +38,7 @@ define variable oSessions as JsonArray     no-undo.
 define variable oSession  as JsonObject    no-undo.
 define variable iLoop     as integer       no-undo.
 define variable iSessions as integer       no-undo.
+define variable iLimit    as integer       no-undo.
 define variable cScheme   as character     no-undo initial "http".
 define variable cHost     as character     no-undo initial "localhost".
 define variable cPort     as character     no-undo initial "8810".
@@ -104,13 +105,17 @@ if valid-object(oJsonResp) then do:
         oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("OEABLSession").
 
         assign iSessions = oSessions:Length.
+        assign iLimit = 1000 * 60 * 60 * 24.
         message substitute("~nClient (HTTP) Sessions: &1", iSessions).
 
         if iSessions gt 0 then
         do iLoop = 1 to iSessions:
             oSession = oSessions:GetJsonObject(iLoop).
+
+            message substitute("~nLooking for READY and AVAILABLE sessions with elapsed time more than &1 ms...", iLimit).
+
             if oSession:GetCharacter("requestState") eq "READY" and oSession:GetCharacter("sessionState") eq "AVAILABLE" and
-               oSession:GetInt64("elapsedTimeMs") ge (1000 * 60 * 60 * 24) then do:
+               oSession:GetInt64("elapsedTimeMs") ge iLimit then do:
                 message substitute("Found Inactive Session: &1 [&2 sec.]", oSession:GetCharacter("sessionID"),
                                    trim(string(oSession:GetInt64("elapsedTimeMs") / 1000, ">>>,>>>,>>9"))).
 
