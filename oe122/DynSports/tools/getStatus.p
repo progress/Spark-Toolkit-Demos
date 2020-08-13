@@ -99,12 +99,15 @@ function MakeRequest RETURNS JsonObject ( input pcHttpUrl as character ):
     end. /* Valid Entity */
     else do:
         if valid-object(oResp) and type-of(oResp:Entity, JsonObject) then
-            message substitute("Error executing oemanager request: &1", cast(oResp:Entity, JsonObject):GetJsonText()).
+            undo, throw new Progress.Lang.AppError(string(cast(oResp:Entity, JsonObject):GetJsonText())).
         else
-            message substitute("Non-JSON response from &1", pcHttpUrl).
-
-        return new JsonObject().
+            undo, throw new Progress.Lang.AppError(substitute("Non-JSON response from &1", pcHttpUrl)).
     end. /* failure */
+
+    catch err as Progress.Lang.Error:
+        message substitute("Error executing OEM-API request: &1", err:GetMessage(1)).
+        return new JsonObject().
+    end catch.
 end function. /* MakeRequest */
 
 message substitute("PASOE Instance: &1", cInstance).
@@ -152,8 +155,9 @@ end. /* agent manager properties */
 /* Initial URL to obtain a list of all agents for an ABL Application. */
 assign cHttpUrl = substitute("&1/oemanager/applications/&2/agents", cInstance, cAblApp).
 assign oJsonResp = MakeRequest(cHttpUrl). 
-if valid-object(oJsonResp) then do:
+if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
     oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
+
     if oAgents:Length eq 0 then
         message "No agents running".
     else
