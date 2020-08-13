@@ -110,6 +110,7 @@ function MakeRequest RETURNS JsonObject ( input pcHttpUrl as character ):
     end catch.
 end function. /* MakeRequest */
 
+message substitute("Current Time: &1", iso-date(now)).
 message substitute("PASOE Instance: &1", cInstance).
 message substitute("ABL Application: &1", cAblApp).
 
