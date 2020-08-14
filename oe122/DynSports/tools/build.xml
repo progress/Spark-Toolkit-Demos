@@ -56,11 +56,7 @@
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <fileset dir="${basedir}">
-                <include name="getStatus.p"/>
-            	<include name="refreshAgents.p"/>
-            	<include name="trimAgents.p"/>
-            	<include name="trimAgentSessions.p"/>
-            	<include name="trimSessions.p"/>
+                <include name="*.p"/>
             </fileset>
         </PCTCompile>
 

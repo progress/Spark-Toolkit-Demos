@@ -364,7 +364,7 @@ class OpenEdge.Core.Util.AnnotationWriter implements ISupportInitialize:
                         assign valueData = new JsonObject()
                                // don't TRIM; we only want to remove the last single ) paren
                                annoVals  = substring(lbReference.Object-identifier, pos + 1)
-                               annoVals  = substring(annoVals, 1, length(annoVals) - 1)
+                               annoVals  = substring(annoVals, 1, r-index(annoVals, ')':u) - 1)
                                cnt       = num-entries(annoVals) /* Get a count, which may be inaccurate... */
                                .
                         do loop = 1 to cnt:

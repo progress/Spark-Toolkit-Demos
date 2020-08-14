@@ -6,7 +6,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -104,7 +106,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -124,7 +128,9 @@
         "Spark.Core.Service.SparkEntity",
         "OpenEdge.BusinessLogic.BusinessEntity"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -163,7 +169,9 @@
         "Spark.Core.Service.SparkEntity",
         "OpenEdge.BusinessLogic.BusinessEntity"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -183,7 +191,9 @@
         "Spark.Core.Service.SparkEntity",
         "OpenEdge.BusinessLogic.BusinessEntity"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -203,7 +213,9 @@
         "Spark.Core.Service.SparkEntity",
         "OpenEdge.BusinessLogic.BusinessEntity"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -221,7 +233,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -239,7 +253,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -259,7 +275,9 @@
         "Spark.Core.Service.SparkEntity",
         "OpenEdge.BusinessLogic.BusinessEntity"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -279,7 +297,9 @@
         "Spark.Core.Service.SparkEntity",
         "OpenEdge.BusinessLogic.BusinessEntity"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -299,7 +319,9 @@
         "Spark.Core.Service.SparkEntity",
         "OpenEdge.BusinessLogic.BusinessEntity"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -317,7 +339,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -335,7 +359,9 @@
       "inherits": [
         "Spark.Core.Service.Service"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": {
       "program FILE": {
@@ -420,7 +446,9 @@
         "Spark.Core.Service.SparkEntity",
         "OpenEdge.BusinessLogic.BusinessEntity"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -438,7 +466,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -456,7 +486,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -474,7 +506,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -492,7 +526,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -510,7 +546,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -528,7 +566,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -546,7 +586,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -566,7 +608,9 @@
         "Spark.Core.Service.SparkEntity",
         "OpenEdge.BusinessLogic.BusinessEntity"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
@@ -584,7 +628,9 @@
       "inherits": [
         "Spark.Core.Service.DynamicResource"
       ],
-      "implements": null
+      "implements": [
+        ""
+      ]
     },
     "program": null,
     "property": null,
