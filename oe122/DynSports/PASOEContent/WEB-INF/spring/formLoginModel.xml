@@ -222,8 +222,13 @@
                 delete-cookies="${http.logout.deletecookie}" />
 
         <headers defaults-disabled="false"
+                        disabled="false">
+            <frame-options policy="SAMEORIGIN"/>
+        </headers>
+        <!--
+        <headers defaults-disabled="false"
                  disabled="false" />
-
+        -->
         <!--  
         <remember-me />
         -->
