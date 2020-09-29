@@ -33,6 +33,9 @@ class OpenEdge.Core.String serializable
     /* Helper/holder for an empty String instance.  */  
     define static private variable moEmptyString as OpenEdge.Core.String no-undo.
     
+    /* Helper/holder for an unknown value String instance.  */  
+    define static private variable mUnknownString as OpenEdge.Core.String no-undo.
+    
     /* Holds the actual value, in UTF-8. UTF-8 can hold pretty much all characters, so let's be smart and use that. 
        SERIALIZABLE since this is the actual value 'holder' */
     define private serializable variable mUTF8Value as longchar no-undo. 
@@ -113,6 +116,16 @@ class OpenEdge.Core.String serializable
             assign moEmptyString = new OpenEdge.Core.String().
         
         return moEmptyString.
+    end method.
+    
+    /* Returns a single/the same unknown value String object.
+       
+       @return OpenEdge.Core.String An empty string */
+    method static public OpenEdge.Core.String Unknown():
+        if not valid-object(mUnknownString) then
+            assign mUnknownString = new OpenEdge.Core.String(StringConstant:UNKNOWN).
+        
+        return mUnknownString.
     end method.
     
     method override public logical Equals(input p0 as Object):
@@ -221,6 +234,14 @@ class OpenEdge.Core.String serializable
                    .
         else
             assign extent(cArray) = iMax.
+        
+        if iMax eq 0 then
+            assign extent(cArray) = 1
+                   // this should only happen of value and delimiter are empty
+                   cArray[1]      = pcValue
+                   .
+        else
+            assign extent(cArray) = iMax.
         do iLoop = 1 to iMax:
             assign cArray[iLoop] = entry(iLoop, pcValue, pcDelimiter).
         end. 
@@ -310,7 +331,9 @@ class OpenEdge.Core.String serializable
     method public void Append(input pcValue as longchar):
         // no-op allowed on the special Empty string. don't use the Equals() 
         // overload cos it checks values first
-        if int64(this-object) eq int64(moEmptyString) then
+        if int64(this-object) eq int64(moEmptyString) 
+        or int64(this-object) eq int64(mUnknownString)
+        then
             return.
         
         assign mUTF8Value = mUTF8Value + pcValue.
@@ -324,7 +347,9 @@ class OpenEdge.Core.String serializable
     method public void Append(input poValue as OpenEdge.Core.String):
         // no-op allowed on the special Empty string. don't use the Equals() 
         // overload cos it checks values first
-        if int64(this-object) eq int64(moEmptyString) then
+        if int64(this-object) eq int64(moEmptyString) 
+        or int64(this-object) eq int64(mUnknownString)
+        then
             return.
         
         assign mUTF8Value = mUTF8Value  + poValue:mUTF8Value . 
@@ -338,7 +363,9 @@ class OpenEdge.Core.String serializable
     method public void Prepend(input pcValue as longchar):
         // no-op allowed on the special Empty string. don't use the Equals() 
         // overload cos it checks values first
-        if int64(this-object) eq int64(moEmptyString) then
+        if int64(this-object) eq int64(moEmptyString) 
+        or int64(this-object) eq int64(mUnknownString)
+        then
             return.
         
         assign mUTF8Value = pcValue + mUTF8Value.
@@ -352,7 +379,9 @@ class OpenEdge.Core.String serializable
     method public void Prepend(input poValue as OpenEdge.Core.String):
         // no-op allowed on the special Empty string. don't use the Equals() 
         // overload cos it checks values first
-        if int64(this-object) eq int64(moEmptyString) then
+        if int64(this-object) eq int64(moEmptyString)
+        or int64(this-object) eq int64(mUnknownString)
+        then
             return.
         
         assign mUTF8Value = poValue:mUTF8Value + mUTF8Value. 

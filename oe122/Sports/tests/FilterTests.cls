@@ -124,10 +124,10 @@ class tests.FilterTests:
         oDataRequest = oFilterParser:Parse(new String(oABLFilter:GetCharacter(3))).
 
         /* Test with a simple "where" phrase and its output. */
-        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "WHERE").
+        OpenEdge.Core.Assert:Equals("WHERE", oFilterBuilder:FilterPattern).
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option1a").
-        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where CustNum ne 42').
+        OpenEdge.Core.Assert:Equals('each ttCustomer where CustNum ne 42', cFullQuery).
 
         oFilterBuilder = FilterParserBuilder:Build("JFP").
         oFilterParser = oFilterBuilder:Parser.
@@ -137,7 +137,7 @@ class tests.FilterTests:
         OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "JFP").
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option1b").
-        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where CustNum ne 42').
+        OpenEdge.Core.Assert:Equals('each ttCustomer where CustNum ne 42', cFullQuery).
     end method.
 
     /*------------------------------------------------------------------------------
@@ -153,10 +153,10 @@ class tests.FilterTests:
         oDataRequest = oFilterParser:Parse(oFilterList:GetJsonObject(1)).
 
         /* Test with the "ablFilter" pattern and its output. */
-        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
+        OpenEdge.Core.Assert:Equals("ablFilter", oFilterBuilder:FilterPattern).
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option2").
-        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where CustNum ne 42 by CustNum Descending by SalesRep').
+        OpenEdge.Core.Assert:Equals('each ttCustomer where CustNum ne 42 by CustNum Descending by SalesRep', cFullQuery).
     end method.
 
     /*------------------------------------------------------------------------------
@@ -170,10 +170,10 @@ class tests.FilterTests:
         oDataRequest = oFilterParser:Parse(oFilterData).
 
         /* Test with the "ablFilter" pattern and its output. */
-        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "ablFilter").
+        OpenEdge.Core.Assert:Equals("ablFilter", oFilterBuilder:FilterPattern).
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3a").
-        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where CustNum ne 42 by CustNum Descending by SalesRep').
+        OpenEdge.Core.Assert:Equals('each ttCustomer where CustNum ne 42 by CustNum Descending by SalesRep', cFullQuery).
 
         define variable cPayload as character no-undo.
 
@@ -185,10 +185,10 @@ class tests.FilterTests:
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterData).
 
-        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        OpenEdge.Core.Assert:Equals("kendo", oFilterBuilder:FilterPattern).
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3b").
-        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (CustNum ne 42) by CustNum Descending by SalesRep').
+        OpenEdge.Core.Assert:Equals('each ttCustomer where (CustNum ne 42) by CustNum Descending by SalesRep', cFullQuery).
 
         /* Test with the "kendo" pattern and its output (requires some additional setup). */
         assign cPayload = substitute('~{"mappingType": "kendo", "filter": ~{"logic": "and", "filters": [~{"field": "CustNum", "operator": "gt", "value": 1}, ~{"field": "CustNum", "operator": "lt", "value": 10000}, ~{"logic": "or", "filters": [~{"field": "Name", "operator": "begins", "value": "A"}, ~{"field": "Name", "operator": "begins", "value": "B"}]}]}, "sort": [~{"field": "CustNum", "dir": "desc"}, ~{"field": "SalesRep", "dir": "asc"}], "skip": &1, "top": &2}', iSkip, iTop).
@@ -198,10 +198,10 @@ class tests.FilterTests:
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterData).
 
-        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        OpenEdge.Core.Assert:Equals("kendo", oFilterBuilder:FilterPattern).
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("Option3c").
-        OpenEdge.Core.Assert:Equals(cFullQuery, 'each ttCustomer where (CustNum gt 1) and (CustNum lt 10000) and ((Name begins "A") or (Name begins "B")) by CustNum Descending by SalesRep').
+        OpenEdge.Core.Assert:Equals('each ttCustomer where (CustNum gt 1) and (CustNum lt 10000) and ((Name begins "A") or (Name begins "B")) by CustNum Descending by SalesRep', cFullQuery).
     end method.
 
     /*------------------------------------------------------------------------------
@@ -220,7 +220,7 @@ class tests.FilterTests:
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterData).
 
-        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        OpenEdge.Core.Assert:Equals("kendo", oFilterBuilder:FilterPattern).
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("RealField").
         OpenEdge.Core.Assert:Equals('each ttCustomer where (Name eq "Test")', cFullQuery).
@@ -242,7 +242,7 @@ class tests.FilterTests:
         oFilterParser = oFilterBuilder:Parser.
         oDataRequest = oFilterParser:Parse(oFilterData).
 
-        OpenEdge.Core.Assert:Equals(oFilterBuilder:FilterPattern, "kendo").
+        OpenEdge.Core.Assert:Equals("kendo", oFilterBuilder:FilterPattern).
         assign cFullQuery = oQueryBuilder:BuildQueryString(oDataRequest, dataset dsCustomer:handle).
         this-object:showOutput("SerializedField").
         OpenEdge.Core.Assert:Equals('each ttCustomer where (Name eq "Test")', cFullQuery).

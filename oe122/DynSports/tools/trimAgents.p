@@ -123,3 +123,4 @@ end. /* agents */
 
 /* Return value expected by PCT Ant task. */
 return string(0).
+
