@@ -1,5 +1,5 @@
 /* *************************************************************************************************************************
-Copyright (c) 2019 by Progress Software Corporation and/or one of its subsidiaries or affiliates. All rights reserved.
+Copyright (c) 2019-2020 by Progress Software Corporation and/or one of its subsidiaries or affiliates. All rights reserved.
 ************************************************************************************************************************** */
 /*------------------------------------------------------------------------
     File        : QueryBuilder
@@ -13,8 +13,12 @@ Copyright (c) 2019 by Progress Software Corporation and/or one of its subsidiari
 block-level on error undo, throw.
 
 using Ccs.BusinessLogic.IGetDataRequest.
+using Ccs.BusinessLogic.IGetDataTableRequest.
+using Ccs.BusinessLogic.IQueryGroup.
+using Ccs.BusinessLogic.IQueryPredicate.
 using Ccs.BusinessLogic.JoinEnum.
 using Ccs.BusinessLogic.QueryOperatorEnum.
+using Ccs.BusinessLogic.SortOrderEnum.
 using Ccs.Common.Support.ICharacterArrayHolder.
 using Ccs.Common.Support.ICharacterHolder.
 using Ccs.Common.Support.IDateArrayHolder.
@@ -33,11 +37,7 @@ using Ccs.Common.Support.ILogicalArrayHolder.
 using Ccs.Common.Support.ILogicalHolder.
 using Ccs.Common.Support.ILongcharArrayHolder.
 using Ccs.Common.Support.ILongcharHolder.
-using OpenEdge.BusinessLogic.GetDataTableRequest.
-using OpenEdge.BusinessLogic.QueryDefinition.
-using OpenEdge.BusinessLogic.QueryGroup.
-using OpenEdge.BusinessLogic.QueryPredicate.
-using OpenEdge.BusinessLogic.QuerySortEntry.
+using OpenEdge.Core.StringConstant.
 
 class OpenEdge.BusinessLogic.Query.QueryBuilder:
 
@@ -103,7 +103,7 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
              * This is because we'll check if a valid field buffer exists, or roll on to
              * checking each field in the table (in the case of a serialized name).
              */
-			assign bhField = phTable:buffer-field(pcFieldName) no-error. /* Must keep this no-error! */
+            assign bhField = phTable:buffer-field(pcFieldName) no-error. /* Must keep this no-error! */
             if valid-handle(bhField) then
                 return bhField.
 
@@ -213,7 +213,7 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
        @param QueryGroup The group
        @return character A group string */
     method protected character BuildGroup (input phTable as handle,
-                                           input poGroup as QueryGroup):
+                                           input poGroup as IQueryGroup):
         define variable cQueryString as character no-undo initial "".
         define variable cClause      as character no-undo.
         define variable iLoop        as integer   no-undo.
@@ -228,15 +228,15 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
 
         if extent(poGroup:Entries) ne ? and extent(poGroup:Entries) ge 1 then
         do iLoop = 1 to extent(poGroup:Entries):
-            if type-of(poGroup:Entries[iLoop], QueryGroup) then
+            if type-of(poGroup:Entries[iLoop], IQueryGroup) then
                 /* Create a nested query from this child group. */
-                assign cClause = this-object:BuildGroup(phTable, cast(poGroup:Entries[iLoop], QueryGroup))
+                assign cClause = this-object:BuildGroup(phTable, cast(poGroup:Entries[iLoop], IQueryGroup))
                        oJoinAs = poGroup:join /* Use the overall group join. */
                        .
             else
                 /* Create a simple clause frmo the given predicate. */
-                assign cClause = this-object:BuildClause(phTable, cast(poGroup:Entries[iLoop], QueryPredicate))
-                       oJoinAs = cast(poGroup:Entries[iLoop], QueryPredicate):Join
+                assign cClause = this-object:BuildClause(phTable, cast(poGroup:Entries[iLoop], IQueryPredicate))
+                       oJoinAs = cast(poGroup:Entries[iLoop], IQueryPredicate):Join
                        .
 
             /* Continue with joining the clause (single or nested) to the query if non-blank. */
@@ -253,7 +253,7 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
        @param QueryPredicate The abstract query predicate
        @return character A string representation of the where clause */
     method protected character BuildClause (input phTable  as handle,
-                                            input poClause as QueryPredicate):
+                                            input poClause as IQueryPredicate):
         define variable hField  as handle     no-undo.
         define variable cClause as character  no-undo.
         define variable cField  as character  no-undo.
@@ -437,100 +437,159 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
          */
         return BuildQueryString(pFilter, ?).
     end method. /* BuildQueryString */
-
+    
+    /* Builds a query string for a single table from a IGetDataTableRequest object.
+       
+       This method maps the input names to the input handle's SERIALIZE-NAMEs and 
+       uses the 'real' names to build the where clause
+       
+       @param IGetDataTableRequest A valid 
+       @param handle a Dataset or buffer (TT or DB) handle
+       @param logical TRUE if the FILTER (where) expression must be included, FALSE if not
+       @param logical TRUE if the SORT expression must be included , FALSE if not
+       @return character A complete WHERE clause */
+    method public character BuildQueryString (input pFilter as IGetDataTableRequest,
+                                              input pInclFilter as logical,
+                                              input pInclSort as logical,
+                                              input pSchema as handle):
+        define variable hdlFld as handle no-undo.
+        define variable loop as integer no-undo.
+        define variable cnt as integer no-undo.
+        define variable sortOrder as character no-undo.
+        define variable qryString as character no-undo.
+        define variable queryWhere as character no-undo.
+        define variable querySort as character no-undo.
+        define variable fieldName as character no-undo.
+        
+        // we don't want anything, get nothing
+        if  pInclFilter eq false
+        and pInclSort eq false
+        then
+            return qryString.
+        
+        // allow for ?, which defaults to true
+        if not pInclFilter eq false then
+        do:
+            // If the QueryString is set, use it.  
+            if  not pFilter:QueryString eq ?
+            and not pFilter:QueryString eq '':u
+            then
+                return pFilter:QueryString.
+            else
+            do:
+                if not valid-object(pFilter:QueryDefinition)
+                or not valid-object(pFilter:QueryDefinition:QuerySelection)
+                then
+                    assign queryWhere = '':u.
+                else
+                /* Build either a nested query or a simple clause, depending on the object available. */
+                if type-of(pFilter:QueryDefinition:QuerySelection, IQueryGroup) then
+                    assign queryWhere = this-object:BuildGroup(pSchema, cast(pFilter:QueryDefinition:QuerySelection, IQueryGroup)).
+                else
+                if type-of(pFilter:QueryDefinition:QuerySelection, IQueryPredicate) then
+                    assign queryWhere = this-object:BuildClause(pSchema, cast(pFilter:QueryDefinition:QuerySelection, IQueryPredicate)).
+            end.
+            
+            /* If query string is blank, set to simply "true". */
+            if queryWhere eq '':u then
+                assign queryWhere = 'true':u.
+            
+            if not queryWhere eq '':u then
+                assign qryString = 'where ':u + left-trim(queryWhere, 'where ':u).
+        end.    // include where/filter
+        
+        // allow for ?, which defaults to true
+        if not pInclSort eq false then
+        do:
+            if valid-object(pFilter:QueryDefinition) then
+                assign cnt = extent(pFilter:QueryDefinition:QuerySort).
+            
+            SORT-LOOP:
+            do loop = 1 to cnt:
+                if not valid-object(pFilter:QueryDefinition:QuerySort[loop]) then
+                    next SORT-LOOP.
+                
+                /* Create the sort clause based on the real field information. */
+                assign hdlFld = this-object:GetFieldBuffer(pSchema, pFilter:QueryDefinition:QuerySort[loop]:FieldName).
+                if valid-handle(hdlFld) then
+                    assign fieldName = hdlFld:name.
+                else
+                    assign fieldName = pFilter:QueryDefinition:QuerySort[loop]:FieldName.
+                
+                if valid-object(pFilter:QueryDefinition:QuerySort[loop]:SortOrder)
+                and pFilter:QueryDefinition:QuerySort[loop]:SortOrder eq SortOrderEnum:Descending
+                then
+                    // make sure there's a space here
+                    assign sortOrder = StringConstant:SPACE + 'descending':u.
+                else
+                    assign sortOrder = '':u.
+                
+                assign querySort = substitute('&1 by &2&3':u, 
+                                              querySort,
+                                              fieldName,
+                                              sortOrder).
+            end. /* do iLoop */
+            
+            if not querySort eq '':u then
+                assign qryString = qryString + StringConstant:SPACE + trim(querySort)
+                       // in case there is no WHERE clause
+                       qryString = trim(qryString)
+                       .
+        end.    // include sort
+        
+        return qryString.
+    end method.
+    
     /* Builds a query string from a IGetDataRequest object. This method maps
        the input names to the input handle's SERIALIZE-NAMEs and uses the 'real'
        names to build the where clause
-
+       
        @param IGetDataRequest A valid queryn definition
        @param handle a Dataset or buffer (TT or DB) handle
        @return character A complete WHERE clause */
     method public character BuildQueryString (input pFilter as IGetDataRequest,
                                               input pSchema as handle):
-        define variable oQueryDef    as QueryDefinition no-undo.
-        define variable oSortList    as QuerySortEntry  no-undo extent.
         define variable cQueryString as character       no-undo.
-        define variable cTableQuery  as character       no-undo extent.
         define variable bhTable      as handle          no-undo.
-        define variable bhField      as handle          no-undo.
-        define variable iTable       as integer         no-undo.
-        define variable iLoop        as integer         no-undo.
+        define variable iLoop       as integer         no-undo.
         define variable cSortBy      as character       no-undo extent.
-        define variable cTable       as character       no-undo extent.
-
+        define variable tblName as character no-undo.
+        define variable tblQry as character no-undo.
+        define variable cnt as integer no-undo.
+        
         /* Cycle through all the table requests for this filter. */
-        extent(cSortBy) = extent(pFilter:TableRequests).
-        extent(cTable) = extent(pFilter:TableRequests).
-        extent(cTableQuery) = extent(pFilter:TableRequests).
-        do iTable = 1 to extent(pFilter:TableRequests):
+        assign cnt             = extent(pFilter:TableRequests)
+               extent(cSortBy) = cnt
+               .
+        do iLoop = 1 to cnt:
             if valid-handle(pSchema) and pSchema:type eq "dataset" then
-                assign bhTable = this-object:GetTableBuffer(pSchema,
-                                                            cast(pFilter:TableRequests[iTable], GetDataTableRequest):TableName).
+                assign bhTable = this-object:GetTableBuffer(pSchema, pFilter:TableRequests[iLoop]:TableName).
             else if valid-handle(pSchema) and pSchema:type eq "temp-table" then
                 assign bhTable = pSchema. /* Use given temp-table handle as-is. */
-
+            
+            assign tblQry         = BuildQueryString(pFilter:TableRequests[iLoop], yes, no, bhTable)
+                   cSortBy[iLoop] = BuildQueryString(pFilter:TableRequests[iLoop], no, yes, bhTable)
+                   .
             /* Remember the real name for each table. */
             if valid-handle(bhTable) then
-                assign cTable[iTable] = bhTable:name.
-
-            assign oQueryDef = cast(cast(pFilter:TableRequests[iTable], GetDataTableRequest):QueryDefinition, QueryDefinition).
-            assign oSortList = cast(oQueryDef:QuerySort, QuerySortEntry).
-
-            /* Build either a nested query or a simple clause, depending on the object available. */
-            if type-of(oQueryDef:QuerySelection, QueryGroup) then
-                assign cTableQuery[iTable] = this-object:BuildGroup(bhTable, cast(oQueryDef:QuerySelection, QueryGroup)).
-            else if type-of(oQueryDef:QuerySelection, QueryPredicate) then
-                assign cTableQuery[iTable] = this-object:BuildClause(bhTable, cast(oQueryDef:QuerySelection, QueryPredicate)).
-
-            if extent(oSortList) ne ? then
-            do iLoop = 1 to extent(oSortList):
-                if valid-object(oSortList[iLoop]) then do:
-                    /* Create the sort clause based on the real field information. */
-                    assign bhField = this-object:GetFieldBuffer(bhTable, oSortList[iLoop]:FieldName).
-                    if valid-object(bhField) then
-                        assign cSortBy[iTable] = trim(substitute("&1 by &2 &3", cSortBy[iTable], bhField:name,
-                                                                 if oSortList[iLoop]:SortOrder eq Ccs.BusinessLogic.SortOrderEnum:Ascending
-                                                                 then "" else oSortList[iLoop]:SortOrder:ToString())).
-                    else /* Otherwise use the given field name. */
-                        assign cSortBy[iTable] = trim(substitute("&1 by &2 &3", cSortBy[iTable], oSortList[iLoop]:FieldName,
-                                                                 if oSortList[iLoop]:SortOrder eq Ccs.BusinessLogic.SortOrderEnum:Ascending
-                                                                 then "" else oSortList[iLoop]:SortOrder:ToString())).
-                end. /* Valid Sort Entry*/
-            end. /* do iLoop */
-
-            /* If query string is blank, set to simply "true". */
-            if (cTableQuery[iTable] gt "") ne true then
-                assign cTableQuery[iTable] = "true". /* Will add the "where" to this later. */
-
-            /* If the table request's QueryString property is empty, provide the derived table query string and sort phrase. */
-            if (cast(pFilter:TableRequests[iTable], GetDataTableRequest):QueryString gt "") ne true then
-                cast(pFilter:TableRequests[iTable], GetDataTableRequest):QueryString = substitute("where &1 &2",
-                                                                                                  cTableQuery[iTable],
-                                                                                                  cSortBy[iTable]).
-        end. /* extent pFilter:TableRequests */
-
-        /* Build the query string from each table query. */
-        do iLoop = 1 to extent(cTableQuery):
-            if (cQueryString gt "") ne true then
-                /* Set blank query string to first table's query string. */
-                assign cQueryString = substitute("each &1 where &2", cTable[iLoop], cTableQuery[iLoop]).
+                assign tblName = bhTable:name.
             else
-                /* If we have a valid name for an additional table, append the next table query. */
-                assign cQueryString = substitute("&1, each &2 where &3", cQueryString, cTable[iLoop], cTableQuery[iLoop]).
-
-            /* Trim commas and spaces from query string after each table. */
-            assign cQueryString = trim(trim(cQueryString, ",")).
-        end. /* extent cTableQuery */
-
+                assign tblName = '':u.
+            
+            /* If we have a valid name for an additional table, append the next table query. */
+            assign cQueryString = substitute("&1, each &2 &3", cQueryString, tblName, tblQry)
+                   /* Trim commas and spaces from query string after each table. */
+                   cQueryString = trim(trim(cQueryString, ","))
+                   .
+        end. /* extent pFilter:TableRequests */
+        
         /* Add the sort phrases after all table "where" phrases. */
-        do iLoop = 1 to extent(cSortBy):
+        do iLoop = 1 to cnt:
             assign cQueryString = substitute("&1 &2", cQueryString, cSortBy[iLoop]).
         end. /* extent cSortBy */
-
-        finally:
-            /* Return the first TableRequest's query string by default. */
-            return trim(cQueryString).
-        end finally.
+        
+        /* Return the first TableRequest's query string by default. */
+        return trim(cQueryString).
     end method. /* BuildQueryString */
-
+    
 end class.

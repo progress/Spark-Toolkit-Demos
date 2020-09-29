@@ -445,6 +445,8 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         /* Use the query builder to convert the request object into a valid "where" phrases. */
         assign oQueryBuilder = new QueryBuilder().
         assign cQueryString = oQueryBuilder:BuildQueryString(poRequest, ProDataSet).
+
+        /* Adjust the batch size for each table buffer. */
         extent(hTTBuffer) = ProDataSet:num-buffers.
         do ix = 1 to ProDataSet:num-buffers:
             assign hTTBuffer[ix] = ProDataSet:get-buffer-handle(ix) no-error.
@@ -452,19 +454,6 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             if valid-handle(hTTBuffer[ix]) then do:
                 hTTBuffer[ix]:empty-temp-table().
                 hTTBuffer[ix]:attach-data-source(ProDataSource[ix]).
-
-                if extent(poRequest:TableRequests) ge ix and
-                   valid-object(poRequest:TableRequests[ix]) then do:
-                    /* Set batch size per max rows to return, or use paging context if available. */
-                    if poRequest:TableRequests[ix]:NumRecords gt 0 then
-                        hTTBuffer[ix]:batch-size = integer(poRequest:TableRequests[ix]:NumRecords).
-                    else do:
-                        if (poRequest:TableRequests[ix]:PagingContext gt "") eq true then
-                            hTTBuffer[ix]:batch-size = 1.
-                        else
-                            hTTBuffer[ix]:batch-size = 0.
-                    end. /* NumRecords = 0 */
-                end. /* valid-object (TableRequests) */
             end.
         end. /* ProDataSet */
 
@@ -477,8 +466,19 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             assign hDBBuffer[ix] = ProDataSource[ix]:get-source-buffer(1) no-error.
 
             if extent(poRequest:TableRequests) ge ix and
-               valid-object(poRequest:TableRequests[ix]) then do:
-                ProDataSource[ix]:fill-where-string = poRequest:TableRequests[ix]:QueryString.
+               valid-object(poRequest:TableRequests[ix]) and
+               valid-object(hTTBuffer[ix]) then do:
+                ProDataSource[ix]:fill-where-string = oQueryBuilder:BuildQueryString(poRequest:TableRequests[ix], true, true, hTTBuffer[ix]).
+
+                /* Set batch size per max rows to return, or use paging context if available. */
+                if poRequest:TableRequests[ix]:NumRecords gt 0 then
+                    hTTBuffer[ix]:batch-size = integer(poRequest:TableRequests[ix]:NumRecords).
+                else do:
+                    if (poRequest:TableRequests[ix]:PagingContext gt "") eq true then
+                        hTTBuffer[ix]:batch-size = 1.
+                    else
+                        hTTBuffer[ix]:batch-size = 0.
+                end. /* NumRecords = 0 */
 
                 /* Echo the current query phrase to the log if debugging is enabled. */
                 oLoggingManager:logMessage(substitute("Query: &1", ProDataSource[ix]:fill-where-string), "ENTITY-DBG", 3).
