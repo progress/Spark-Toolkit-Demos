@@ -23,6 +23,7 @@ using Spark.Core.Message.IContextMessage from propath.
 using Spark.Core.Util.* from propath.
 
 block-level on error undo, throw.
+
 &GLOBAL-DEFINE THROW ON ERROR UNDO, THROW
 
 class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEntity implements Spark.Core.Service.ISparkEntity use-widget-pool abstract:
@@ -442,11 +443,7 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         this-object:ValidateDataSources().
         DataSetTools:emptyDataSet(ProDataSet).
 
-        /* Use the query builder to convert the request object into a valid "where" phrases. */
-        assign oQueryBuilder = new QueryBuilder().
-        assign cQueryString = oQueryBuilder:BuildQueryString(poRequest, ProDataSet).
-
-        /* Adjust the batch size for each table buffer. */
+        /* Attach data sources for each table buffer. */
         extent(hTTBuffer) = ProDataSet:num-buffers.
         do ix = 1 to ProDataSet:num-buffers:
             assign hTTBuffer[ix] = ProDataSet:get-buffer-handle(ix) no-error.
@@ -460,6 +457,20 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
         /* If no valid first temp-table buffer, just leave. */
         if not valid-handle(hTTBuffer[1]) then return ?.
 
+        /**
+         * Confirm whether a particular class exists in the current environment.
+         * This is used to indicate if the new Business Logic classes are present,
+         * which support enhanced QueryBuilder methods for query string creation.
+         */
+        &scoped-define hasQED valid-object(Progress.Lang.Class:GetClass("OpenEdge.BusinessLogic.IO.QueryEntryDeserializer"))
+
+        /* Use the query builder to convert the request object into a valid "where" phrases. */
+        assign oQueryBuilder = new QueryBuilder().
+        &if integer(entry(1, proversion, ".")) eq 11 or (integer(entry(1, proversion, ".")) ge 12 and integer(entry(2, proversion, ".")) lt 4) &then
+        /* Needs to be called once prior to filling the where-string on each data source. */
+        assign cQueryString = oQueryBuilder:BuildQueryString(poRequest, ProDataSet).
+        &endif
+
         /* Prepare to fill Dataset via where phrase from the table request. */
         extent(hDBBuffer) = extent(ProDataSource).
         do ix = 1 to extent(ProDataSource):
@@ -468,9 +479,21 @@ class Spark.Core.Service.SparkEntity inherits OpenEdge.BusinessLogic.BusinessEnt
             if extent(poRequest:TableRequests) ge ix and
                valid-object(poRequest:TableRequests[ix]) and
                valid-object(hTTBuffer[ix]) then do:
+                &if integer(entry(1, proversion, ".")) eq 11 or (integer(entry(1, proversion, ".")) ge 12 and integer(entry(2, proversion, ".")) lt 4) &then
+                /* Use the older method, which uses the pre-built QueryString for each TableRequest. */
+                if poRequest:TableRequests[ix]:QueryString gt "" then
+                    ProDataSource[ix]:fill-where-string = poRequest:TableRequests[ix]:QueryString.
+                else if cQueryString begins "each" and cQueryString matches "*where*" then
+                    ProDataSource[ix]:fill-where-string = substring(cQueryString, index(cQueryString, "where")).
+                &else
+                /**
+                 * Newer method, which more intelligently builds a query string for the given table request and buffer.
+                 * This combines the natural query for child tables with a data-relation together with the user's query. 
+                 */
                 ProDataSource[ix]:fill-where-string = oQueryBuilder:BuildQueryString(poRequest:TableRequests[ix], true, true, hTTBuffer[ix]).
-
-                /* Set batch size per max rows to return, or use paging context if available. */
+                &endif
+ 
+                /* Set batch size and max rows to return, or use paging context if available. */
                 if poRequest:TableRequests[ix]:NumRecords gt 0 then
                     hTTBuffer[ix]:batch-size = integer(poRequest:TableRequests[ix]:NumRecords).
                 else do:
