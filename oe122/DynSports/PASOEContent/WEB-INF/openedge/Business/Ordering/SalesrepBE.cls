@@ -36,7 +36,7 @@ class Business.Ordering.SalesrepBE inherits Spark.Core.Service.DynamicEntity use
         protected set.
 
     define public override property capabilities as character
-        initial "" no-undo get.
+        initial "filter,id,orderBy,skip,sort,top" no-undo get.
         protected set.
 
     define public override property operations as character
