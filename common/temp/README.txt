@@ -1,0 +1,1 @@
+Location for project temp files (this text file should ensure the folder is kept within GitHub).

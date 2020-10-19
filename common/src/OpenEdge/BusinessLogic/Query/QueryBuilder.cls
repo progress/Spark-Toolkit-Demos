@@ -218,29 +218,41 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         define variable cClause      as character no-undo.
         define variable iLoop        as integer   no-undo.
         define variable oJoinAs      as JoinEnum  no-undo.
+        define variable cnt as integer no-undo.
 
+        if not valid-object(poGroup) then
+            return cQueryString.
+        
         /**
          * Note: This is a recursive method, as the provided group may consist of either only
          * query predicates (field, operator, value) or an entire group (nested query). For the
          * case of a group the object will be fed into another call to this method which will
          * result in a nested (bracketed) query clause.
          */
-
-        if extent(poGroup:Entries) ne ? and extent(poGroup:Entries) ge 1 then
-        do iLoop = 1 to extent(poGroup:Entries):
+        assign cnt = extent(poGroup:Entries).
+        do iLoop = 1 to cnt:
             if type-of(poGroup:Entries[iLoop], IQueryGroup) then
                 /* Create a nested query from this child group. */
                 assign cClause = this-object:BuildGroup(phTable, cast(poGroup:Entries[iLoop], IQueryGroup))
-                       oJoinAs = poGroup:join /* Use the overall group join. */
+                       oJoinAs = poGroup:Join /* Use the overall group join. */
                        .
             else
+            do:
                 /* Create a simple clause frmo the given predicate. */
                 assign cClause = this-object:BuildClause(phTable, cast(poGroup:Entries[iLoop], IQueryPredicate))
                        oJoinAs = cast(poGroup:Entries[iLoop], IQueryPredicate):Join
                        .
-
+                // use the group join if the predicate has none
+                if not valid-object(oJoinAs) then
+                    assign oJoinAs = poGroup:Join.
+            end.
+            
+            // default to an AND join if there's none provided
+            if not valid-object(oJoinAs) then
+                assign oJoinAs = JoinEnum:And.
+            
             /* Continue with joining the clause (single or nested) to the query if non-blank. */
-            if (cClause gt "") eq true then
+            if not cClause eq '':u then
                 assign cQueryString = this-object:MapJoin(cQueryString, cClause, oJoinAs).
         end. /* Looping Entries */
 
@@ -592,4 +604,147 @@ class OpenEdge.BusinessLogic.Query.QueryBuilder:
         return trim(cQueryString).
     end method. /* BuildQueryString */
     
+    /* Merges 2 query strings with specified join. The resulting query string has the format
+            "WHERE ( <string-1> ) <join> ( <string-2> ) BY <by-1> BY <by-2> "
+        or 
+            "WHERE TRUE BY <by-1> BY <by-2>"
+        if only BY clauses are passed in.
+        
+        Each input string is put in parentheses, except when 
+            i)   the input strings are both ?
+            ii)  one or both of the input strings is empty
+            iii) there are no where clauses
+       
+       - Join values
+         - if the join is null, use JoinEnum:And
+         - if the join is NONE, use JoinEnum:And
+         - if the join is NOT, use JoinEnum:AndNot
+         - For other values, use as specified
+       
+       - if both strings are null, then shortcut and return 
+                ? and ?     = where true
+                ? or ?      = where true
+                ? and not ? = where false
+                ? or not ?  = where true
+       
+       - No validation (of field/table names) is done; this is a simple string merge routine.
+       - If either string is empty, no join is performed, and the other string
+         is returned (even if empty)
+       - If either query string containd BY clause(s), these are appended
+       
+       @param character  The first query string
+       @param JoinEnum   The join criteria
+       @param character  The second query string
+       @return character The merged query string */
+    method public character MergeQueryStrings(input pQueryString1 as character,
+                                              input pJoin as JoinEnum,
+                                              input pQueryString2 as character):
+        define variable mergedQry as character no-undo.
+        define variable startPos as integer no-undo.
+        define variable endPos as integer no-undo.
+        define variable byExpr as character no-undo.
+        
+        // Default Join is AND 
+        if not valid-object(pJoin) 
+        or pJoin eq JoinEnum:None 
+        then
+            assign pJoin = JoinEnum:And.
+        else
+        if pJoin eq JoinEnum:Not then
+            assign pJoin = JoinEnum:AndNot.
+        
+        // If only nulls are passed in, shortcut the join
+        if  pQueryString1 eq ? 
+        and pQueryString2 eq ?
+        then
+        do:
+            if pJoin eq JoinEnum:AndNot then
+                return 'where false':u.
+            else
+                return 'where true':u.
+        end.
+        
+        if pQueryString1 eq ? then
+            assign pQueryString1 = 'where true':u.
+        
+        if pQueryString2 eq ? then
+            assign pQueryString2 = 'where true':u.
+        
+        // nothing to merge from string2, so return string1
+        if pQueryString2 eq '':u then
+            return pQueryString1.
+        
+        // nothing to merge from string1, so return string2
+        if pQueryString1 eq '':u then
+            return pQueryString2.
+        
+        // first query
+        assign startPos = index(pQueryString1, 'where ':u).
+        if not startPos eq 0 then
+            assign pQueryString1 = substring(pQueryString1, startPos + 6).
+        
+        assign startPos = index(pQueryString1, ' by ':u).
+        if startPos gt 0 then
+            assign byExpr        = byExpr + substring(pQueryString1, startPos)
+                   pQueryString1 = trim(substring(pQueryString1, 1, startPos - 1))
+                   .
+        else
+        if pQueryString1 begins 'by ':u then
+            assign byExpr        = byExpr + ' ':u + pQueryString1
+                   pQueryString1 = '':U
+                   .
+        
+        if not pQueryString1 eq '':u then
+            assign pQueryString1 = '( ':u + pQueryString1 + ' )':u.
+        // now we have where in pQueryString2 and by in byExpr
+        
+        // second query
+        assign startPos = index(pQueryString2, 'where ':u).
+        if not startPos eq 0 then
+            assign pQueryString2 = substring(pQueryString2, startPos + 6).
+        
+        assign startPos = index(pQueryString2, ' by ':u).
+        if startPos gt 0 then
+            assign byExpr        = byExpr + substring(pQueryString2, startPos)
+                   pQueryString2 = trim(substring(pQueryString2, 1, startPos - 1))
+                   .
+        else
+        if pQueryString2 begins 'by ':u then
+            assign byExpr        = byExpr + ' ':u + pQueryString2
+                   pQueryString2 = '':U
+                   .
+        
+        if not pQueryString2 eq '':u then
+            assign pQueryString2 = '( ':u + pQueryString2 + ' )':u.
+        // now we have where in pQueryString2 and by in byExpr
+        
+        // there is a where clause
+        if pQueryString1 begins '(':u
+        or pQueryString2 begins '(':u
+        then
+        do:
+            assign mergedQry = 'where ':u.
+            if pQueryString1 begins '(':u then
+                assign mergedQry = mergedQry + pQueryString1.
+            
+            if pQueryString2 begins '(':u then
+            do:
+                if pQueryString1 begins '(':u then
+                case pJoin:
+                    when JoinEnum:AndNot then assign mergedQry = substitute('&1 and not &2':u, mergedQry, pQueryString2).
+                    when JoinEnum:OrNot  then assign mergedQry = substitute('&1 or not &2':u, mergedQry, pQueryString2).
+                    otherwise                 assign mergedQry = substitute('&1 &2 &3':u, mergedQry, string(pJoin), pQueryString2).
+                end case.
+                else
+                    assign mergedQry = mergedQry + pQueryString2.
+            end.
+        end.    // we have one or two WHERE
+        else
+            assign mergedQry = 'where true':u.
+        
+        if not byExpr eq '':u then
+            assign mergedQry = mergedQry + ' ':u + trim(byExpr).
+        
+        return mergedQry.
+    end method.
 end class.

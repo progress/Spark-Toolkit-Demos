@@ -79,7 +79,6 @@ do while oIter:HasNext() on error undo, throw:
     oFile = cast(oIter:Next(), IMapEntry).
 
     assign cXrefTemp = string(oFile:Value) + ".xref".
-message cXrefTemp.
     compile value(string(oFile:Value)) xref-xml value(cXrefTemp) no-error.
 
     /* Process each XREF file and create an annotations JSON file. */
