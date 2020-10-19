@@ -171,6 +171,15 @@
             </fileset>
         </copy>
 
+        <!-- Copy overrides to the new PAS instance. -->
+        <copy toDir="${pas.path}/openedge" verbose="true">
+            <fileset dir="${basedir}/../../../common/src/">
+            	<include name="*.i"/>
+                <include name="*.p"/>
+            	<include name="*.cls"/>
+            </fileset>
+        </copy>
+
         <!-- Copy initial configuration files to the PAS instance. -->
         <mkdir dir="${pas.path}/conf/${pas.conf.spark}"/>
         <mkdir dir="${pas.path}/conf/${pas.conf.spark}/signatures"/>
