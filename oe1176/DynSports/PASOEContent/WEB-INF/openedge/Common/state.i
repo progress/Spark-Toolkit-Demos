@@ -7,7 +7,7 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-define private temp-table states no-undo
+define temp-table states no-undo
     field Abbrev   as character
     field FullName as character
     index pkState  is primary unique Abbrev ascending

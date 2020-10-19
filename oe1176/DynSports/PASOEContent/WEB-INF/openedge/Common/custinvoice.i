@@ -7,8 +7,6 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="CustNum").
-
 define temp-table ttCustomer no-undo before-table bttCustomer
     field id           as character
     field seq          as integer   initial ?

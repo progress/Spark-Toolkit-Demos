@@ -7,9 +7,11 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="Ordernum").
-@openapi.openedge.entity.field.property(field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(field="seq", name="semanticType", value="Internal").
+@openapi.openedge.entity.primarykey(table="ttOrder", fields="Ordernum").
+@openapi.openedge.entity.field.property(table="ttOrder", field="id", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttOrder", field="seq", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttOrder", field="OrderNum", name="editable", value="false").
+@openapi.openedge.entity.field.property(table="ttOrder", field="CustNum", name="validation", value="required").
 @openapi.openedge.entity.foreignkey(name="SalesrepFK", fields="SalesRep", parent="salesrep.ttSalesrep", parentFields="SalesRep").
 
 define temp-table ttOrder no-undo before-table bttOrder
@@ -40,9 +42,7 @@ define temp-table ttOrder no-undo before-table bttOrder
     index SalesRep                SalesRep    ascending
     .
 
-@openapi.openedge.entity.primarykey(fields="Ordernum").
-@openapi.openedge.entity.field.property(field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(field="seq", name="semanticType", value="Internal").
+@openapi.openedge.entity.primarykey(table="ttOrderLine", fields="Ordernum").
 
 define temp-table ttOrderLine no-undo before-table bttOrderLine
     field OrderNum        as integer   initial "0" label "Order Num"

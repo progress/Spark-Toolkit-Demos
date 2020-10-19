@@ -7,9 +7,9 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="Abbrev").
+@openapi.openedge.entity.primarykey(table="states", fields="Abbrev").
 
-define private temp-table states no-undo
+define temp-table states no-undo
     field Abbrev   as character
     field FullName as character
     index pkState  is primary unique Abbrev ascending

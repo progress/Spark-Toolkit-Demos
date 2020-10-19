@@ -4,92 +4,160 @@
         <init_env/>
 
         <echo message="${line.separator}Usage Instructions:"/>
+        <echo message="${line.separator}ant annotate - Create a consolidated annotation file"/>
+        <echo message="${line.separator}ant publish - Push code to PAS instance, trim sessions"/>
+        <echo message="    PAS Instance: ${pas.path}"/>
+        <echo message="     WebApp Name: ${webapp}"/>
         <echo message="${line.separator}ant build - Create deployment artifacts"/>
         <echo message="    -DjavaHome=[JAVA_HOME] = Location of Java install (Default: ${javaHome})"/>
-		<echo message="    -Dwebapp=[WEBAPP_NAME] = Name of the WebApp, also for WAR/ZIP filename (Default: ${webapp})"/>
-		<echo message="${line.separator}Paths:"/>
-		<echo message="${line.separator}"/>
-		<echo message="Source: ${src.dir}"/>
-		<echo message="  Dest: ${dest.dir}"/>
+        <echo message="    -Dwebapp=[WEBAPP_NAME] = Name of the WebApp, also for WAR/ZIP filename (Default: ${webapp})"/>
+        <echo message="${line.separator}Local Paths:"/>
+        <echo message="${line.separator}"/>
+        <echo message="Source: ${src.dir}"/>
+        <echo message="Config: ${deploy.dir}"/>
     </target>
 
     <macrodef name="init_env">
         <sequential>
-			<property environment="env"/>
+            <property environment="env"/>
 
-			<!-- Check if DLC is set as an environment variable. -->
-			<fail message="$DLC path is not set">
-				<condition>
-					<and>
-						<not><isset property="dlcHome"/></not>
-						<not><isset property="env.DLC"/></not>
-					</and>
-				</condition>
-			</fail>
-			<property name="dlcHome" value="${env.DLC}"/>
-			<echo message="DLC Home: ${dlcHome}"/>
+            <!-- Check if DLC is set as an environment variable. -->
+            <fail message="$DLC path is not set">
+                <condition>
+                    <and>
+                        <not><isset property="dlcHome"/></not>
+                        <not><isset property="env.DLC"/></not>
+                    </and>
+                </condition>
+            </fail>
+            <property name="dlcHome" value="${env.DLC}"/>
+            <echo message="DLC Home: ${dlcHome}"/>
 
-			<!-- Determine current operating system in use. -->
-			<echo message="OS Arch: ${os.arch}"/>
-			<condition property="isWin64">
-				<os family="windows"/>
-			</condition>
-			<condition property="isUnix">
-				<os family="unix"/>
-			</condition>
+            <!-- Determine current operating system in use. -->
+            <echo message="OS Arch: ${os.arch}"/>
+            <condition property="isWin64">
+                <os family="windows"/>
+            </condition>
+            <condition property="isUnix">
+                <os family="unix"/>
+            </condition>
 
-			<!-- Determine script suffix and database location. -->
-			<condition property="scriptSuffix" value="sh" else="bat">
-				<os family="unix"/>
-			</condition>
-			<condition property="path" value="/usr/databases" else="C:\Databases">
-				<os family="unix"/>
-			</condition>
+            <!-- Determine script suffix, database location, and PAS root. -->
+            <condition property="scriptSuffix" value="sh" else="bat">
+                <os family="unix"/>
+            </condition>
+            <condition property="path" value="/usr/databases" else="C:\Databases">
+                <os family="unix"/>
+            </condition>
+            <condition property="pas.root" value="/usr/pas" else="C:/PASOE">
+                <os family="unix"/>
+            </condition>
 
-			<property name="javaHome" value="${dlcHome}/java"/>
-			<property name="src.dir" value="${basedir}"/>
-			<property name="dest.dir" value="${basedir}/Deploy"/>
-			<property name="webapp" value="sports"/>
-			<mkdir dir="${basedir}/Deploy"/>
+            <property name="javaHome" value="${dlcHome}/java"/>
+            <property name="src.dir" value="${basedir}"/>
+            <property name="deploy.dir" value="${basedir}/Deploy"/>
+            <property name="instance" value="SportsPASOE"/>
+            <property name="pas.path" value="${pas.root}/${instance}"/>
+            <property name="webapp" value="sports"/>
+            <mkdir dir="${basedir}/Deploy"/>
 
-			<!-- Add the ANT-Contrib library to this environment (present in 11.7.4+ and 12.0+). -->
-			<taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
+            <!-- Add the ANT-Contrib library to this environment (present in 11.7.4+ and 12.0+). -->
+            <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
 
-			<!-- Set up the needed dependencies for the ABLWebAppPackage task -->
-			<taskdef resource="com/progress/openedge/pdt/ant/ablwebapp/ablwebapps.properties">
-				<classpath>
-					<pathelement location="${javaHome}/ant-ablwebapp.jar" />
-					
-					<!-- ABLWebApp Dependencies -->
-					<pathelement location="${javaHome}/ant-libs/ablwebapp.jar" />
-					<pathelement location="${javaHome}/ant-libs/ablwebapp-dependencies.jar" />
-					
-					<!-- CodeModel Dependencies -->
-					<pathelement location="${javaHome}/ant-libs/codemodel-dependencies.jar" />
-					
-					<!-- AST and its Dependencies -->
-					<pathelement location="${javaHome}/ant-libs/ast.jar" />
-					<pathelement location="${javaHome}/ant-libs/ast-dependencies.jar" />
-					
-					<!-- Additional Dependencies -->
-					<pathelement location="${javaHome}/ant-libs/velocity-1.7.jar" />
-					<pathelement location="${javaHome}/ant-libs/velocity-1.7-dep.jar" />
-					<pathelement location="${javaHome}/ant-libs/1padapters-restExpose.jar" />
-					<pathelement location="${javaHome}/1padapters-idl.jar" />
-					<pathelement location="${javaHome}/ext/jettison-1.2.jar" />
+            <!-- Set up the needed dependencies for the ABLWebAppPackage task -->
+            <taskdef resource="com/progress/openedge/pdt/ant/ablwebapp/ablwebapps.properties">
+                <classpath>
+                    <pathelement location="${javaHome}/ant-ablwebapp.jar" />
 
-					<!-- Added for OE 12.0 -->
-					<pathelement location="${javaHome}/ext/commons-logging-1.2.jar" />
-					<pathelement location="${javaHome}/ext/xmlschema-core-2.2.1.jar" />
-				</classpath>
-			</taskdef>
+                    <!-- ABLWebApp Dependencies -->
+                    <pathelement location="${javaHome}/ant-libs/ablwebapp.jar" />
+                    <pathelement location="${javaHome}/ant-libs/ablwebapp-dependencies.jar" />
+
+                    <!-- CodeModel Dependencies -->
+                    <pathelement location="${javaHome}/ant-libs/codemodel-dependencies.jar" />
+
+                    <!-- AST and its Dependencies -->
+                    <pathelement location="${javaHome}/ant-libs/ast.jar" />
+                    <pathelement location="${javaHome}/ant-libs/ast-dependencies.jar" />
+
+                    <!-- Additional Dependencies -->
+                    <pathelement location="${javaHome}/ant-libs/velocity-1.7.jar" />
+                    <pathelement location="${javaHome}/ant-libs/velocity-1.7-dep.jar" />
+                    <pathelement location="${javaHome}/ant-libs/1padapters-restExpose.jar" />
+                    <pathelement location="${javaHome}/1padapters-idl.jar" />
+                    <pathelement location="${javaHome}/ext/jettison-1.2.jar" />
+
+                    <!-- Added for OE 12.0 -->
+                    <pathelement location="${javaHome}/ext/commons-logging-1.2.jar" />
+                    <pathelement location="${javaHome}/ext/xmlschema-core-2.2.1.jar" />
+                </classpath>
+            </taskdef>
         </sequential>
     </macrodef>
 
-    <target name="build">
-		<init_env/>
+    <target name="annotate">
+        <init_env/>
 
-        <ABLWebAppPackage srcdir="${src.dir}" dlc="${dlcHome}" verbose="true" isIncremental="false" webAppName="${webapp}" destdir="${dest.dir}"/>
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <!-- This will need to compile the code to obtain XREF files, so we need the databases as would be required by the code. -->
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="tools/createAnnotations.p">
+            <propath>
+                <pathelement path="${basedir}/PASOEContent/WEB-INF/openedge"/>
+                <pathelement path="${basedir}/AppServer/Spark.pl"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+                <pathelement path="${basedir}/AppServer"/>
+            </propath>
+            <DBConnection dbName="webstate" hostName="localhost" dbPort="8500" readOnly="true"/>
+            <DBConnection dbName="sports2020" hostName="localhost" dbPort="8600" readOnly="true"/>
+        </PCTRun>
+
+        <echo message="See output in ${basedir}/Deploy/Conf/annotations.json"/>
     </target>
-    
+
+    <target name="publish">
+        <init_env/>
+
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <!-- Copy source and r-code to the PAS instance. -->
+    	<copy toDir="${pas.path}/webapps/${webapp}/WEB-INF/openedge" verbose="true">
+            <fileset dir="${basedir}/PASOEContent/WEB-INF/openedge">
+                <include name="**/*.i"/>
+                <include name="**/*.cls"/>
+                <include name="**/*.p"/>
+				<include name="**/*.r"/>
+            </fileset>
+        </copy>
+
+        <!-- Copy annotation file to config directory. -->
+        <copy toDir="${pas.path}/conf/sports" verbose="true">
+            <fileset dir="${deploy.dir}/Conf">
+                <include name="annotations.json"/>
+            </fileset>
+        </copy>
+
+        <!-- Trim the current agents to force changes to r-code to be picked up, and get metadata via new session startups. -->
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="trimAgents.p">
+            <propath>
+                <pathelement path="${basedir}/tools"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+        </PCTRun>
+    </target>
+
+    <target name="build">
+        <init_env/>
+
+        <ABLWebAppPackage srcdir="${src.dir}" dlc="${dlcHome}" verbose="true" isIncremental="false" webAppName="${webapp}" destdir="${deploy.dir}"/>
+    </target>
+
 </project>

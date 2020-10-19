@@ -6,7 +6,7 @@
         "Domains": [{
             "domain": "spark",
             "accessCode": "oech1::23222e35397562",
-            "description": "Default Framework Domain"
+            "description": "External Realm Domain"
         }]
     }
 }

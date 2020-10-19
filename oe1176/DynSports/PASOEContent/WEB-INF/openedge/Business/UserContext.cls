@@ -8,6 +8,7 @@
 
 using Progress.Lang.* from propath.
 using Progress.Json.ObjectModel.* from propath.
+using Spark.Core.Util.FieldInfo from propath.
 
 block-level on error undo, throw.
 
@@ -48,9 +49,16 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity use-widget-
         /* Describe any overrides to the operations to be exposed. */
         Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadContext").
         Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitContext").
-        Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getCount", "count", "get").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "clearContext", "clear", "put").
         Spark.Core.Util.Annotate:describeInvoke(serviceURI, getClassName(), "getRoles", "roles", "put").
+
+        /* Describe any properties to be added the entity tables. */
+        define variable oFieldProps as FieldInfo no-undo.
+        assign oFieldProps = new FieldInfo("dsWebContext", "ttWebContext").
+        oFieldProps:addProperty("id", "semanticType", "Internal").
+        oFieldProps:addProperty("seq", "semanticType", "Internal").
+        Spark.Core.Util.Annotate:describeFields(oFieldProps).
+        delete object oFieldProps no-error.
     end method. /* initialize */
 
 
@@ -218,11 +226,6 @@ class Business.UserContext inherits Spark.Core.Service.DynamicEntity use-widget-
     method public void SubmitContext ( input-output dataset dsWebContext ):
         super:SubmitData(input-output dataset dsWebContext by-reference).
     end method. /* SubmitContext */
-
-
-    method public void getCount ( input filter as character, output numRecs as int64 ):
-        assign numRecs = this-object:getRecCount(filter).
-    end method. /* getCount */
 
 
     method public void clearContext ( input  contextType    as character,

@@ -7,6 +7,7 @@
 - Adding new ability for CatalogManager to read an annotations.json config file, when present (file generation TBD).
 - Adds support for annotated classes/procedures in addition to the Dynamic\* classes provided by Spark-Toolkit natively.
 - Added new folders to correspond to OE releases and to reflect the version where a demo should be installed/run
+- Add support for new features in QueryBuilder coming in 12.4 or later to better support the CCS-BE pattern
 
 ## OpenEdge 11.7.5 and 12.1 (Not Recommended, Deprecated Soon)
 

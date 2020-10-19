@@ -8,11 +8,16 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="Username,DomainName").
-@openapi.openedge.entity.field.property(field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(field="seq", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(field="HomePhone", name="semanticType", value="PhoneNumber").
-@openapi.openedge.entity.field.property(field="WorkPhone", name="semanticType", value="PhoneNumber").
+@openapi.openedge.entity.primarykey(table="ttWebProfile", fields="Username,DomainName").
+@openapi.openedge.entity.field.property(table="ttWebProfile", field="id", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttWebProfile", field="seq", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttWebProfile", field="UserNum", name="editable", value="false").
+@openapi.openedge.entity.field.property(table="ttWebProfile", field="Username", name="validation", value="required").
+@openapi.openedge.entity.field.property(table="ttWebProfile", field="Password", name="validation", value="required").
+@openapi.openedge.entity.field.property(table="ttWebProfile", field="HomePhone", name="mask", value="000-000-0000").
+@openapi.openedge.entity.field.property(table="ttWebProfile", field="HomePhone", name="semanticType", value="PhoneNumber").
+@openapi.openedge.entity.field.property(table="ttWebProfile", field="WorkPhone", name="mask", value="000-000-0000").
+@openapi.openedge.entity.field.property(table="ttWebProfile", field="WorkPhone", name="semanticType", value="PhoneNumber").
 
 define temp-table ttWebProfile no-undo before-table bttWebProfile
     field id               as character

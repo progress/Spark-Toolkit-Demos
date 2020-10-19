@@ -1,11 +1,11 @@
 /*------------------------------------------------------------------------
     File        : AnnoTest
-    Purpose     :
-    Syntax      :
-    Description :
+    Purpose     : 
+    Syntax      : 
+    Description : 
     Author(s)   : Dustin Grau
     Created     : Wed May 06 13:12:28 EDT 2020
-    Notes       :
+    Notes       : 
   ----------------------------------------------------------------------*/
 
 @program FILE(name="AnnoTest.cls", module="AppServer").
@@ -17,14 +17,22 @@
 @openapi.openedge.resource.version(major="1", minor="0", patch="1").
 
 /* Proposed annotation to set security options for this resource overall. */
-@openapi.openedge.resource.security(denyAll="true").
+@openapi.openedge.resource.access(role="PSC_Admin").
 
 using Progress.Lang.*.
 using Spark.Core.Util.ApplicationError from propath.
 
 block-level on error undo, throw.
 
-class Business.UnitTest.AnnoTest use-widget-pool:
+class Business.UnitTest.AnnoTest inherits Spark.Core.Service.Service use-widget-pool: 
+
+    method public override void initialize ( ):
+        message "Ran Initialize".
+    end method. /* initialize */
+
+    method public override void dispose ( ):
+        message "Ran Dispose".
+    end method. /* dispose */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/test", alias="msgTest", mediaType="application/json").
@@ -35,7 +43,7 @@ class Business.UnitTest.AnnoTest use-widget-pool:
     @openapi.openedge.method.parameter(name="messageText", type="field", alias="text").
 
     /* Proposed annotation to set distinct security options on this method only. */
-    @openapi.openedge.method.security(role="ROLE_PSCUser|ROLE_ANONYMOUS").
+    @openapi.openedge.method.access(role="ROLE_PSCUser,ROLE_ANONYMOUS").
     method public void testMessage ( input  messageType as character,
                                      output messageText as character ):
         assign messageText = "no type".
@@ -44,6 +52,8 @@ class Business.UnitTest.AnnoTest use-widget-pool:
             assign messageText = messageType.
 
             case messageType:
+                when "Hello" then
+                    assign messageText = "Hello World".
                 when "Teapot" then
                     undo, throw new AppError("I'm a teapot", -418).
                 when "AppError" then

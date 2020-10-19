@@ -6,7 +6,7 @@
     Notes       :
   ----------------------------------------------------------------------*/
 
-@program FILE(name="BadObjects.cls", module="AppServer").
+@program FILE(name="Params.cls", module="AppServer").
 @openapi.openedge.export FILE(type="REST", executionMode="singleton", useReturnValue="false", writeDataSetBeforeImage="false").
 @progress.service.resource FILE(name="params", URI="/params", schemaName="", schemaFile="").
 
@@ -15,7 +15,7 @@ using Spark.Core.Manager.ISchemaManager from propath.
 
 block-level on error undo, throw.
 
-class Business.UnitTest.Params:
+class Business.UnitTest.Params inherits Spark.Core.Service.Service use-widget-pool:
 
     define temp-table ttInParam no-undo
         field cString  as character
@@ -24,6 +24,7 @@ class Business.UnitTest.Params:
         field dDate    as date
         field dDTime   as datetime
         field dDTimeTZ as datetime-tz
+        index pkMain as primary cString
         .
     define dataset dsInParam for ttInParam.
 
@@ -34,8 +35,26 @@ class Business.UnitTest.Params:
         field dDate    as date
         field dDTime   as datetime
         field dDTimeTZ as datetime-tz
+        index pkMain as primary cString
         .
     define dataset dsOutParam for ttOutParam.
+
+    method public override void initialize ( ):
+        define variable hDataset as handle no-undo.
+
+        /* Describe schema for any temp-tables to be exposed. */
+        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerTempTable(input temp-table ttInParam:handle).
+        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerTempTable(input temp-table ttOutParam:handle).
+
+        /* Describe schema for any datasets to be exposed. */
+        assign hDataset = dataset dsInParam:handle.
+        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerDataset(input hDataset).
+        assign hDataset = dataset dsOutParam:handle.
+        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerDataset(input hDataset).
+    end method. /* initialize */
+
+    method public override void dispose ( ):
+    end method. /* dispose */
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/primitives", alias="primitives", mediaType="application/json").
@@ -71,7 +90,8 @@ class Business.UnitTest.Params:
         if can-find(first ttInParam) then
             for each ttInParam:
                 create ttOutParam.
-                message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
+                if log-manager:logging-level ge 3 then
+                    message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:
@@ -96,7 +116,8 @@ class Business.UnitTest.Params:
         if can-find(first ttInParam) then
             for each ttInParam:
                 create ttOutParam.
-                message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
+                if log-manager:logging-level ge 3 then
+                    message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:

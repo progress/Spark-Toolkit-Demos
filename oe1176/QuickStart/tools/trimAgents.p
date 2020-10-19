@@ -46,10 +46,10 @@ define variable cAblApp   as character     no-undo.
 assign
     cScheme   = "http"
     cHost     = "localhost"
-    cPort     = "8820"
+    cPort     = "8880"
     cUserId   = "tomcat"
     cPassword = "tomcat"
-    cAblApp   = "SportsPASOE"
+    cAblApp   = "MyPAS1"
     .
 
 if num-entries(session:parameter) ge 6 then

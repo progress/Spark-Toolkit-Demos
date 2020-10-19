@@ -193,7 +193,8 @@ class Business.UserContext inherits Spark.Core.Service.SparkEntity use-widget-po
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="count", URI="/count?filter=~{filter~}", alias="count", mediaType="application/json").
-    method public void getCount ( input filter as character, output numRecs as integer ):
+    @openapi.openedge.method.property(name="verb", value="get").
+    method public void getCount ( input filter as character, output numRecs as int64 ):
         assign numRecs = integer(super:getRecCount(filter)).
     end method. /* getCount */
 

@@ -6,6 +6,7 @@
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
+using Spark.Core.Util.FieldInfo from propath.
 
 block-level on error undo, throw.
 
@@ -46,6 +47,14 @@ class Business.Personnel.FamilyBE inherits Spark.Core.Service.DynamicEntity use-
         /* Describe any overrides to the operations to be exposed. */
         Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadFamily").
         Spark.Core.Util.Annotate:describeSubmit(serviceURI, getClassName(), "SubmitFamily").
+
+        /* Describe any properties to be added the entity tables. */
+        define variable oFieldProps as FieldInfo no-undo.
+        assign oFieldProps = new FieldInfo("dsFamily", "ttFamily").
+        oFieldProps:addProperty("id", "semanticType", "Internal").
+        oFieldProps:addProperty("seq", "semanticType", "Internal").
+        Spark.Core.Util.Annotate:describeFields(oFieldProps).
+        delete object oFieldProps no-error.
     end method. /* initialize */
 
 

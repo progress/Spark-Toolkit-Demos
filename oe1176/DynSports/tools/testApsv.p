@@ -49,7 +49,7 @@ if hServer:connected() then do:
     hCPO:seal("spark01").
     hServer:request-info:SetClientPrincipal(hCPO).
 
-    do stop-after 20 on stop undo, leave:
+    do stop-after 30 on stop undo, leave:
         run Business/HelloProc.p on server hServer single-run set hProc no-error.
         if error-status:error then
             message "Error, Return-Value:" return-value view-as alert-box.
@@ -67,4 +67,7 @@ finally:
     delete object hProc no-error.
     hServer:disconnect().
     delete object hServer no-error.
+
+    /* Return value expected by PCT Ant task. */
+    return string(0).
 end.

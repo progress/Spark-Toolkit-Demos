@@ -59,7 +59,7 @@ assign
     cPort     = "9090"
     cUserId   = "pasmgr"
     cPassword = "s3cr3t"
-    cAppName  = "SportsPASOE"
+    cAppName  = "MyPAS1"
     cAction   = "status"
     .
 

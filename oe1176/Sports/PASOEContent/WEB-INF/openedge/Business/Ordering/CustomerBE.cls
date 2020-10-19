@@ -168,7 +168,7 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.SparkEntity use-w
 
     method protected override void postCommitLogic ( input pcAction as character,
                                                      input-output dataset-handle phDataset ):
-        /* When explicitly a delete and primary key available, delete child records. */
+        /* When explicitly a delete action and primary key is available, delete child records. */
         if pcAction eq "Delete" and (iCustNum ne ? and iCustNum gt 0) then do:
             message substitute("Removing related records for customer &1.", iCustNum).
             for each Order exclusive-lock

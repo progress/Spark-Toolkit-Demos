@@ -8,8 +8,6 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="EmpNum").
-
 define temp-table ttEmployee no-undo before-table bttEmployee
     field id               as character
     field seq              as integer   initial ?

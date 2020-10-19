@@ -34,14 +34,15 @@ class Business.UnitTest.RunCode inherits Spark.Core.Service.Service use-widget-p
             undo, throw new OpenEdge.Web.SendExceptionError(OpenEdge.Net.HTTP.StatusCodeEnum:BadRequest,
                                                             "Busy Time parameter cannot be less than zero.").
 
-        /* Run a wait loop for some period to imitate long-running code. */
-        define variable iStart as datetime no-undo.
-        assign iStart = now.
+        /* Execute a pause for some period to imitate long-running code. */
+        define variable dStart as datetime no-undo.
+
+        assign dStart = now.
         pause (busyTime / 1000) no-message.
 
         finally:
             /* Confirm that execution paused for the time stated. */
-            assign elapsed = interval(now, iStart, "milliseconds").
+            assign elapsed = interval(now, dStart, "milliseconds").
         end finally.
     end method. /* lookBusy */
 

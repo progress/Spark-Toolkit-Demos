@@ -155,6 +155,7 @@ class Business.System.Access inherits Spark.Core.Service.SparkEntity use-widget-
 
     @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
     @progress.service.resourceMapping(type="REST", operation="invoke", URI="/rules", alias="rules", mediaType="application/json").
+    @openapi.openedge.method.property(name="verb", value="get").
     method public void getInterceptRules ( output rules as Progress.Json.ObjectModel.JsonArray ):
         define variable cRule as character no-undo.
 

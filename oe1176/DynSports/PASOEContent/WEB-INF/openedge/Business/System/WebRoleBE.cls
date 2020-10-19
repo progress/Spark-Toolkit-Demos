@@ -6,6 +6,7 @@
   ----------------------------------------------------------------------*/
 
 using Progress.Lang.* from propath.
+using Spark.Core.Util.FieldInfo from propath.
 
 block-level on error undo, throw.
 
@@ -14,7 +15,7 @@ class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity use-wi
     {Common/webrole.i}
 
     define public override property serviceURI as character
-        initial "/web/api/common" no-undo get.
+        initial "/web/api/system" no-undo get.
         protected set.
 
     define public override property resourceName as character
@@ -45,6 +46,14 @@ class Business.System.WebRoleBE inherits Spark.Core.Service.DynamicEntity use-wi
     method public override void initialize ( ):
         /* Describe any overrides to the operations to be exposed. */
         Spark.Core.Util.Annotate:describeRead(serviceURI, getClassName(), "ReadWebRole").
+
+        /* Describe any properties to be added the entity tables. */
+        define variable oFieldProps as FieldInfo no-undo.
+        assign oFieldProps = new FieldInfo("dsWebRole", "ttWebRole").
+        oFieldProps:addProperty("id", "semanticType", "Internal").
+        oFieldProps:addProperty("seq", "semanticType", "Internal").
+        Spark.Core.Util.Annotate:describeFields(oFieldProps).
+        delete object oFieldProps no-error.
     end method. /* initialize */
 
 

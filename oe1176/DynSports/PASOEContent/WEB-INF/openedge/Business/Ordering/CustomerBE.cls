@@ -78,12 +78,15 @@ class Business.Ordering.CustomerBE inherits Spark.Core.Service.DynamicEntity use
         /* Describe any properties to be added the entity tables. */
         define variable oFieldProps as FieldInfo no-undo.
         assign oFieldProps = new FieldInfo("dsCustomer", "ttCustomer").
+        oFieldProps:addProperty("id", "semanticType", "Internal").
         oFieldProps:addProperty("seq", "semanticType", "Internal").
         oFieldProps:addProperty("CustNum", "editable", false).
         oFieldProps:makeRequired("CustName"). /* Add "required" Validator */
         oFieldProps:addProperty("Country", "defaultValue", "United States").
         oFieldProps:addProperty("Phone", "mask", "000-000-0000").
         oFieldProps:addProperty("Phone", "semanticType", "PhoneNumber").
+        oFieldProps:addProperty("CreditLimit", "semanticType", "Currency").
+        oFieldProps:addProperty("Balance", "semanticType", "Currency").
         Spark.Core.Util.Annotate:describeFields(oFieldProps).
         delete object oFieldProps no-error.
     end method. /* initialize */

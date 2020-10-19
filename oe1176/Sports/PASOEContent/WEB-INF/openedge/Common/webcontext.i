@@ -8,9 +8,9 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="IdentityName,ContextType,ContextViewID,ContextTitle,ContextSeqNo").
-@openapi.openedge.entity.field.property(field="id", name="semanticType", value="Internal").
-@openapi.openedge.entity.field.property(field="seq", name="semanticType", value="Internal").
+@openapi.openedge.entity.primarykey(table="ttWebContext", fields="IdentityName,ContextType,ContextViewID,ContextTitle,ContextSeqNo").
+@openapi.openedge.entity.field.property(table="ttWebContext", field="id", name="semanticType", value="Internal").
+@openapi.openedge.entity.field.property(table="ttWebContext", field="seq", name="semanticType", value="Internal").
 
 define temp-table ttWebContext before-table bttWebContext
     field id            as character

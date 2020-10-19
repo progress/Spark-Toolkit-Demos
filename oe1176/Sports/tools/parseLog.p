@@ -1,6 +1,6 @@
 /*------------------------------------------------------------------------
     File        : parseLog.p
-    Purpose     : Parse the agent (CAS) or session (PAS) log file.
+    Purpose     : Parse the agent (CAS) or session (PAS) log file. 
     Syntax      :
     Description : Based on leakcheck.p from Progress KB
     Author(s)   : dugrau

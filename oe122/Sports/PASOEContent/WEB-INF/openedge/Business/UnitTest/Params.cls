@@ -24,6 +24,7 @@ class Business.UnitTest.Params inherits Spark.Core.Service.Service use-widget-po
         field dDate    as date
         field dDTime   as datetime
         field dDTimeTZ as datetime-tz
+        index pkMain as primary cString
         .
     define dataset dsInParam for ttInParam.
 
@@ -34,6 +35,7 @@ class Business.UnitTest.Params inherits Spark.Core.Service.Service use-widget-po
         field dDate    as date
         field dDTime   as datetime
         field dDTimeTZ as datetime-tz
+        index pkMain as primary cString
         .
     define dataset dsOutParam for ttOutParam.
 
@@ -88,7 +90,8 @@ class Business.UnitTest.Params inherits Spark.Core.Service.Service use-widget-po
         if can-find(first ttInParam) then
             for each ttInParam:
                 create ttOutParam.
-                message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
+                if log-manager:logging-level ge 3 then
+                    message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:
@@ -113,7 +116,8 @@ class Business.UnitTest.Params inherits Spark.Core.Service.Service use-widget-po
         if can-find(first ttInParam) then
             for each ttInParam:
                 create ttOutParam.
-                message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
+                if log-manager:logging-level ge 3 then
+                    message "Record:" ttInParam.cString ":" ttInParam.fDecimal ":" ttInParam.iInteger ":" ttInParam.dDate ":" ttInParam.dDTime ":" ttInParam.dDTimeTZ.
                 buffer-copy ttInParam to ttOutParam no-error.
             end.
         else do:

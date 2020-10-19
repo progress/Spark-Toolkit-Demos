@@ -46,6 +46,7 @@
         <mkdir dir="${pas.path}/conf/spark"/>
         <copy file="${deploy}/Realm/SparkRealm.cp" toDir="${pas.path}/common/lib"/>
         <copy file="${deploy}/Realm/SparkRealm.json" toDir="${pas.path}/conf/spark"/>
+    	<copy file="${deploy}/Realm/ABLDomainRegistry.keystore" toDir="${pas.path}/conf"/>
     </target>
 
     <macrodef name="init_env">
