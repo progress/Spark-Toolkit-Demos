@@ -1,5 +1,7 @@
 <project name="ABLWebApp" basedir="." default="usage">
 
+    <property file="build.properties"/>
+
     <macrodef name="init_env">
         <sequential>
             <property environment="env"/>
@@ -22,33 +24,46 @@
             <property name="userid" value="tomcat"/>
             <property name="passwd" value="tomcat"/>
             <property name="ablapp" value="oepas1"/>
+            <property name="webapp" value="ROOT"/>
         </sequential>
     </macrodef>
 
     <target name="usage">
-        <init_env/>
+        <init_env/> <!-- Set standard environment variables. -->
 
+        <echo message="${line.separator}"/>
+        <echo message="Utilities for easy operation and maintenance of a PASOE instance."/>
+        <echo message="Run from a PROENV session or with DLC and DLC/bin in your PATH."/>
         <echo message="${line.separator}Usage Instructions:"/>
-        <echo message="${line.separator} [proant|ant] status - Obtain agent/connection status information for an ABL App"/>
-        <echo message="${line.separator} [proant|ant] trim - Trim all IDLE agent-sessions for each MSAS agent for an ABL App"/>
-    	<echo message="${line.separator} [proant|ant] close - Terminate all inactive ABLSessions/Connections for an ABL App"/>
-    	<echo message="${line.separator} [proant|ant] refresh - Terminates all sessions for each MSAS agent for an ABL App"/>
-    	<echo message="${line.separator} [proant|ant] kill - Gracefully stops all MSAS agents for an ABL App"/>
-        <echo message="${line.separator}Available Parameters with Defaults:"/>
+        <echo message="${line.separator} proant compile - Compile all utility procedures to r-code"/>
+        <echo message="${line.separator} proant status - Obtain agent/connection status information for an ABL App"/>
+        <echo message="${line.separator} proant stacks - Obtain stack information for all agents for an ABL App"/>
+        <echo message="${line.separator} proant flush - Flush the available deferred log buffer to Agent log file"/>
+        <echo message="${line.separator} proant close - Terminate all available client sessions for an ABL/Web App"/>
+        <echo message="${line.separator} proant trim - Trim all IDLE ABLSessions for each MSAS agent for an ABL App"/>
+        <echo message="${line.separator} proant refresh - Terminates all ABLSessions for each MSAS agent for an ABL App"/>
+        <echo message="${line.separator} proant stop - Gracefully stops all MSAS agents (+stacks) for an ABL App"/>
+        <echo message="${line.separator} proant clean - Perform a 'soft restart' of an ABL App"/>
+        <echo message="                [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 3)"/>
+        <echo message="${line.separator}"/>
+        <echo message="${line.separator}Available parameters with their defaults:"/>
         <echo message="  -Dscheme=${scheme}"/>
         <echo message="    -Dhost=${host}"/>
         <echo message="    -Dport=${port}"/>
         <echo message="  -Duserid=${userid}"/>
         <echo message="  -Dpasswd=${passwd}"/>
         <echo message="  -Dablapp=${ablapp}"/>
+        <echo message="  -Dwebapp=${webapp} (Used by close/clean)"/>
+        <echo message="${line.separator}NOTE: The name of the ABLApp is case-sensitive!"/>
     </target>
 
     <target name="compile">
-        <init_env/>
+        <init_env/> <!-- Set standard environment variables. -->
 
         <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
 
+        <!-- Compile the code in the current directory, whether source or xcode. -->
         <PCTCompile
                destDir="${basedir}"
                dlcHome="${dlcHome}">
@@ -60,11 +75,64 @@
             </fileset>
         </PCTCompile>
 
-    	<delete dir="${basedir}/.pct" quiet="true"/>
+        <delete dir="${basedir}/.pct" quiet="true"/>
+    </target>
+
+    <target name="bundle">
+        <init_env/> <!-- Set standard environment variables. -->
+
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <mkdir dir="${basedir}/xbuild"/>
+
+        <!-- Create xcode from source, placing in a temporary directory. -->
+        <PCTXCode
+               destDir="${basedir}/xbuild"
+               dlcHome="${dlcHome}">
+            <fileset dir="${basedir}">
+                <include name="*.p"/>
+            </fileset>
+        </PCTXCode>
+
+        <!-- Bundle only xcode versions of .p's with source in a dedicated subdirectory. -->
+        <zip destfile="${basedir}/utilities.zip">
+            <zipfileset dir="${basedir}" includes="build.xml,LICENSE,NOTICE"/>
+            <zipfileset dir="${basedir}/xbuild" includes="*.p"/>
+            <zipfileset dir="${basedir}" includes="*.p" prefix="src"/>
+        </zip>
+
+        <delete dir="${basedir}/xbuild" quiet="true"/>
+    </target>
+
+    <target name="clean">
+        <property name="sleep" value="3"/>
+
+        <!-- Perform a 'soft restart' of an ABL Application -->
+        <antcall target="status"/>
+        <antcall target="flush"/>
+        <antcall target="close"/>
+        <antcall target="stop"/>
+        <echo message="${line.separator}Sleeping for ${sleep} minutes to allow time for agent shutdown."/>
+    	<echo message="Next step is to run 'status'; use Ctrl+C to exit if desired."/>
+    	<echo message="..."/>
+        <sleep minutes="${sleep}"/>
+        <antcall target="status"/>
+    </target>
+
+    <target name="selftest">
+        <!-- Runs all the targets in a particular order (least to most termination) -->
+        <antcall target="status"/>
+        <antcall target="stacks"/>
+        <antcall target="flush"/>
+        <antcall target="close"/>
+        <antcall target="trim"/>
+        <antcall target="refresh"/>
+        <antcall target="stop"/>
     </target>
 
     <target name="status">
-        <init_env/>
+        <init_env/> <!-- Set standard environment variables. -->
 
         <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
@@ -74,19 +142,20 @@
                graphicalMode="false"
                procedure="getStatus">
             <propath>
+                <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
-        	<Parameter name="Scheme" value="${scheme}"/>
-        	<Parameter name="Host" value="${host}"/>
-    		<Parameter name="Port" value="${port}"/>
-    		<Parameter name="UserID" value="${userid}"/>
-    		<Parameter name="PassWD" value="${passwd}"/>
-        	<Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
         </PCTRun>
     </target>
 
-    <target name="trim">
-        <init_env/>
+    <target name="stacks">
+        <init_env/> <!-- Set standard environment variables. -->
 
         <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
@@ -94,8 +163,32 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimAgentSessions">
+               procedure="getStacks">
             <propath>
+                <pathelement path="${basedir}"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+        </PCTRun>
+    </target>
+
+    <target name="flush">
+        <init_env/> <!-- Set standard environment variables. -->
+
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="flushLogs">
+            <propath>
+                <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <Parameter name="Scheme" value="${scheme}"/>
@@ -108,7 +201,7 @@
     </target>
 
     <target name="close">
-        <init_env/>
+        <init_env/> <!-- Set standard environment variables. -->
 
         <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
@@ -118,6 +211,7 @@
                graphicalMode="false"
                procedure="trimSessions">
             <propath>
+                <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <Parameter name="Scheme" value="${scheme}"/>
@@ -126,11 +220,12 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="WebApp" value="${webapp}"/>
         </PCTRun>
     </target>
 
-    <target name="kill">
-        <init_env/>
+    <target name="trim">
+        <init_env/> <!-- Set standard environment variables. -->
 
         <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
@@ -138,8 +233,9 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimAgents">
+               procedure="trimAgentSessions">
             <propath>
+                <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <Parameter name="Scheme" value="${scheme}"/>
@@ -152,7 +248,7 @@
     </target>
 
     <target name="refresh">
-        <init_env/>
+        <init_env/> <!-- Set standard environment variables. -->
 
         <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
         <PCTVersion/>
@@ -162,6 +258,7 @@
                graphicalMode="false"
                procedure="refreshAgents">
             <propath>
+                <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <Parameter name="Scheme" value="${scheme}"/>
@@ -171,6 +268,211 @@
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
         </PCTRun>
+    </target>
+
+    <target name="stop">
+        <init_env/> <!-- Set standard environment variables. -->
+
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="trimAgents">
+            <propath>
+                <pathelement path="${basedir}"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+        </PCTRun>
+    </target>
+
+    <!-- PAS instance management -->
+
+    <macrodef name="requireDir">
+        <attribute name="folder"/>
+        <attribute name="message" default="Directory @{folder} not set or missing"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{folder}" type="dir"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <target name="shutdown">
+        <init_env/> <!-- Set standard environment variables. -->
+
+        <condition property="wrk" value="/usr/wrk" else="C:/OpenEdge/WRK">
+            <os family="unix"/>
+        </condition>
+        <condition property="scriptSuffix" value=".sh" else=".bat">
+            <os family="unix"/>
+        </condition>
+
+        <property name="instance" value="oepas1"/>
+        <property name="pas.root" value="${wrk}"/>
+        <property name="pas.path" value="${pas.root}/${instance}"/>
+        <property name="pas.bin" value="${pas.path}/bin"/>
+
+        <requireDir folder="${pas.path}"/>
+
+        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="true">
+            <arg line="pasoestart -v -halt -abort -timeout 300 -json -array"/>
+        </exec>
+    </target>
+
+    <target name="startup">
+        <init_env/> <!-- Set standard environment variables. -->
+
+        <condition property="wrk" value="/usr/wrk" else="C:/OpenEdge/WRK">
+            <os family="unix"/>
+        </condition>
+        <condition property="scriptSuffix" value=".sh" else=".bat">
+            <os family="unix"/>
+        </condition>
+
+        <property name="instance" value="oepas1"/>
+        <property name="pas.root" value="${wrk}"/>
+        <property name="pas.path" value="${pas.root}/${instance}"/>
+        <property name="pas.bin" value="${pas.path}/bin"/>
+
+        <requireDir folder="${pas.path}"/>
+
+        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="false">
+            <arg line="pasoestart -v -archive -timeout 300 -json -array"/>
+        </exec>
+    </target>
+
+    <target name="query">
+        <init_env/> <!-- Set standard environment variables. -->
+
+        <condition property="wrk" value="/usr/wrk" else="C:/OpenEdge/WRK">
+            <os family="unix"/>
+        </condition>
+        <condition property="scriptSuffix" value=".sh" else=".bat">
+            <os family="unix"/>
+        </condition>
+
+        <property name="instance" value="oepas1"/>
+        <property name="pas.root" value="${wrk}"/>
+        <property name="pas.path" value="${pas.root}/${instance}"/>
+        <property name="pas.bin" value="${pas.path}/bin"/>
+
+        <requireDir folder="${pas.path}"/>
+
+        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="false">
+            <arg line="pasoestart -v -query -json -array"/>
+        </exec>
+    </target>
+
+    <!-- Code for Testing -->
+
+    <macrodef name="tester">
+        <attribute name="batch"/>
+        <attribute name="run"/>
+
+        <sequential>
+            <echo message="Initiating test @{batch}.@{run} of ${num.tests}..."/>
+            <PCTRun
+                   dlcHome="${dlcHome}"
+                   graphicalMode="false"
+                   procedure="testApsv">
+                <Option name="-clientlog" value="${log.dir}/client-@{batch}.@{run}.log"/>
+                <Option name="-logginglevel" value="${log.level}"/>
+                <Option name="-logentrytypes" value="${log.types}"/>
+                <Parameter name="scheme" value="${scheme}"/>
+                <Parameter name="host" value="${host}"/>
+                <Parameter name="port" value="${port}"/>
+            	<Parameter name="webapp" value="${webapp}"/>
+                <Parameter name="tests" value="${num.tests}"/>
+                <Parameter name="test" value="@{batch}.@{run}"/>
+                <Parameter name="pause" value="${pause.time}"/>
+                <Parameter name="duration" value="${test.time}"/>
+                <Parameter name="waitAfter" value="${wait.time}"/>
+                <Parameter name="badCode" value="${bad}"/>
+                <Parameter name="verbose" value="${verbose}"/>
+                <Parameter name="type" value="${type}"/>
+            </PCTRun>
+        </sequential>
+    </macrodef>
+
+    <target name="_runbatch">
+        <echo message="Running batch ${batch}..."/>
+
+        <!-- Run a batch of 10 tests. -->
+        <parallel failonany="false">
+            <tester batch="${batch}" run="0"/>
+            <tester batch="${batch}" run="1"/>
+            <tester batch="${batch}" run="2"/>
+            <tester batch="${batch}" run="3"/>
+            <tester batch="${batch}" run="4"/>
+            <tester batch="${batch}" run="5"/>
+            <tester batch="${batch}" run="6"/>
+            <tester batch="${batch}" run="7"/>
+            <tester batch="${batch}" run="8"/>
+            <tester batch="${batch}" run="9"/>
+        </parallel>
+    </target>
+
+    <target name="test">
+        <init_env/> <!-- Set standard environment variables. -->
+
+        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+        <PCTVersion/>
+
+        <!-- Set variables for all tests. -->
+        <property name="num.tests" value="5"/> <!-- Should match the number of batches defined below. -->
+        <property name="pause.time" value="5"/> <!-- How long to wait between iterations of internal tests. -->
+        <property name="test.time" value="60"/> <!-- Overall testing time (main loop execution). -->
+        <property name="wait.time" value="2"/> <!-- How long to wait after main loop completes. -->
+        <property name="bad" value="false"/> <!-- Run with inefficient code cleanup practices. -->
+        <property name="verbose" value="true"/> <!-- Default to true, set false to suppress messages. -->
+        <property name="type" value="hello"/> <!-- Allows easy switching of test pre-configured cases. -->
+        <property name="log.level" value="2"/>
+        <property name="log.types" value="DB.Connects"/>
+		<property name="log.dir" value="${basedir}/logs"/>
+
+		<!-- Create an output directory for log files. -->
+		<mkdir dir="${log.dir}"/>
+
+        <!--
+           Override properties above like normal, eg.:
+             -Dlog.level=5 -Dlog.types=4GLTrace:4
+        -->
+
+        <!-- Run a set of batches. -->
+        <parallel failonany="false">
+            <antcall target="_runbatch">
+                <param name="batch" value="1"/>
+            </antcall>
+
+            <antcall target="_runbatch">
+                <param name="batch" value="2"/>
+            </antcall>
+
+            <antcall target="_runbatch">
+                <param name="batch" value="3"/>
+            </antcall>
+
+            <antcall target="_runbatch">
+                <param name="batch" value="4"/>
+            </antcall>
+
+            <antcall target="_runbatch">
+                <param name="batch" value="5"/>
+            </antcall>
+        </parallel>
     </target>
 
 </project>
