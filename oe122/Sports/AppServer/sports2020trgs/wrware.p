@@ -14,7 +14,7 @@ define variable j as integer initial 0.
 
 /* Check to see if the user changed the Warehouse Number */
 
-if Warehouse.WarehouseNum ne oldWarehouse.WarehouseNum and oldWarehouse.WarehouseNum gt 0 then 
+if Warehouse.WarehouseNum ne oldWarehouse.WarehouseNum and oldWarehouse.WarehouseNum gt 0 then
 do:
     /* If user changed the Warehouse Number, find related bin and */
     /* change the Warehouse numbers.                             */

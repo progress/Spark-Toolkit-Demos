@@ -17,7 +17,7 @@ define variable l as integer initial 0.
 
 /* Check to see if the user changed the Item Number */
 
-if Item.ItemNum ne oldItem.ItemNum and oldItem.ItemNum gt 0 then 
+if Item.ItemNum ne oldItem.ItemNum and oldItem.ItemNum gt 0 then
 do:
     /* If user changed the Item Number, find related bin and */
     /* change their Item numbers.                            */
@@ -75,17 +75,17 @@ end.
  * Generate Po if there is not enough qty
  */
 
-if Item.MinQty > ((Item.OnHand - Item.Allocated) + Item.onorder) then 
+if Item.MinQty > ((Item.OnHand - Item.Allocated) + Item.onorder) then
 do:
 
     find first SupplierItemXref where SupplierItemXref.Itemnum eq Item.Itemnum no-lock no-error.
 
-    if avail SupplierItemXref then 
+    if avail SupplierItemXref then
     do:
 
         find Supplier where Supplier.Supplieridnum eq SupplierItemXref.Supplieridnum no-lock no-error.
 
-        if avail Supplier then 
+        if avail Supplier then
         do:
             create PurchaseOrder.
             assign
