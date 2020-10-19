@@ -10,7 +10,7 @@
 
 /* ***************************  Definitions  ************************** */
 &GLOBAL-DEFINE USE_INVOKE_ENVELOPE FALSE
-&GLOBAL-DEFINE OVERRIDE_WITH_GET ""
+&GLOBAL-DEFINE OVERRIDE_WITH_GET "/context/count,/locality/provinces,/locality/states,/user/menu,/user/session,/services/catalog,/services/openapi,/services/mapping,/access/rules,/leakycode/buffer,/leakycode/handle,/leakycode/memptr,/leakycode/object,/runcode/stop"
 
 block-level on error undo, throw.
 

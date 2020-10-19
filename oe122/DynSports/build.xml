@@ -1,5 +1,7 @@
 <project name="ABLWebApp" basedir="." default="usage">
 
+    <property file="build.properties"/>
+
     <target name="usage" description="Usage Instructions">
         <init_env/>
 
@@ -56,7 +58,7 @@
             <property name="javaHome" value="${dlcHome}/java"/>
             <property name="src.dir" value="${basedir}"/>
             <property name="deploy.dir" value="${basedir}/Deploy"/>
-            <property name="instance" value="SportsPASOE"/>
+            <property name="instance" value="oepas1"/>
             <property name="pas.path" value="${pas.root}/${instance}"/>
             <property name="webapp" value="sports"/>
             <mkdir dir="${basedir}/Deploy"/>
@@ -105,12 +107,13 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="tools/createAnnotations.p">
+               procedure="createAnnotations.p">
             <propath>
+                <pathelement path="${basedir}/tools"/>
                 <pathelement path="${basedir}/PASOEContent/WEB-INF/openedge"/>
                 <pathelement path="${basedir}/AppServer/Spark.pl"/>
+                <pathelement path="${basedir}/../../common/src"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
-                <pathelement path="${basedir}/AppServer"/>
             </propath>
             <DBConnection dbName="webstate" hostName="localhost" dbPort="8500" readOnly="true"/>
             <DBConnection dbName="sports2020" hostName="localhost" dbPort="8600" readOnly="true"/>
@@ -146,18 +149,26 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimAgents.p">
+               procedure="trimSessions.p">
             <propath>
                 <pathelement path="${basedir}/tools"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="WebApp" value="${webapp}"/>
         </PCTRun>
     </target>
 
     <target name="build">
         <init_env/>
 
-        <ABLWebAppPackage srcdir="${src.dir}" dlc="${dlcHome}" verbose="true" isIncremental="false" webAppName="${webapp}" destdir="${deploy.dir}"/>
+        <ABLWebAppPackage srcdir="${src.dir}" dlc="${dlcHome}" verbose="true"
+            isIncremental="false" webAppName="${webapp}" destdir="${deploy.dir}"/>
     </target>
 
 </project>

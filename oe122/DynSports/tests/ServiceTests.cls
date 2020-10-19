@@ -14,14 +14,14 @@ block-level on error undo, throw.
 
 class tests.ServiceTests inherits tests.SparkUnit:
 
-	/*------------------------------------------------------------------------------
-	 Purpose: Start up the Spark stack similar to a session of the MSAS agent.
-	 Notes:
-	------------------------------------------------------------------------------*/
-	@Before.
-	method public void before ( ):
+    /*------------------------------------------------------------------------------
+     Purpose: Start up the Spark stack similar to a session of the MSAS agent.
+     Notes:
+    ------------------------------------------------------------------------------*/
+    @Before.
+    method public void before ( ):
         this-object:StartSpark("service").
-	end method.
+    end method.
 
     /*------------------------------------------------------------------------------
      Purpose: Shut down the Spark stack similar to a session of the MSAS agent.

@@ -94,7 +94,7 @@ class tests.SparkUnit abstract:
 
             /* Report the error to a log file and raise an error for the test. */
             log-manager:write-message(substitute("Error during SparkUnit startup: &1", err:GetMessage(1))).
-    		OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
+            OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
         end catch.
         finally:
             delete object oConfig no-error.

@@ -101,8 +101,15 @@ if not lReturn then
 
 if hServer:connected() then do:
     define variable cGreeting as character no-undo.
+    define variable hCPO      as handle    no-undo.
 
     WriteMessage(substitute("&1 | Connected: &2 | Context: &3", trim(string(fTestNum, ">9.9")), cConnect, hServer:request-info:ClientContextId)).
+
+    create client-principal hCPO.
+    hCPO:initialize("dev", "0").
+    hCPO:domain-name = "spark".
+    hCPO:seal("spark01").
+    hServer:request-info:SetClientPrincipal(hCPO).
 
     /* Run a remote procedure every X seconds up to the given limit. */
     RPTBLK:

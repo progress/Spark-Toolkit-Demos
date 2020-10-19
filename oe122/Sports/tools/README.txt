@@ -17,14 +17,3 @@ endpoint class to validate the seal of the passed CP token. Please note that the
 SparkRealm.cp must be placed in the CATALINA_BASE/common/lib folder for Tomcat to see it.
 For the OERealm class, the SparkRealm.json file must be in CATALINA_BASE/conf or
 CATALINA_BASE/conf/spark to be used properly.
-
-
-/******************************************************************************************/
-
-The following files are needed by the ANT scripts to start/stop/clean/trim the PAS instance:
-    manageInstance.p
-    clean.bat
-    trimAgents.p
-
-Be sure to confirm your hostname and port options within these files, or otherwise call the
-programs with parameters as noted within the comments.

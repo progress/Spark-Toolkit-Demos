@@ -1,6 +1,6 @@
 <project name="ABLWebApp" basedir="." default="usage">
 
-    <property file="build.properties"/>
+    <property file="${basedir}/../build.properties"/>
 
     <macrodef name="init_env">
         <sequential>

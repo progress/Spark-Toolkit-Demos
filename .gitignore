@@ -1,5 +1,8 @@
 *.r
 *.e
+lbia*
+rcda*
+srta*
 /oe117/Sports/PASOEContent/WEB-INF/openedge/Business/UnitTest/ApsvTest.p
 /oe117/Sports/tools/testApsvHello.p
 *.prof

@@ -1,6 +1,6 @@
 /**
- * Terminates all running agents of an ABLApp.
- * Usage: trimAgents.p <params>
+ * Trim idle ABL sessions for all agents of an ABLApp.
+ * Usage: trimAgentSessions.p <params>
  *  Parameter Default/Allowed
  *   Scheme   [http|https]
  *   Hostname [localhost]
@@ -24,26 +24,27 @@ using Progress.Json.ObjectModel.JsonObject.
 using Progress.Json.ObjectModel.JsonArray.
 using Progress.Json.ObjectModel.JsonDataType.
 
-define variable cOutFile    as character       no-undo.
-define variable oDelResp    as IHttpResponse   no-undo.
-define variable oClient     as IHttpClient     no-undo.
-define variable oCreds      as Credentials     no-undo.
-define variable cHttpUrl    as character       no-undo.
-define variable cInstance   as character       no-undo.
-define variable oJsonResp   as JsonObject      no-undo.
-define variable oAgents     as JsonArray       no-undo.
-define variable oAgent      as JsonObject      no-undo.
-define variable oQueryURL   as StringStringMap no-undo.
-define variable iLoop       as integer         no-undo.
-define variable cScheme     as character       no-undo initial "http".
-define variable cHost       as character       no-undo initial "localhost".
-define variable cPort       as character       no-undo initial "8810".
-define variable cUserId     as character       no-undo initial "tomcat".
-define variable cPassword   as character       no-undo initial "tomcat".
-define variable cAblApp     as character       no-undo initial "oepas1".
-define variable iWaitFinish as integer         no-undo initial 120000.
-define variable iWaitAfter  as integer         no-undo initial 60000.
-define variable cPID        as character       no-undo.
+define variable oDelResp  as IHttpResponse   no-undo.
+define variable oClient   as IHttpClient     no-undo.
+define variable oCreds    as Credentials     no-undo.
+define variable cHttpUrl  as character       no-undo.
+define variable cInstance as character       no-undo.
+define variable oJsonResp as JsonObject      no-undo.
+define variable oAgents   as JsonArray       no-undo.
+define variable oAgent    as JsonObject      no-undo.
+define variable oSessions as JsonArray       no-undo.
+define variable oTemp     as JsonObject      no-undo.
+define variable oQueryURL as StringStringMap no-undo.
+define variable iLoop     as integer         no-undo.
+define variable iLoop2    as integer         no-undo.
+define variable iTotSess  as integer         no-undo.
+define variable cScheme   as character       no-undo initial "http".
+define variable cHost     as character       no-undo initial "localhost".
+define variable cPort     as character       no-undo initial "8810".
+define variable cUserId   as character       no-undo initial "tomcat".
+define variable cPassword as character       no-undo initial "tomcat".
+define variable cAblApp   as character       no-undo initial "oepas1".
+define variable iSession  as integer         no-undo.
 
 /* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
@@ -74,8 +75,8 @@ assign oQueryURL = new StringStringMap().
 
 /* Register the URL's to the OEM-API endpoints as will be used in this utility. */
 oQueryURL:Put("Agents", "&1/oemanager/applications/&2/agents").
-oQueryURL:Put("Stacks", "&1/oemanager/applications/&2/agents/&3/stacks").
-oQueryURL:Put("AgentStop", "&1/oemanager/applications/&2/agents/&3").
+oQueryURL:Put("AgentSessions", "&1/oemanager/applications/&2/agents/&3/sessions").
+oQueryURL:Put("AgentSession", "&1/oemanager/applications/&2/agents/&3/sessions/&4").
 
 function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
     define variable oReq  as IHttpRequest  no-undo.
@@ -168,56 +169,66 @@ if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("re
     on stop undo, next AGENTBLK:
         oAgent = oAgents:GetJsonObject(iLoop).
 
-        if oAgent:has("pid") and oAgent:GetType("pid") eq JsonDataType:string then
-            assign cPID = oAgent:GetCharacter("pid").
-
-        /* Write session stack information for any available agents. */
+        /* Get sessions and determine non-idle states on active agents. */
         if oAgent:GetCharacter("state") eq "available" then do:
-            assign cHttpUrl = substitute(oQueryURL:Get("Stacks"), cInstance, cAblApp, oAgent:GetCharacter("pid")).
+            assign cHttpUrl = substitute(oQueryURL:Get("AgentSessions"), cInstance, cAblApp, oAgent:GetCharacter("pid")).
             assign oJsonResp = MakeRequest(cHttpUrl).
             if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-                message substitute("Saving stack information for Agent PID &1...", cPID).
+                if oJsonResp:Has("result") then do:
+                    message substitute("Found Agent PID &1", oAgent:GetCharacter("pid")).
 
-                if oJsonResp:GetJsonObject("result"):Has("ABLStacks") and oJsonResp:GetJsonObject("result"):GetType("ABLStacks") eq JsonDataType:Array then do:
-                    assign cOutFile = substitute("agentStacks_&1_&2.json", cPID, replace(iso-date(now), ":", "_")).
-                    oJsonResp:WriteFile(cOutFile, true). /* Write entire response to disk. */
-                    message substitute("~tStack data written to &1", cOutFile).
+                    oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentSession").
+                    assign iTotSess = oSessions:Length.
+
+                    SESSIONBLK:
+                    do iLoop2 = 1 to iTotSess
+                    on error undo, next SESSIONBLK
+                    on stop undo, next SESSIONBLK:
+                        if oSessions:GetType(iLoop2) eq JsonDataType:Object then
+                            assign oTemp = oSessions:GetJsonObject(iLoop2).
+                        else
+                            next SESSIONBLK.
+
+                        /* Only IDLE sessions will be terminated, so continue if that's not the case. */
+                        if oTemp:GetCharacter("SessionState") ne "IDLE" then next SESSIONBLK.
+
+                        if oTemp:has("SessionId") and oTemp:GetType("SessionId") eq JsonDataType:string then
+                            assign iSession = oTemp:GetInteger("SessionId").
+
+                        message substitute("Terminating Idle Agent-Session: &1", iSession).
+
+                        do stop-after 10
+                        on error undo, throw
+                        on stop undo, retry:
+                            if retry then
+                                undo, throw new Progress.Lang.AppError("Encountered stop condition", 0).
+
+                            assign cHttpUrl = substitute(oQueryURL:Get("AgentSession"), cInstance, cAblApp, oAgent:GetCharacter("pid"), iSession).
+
+                            oDelResp = oClient:Execute(RequestBuilder
+                                                       :Delete(cHttpUrl)
+                                                       :AcceptContentType("application/vnd.progress+json")
+                                                       :ContentType("application/vnd.progress+json")
+                                                       :UsingBasicAuthentication(oCreds)
+                                                       :Request).
+
+                            if valid-object(oDelResp) and valid-object(oDelResp:Entity) and type-of(oDelResp:Entity, JsonObject) then do:
+                                assign oJsonResp = cast(oDelResp:Entity, JsonObject).
+                                if oJsonResp:Has("operation") and oJsonResp:Has("outcome") then
+                                    message substitute("~t&1: &2", oJsonResp:GetCharacter("operation"), oJsonResp:GetCharacter("outcome")).
+                            end.
+
+                            catch err as Progress.Lang.Error:
+                                message substitute("Error Terminating Session &1: &2", iSession, err:GetMessage(1)).
+                                next SESSIONBLK.
+                            end catch.
+                        end. /* do stop-after */
+                    end. /* iLoop2 - session */
                 end.
-            end. /* stacks */
+            end. /* agent sessions */
         end. /* agent state = available */
         else
-            message substitute("Agent PID &1 not AVAILABLE, skipping stacks.", cPID).
-
-        message substitute("Stopping Agent PID &1...", cPID).
-
-        /* Gracefully stop each agent through use of the waitToFinish and waitAfterStop timeout values. */
-        do stop-after 10
-        on error undo, throw
-        on stop undo, retry:
-            if retry then
-                undo, throw new Progress.Lang.AppError("Encountered stop condition", 0).
-
-            assign cHttpUrl = substitute(oQueryURL:Get("AgentStop"), cInstance, cAblApp, oAgent:GetCharacter("agentId"))
-                            + "?waitToFinish=" + string(iWaitFinish) + "&waitAfterStop=" + string(iWaitAfter).
-
-            oDelResp = oClient:Execute(RequestBuilder
-                                       :Delete(cHttpUrl)
-                                       :AcceptContentType("application/vnd.progress+json")
-                                       :ContentType("application/vnd.progress+json")
-                                       :UsingBasicAuthentication(oCreds)
-                                       :Request).
-
-            if valid-object(oDelResp) and valid-object(oDelResp:Entity) and type-of(oDelResp:Entity, JsonObject) then do:
-                assign oJsonResp = cast(oDelResp:Entity, JsonObject).
-                if oJsonResp:Has("operation") and oJsonResp:Has("outcome") then
-                    message substitute("~t&1: &2", oJsonResp:GetCharacter("operation"), oJsonResp:GetCharacter("outcome")).
-            end.
-
-            catch err as Progress.Lang.Error:
-                message substitute("Error Stopping PID &1: &2", cPID, err:GetMessage(1)).
-                next AGENTBLK.
-            end catch.
-        end. /* do stop-after */
+            message substitute("Agent PID &1 not AVAILABLE, skipping trim.", oAgent:GetCharacter("pid")).
     end. /* iLoop - agent */
 end. /* agents */
 
