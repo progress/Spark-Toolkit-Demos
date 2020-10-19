@@ -110,9 +110,11 @@ class tests.StartupTests inherits tests.SparkUnit:
     ------------------------------------------------------------------------------*/
     @Test.
     method public void testCatalogManager ( ):
-        define variable oManager as Progress.Lang.Object no-undo.
-        assign oManager = this-object:GetManager("Spark.Core.Manager.ICatalogManager").
-        OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
+        if this-object:HasManagerConfigured("Spark.Core.Manager.ICatalogManager") then do:
+            define variable oManager as Progress.Lang.Object no-undo.
+            assign oManager = this-object:GetManager("Spark.Core.Manager.ICatalogManager").
+            OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
+        end.
     end method.
 
     /*------------------------------------------------------------------------------
@@ -132,9 +134,11 @@ class tests.StartupTests inherits tests.SparkUnit:
     ------------------------------------------------------------------------------*/
     @Test.
     method public void testSchemaManager ( ):
-        define variable oManager as Progress.Lang.Object no-undo.
-        assign oManager = this-object:GetManager("Spark.Core.Manager.ISchemaManager").
-        OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
+        if this-object:HasManagerConfigured("Spark.Core.Manager.ISchemaManager") then do:
+            define variable oManager as Progress.Lang.Object no-undo.
+            assign oManager = this-object:GetManager("Spark.Core.Manager.ISchemaManager").
+            OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
+        end.
     end method.
 
     /*------------------------------------------------------------------------------
