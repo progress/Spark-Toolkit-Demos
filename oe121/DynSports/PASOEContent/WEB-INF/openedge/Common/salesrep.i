@@ -8,8 +8,6 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="SalesRep").
-
 define temp-table ttSalesrep no-undo before-table bttSalesrep
     field id           as character
     field seq          as integer   initial ?

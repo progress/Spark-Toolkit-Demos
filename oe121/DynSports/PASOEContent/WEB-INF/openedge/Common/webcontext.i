@@ -8,8 +8,6 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="IdentityName,ContextType,ContextViewID,ContextTitle,ContextSeqNo").
-
 define temp-table ttWebContext before-table bttWebContext
     field id            as character
     field seq           as integer   initial ?

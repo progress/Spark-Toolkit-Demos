@@ -8,8 +8,6 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="Username,DomainName").
-
 define temp-table ttWebProfile no-undo before-table bttWebProfile
     field id               as character
     field seq              as integer    initial ?

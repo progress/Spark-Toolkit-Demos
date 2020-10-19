@@ -16,6 +16,7 @@ using Spark.Util.* from propath.
 define variable cStartDir    as character        no-undo.
 define variable cOutFolder   as character        no-undo initial "Deploy/Conf".
 define variable cXrefTemp    as character        no-undo.
+define variable cListTemp    as character        no-undo.
 define variable oAnnotations as JsonObject       no-undo.
 define variable oWriter      as AnnotationWriter no-undo.
 define variable oFileMap     as IStringStringMap no-undo.
@@ -78,14 +79,18 @@ do while oIter:HasNext() on error undo, throw:
     /* Iterate through the .xref.xml files. */
     oFile = cast(oIter:Next(), IMapEntry).
 
-    assign cXrefTemp = string(oFile:Value) + ".xref".
-    compile value(string(oFile:Value)) xref-xml value(cXrefTemp) no-error.
+    assign
+        cXrefTemp = string(oFile:Value) + ".xref"
+        cListTemp = string(oFile:Value) + ".list"
+        .
+    compile value(string(oFile:Value)) xref-xml value(cXrefTemp) listing value(cListTemp) no-error.
 
     /* Process each XREF file and create an annotations JSON file. */
     oWriter:ParseXref(cXrefTemp).
 
     finally:
         os-delete value(cXrefTemp) no-error.
+        os-delete value(cListTemp) no-error.
     end finally.
 end. /* oIter */
 

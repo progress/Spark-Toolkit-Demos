@@ -8,8 +8,6 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="RoleID").
-
 define temp-table ttWebRole no-undo before-table bttWebRole
     field id          as character
     field seq         as integer   initial ?

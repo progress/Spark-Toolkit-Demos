@@ -8,8 +8,6 @@
    Notes       :
  ----------------------------------------------------------------------*/
 
-@openapi.openedge.entity.primarykey(fields="WebSessionID,ObjectName").
-
 define temp-table ttWebDataStore no-undo
     field id           as character
     field seq          as integer   initial ?
