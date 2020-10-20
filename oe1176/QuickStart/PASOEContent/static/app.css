@@ -327,18 +327,17 @@ html .km-pane-wrapper .k-header {
 .k-mobile-list .k-check:checked,
 .k-mobile-list .k-edit-field [type=checkbox]:checked,
 .k-mobile-list .k-edit-field [type=radio]:checked {
-  /*background-image: url('../../vendor/kendo/styles/Bootstrap/sprite.png');*/
   border-color: transparent;
 }
 .k-loading,
 .k-state-hover .k-loading,
 .k-i-loading,
 .k-state-hover .k-i-loading {
-  background-image: url('../../vendor/kendo/styles/Default/loading.gif');
+  background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Default/loading.gif');
   background-position: 50% 50%;
 }
 .k-loading-image {
-  background-image: url('../../vendor/kendo/styles/Default/loading-image.gif');
+  background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Default/loading-image.gif');
 }
 .k-loading-color {
   background-color: #fff;
@@ -717,7 +716,7 @@ div.k-filebrowser-dropzone em,
   background-position: 50% 50%;
 }
 .k-tool-icon {
-  background-image: url('../../vendor/kendo/styles/Bootstrap/sprite.png');
+  background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/sprite.png');
 }
 .k-state-hover > .k-link,
 .k-other-month.k-state-hover .k-link,
@@ -797,7 +796,7 @@ div.k-filebrowser-dropzone em {
 }
 /* Progressbar */
 .k-progressbar-indeterminate {
-  background: url('../../vendor/kendo/styles/Bootstrap/indeterminate.gif');
+  background: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/indeterminate.gif');
 }
 .k-progressbar-indeterminate .k-progress-status-wrap,
 .k-progressbar-indeterminate .k-state-selected {
@@ -811,10 +810,10 @@ div.k-filebrowser-dropzone em {
   background-color: #2cb500;
 }
 .k-slider-horizontal .k-tick {
-  background-image: url('../../vendor/kendo/styles/Bootstrap/slider-h.gif');
+  background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/slider-h.gif');
 }
 .k-slider-vertical .k-tick {
-  background-image: url('../../vendor/kendo/styles/Bootstrap/slider-v.gif');
+  background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/slider-v.gif');
 }
 /* Tooltip */
 .k-widget.k-tooltip {
@@ -958,7 +957,7 @@ div.k-filebrowser-dropzone em {
 .k-filebrowser .k-tile .k-file,
 .k-filebrowser .k-tile .k-i-folder,
 .k-filebrowser .k-tile .k-i-file {
-  background-image: url('../../vendor/kendo/styles/Bootstrap/imagebrowser.png');
+  background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/imagebrowser.png');
   background-size: auto auto;
 }
 /* TreeMap */
@@ -1147,7 +1146,7 @@ div.k-filebrowser-dropzone em {
 .k-i-kpi-hold,
 .k-i-kpi-increase,
 .k-i-kpi-open {
-  background-image: url('../../vendor/kendo/styles/Bootstrap/sprite_kpi.png');
+  background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/sprite_kpi.png');
 }
 /* Border radius */
 .k-block,
@@ -1836,7 +1835,7 @@ html .km-pane-wrapper .km-widget,
   .k-mobile-list .k-check:checked,
   .k-mobile-list .k-edit-field [type=checkbox]:checked,
   .k-mobile-list .k-edit-field [type=radio]:checked {
-    background-image: url('../../vendor/kendo/styles/Bootstrap/sprite_2x.png');
+    background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/sprite_2x.png');
     background-size: 340px 336px;
   }
   .k-dropdown-wrap .k-input,
@@ -1850,7 +1849,7 @@ html .km-pane-wrapper .km-widget,
   .k-i-kpi-hold,
   .k-i-kpi-increase,
   .k-i-kpi-open {
-    background-image: url('../../vendor/kendo/styles/Bootstrap/sprite_kpi_2x.png');
+    background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/sprite_kpi_2x.png');
     background-size: 96px 16px;
   }
 }
@@ -2164,7 +2163,7 @@ thead.k-grid-header th.k-header:last-child {
   border-radius: 0;
 }
 .k-slider-horizontal .k-tick {
-  background-image: url('../../vendor/kendo/styles/Bootstrap/slider-h.gif');
+  background-image: url('http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/slider-h.gif');
 }
 .k-draghandle.k-state-selected,
 .k-draghandle.k-state-selected:link,
@@ -2812,11 +2811,11 @@ td.k-state-focused.k-state-selected,
 }
 /* Map */
 .k-map .k-marker {
-  background-image: url("../../vendor/kendo/styles/Bootstrap/markers.png");
+  background-image: url("http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/markers.png");
 }
 @media only screen and (-webkit-min-device-pixel-ratio: 1.2), only screen and (min-device-pixel-ratio: 1.2) {
   .k-map .k-marker {
-    background-image: url("../../vendor/kendo/styles/Bootstrap/markers_2x.png");
+    background-image: url("http://kendo.cdn.telerik.com/2020.3.915/styles/Bootstrap/markers_2x.png");
   }
 }
 /*!
