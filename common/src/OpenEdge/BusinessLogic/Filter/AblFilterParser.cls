@@ -116,10 +116,23 @@ class OpenEdge.BusinessLogic.Filter.AblFilterParser inherits FilterParser:
         assign pSortBy = trim(replace(pSortBy, '  ':u, StringConstant:SPACE))
                cnt     = num-entries(pSortBy, StringConstant:SPACE)
                .
+
+        BY-LOOP:
+        do loop = 1 to cnt:
+            assign word = entry(loop, pSortBy, StringConstant:SPACE).
+
+            // count the occurrences of "by"
+            if word eq 'by':u then
+                assign elems = elems + 1.
+        end. //BY-LOOP
+
+        extent(querySortEntry) = elems.
+        elems = 0. /* Reset before running loop again. */
+
         WORD-LOOP:
         do loop = 1 to cnt:
             assign word = entry(loop, pSortBy, StringConstant:SPACE).
-            
+
             // if there are double spaces, skip
             if word eq '':u then
                 next WORD-LOOP.
@@ -155,11 +168,11 @@ class OpenEdge.BusinessLogic.Filter.AblFilterParser inherits FilterParser:
                 assign sortOrder = SortOrderEnum:Ascending
                        loop     = loop + 1
                        .
-            assign elems                  = elems + 1 
-                   extent(querySortEntry) = elems
-                   querySortEntry[elems]  = new QuerySortEntry(fieldName, sortOrder)
+
+            assign elems                 = elems + 1 
+                   querySortEntry[elems] = new QuerySortEntry(fieldName, sortOrder)
                    .
-        end.    //WORD-LOOP
+        end. //WORD-LOOP
         
         return querySortEntry.
     end method.
