@@ -23,8 +23,65 @@
         <sequential>
             <property environment="env"/>
 
+            <!-- Set a property if environment is Windows. -->
+            <condition property="isWin32">
+                <os family="windows"/>
+            </condition>
+
+            <!-- Set a property if environment is Unix. -->
+            <condition property="isUnix">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set a property if environment is 32bit. -->
+            <condition property="is32bit">
+                <or>
+                    <os arch="x86"/>
+                    <os arch="i386"/>
+                </or>
+            </condition>
+
+            <!-- Set a property if environment is 64bit. -->
+            <condition property="is64bit">
+                <not>
+                    <or>
+                        <os arch="x86"/>
+                        <os arch="i386"/>
+                    </or>
+                </not>
+            </condition>
+
+            <condition property="path" value="/usr/pas" else="C:/PASOE">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set properties for special directories. -->
+        	<property name="javaHome" value="${dlcHome}/java"/>
+            <property name="src.dir" value="${basedir}"/>
+            <property name="deploy.dir" value="${basedir}/Deploy"/>
+            <property name="instance" value="oepas1"/>
+        	<property name="pas.root" value="${path}"/>
+            <property name="pas.path" value="${pas.root}/${instance}"/>
+            <property name="webapp" value="sports"/>
+
+        	<mkdir dir="${deploy.dir}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="init_oe">
+        <sequential>
+            <init_env/>
+
+            <fail message="Environment is not 64-bit">
+                <condition>
+                    <not>
+                        <isset property="is64bit"/>
+                    </not>
+                </condition>
+            </fail>
+
             <!-- Check if DLC is set as an environment variable. -->
-            <fail message="$DLC path is not set">
+            <fail message="DLC Home path is not set">
                 <condition>
                     <and>
                         <not><isset property="dlcHome"/></not>
@@ -33,75 +90,79 @@
                 </condition>
             </fail>
             <property name="dlcHome" value="${env.DLC}"/>
-            <echo message="DLC Home: ${dlcHome}"/>
+            <property name="dlcJava" value="${dlcHome}/java"/>
 
-            <!-- Determine current operating system in use. -->
-            <echo message="OS Arch: ${os.arch}"/>
-            <condition property="isWin64">
-                <os family="windows"/>
-            </condition>
-            <condition property="isUnix">
-                <os family="unix"/>
-            </condition>
+            <!-- Load the current PCT library from DLC. -->
+            <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
 
-            <!-- Determine script suffix, database location, and PAS root. -->
-            <condition property="scriptSuffix" value="sh" else="bat">
-                <os family="unix"/>
-            </condition>
-            <condition property="path" value="/usr/databases" else="C:\Databases">
-                <os family="unix"/>
-            </condition>
-            <condition property="pas.root" value="/usr/pas" else="C:/PASOE">
-                <os family="unix"/>
-            </condition>
-
-            <property name="javaHome" value="${dlcHome}/java"/>
-            <property name="src.dir" value="${basedir}"/>
-            <property name="deploy.dir" value="${basedir}/Deploy"/>
-            <property name="instance" value="oepas1"/>
-            <property name="pas.path" value="${pas.root}/${instance}"/>
-            <property name="webapp" value="sports"/>
-            <mkdir dir="${basedir}/Deploy"/>
+            <!-- Access the OE version info, and read into a property. -->
+            <ProgressVersion dlcHome="${dlcHome}" majorVersion="oeMajor" minorVersion="oeMinor" revision="oeRev" fullVersion="full"/>
+            <property name="oe.version" value="${oeMajor}.${oeMinor}.${oeRev}"/>
+            <echo message="OpenEdge Version: ${oe.version}"/>
 
             <!-- Add the ANT-Contrib library to this environment (present in 11.7.4+ and 12.0+). -->
             <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
 
-            <!-- Set up the needed dependencies for the ABLWebAppPackage task -->
             <taskdef resource="com/progress/openedge/pdt/ant/ablwebapp/ablwebapps.properties">
                 <classpath>
-                    <pathelement location="${javaHome}/ant-ablwebapp.jar" />
+                    <pathelement location="${dlcJava}/ant-ablwebapp.jar" />
 
-                    <!-- ABLWebApp Dependencies -->
-                    <pathelement location="${javaHome}/ant-libs/ablwebapp.jar" />
-                    <pathelement location="${javaHome}/ant-libs/ablwebapp-dependencies.jar" />
+                    <pathelement location="${dlcJava}/ant-libs/ablwebapp.jar" />
+                    <pathelement location="${dlcJava}/ant-libs/ablwebapp-dependencies.jar" />
 
                     <!-- CodeModel Dependencies -->
-                    <pathelement location="${javaHome}/ant-libs/codemodel-dependencies.jar" />
+                    <pathelement location="${dlcJava}/ant-libs/codemodel-dependencies.jar" />
 
                     <!-- AST and its Dependencies -->
-                    <pathelement location="${javaHome}/ant-libs/ast.jar" />
-                    <pathelement location="${javaHome}/ant-libs/ast-dependencies.jar" />
+                    <pathelement location="${dlcJava}/ant-libs/ast.jar" />
+                    <pathelement location="${dlcJava}/ant-libs/ast-dependencies.jar" />
 
-                    <!-- Additional Dependencies -->
-                    <pathelement location="${javaHome}/ant-libs/velocity-1.7.jar" />
-                    <pathelement location="${javaHome}/ant-libs/velocity-1.7-dep.jar" />
-                    <pathelement location="${javaHome}/ant-libs/1padapters-restExpose.jar" />
-                    <pathelement location="${javaHome}/1padapters-idl.jar" />
-                    <pathelement location="${javaHome}/ext/jettison-1.2.jar" />
-
-                    <!-- Added for OE 12.0 -->
-                    <pathelement location="${javaHome}/ext/commons-logging-1.2.jar" />
-                    <pathelement location="${javaHome}/ext/xmlschema-core-2.2.1.jar" />
+                    <!-- Additional deps -->
+                    <pathelement location="${dlcJava}/ant-libs/velocity-1.7.jar" />
+                    <pathelement location="${dlcJava}/ant-libs/velocity-1.7-dep.jar" />
+                    <pathelement location="${dlcJava}/ant-libs/1padapters-restExpose.jar" />
+                    <pathelement location="${dlcJava}/1padapters-idl.jar" />
+                    <pathelement location="${dlcJava}/ext/jettison-1.2.jar" />
+                	<pathelement location="${dlcJava}/ext/jettison-1.4.0.jar" />
+                    <pathelement location="${dlcJava}/ext/commons-logging-1.2.jar" />
+                    <pathelement location="${dlcJava}/ext/xmlschema-core-2.2.1.jar" />
                 </classpath>
             </taskdef>
         </sequential>
     </macrodef>
 
-    <target name="annotate">
-        <init_env/>
+    <macrodef name="require">
+        <attribute name="file"/>
+        <attribute name="message" default="File @{file} not set or missing"/>
 
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{file}" type="file"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="requireDir">
+        <attribute name="folder"/>
+        <attribute name="message" default="Directory @{folder} not set or missing"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{folder}" type="dir"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <target name="annotate">
+    	<init_oe/>
 
         <!-- This will need to compile the code to obtain XREF files, so we need the databases as would be required by the code. -->
         <PCTRun
@@ -121,11 +182,25 @@
         <echo message="See output in ${basedir}/Deploy/Conf/annotations.json"/>
     </target>
 
-    <target name="publish">
-        <init_env/>
+    <target name="build">
+        <init_oe/>
 
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+    	<!-- Build PL file with source and R-code. -->
+        <PCTLibrary destfile="${deploy.dir}/${ablapp}.pl" dlcHome="${dlcHome}">
+            <fileset dir="${basedir}/PASOEContent/WEB-INF/openedge">
+                <include name="**/*.r"/>
+            </fileset>
+        </PCTLibrary>
+
+        <ABLWebAppPackage srcdir="${src.dir}" destdir="${deploy.dir}" dlc="${dlcHome}" verbose="true"
+                          isIncremental="false" webAppName="${webapp}"/>
+    </target>
+
+    <target name="publish">
+    	<init_oe/>
+
+        <!-- Check if PAS properties file exists. -->
+        <require file="${pas.path}/conf/openedge.properties"/>
 
         <!-- Copy source and r-code to the PAS instance. -->
     	<copy toDir="${pas.path}/webapps/${webapp}/WEB-INF/openedge" verbose="true">
@@ -138,7 +213,7 @@
         </copy>
 
         <!-- Copy annotation file to config directory. -->
-        <copy toDir="${pas.path}/conf/sports" verbose="true">
+        <copy toDir="${pas.path}/conf/${pas.conf.spark}" verbose="true">
             <fileset dir="${deploy.dir}/Conf">
                 <include name="annotations.json"/>
             </fileset>
@@ -148,7 +223,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimSessions.p">
+               procedure="refreshAgents">
             <propath>
                 <pathelement path="${basedir}/tools"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -159,15 +234,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-            <Parameter name="WebApp" value="${webapp}"/>
         </PCTRun>
-    </target>
-
-    <target name="build">
-        <init_env/>
-
-        <ABLWebAppPackage srcdir="${src.dir}" dlc="${dlcHome}" verbose="true"
-            isIncremental="false" webAppName="${webapp}" destdir="${deploy.dir}"/>
     </target>
 
 </project>

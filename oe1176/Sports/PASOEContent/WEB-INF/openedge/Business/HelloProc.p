@@ -17,6 +17,27 @@
 
 block-level on error undo, throw.
 
+/* Used for testing persistent procedures. */
+define variable cUser as character no-undo.
+
+/* Used for session-managed APSV connections. */
+procedure setHelloUser:
+    define input parameter toWhom as character no-undo.
+
+    pause 0.4 no-message. /* Just add a bit of fake think-time. */
+
+    assign cUser = toWhom.
+end procedure.
+
+/* Used for session-managed APSV connections. */
+procedure sayHelloStoredUser:
+    define output parameter greeting as character no-undo.
+
+    pause 0.4 no-message. /* Just add a bit of fake think-time. */
+
+    assign greeting = substitute("Hello &1", cUser).
+end procedure.
+
 @openapi.openedge.export(type="REST", useReturnValue="false", writeDataSetBeforeImage="false").
 @progress.service.resourceMapping(type="REST", operation="invoke", URI="/hello", alias="hello", mediaType="application/json").
 procedure sayHello:

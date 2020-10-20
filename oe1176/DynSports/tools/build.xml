@@ -1,4 +1,4 @@
-<project name="ABLWebApp" basedir="." default="usage">
+<project name="ManagementTools" basedir="." default="usage">
 
     <property file="${basedir}/../build.properties"/>
 
@@ -35,7 +35,6 @@
         <echo message="Utilities for easy operation and maintenance of a PASOE instance."/>
         <echo message="Run from a PROENV session or with DLC and DLC/bin in your PATH."/>
         <echo message="${line.separator}Usage Instructions:"/>
-        <echo message="${line.separator} proant compile - Compile all utility procedures to r-code"/>
         <echo message="${line.separator} proant status - Obtain agent/connection status information for an ABL App"/>
         <echo message="${line.separator} proant stacks - Obtain stack information for all agents for an ABL App"/>
         <echo message="${line.separator} proant flush - Flush the available deferred log buffer to Agent log file"/>
@@ -55,54 +54,6 @@
         <echo message="  -Dablapp=${ablapp}"/>
         <echo message="  -Dwebapp=${webapp} (Used by close/clean)"/>
         <echo message="${line.separator}NOTE: The name of the ABLApp is case-sensitive!"/>
-    </target>
-
-    <target name="compile">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
-
-        <!-- Compile the code in the current directory, whether source or xcode. -->
-        <PCTCompile
-               destDir="${basedir}"
-               dlcHome="${dlcHome}">
-            <propath>
-                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
-            </propath>
-            <fileset dir="${basedir}">
-                <include name="*.p"/>
-            </fileset>
-        </PCTCompile>
-
-        <delete dir="${basedir}/.pct" quiet="true"/>
-    </target>
-
-    <target name="bundle">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
-
-        <mkdir dir="${basedir}/xbuild"/>
-
-        <!-- Create xcode from source, placing in a temporary directory. -->
-        <PCTXCode
-               destDir="${basedir}/xbuild"
-               dlcHome="${dlcHome}">
-            <fileset dir="${basedir}">
-                <include name="*.p"/>
-            </fileset>
-        </PCTXCode>
-
-        <!-- Bundle only xcode versions of .p's with source in a dedicated subdirectory. -->
-        <zip destfile="${basedir}/utilities.zip">
-            <zipfileset dir="${basedir}" includes="build.xml,LICENSE,NOTICE"/>
-            <zipfileset dir="${basedir}/xbuild" includes="*.p"/>
-            <zipfileset dir="${basedir}" includes="*.p" prefix="src"/>
-        </zip>
-
-        <delete dir="${basedir}/xbuild" quiet="true"/>
     </target>
 
     <target name="clean">
