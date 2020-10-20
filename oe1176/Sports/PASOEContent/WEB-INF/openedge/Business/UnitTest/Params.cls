@@ -39,18 +39,26 @@ class Business.UnitTest.Params inherits Spark.Core.Service.Service use-widget-po
         .
     define dataset dsOutParam for ttOutParam.
 
+    define protected property oSchemaManager as ISchemaManager no-undo
+        get:
+            if not valid-object(oSchemaManager) then
+                assign oSchemaManager = cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager).
+            return oSchemaManager.
+        end get.
+        set.
+
     method public override void initialize ( ):
         define variable hDataset as handle no-undo.
 
         /* Describe schema for any temp-tables to be exposed. */
-        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerTempTable(input temp-table ttInParam:handle).
-        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerTempTable(input temp-table ttOutParam:handle).
+        oSchemaManager:registerTempTable(input temp-table ttInParam:handle).
+        oSchemaManager:registerTempTable(input temp-table ttOutParam:handle).
 
         /* Describe schema for any datasets to be exposed. */
         assign hDataset = dataset dsInParam:handle.
-        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerDataset(input hDataset).
+        oSchemaManager:registerDataset(input hDataset).
         assign hDataset = dataset dsOutParam:handle.
-        cast(Ccs.Common.Application:StartupManager:getManager(get-class(ISchemaManager)), ISchemaManager):registerDataset(input hDataset).
+        oSchemaManager:registerDataset(input hDataset).
     end method. /* initialize */
 
     method public override void dispose ( ):

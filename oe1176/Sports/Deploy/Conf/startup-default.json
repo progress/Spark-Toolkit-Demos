@@ -10,11 +10,17 @@
             "Manager": "Spark.Core.Manager.ILoggingManager",
             "Implementation": "Spark.Core.Manager.LoggingManager"
         }, {
+            "Manager": "Spark.Core.Manager.ISchemaManager",
+            "Implementation": "Spark.Core.Manager.SchemaManager"
+        }, {
+            "Manager": "Spark.Core.Manager.ICatalogManager",
+            "Implementation": "Spark.Core.Manager.CatalogManager"
+        }, {
             "Manager": "Spark.Core.Manager.ITranslationManager",
             "Implementation": "Spark.Core.Manager.TranslationManager"
         }, {
             "Manager": "Spark.Core.Manager.IStateManager",
-            "Implementation": "Sports.Spark.Core.Manager.StateManager"
+            "Implementation": "Spark.Core.Manager.StateManager"
         }]
     }
 }

@@ -16,7 +16,6 @@ using Spark.Util.* from propath.
 define variable cStartDir    as character        no-undo.
 define variable cOutFolder   as character        no-undo initial "Deploy/Conf".
 define variable cXrefTemp    as character        no-undo.
-define variable cListTemp    as character        no-undo.
 define variable oAnnotations as JsonObject       no-undo.
 define variable oWriter      as AnnotationWriter no-undo.
 define variable oFileMap     as IStringStringMap no-undo.
@@ -79,18 +78,14 @@ do while oIter:HasNext() on error undo, throw:
     /* Iterate through the .xref.xml files. */
     oFile = cast(oIter:Next(), IMapEntry).
 
-    assign
-        cXrefTemp = string(oFile:Value) + ".xref"
-        cListTemp = string(oFile:Value) + ".list"
-        .
-    compile value(string(oFile:Value)) xref-xml value(cXrefTemp) listing value(cListTemp) no-error.
+    assign cXrefTemp = string(oFile:Value) + ".xref".
+    compile value(string(oFile:Value)) xref-xml value(cXrefTemp) no-error.
 
     /* Process each XREF file and create an annotations JSON file. */
     oWriter:ParseXref(cXrefTemp).
 
     finally:
         os-delete value(cXrefTemp) no-error.
-        os-delete value(cListTemp) no-error.
     end finally.
 end. /* oIter */
 
@@ -116,5 +111,5 @@ catch err as Progress.Lang.Error:
         message err:CallStack.
 end catch.
 finally:
-    return. /* Use this so that ANT scripts can return gracefully when finished. */
+    return string(0). /* Use this so that ANT scripts can return gracefully when finished. */
 end finally.

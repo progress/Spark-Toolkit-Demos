@@ -19,6 +19,17 @@ class tests.SparkUnit abstract:
 
     define protected variable UseProfiler as logical no-undo initial true.
 
+    define private temp-table ttGeneral no-undo serialize-name "General"
+        field iStopAfter as integer serialize-name "Timeout".
+
+    define private temp-table ttImplMapping no-undo serialize-name "ManagerMapping"
+        field Manager        as character
+        field Implementation as character.
+        /* No index - want them in the order they are defined. */
+
+    define private dataset dsConfig serialize-name "Config"
+        for ttGeneral, ttImplMapping.
+
     method protected void StartSpark ( input pcTestSuiteName as character ):
         define variable oParser    as ObjectModelParser no-undo.
         define variable oConfig    as JsonObject        no-undo.
@@ -60,9 +71,11 @@ class tests.SparkUnit abstract:
         if this-object:NumDatabases eq 0 then
             OpenEdge.Core.Assert:RaiseError("No databases configured for testing.").
 
+        this-object:LoadServiceConfig(). /* Load manager configuration locally. */
+
         /* Run standard "sessionStartupProc". */
         define variable cStartup as character no-undo. /* sessionStartupProcParam */
-        run Spark/startup.p (input cStartup).
+        run Spark/startup.r (input cStartup).
 
         if UseProfiler then do:
             define variable cProfDir as character no-undo.
@@ -94,7 +107,7 @@ class tests.SparkUnit abstract:
 
             /* Report the error to a log file and raise an error for the test. */
             log-manager:write-message(substitute("Error during SparkUnit startup: &1", err:GetMessage(1))).
-    		OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
+            OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
         end catch.
         finally:
             delete object oConfig no-error.
@@ -104,7 +117,7 @@ class tests.SparkUnit abstract:
 
     method protected void StopSpark ( ):
         /* Run standard "sessionShutdownProc". */
-        run Spark/shutdown.p.
+        run Spark/shutdown.r.
 
         if profiler:enabled then do:
             /* Turn off the profiler, if enabled. */
@@ -127,6 +140,26 @@ class tests.SparkUnit abstract:
             OpenEdge.Core.Assert:RaiseError(err:GetMessage(1)).
         end catch.
     end method. /* StopSpark */
+
+    method protected void LoadServiceConfig ( ):
+        define variable cCfgFileName     as character no-undo.
+        define variable cFullCfgFileName as character no-undo.
+        define variable iCnt             as integer   no-undo.
+
+        cCfgFileName = "startup.json".
+        file-info:file-name = Spark.Core.Util.OSTools:sparkConf + cCfgFileName.
+        cFullCfgFileName = file-info:full-pathname.
+
+        if cFullCfgFileName ne ? then
+            dataset dsConfig:read-json("FILE", cFullCfgFileName, "EMPTY").
+    end method.
+
+    method protected logical HasManagerConfigured ( input pcClassInterface as character ):
+        find first ttImplMapping no-lock
+             where ttImplMapping.Manager eq pcClassInterface no-error.
+
+        return available(ttImplMapping).
+    end method. /* HasManagerConfigured */
 
     method protected logical HasManagerInterface ( ):
         define variable oManager as Progress.Lang.Class no-undo.
