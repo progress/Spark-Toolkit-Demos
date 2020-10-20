@@ -112,7 +112,6 @@
                 <pathelement path="${basedir}/tools"/>
                 <pathelement path="${basedir}/PASOEContent/WEB-INF/openedge"/>
                 <pathelement path="${basedir}/AppServer/Spark.pl"/>
-                <pathelement path="${basedir}/../../common/src"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <DBConnection dbName="webstate" hostName="localhost" dbPort="8500" readOnly="true"/>
