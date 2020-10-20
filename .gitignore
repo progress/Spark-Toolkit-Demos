@@ -12,3 +12,5 @@ srta*
 /oe122/DynSports/results.xml
 /oe122/DynSports/tests/profiler
 /oe122/DynSports/tests/*.log
+/oe122/Sports/results.xml
+/oe122/Sports/server.log

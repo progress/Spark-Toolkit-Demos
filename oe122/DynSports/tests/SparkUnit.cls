@@ -75,7 +75,7 @@ class tests.SparkUnit abstract:
 
         /* Run standard "sessionStartupProc". */
         define variable cStartup as character no-undo. /* sessionStartupProcParam */
-        run Spark/startup.p (input cStartup).
+        run Spark/startup.r (input cStartup).
 
         if UseProfiler then do:
             define variable cProfDir as character no-undo.
@@ -117,7 +117,7 @@ class tests.SparkUnit abstract:
 
     method protected void StopSpark ( ):
         /* Run standard "sessionShutdownProc". */
-        run Spark/shutdown.p.
+        run Spark/shutdown.r.
 
         if profiler:enabled then do:
             /* Turn off the profiler, if enabled. */
@@ -156,7 +156,7 @@ class tests.SparkUnit abstract:
 
     method protected logical HasManagerConfigured ( input pcClassInterface as character ):
         find first ttImplMapping no-lock
-             where ttImplMapping.Manager eq pcClassInterface.
+             where ttImplMapping.Manager eq pcClassInterface no-error.
 
         return available(ttImplMapping).
     end method. /* HasManagerConfigured */

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <propath version="12.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="schema/propath.xsd">
     <propathentry env="all" kind="src" path="@{ROOT}\PASOEContent\WEB-INF\openedge" platform="All"/>
+    <propathentry env="all" kind="src" path="@{ROOT}\AppServer" platform="All"/>
     <propathentry env="all" kind="lib" path="@{ROOT}\AppServer\Spark.pl" platform="All"/>
     <propathentry env="all" kind="lib" path="@{ROOT}\AppServer\Diagnostic.pl" platform="All"/>
-    <propathentry env="all" kind="src" path="@{ROOT}\AppServer" platform="All"/>
     <propathentry env="all" kind="dir" path="@{ROOT}\tools" platform="All"/>
     <propathentry env="all" excluding="@{ROOT}/PASOEContent/static¦@{ROOT}/Deploy¦@{ROOT}/PASOEContent/WEB-INF/home/" kind="src" path="@{ROOT}" platform="All"/>
     <propathentry env="all" kind="folder" path="\Common\src" platform="All"/>
