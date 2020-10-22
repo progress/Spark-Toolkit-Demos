@@ -48,7 +48,7 @@ if hServer:connected() then do:
         if error-status:error then
             message "Error, Return-Value:" return-value view-as alert-box.
 
-        assign iWaitTime = random(2000, 4000).
+        assign iWaitTime = random(10000, 30000).
 
         if valid-handle(hPortType) then
             run TestSuite in hPortType (input iWaitTime, output cResult).
