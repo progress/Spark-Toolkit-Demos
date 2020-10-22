@@ -12,6 +12,8 @@ block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
 
+define input parameter iWaitTime as integer no-undo.
+
 mainblk:
 do on error undo, throw:
     define variable oRunCode   as Business.UnitTest.RunCode   no-undo.
@@ -21,7 +23,9 @@ do on error undo, throw:
     assign oLeakyCode = new Business.UnitTest.LeakyCode().
 
     define variable iElapsed as integer no-undo.
-    oRunCode:lookBusy(random(2000, 4000), output iElapsed).
+    if iWaitTime le 0 then
+        assign iWaitTime = random(2000, 4000).
+    oRunCode:lookBusy(iWaitTime, output iElapsed).
     message substitute("Completed 'LookBusy' in &1ms", iElapsed).
 
     define variable lCompleted as logical no-undo.
