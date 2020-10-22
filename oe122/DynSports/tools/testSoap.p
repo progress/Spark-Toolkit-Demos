@@ -53,7 +53,10 @@ if hServer:connected() then do:
         if valid-handle(hPortType) then
             run TestSuite in hPortType (input iWaitTime, output cResult).
 
-        message "Result:" cResult view-as alert-box.
+        if cResult eq ? then
+            message "Success!" view-as alert-box.
+        else
+            message "Result:" cResult view-as alert-box.
 
         catch err as Progress.Lang.Error:
             define variable cMessage as character no-undo.

@@ -85,7 +85,7 @@
     <WriteDatasetBeforeImage>false</WriteDatasetBeforeImage>
     <Procedure isPersistent="false" useFullName="false">
       <Name>TestSuite</Name>
-      <ProcPath>Business\</ProcPath>
+      <ProcPath />
       <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe122\DynSports\PASOEContent\WEB-INF\openedge\</ProPath>
     </Procedure>
   </AppObject>

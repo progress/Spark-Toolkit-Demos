@@ -80,7 +80,7 @@
       <WriteDatasetBeforeImage>false</WriteDatasetBeforeImage>
       <Procedure isPersistent="false" useFullName="false">
         <Name>TestSuite</Name>
-        <ProcPath>Business\</ProcPath>
+        <ProcPath/>
         <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe122\DynSports\PASOEContent\WEB-INF\openedge\</ProPath>
         <ProcExt>p</ProcExt>
         <ProcDetail isCustomized="false" usesUnknownDefault="true" useRetVal="false" usesTTMappingDefault="true" IsTTResultSet="true" usesBeforeImageDefault="true" IsMappedToSubmit="false">
@@ -91,6 +91,12 @@
             <Type>1</Type>
             <Mode>0</Mode>
           </ReturnValue>
+          <Parameter allowUnknown="false" ordinal="1" writeXmlBeforeImage="false">
+            <Name>iWaitTime</Name>
+            <OrigName>iWaitTime</OrigName>
+            <Type>4</Type>
+            <Mode>1</Mode>
+          </Parameter>
         </ProcDetail>
       </Procedure>
     </AppObject>
