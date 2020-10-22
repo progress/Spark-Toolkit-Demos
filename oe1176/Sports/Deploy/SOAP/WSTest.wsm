@@ -13,7 +13,7 @@
         <VersionNumber>1</VersionNumber>
         <Package></Package>
         <Service>WSTest</Service>
-        <WorkDir>D:\OpenSource\Spark-Toolkit-Demos\oe1176\DynSports\Deploy\SOAP\</WorkDir>
+        <WorkDir>D:\OpenSource\Spark-Toolkit-Demos\oe1176\Sports\Deploy\SOAP\</WorkDir>
         <VerboseLogging>true</VerboseLogging>
         <LeaveProxyFiles>true</LeaveProxyFiles>
         <SaveBeforeGen>true</SaveBeforeGen>
@@ -73,7 +73,7 @@
         </SonicAppService>
       </DeploymentWizard>
       <Name>WSTest</Name>
-      <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\DynSports\PASOEContent\WEB-INF\openedge\</ProPath>
+      <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\Sports\PASOEContent\WEB-INF\openedge\</ProPath>
       <HelpString></HelpString>
       <ObjectType>false</ObjectType>
       <AllowUnknown>false</AllowUnknown>
@@ -82,7 +82,7 @@
       <Procedure isPersistent="false" useFullName="false">
         <Name>TestSuite</Name>
         <ProcPath></ProcPath>
-        <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\DynSports\PASOEContent\WEB-INF\openedge\</ProPath>
+        <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\Sports\PASOEContent\WEB-INF\openedge\</ProPath>
         <ProcExt>p</ProcExt>
         <ProcDetail isCustomized="false" usesUnknownDefault="true" useRetVal="false" usesTTMappingDefault="true" IsTTResultSet="true" usesBeforeImageDefault="true" IsMappedToSubmit="false">
           <Name>TestSuite</Name>

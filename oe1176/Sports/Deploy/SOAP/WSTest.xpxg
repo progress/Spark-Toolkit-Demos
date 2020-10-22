@@ -10,7 +10,7 @@
       <VersionNumber>1</VersionNumber>
       <Package />
       <Service>WSTest</Service>
-      <WorkDir>D:\OpenSource\Spark-Toolkit-Demos\oe1176\DynSports\Deploy\SOAP\</WorkDir>
+      <WorkDir>D:\OpenSource\Spark-Toolkit-Demos\oe1176\Sports\Deploy\SOAP\</WorkDir>
       <VerboseLogging>true</VerboseLogging>
       <LeaveProxyFiles>true</LeaveProxyFiles>
       <SaveBeforeGen>true</SaveBeforeGen>
@@ -76,7 +76,7 @@
       </SonicConnectionInfo>
     </DeploymentWizard>
     <Name>WSTest</Name>
-    <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\DynSports\PASOEContent\WEB-INF\openedge\</ProPath>
+    <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\Sports\PASOEContent\WEB-INF\openedge\</ProPath>
     <HelpString />
     <ODLHelpString />
     <ObjectType>false</ObjectType>
@@ -86,7 +86,7 @@
     <Procedure isPersistent="false" useFullName="false">
       <Name>TestSuite</Name>
       <ProcPath />
-      <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\DynSports\PASOEContent\WEB-INF\openedge\</ProPath>
+      <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\Sports\PASOEContent\WEB-INF\openedge\</ProPath>
     </Procedure>
   </AppObject>
 </WSAD>
