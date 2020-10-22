@@ -56,15 +56,15 @@
             </condition>
 
             <!-- Set properties for special directories. -->
-        	<property name="javaHome" value="${dlcHome}/java"/>
+            <property name="javaHome" value="${dlcHome}/java"/>
             <property name="src.dir" value="${basedir}"/>
             <property name="deploy.dir" value="${basedir}/Deploy"/>
             <property name="instance" value="oepas1"/>
-        	<property name="pas.root" value="${path}"/>
+            <property name="pas.root" value="${path}"/>
             <property name="pas.path" value="${pas.root}/${instance}"/>
             <property name="webapp" value="sports"/>
 
-        	<mkdir dir="${deploy.dir}"/>
+            <mkdir dir="${deploy.dir}"/>
         </sequential>
     </macrodef>
 
@@ -122,8 +122,9 @@
                     <pathelement location="${dlcJava}/ant-libs/velocity-1.7-dep.jar" />
                     <pathelement location="${dlcJava}/ant-libs/1padapters-restExpose.jar" />
                     <pathelement location="${dlcJava}/1padapters-idl.jar" />
+                    <pathelement location="${dlcJava}/1padapters-util.jar" />
                     <pathelement location="${dlcJava}/ext/jettison-1.2.jar" />
-                	<pathelement location="${dlcJava}/ext/jettison-1.4.0.jar" />
+                    <pathelement location="${dlcJava}/ext/jettison-1.4.0.jar" />
                     <pathelement location="${dlcJava}/ext/commons-logging-1.2.jar" />
                     <pathelement location="${dlcJava}/ext/xmlschema-core-2.2.1.jar" />
                 </classpath>
@@ -162,7 +163,7 @@
     </macrodef>
 
     <target name="annotate">
-    	<init_oe/>
+        <init_oe/>
 
         <!-- This will need to compile the code to obtain XREF files, so we need the databases as would be required by the code. -->
         <PCTRun
@@ -185,7 +186,7 @@
     <target name="build">
         <init_oe/>
 
-    	<!-- Build PL file with source and R-code. -->
+        <!-- Build PL file with source and R-code. -->
         <PCTLibrary destfile="${deploy.dir}/${ablapp}.pl" dlcHome="${dlcHome}">
             <fileset dir="${basedir}/PASOEContent/WEB-INF/openedge">
                 <include name="**/*.r"/>
@@ -197,18 +198,18 @@
     </target>
 
     <target name="publish">
-    	<init_oe/>
+        <init_oe/>
 
         <!-- Check if PAS properties file exists. -->
         <require file="${pas.path}/conf/openedge.properties"/>
 
         <!-- Copy source and r-code to the PAS instance. -->
-    	<copy toDir="${pas.path}/webapps/${webapp}/WEB-INF/openedge" verbose="true">
+        <copy toDir="${pas.path}/webapps/${webapp}/WEB-INF/openedge" verbose="true">
             <fileset dir="${basedir}/PASOEContent/WEB-INF/openedge">
                 <include name="**/*.i"/>
                 <include name="**/*.cls"/>
                 <include name="**/*.p"/>
-				<include name="**/*.r"/>
+                <include name="**/*.r"/>
             </fileset>
         </copy>
 
