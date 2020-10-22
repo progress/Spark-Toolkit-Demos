@@ -40,7 +40,8 @@ if not lReturn then
     message "Failed to connect to SOAP server: " + cConnect view-as alert-box.
 
 if hServer:connected() then do:
-    define variable cResult as character no-undo.
+    define variable cResult   as character no-undo.
+    define variable iWaitTime as integer   no-undo.
 
     message "Connected to SOAP server: " + cConnect view-as alert-box.
 
@@ -49,8 +50,10 @@ if hServer:connected() then do:
         if error-status:error then
             message "Error, Return-Value:" return-value view-as alert-box.
 
+        assign iWaitTime = random(2000, 4000).
+
         if valid-handle(hPortType) then
-            run TestSuite in hPortType (input random(2000, 4000), output cResult).
+            run TestSuite in hPortType (input iWaitTime, output cResult).
 
         message "Result:" cResult view-as alert-box.
 

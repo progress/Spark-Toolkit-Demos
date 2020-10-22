@@ -97,6 +97,12 @@
             <Type>4</Type>
             <Mode>1</Mode>
           </Parameter>
+          <Parameter allowUnknown="false" ordinal="2" writeXmlBeforeImage="false">
+            <Name>result</Name>
+            <OrigName>result</OrigName>
+            <Type>1</Type>
+            <Mode>2</Mode>
+          </Parameter>
         </ProcDetail>
       </Procedure>
     </AppObject>

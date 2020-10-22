@@ -3,7 +3,7 @@
 <wsdl:documentation>EncodingType=DOC_LITERAL, Proxygen_Product=Progress Version 12.2</wsdl:documentation>
   <wsdl:types>
 <schema elementFormDefault="unqualified" targetNamespace="urn:soap-fault:details" xmlns="http://www.w3.org/2001/XMLSchema"><element name="FaultDetail"><complexType><sequence><element name="errorMessage" type="xsd:string"/><element name="requestID" type="xsd:string"/></sequence></complexType></element></schema>
-<schema elementFormDefault="qualified" targetNamespace="urn:MyTest:WSTest" xmlns="http://www.w3.org/2001/XMLSchema"><element name="TestSuite"><complexType><sequence><element name="iWaitTime" nillable="true" type="xsd:int"/></sequence></complexType></element><element name="TestSuiteResponse"><complexType><sequence><element name="result" nillable="true" type="xsd:string"/></sequence></complexType></element></schema>
+<schema elementFormDefault="qualified" targetNamespace="urn:MyTest:WSTest" xmlns="http://www.w3.org/2001/XMLSchema"><element name="TestSuite"><complexType><sequence><element name="iWaitTime" nillable="true" type="xsd:int"/></sequence></complexType></element><element name="TestSuiteResponse"><complexType><sequence><element name="result" nillable="true" type="xsd:string"/><element name="result" nillable="true" type="xsd:string"/></sequence></complexType></element></schema>
   </wsdl:types>
   <wsdl:message name="WSTest_TestSuiteResponse">
     <wsdl:part name="parameters" element="S2:TestSuiteResponse">

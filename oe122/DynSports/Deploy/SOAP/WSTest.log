@@ -9,6 +9,7 @@
    -- Parsing r-code ...
        MAIN D:\OpenSource\Spark-Toolkit-Demos\oe122\DynSports\PASOEContent\WEB-INF\openedge\TestSuite.p 
           INPUT iWaitTime INTEGER
+          OUTPUT result CHARACTER
    -- No customizations; Validation not necessary
 
 ** Processing procedure objects ...

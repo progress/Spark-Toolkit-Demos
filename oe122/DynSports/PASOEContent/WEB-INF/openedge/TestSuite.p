@@ -12,7 +12,8 @@ block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
 
-define input parameter iWaitTime as integer no-undo.
+define input  parameter iWaitTime as integer   no-undo.
+define output parameter result    as character no-undo.
 
 mainblk:
 do on error undo, throw:
