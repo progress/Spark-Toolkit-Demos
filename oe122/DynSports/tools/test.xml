@@ -201,9 +201,6 @@
     <target name="testAPSV">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
-        <!-- Create an output directory for log files. -->
-        <mkdir dir="${log.dir}"/>
-
 		<!-- Set variables for this type of test. -->
 		<property name="num.tests" value="5"/> <!-- Should match the number of batches defined below. -->
 		<property name="pause.time" value="5"/> <!-- How long to wait between iterations of internal tests. -->
@@ -220,6 +217,9 @@
            Override properties above like normal, eg.:
              -Dlog.level=5 -Dlog.types=4GLTrace:4
         -->
+
+        <!-- Create an output directory for log files. -->
+        <mkdir dir="${log.dir}"/>
 
         <!-- Run a set of batches. -->
         <parallel failonany="false">
