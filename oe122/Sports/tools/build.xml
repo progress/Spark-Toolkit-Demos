@@ -10,6 +10,10 @@
         <echo message="Utilities for easy operation and maintenance of a PASOE instance."/>
         <echo message="Run from a PROENV session or with DLC and DLC/bin in your PATH."/>
         <echo message="${line.separator}Usage Instructions:"/>
+        <echo message="${line.separator} proant startup - Use TCMAN to start the instance"/>
+        <echo message="${line.separator} proant query - Use TCMAN to query the instance"/>
+        <echo message="${line.separator} proant shutdown - Use TCMAN to stop the instance"/>
+        <echo message="${line.separator}"/>
         <echo message="${line.separator} proant status - Obtain agent/connection status information for an ABL App"/>
         <echo message="${line.separator} proant stacks - Obtain stack information for all agents for an ABL App"/>
         <echo message="${line.separator} proant flush - Flush the available deferred log buffer to Agent log file"/>
@@ -127,7 +131,6 @@
             <!-- Add the ANT-Contrib library to this environment (present in 11.7.4+ and 12.0+). -->
             <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
 
-
             <!-- Set OpenEdge properties for this build file. -->
             <property name="pas.root" value="${wrk}"/>
             <property name="pas.path" value="${pas.root}${delim}${instance}"/>
@@ -167,6 +170,40 @@
         </sequential>
     </macrodef>
 
+    <!-- PAS instance management -->
+
+    <target name="shutdown">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <requireDir folder="${pas.path}"/>
+
+        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="true">
+            <arg line="pasoestart -v -halt -abort -timeout 300 -json -array"/>
+        </exec>
+    </target>
+
+    <target name="startup">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <requireDir folder="${pas.path}"/>
+
+        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="false">
+            <arg line="pasoestart -v -archive -timeout 300 -json -array"/>
+        </exec>
+    </target>
+
+    <target name="query">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <requireDir folder="${pas.path}"/>
+
+        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="false">
+            <arg line="pasoestart -v -query -json -array"/>
+        </exec>
+    </target>
+
+    <!-- Management Tools -->
+
     <target name="clean">
         <property name="sleep" value="3"/>
 
@@ -176,8 +213,8 @@
         <antcall target="close"/>
         <antcall target="stop"/>
         <echo message="${line.separator}Sleeping for ${sleep} minutes to allow time for agent shutdown."/>
-    	<echo message="Next step is to run 'status'; use Ctrl+C to exit if desired."/>
-    	<echo message="..."/>
+        <echo message="Next step is to run 'status'; use Ctrl+C to exit if desired."/>
+        <echo message="..."/>
         <sleep minutes="${sleep}"/>
         <antcall target="status"/>
     </target>
@@ -332,134 +369,6 @@
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
         </PCTRun>
-    </target>
-
-    <!-- PAS instance management -->
-
-    <target name="shutdown">
-        <init_oe/> <!-- Initialize all OpenEdge properties. -->
-
-        <requireDir folder="${pas.path}"/>
-
-        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="true">
-            <arg line="pasoestart -v -halt -abort -timeout 300 -json -array"/>
-        </exec>
-    </target>
-
-    <target name="startup">
-        <init_oe/> <!-- Initialize all OpenEdge properties. -->
-
-        <requireDir folder="${pas.path}"/>
-
-        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="false">
-            <arg line="pasoestart -v -archive -timeout 300 -json -array"/>
-        </exec>
-    </target>
-
-    <target name="query">
-        <init_oe/> <!-- Initialize all OpenEdge properties. -->
-
-        <requireDir folder="${pas.path}"/>
-
-        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="false">
-            <arg line="pasoestart -v -query -json -array"/>
-        </exec>
-    </target>
-
-    <!-- Code for Testing -->
-
-    <macrodef name="tester">
-        <attribute name="batch"/>
-        <attribute name="run"/>
-
-        <sequential>
-            <echo message="Initiating test @{batch}.@{run} of ${num.tests}..."/>
-            <PCTRun
-                   dlcHome="${dlcHome}"
-                   graphicalMode="false"
-                   procedure="testApsv">
-                <Option name="-clientlog" value="${log.dir}/client-@{batch}.@{run}.log"/>
-                <Option name="-logginglevel" value="${log.level}"/>
-                <Option name="-logentrytypes" value="${log.types}"/>
-                <Parameter name="scheme" value="${scheme}"/>
-                <Parameter name="host" value="${host}"/>
-                <Parameter name="port" value="${port}"/>
-            	<Parameter name="webapp" value="${webapp}"/>
-                <Parameter name="tests" value="${num.tests}"/>
-                <Parameter name="test" value="@{batch}.@{run}"/>
-                <Parameter name="pause" value="${pause.time}"/>
-                <Parameter name="duration" value="${test.time}"/>
-                <Parameter name="waitAfter" value="${wait.time}"/>
-                <Parameter name="badCode" value="${bad}"/>
-                <Parameter name="verbose" value="${verbose}"/>
-                <Parameter name="type" value="${type}"/>
-            </PCTRun>
-        </sequential>
-    </macrodef>
-
-    <target name="_runbatch">
-        <echo message="Running batch ${batch}..."/>
-
-        <!-- Run a batch of 10 tests. -->
-        <parallel failonany="false">
-            <tester batch="${batch}" run="0"/>
-            <tester batch="${batch}" run="1"/>
-            <tester batch="${batch}" run="2"/>
-            <tester batch="${batch}" run="3"/>
-            <tester batch="${batch}" run="4"/>
-            <tester batch="${batch}" run="5"/>
-            <tester batch="${batch}" run="6"/>
-            <tester batch="${batch}" run="7"/>
-            <tester batch="${batch}" run="8"/>
-            <tester batch="${batch}" run="9"/>
-        </parallel>
-    </target>
-
-    <target name="test">
-        <init_oe/> <!-- Initialize all OpenEdge properties. -->
-
-        <!-- Set variables for all tests. -->
-        <property name="num.tests" value="5"/> <!-- Should match the number of batches defined below. -->
-        <property name="pause.time" value="5"/> <!-- How long to wait between iterations of internal tests. -->
-        <property name="test.time" value="60"/> <!-- Overall testing time (main loop execution). -->
-        <property name="wait.time" value="2"/> <!-- How long to wait after main loop completes. -->
-        <property name="bad" value="false"/> <!-- Run with inefficient code cleanup practices. -->
-        <property name="verbose" value="true"/> <!-- Default to true, set false to suppress messages. -->
-        <property name="type" value="hello"/> <!-- Allows easy switching of test pre-configured cases. -->
-        <property name="log.level" value="2"/>
-        <property name="log.types" value="DB.Connects"/>
-		<property name="log.dir" value="${basedir}/logs"/>
-
-		<!-- Create an output directory for log files. -->
-		<mkdir dir="${log.dir}"/>
-
-        <!--
-           Override properties above like normal, eg.:
-             -Dlog.level=5 -Dlog.types=4GLTrace:4
-        -->
-
-        <!-- Run a set of batches. -->
-        <parallel failonany="false">
-            <antcall target="_runbatch">
-                <param name="batch" value="1"/>
-            </antcall>
-
-            <antcall target="_runbatch">
-                <param name="batch" value="2"/>
-            </antcall>
-
-            <antcall target="_runbatch">
-                <param name="batch" value="3"/>
-            </antcall>
-
-            <antcall target="_runbatch">
-                <param name="batch" value="4"/>
-            </antcall>
-
-            <antcall target="_runbatch">
-                <param name="batch" value="5"/>
-            </antcall>
-        </parallel>
     </target>
 
 </project>
