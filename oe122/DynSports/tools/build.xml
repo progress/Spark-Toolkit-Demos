@@ -1,35 +1,10 @@
 <project name="ManagementTools" basedir="." default="usage">
 
+    <!-- Utilize a local file for properties. Allows build.xml to provide defaults only. -->
     <property file="${basedir}/../build.properties"/>
 
-    <macrodef name="init_env">
-        <sequential>
-            <property environment="env"/>
-
-            <!-- Check if DLC is set as an environment variable. -->
-            <fail message="$DLC path is not set">
-                <condition>
-                    <and>
-                        <not><isset property="dlcHome"/></not>
-                        <not><isset property="env.DLC"/></not>
-                    </and>
-                </condition>
-            </fail>
-            <property name="dlcHome" value="${env.DLC}"/>
-            <echo message="DLC Home: ${dlcHome}"/>
-
-            <property name="scheme" value="http"/>
-            <property name="host" value="localhost"/>
-            <property name="port" value="8810"/>
-            <property name="userid" value="tomcat"/>
-            <property name="passwd" value="tomcat"/>
-            <property name="ablapp" value="oepas1"/>
-            <property name="webapp" value="ROOT"/>
-        </sequential>
-    </macrodef>
-
-    <target name="usage">
-        <init_env/> <!-- Set standard environment variables. -->
+    <target name="usage" description="Usage Instructions">
+        <init_oe/> <!-- Set standard environment variables. -->
 
         <echo message="${line.separator}"/>
         <echo message="Utilities for easy operation and maintenance of a PASOE instance."/>
@@ -55,6 +30,142 @@
         <echo message="  -Dwebapp=${webapp} (Used by close/clean)"/>
         <echo message="${line.separator}NOTE: The name of the ABLApp is case-sensitive!"/>
     </target>
+
+    <macrodef name="init_env">
+        <sequential>
+            <!-- Access environmental variables via "env.*". -->
+            <property environment="env"/>
+
+            <!-- Set a property if environment is Windows. -->
+            <condition property="isWin32">
+                <os family="windows"/>
+            </condition>
+
+            <!-- Set a property if environment is Unix. -->
+            <condition property="isUnix">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set a property if environment is 32bit. -->
+            <condition property="is32bit">
+                <or>
+                    <os arch="x86"/>
+                    <os arch="i386"/>
+                </or>
+            </condition>
+
+            <!-- Set a property if environment is 64bit. -->
+            <condition property="is64bit">
+                <not>
+                    <or>
+                        <os arch="x86"/>
+                        <os arch="i386"/>
+                    </or>
+                </not>
+            </condition>
+
+            <!-- Set the script suffix for the OS. -->
+            <condition property="scriptSuffix" value=".sh" else=".bat">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set path delimiter for the OS. -->
+            <condition property="delim" value="/" else="\">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set general properties for this build file. -->
+            <property name="scheme" value="http"/>
+            <property name="host" value="localhost"/>
+            <property name="port" value="8810"/>
+            <property name="userid" value="tomcat"/>
+            <property name="passwd" value="tomcat"/>
+            <property name="instance" value="oepas1"/>
+            <property name="ablapp" value="oepas1"/>
+            <property name="webapp" value="ROOT"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="init_oe">
+        <sequential>
+            <init_env/> <!-- Initialize environmental and general properties. -->
+
+            <!-- Fail immediately if not a 64-bit OS. -->
+            <fail message="Environment is not 64-bit">
+                <condition>
+                    <not>
+                        <isset property="is64bit"/>
+                    </not>
+                </condition>
+            </fail>
+
+            <!-- Check if DLC is set as an environment variable. -->
+            <fail message="DLC Home path is not set">
+                <condition>
+                    <and>
+                        <not><isset property="dlcHome"/></not>
+                        <not><isset property="env.DLC"/></not>
+                    </and>
+                </condition>
+            </fail>
+            <property name="dlcHome" value="${env.DLC}"/>
+            <echo message="DLC Home: ${dlcHome}"/>
+
+            <!-- Assume the DLC WRK directory unless overridden. -->
+            <condition property="wrk" value="/usr/wrk" else="C:\OpenEdge\WRK">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Load the current PCT library from DLC. -->
+            <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+
+            <!-- Access the OE version info, and read into a property. -->
+            <ProgressVersion dlcHome="${dlcHome}" majorVersion="oeMajor" minorVersion="oeMinor" revision="oeRev" fullVersion="full"/>
+            <property name="oe.version" value="${oeMajor}.${oeMinor}.${oeRev}"/>
+            <echo message="OpenEdge Version: ${oe.version}"/>
+
+            <!-- Add the ANT-Contrib library to this environment (present in 11.7.4+ and 12.0+). -->
+            <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
+
+
+            <!-- Set OpenEdge properties for this build file. -->
+            <property name="pas.root" value="${wrk}"/>
+            <property name="pas.path" value="${pas.root}${delim}${instance}"/>
+            <property name="pas.bin" value="${pas.path}${delim}bin"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="require">
+        <!-- Usage <require file="_path_to_file_"/> -->
+        <attribute name="file"/>
+        <attribute name="message" default="File @{file} not set or missing"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{file}" type="file"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="requireDir">
+        <!-- Usage <requireDir folder="_path_to_folder_"/> -->
+        <attribute name="folder"/>
+        <attribute name="message" default="Directory @{folder} not set or missing"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{folder}" type="dir"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
 
     <target name="clean">
         <property name="sleep" value="3"/>
@@ -83,10 +194,7 @@
     </target>
 
     <target name="status">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
@@ -106,10 +214,7 @@
     </target>
 
     <target name="stacks">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
@@ -129,10 +234,7 @@
     </target>
 
     <target name="flush">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
@@ -152,10 +254,7 @@
     </target>
 
     <target name="close">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
@@ -176,10 +275,7 @@
     </target>
 
     <target name="trim">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
@@ -199,10 +295,7 @@
     </target>
 
     <target name="refresh">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
@@ -222,10 +315,7 @@
     </target>
 
     <target name="stop">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
@@ -246,35 +336,8 @@
 
     <!-- PAS instance management -->
 
-    <macrodef name="requireDir">
-        <attribute name="folder"/>
-        <attribute name="message" default="Directory @{folder} not set or missing"/>
-
-        <sequential>
-            <fail message="@{message}">
-                <condition>
-                    <not>
-                        <available file="@{folder}" type="dir"/>
-                    </not>
-                </condition>
-            </fail>
-        </sequential>
-    </macrodef>
-
     <target name="shutdown">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <condition property="wrk" value="/usr/wrk" else="C:/OpenEdge/WRK">
-            <os family="unix"/>
-        </condition>
-        <condition property="scriptSuffix" value=".sh" else=".bat">
-            <os family="unix"/>
-        </condition>
-
-        <property name="instance" value="oepas1"/>
-        <property name="pas.root" value="${wrk}"/>
-        <property name="pas.path" value="${pas.root}/${instance}"/>
-        <property name="pas.bin" value="${pas.path}/bin"/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <requireDir folder="${pas.path}"/>
 
@@ -284,19 +347,7 @@
     </target>
 
     <target name="startup">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <condition property="wrk" value="/usr/wrk" else="C:/OpenEdge/WRK">
-            <os family="unix"/>
-        </condition>
-        <condition property="scriptSuffix" value=".sh" else=".bat">
-            <os family="unix"/>
-        </condition>
-
-        <property name="instance" value="oepas1"/>
-        <property name="pas.root" value="${wrk}"/>
-        <property name="pas.path" value="${pas.root}/${instance}"/>
-        <property name="pas.bin" value="${pas.path}/bin"/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <requireDir folder="${pas.path}"/>
 
@@ -306,19 +357,7 @@
     </target>
 
     <target name="query">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <condition property="wrk" value="/usr/wrk" else="C:/OpenEdge/WRK">
-            <os family="unix"/>
-        </condition>
-        <condition property="scriptSuffix" value=".sh" else=".bat">
-            <os family="unix"/>
-        </condition>
-
-        <property name="instance" value="oepas1"/>
-        <property name="pas.root" value="${wrk}"/>
-        <property name="pas.path" value="${pas.root}/${instance}"/>
-        <property name="pas.bin" value="${pas.path}/bin"/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <requireDir folder="${pas.path}"/>
 
@@ -377,10 +416,7 @@
     </target>
 
     <target name="test">
-        <init_env/> <!-- Set standard environment variables. -->
-
-        <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
-        <PCTVersion/>
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <!-- Set variables for all tests. -->
         <property name="num.tests" value="5"/> <!-- Should match the number of batches defined below. -->
