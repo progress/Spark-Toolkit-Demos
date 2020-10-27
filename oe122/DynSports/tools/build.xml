@@ -20,8 +20,8 @@
         <echo message="${line.separator} proant close - Terminate all available client sessions for an ABL/Web App"/>
         <echo message="${line.separator} proant trim - Trim all IDLE ABLSessions for each MSAS agent for an ABL App"/>
         <echo message="${line.separator} proant refresh - Terminates all ABLSessions for each MSAS agent for an ABL App"/>
-        <echo message="${line.separator} proant stop - Gracefully stops all MSAS agents (+stacks) for an ABL App"/>
-        <echo message="${line.separator} proant clean - Perform a 'soft restart' of an ABL App"/>
+        <echo message="${line.separator} proant stop - Gracefully stops all MSAS agents (+stacks output) for an ABL App"/>
+        <echo message="${line.separator} proant clean - Perform a 'soft restart' of an ABL App (flush, close, stop)"/>
         <echo message="                [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 3)"/>
         <echo message="${line.separator}"/>
         <echo message="${line.separator}Available parameters with their defaults:"/>
