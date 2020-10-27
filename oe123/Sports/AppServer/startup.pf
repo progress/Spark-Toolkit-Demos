@@ -1,0 +1,9 @@
+-db webstate -H localhost -S 8500
+-db sports2020 -H localhost -S 8600
+-cpinternal UTF-8
+-cpstream UTF-8
+-mmax 8192
+-D 1000
+-lkwtmo 10
+-tmpbsize 4
+-errorstack
