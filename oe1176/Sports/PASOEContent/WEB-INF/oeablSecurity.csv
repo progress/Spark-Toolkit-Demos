@@ -6,7 +6,7 @@
 "/apsv/**","POST","permitAll()"
 
 ############## Intercept-url definitions for the REST transport URIs ###############
-"/rest/_oeping","*","permitAll()"
+"/rest/_oeping","GET","permitAll()"
 "/rest/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the SOAP transport URIs ###############
@@ -23,11 +23,13 @@
 "/web/pdo/system/access/*","*","hasAnyRole('ROLE_WebAdmin')"
 "/web/pdo/tests/leakycode/*","PUT","permitAll()"
 "/web/_oeping","GET","permitAll()"
+"/web/*.html","*","permitAll()"
 "/web/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the default URI space #################
 "/static/home.html","GET","hasAnyRole('ROLE_PSCUser')"
 "/static/auth/*","*","permitAll()"
+"/static/status.*","GET","permitAll()"
 "/static/**","GET","permitAll()"
 "/*","GET","permitAll()"
 

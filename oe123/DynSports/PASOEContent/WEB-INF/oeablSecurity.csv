@@ -32,6 +32,7 @@
 ############## Intercept-url definitions for the default URI space #################
 "/static/home.html","GET","hasAnyRole('ROLE_PSCUser')"
 "/static/auth/*","*","permitAll()"
+"/static/status.*","GET","permitAll()"
 "/static/**","GET","permitAll()"
 "/*","GET","permitAll()"
 
