@@ -7,7 +7,6 @@
         <init_oe/> <!-- Set standard environment variables. -->
 
         <echo message="${line.separator}"/>
-        <echo message="Utilities for easy operation and maintenance of a PASOE instance."/>
         <echo message="Run from a PROENV session or with DLC and DLC/bin in your PATH."/>
         <echo message="${line.separator}Usage Instructions:"/>
         <echo message="${line.separator} proant testAPSV - Run concurrent tests against the APSV transport"/>
