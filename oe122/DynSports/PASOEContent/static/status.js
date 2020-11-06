@@ -551,6 +551,7 @@ var app = (function(){
                     tmpRow = row.clone();
                     tmpRow.append(head.clone().html("Session&nbsp;ID"));
                     tmpRow.append(head.clone().text("State"));
+                    tmpRow.append(head.clone().text("").attr({width: 30}));
                     tmpRow.append(head.clone().html("Session&nbsp;Started").css("text-align", "left").css("padding-left", "10px").attr({width: 220}));
                     tmpRow.append(head.clone().text("Memory").attr({width: 140}));
                     tmpRow.append(head.clone().html("Bound/Active&nbsp;Session").css("text-align", "left").css("padding-left", "10px").attr({width: 440}));
@@ -566,6 +567,13 @@ var app = (function(){
                             tmpRow = row.clone();
                             tmpRow.append(cell.clone().text(session.SessionId).append(control));
                             tmpRow.append(cell.clone().text(session.SessionState));
+                            if (session.SessionState == "IDLE") {
+                                tmpRow.append(cell.clone());
+                            } else {
+                                var stacks = $("<a></a>").css("padding-left", "5px").attr("href", 'javascript:app.getSessionStacks("' + ablApp + '", "' + agentPID + '", "' + session.SessionId + '")');
+                                stacks.html('<i class="fa fa-sticky-note-o" title="Get Session Stacks"></i>');
+                                tmpRow.append(cell.clone().append(stacks));
+                            }
                             tmpRow.append(cell.clone().text(session.StartTime).css("text-align", "left").css("padding-left", "10px"));
                             tmpRow.append(cell.clone().text(numberWithCommas(Math.round(parseInt(session.SessionMemory || 0) / 1024, 2)) + " KB"));
                             tmpRow.append(cell.clone().css("text-align", "left").css("padding-left", "10px").attr("id", "bound_sess_" + agentPID + "_" + session.SessionId));
@@ -1038,6 +1046,72 @@ var app = (function(){
         }
     }
 
+    function getSessionStacks(ablApp, agentPID, sessionID){
+        // Obtain stack information for a specific agent and session.
+        if (ablApp && sessionID) {
+            $.ajax({
+                contentType: "application/vnd.progress+json",
+                dataType: "json",
+                method: "get",
+                url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentPID + "/sessions/" + sessionID + "/stacks",
+                success: function(data, textStatus, jqXHR){
+                    if (data.result && data.result.ABLStacks) {
+                        var stacks = (data.result.ABLStacks || [])[0] || {};
+                        /*
+                        var callStack = stacks.Callstack || [];
+                        var databases = stacks.Databases || [];
+                        var oo4GlObjs = stacks.OO4GLObjs || [];
+                        var persProcs = stacks.PersProcs || [];
+                        */
+                        saveAsFile(JSON.stringify(stacks, null, 4), ablApp + "_" + agentPID + "_" + sessionID + "_Stacks.json");
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                    if (jqXHR.status == 401 || jqXHR.status == 403) {
+                        console.log("Login Required");
+                    } else {
+                        var errors = null;
+                        var errMsg = errorThrown;
+                        try {
+                            errors = JSON.parse(jqXHR.responseText);
+                        }
+                        catch(e){}
+
+                        if (errors && errors.operation && errors.outcome && errors.errmsg) {
+                            errMsg = errors.operation + " " + errors.outcome + ": " + errors.errmsg + " (" + agentPID + " #" + sessionID + ")";
+                        }
+                        if (errMsg == "") {
+                            errMsg = "Error encountered while executing remote API";
+                        }
+                        console.log(errMsg);
+                        showMessage(errMsg, "error");
+                    }
+                }
+            });
+        }
+    }
+    
+    function saveAsFile(textToWrite, filename) {
+        var textFileAsBlob = new Blob([textToWrite], {type: "text/plain"});
+        var downloadLink = document.createElement("a");
+        downloadLink.download = filename;
+        downloadLink.innerHTML = "Download File";
+        if (window.webkitURL != null) {
+            // Chrome allows the link to be clicked without actually adding it to the DOM.
+            downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
+        } else {
+            // Firefox requires the link to be added to the DOM before it can be clicked.
+            downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+            downloadLink.onclick = function(event){
+                // Remove the link from the DOM.
+                document.body.removeChild(event.target);
+            };
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+        }
+        downloadLink.click();
+    }
+
     /***** Initialization *****/
 
     // Create a VM to be used by the header.
@@ -1115,6 +1189,7 @@ var app = (function(){
         killABLSession: killABLSession,
         killClientSession: killClientSession,
         killAllClientSessions: killAllClientSessions,
+        getSessionStacks: getSessionStacks,
         showMessage: showMessage
     };
 
