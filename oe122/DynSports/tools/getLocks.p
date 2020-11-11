@@ -29,24 +29,26 @@ using Progress.Json.ObjectModel.JsonObject.
 using Progress.Json.ObjectModel.JsonArray.
 using Progress.Json.ObjectModel.JsonDataType.
 
-define variable oClient     as IHttpClient     no-undo.
-define variable oCreds      as Credentials     no-undo.
-define variable cHttpUrl    as character       no-undo.
-define variable cInstance   as character       no-undo.
-define variable oJsonResp   as JsonObject      no-undo.
-define variable oResult     as JsonObject      no-undo.
-define variable oTemp       as JsonObject      no-undo.
-define variable oAppAgents  as Array           no-undo.
-define variable oAgentList  as Array           no-undo.
-define variable oQueryURL   as StringStringMap no-undo.
-define variable iLoop       as integer         no-undo.
-define variable iLoop2      as integer         no-undo.
-define variable cScheme     as character       no-undo initial "http".
-define variable cHost       as character       no-undo initial "localhost".
-define variable cPort       as character       no-undo initial "8810".
-define variable cUserId     as character       no-undo initial "tomcat".
-define variable cPassword   as character       no-undo initial "tomcat".
-define variable cAblApp     as character       no-undo initial "oepas1".
+define variable oClient     as IHttpClient           no-undo.
+define variable oCreds      as Credentials           no-undo.
+define variable cHttpUrl    as character             no-undo.
+define variable cInstance   as character             no-undo.
+define variable oJsonResp   as JsonObject            no-undo.
+define variable oResult     as JsonObject            no-undo.
+define variable oTemp       as JsonObject            no-undo.
+define variable oAppAgents  as Array                 no-undo.
+define variable oAgentList  as Array                 no-undo.
+define variable oQueryURL   as StringStringMap       no-undo.
+define variable iLoop       as integer               no-undo.
+define variable iLoop2      as integer               no-undo.
+define variable iLoop3      as integer               no-undo.
+define variable iPID        as OpenEdge.Core.Integer no-undo.
+define variable cScheme     as character             no-undo initial "http".
+define variable cHost       as character             no-undo initial "localhost".
+define variable cPort       as character             no-undo initial "8810".
+define variable cUserId     as character             no-undo initial "tomcat".
+define variable cPassword   as character             no-undo initial "tomcat".
+define variable cAblApp     as character             no-undo initial "oepas1".
 
 /* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
@@ -87,41 +89,19 @@ oQueryURL:Put("Agents", "&1/oemanager/applications/&2/agents").
 oQueryURL:Put("Stacks", "&1/oemanager/applications/&2/agents/&3/stacks").
 
 function MakeRequest returns JsonObject ( input pcHttpUrl as character ) forward.
+function HasAgent returns logical ( input poInt as OpenEdge.Core.Integer ) forward.
 
 run getLockStatus.
+run getAblAppAgents.
 
-/* Initial URL to obtain a list of all agents for an ABL Application. */
-assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
-assign oJsonResp = MakeRequest(cHttpUrl).
-if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-    define variable oAgents as JsonArray  no-undo.
-    define variable oAgent  as JsonObject no-undo.
+/* Iterate through the list of ABL App agents, getting stacks for those with table locks. */
+do iLoop = 1 to oAppAgents:Size:
+    if oAppAgents:GetValue(iLoop) ne ? then do:
+        assign iPID = cast(oAppAgents:GetValue(iLoop), OpenEdge.Core.Integer).
 
-    oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
-
-    if oAgents:Length gt 0 then
-    AGENTBLK:
-    do iLoop = 1 to oAgents:Length
-    on error undo, next AGENTBLK
-    on stop undo, next AGENTBLK:
-        oAgent = oAgents:GetJsonObject(iLoop).
-
-        /* Write session stack information from any available agents. */
-        if oAgent:GetCharacter("state") eq "available" then
-            oAppAgents:Add(new OpenEdge.Core.Integer(integer(oAgent:GetCharacter("pid")))).
-    end. /* iLoop - agent */
-end. /* agents */
-
-do iLoop = 1 to oAgentList:Size:
-    define variable iPID as OpenEdge.Core.Integer no-undo.
-
-    if oAgentList:GetValue(iLoop) ne ? then do:
-        assign iPID = cast(oAgentList:GetValue(iLoop), OpenEdge.Core.Integer).
-
-        message "AppAgent contains PID?" oAppAgents:Contains(iPID).
-
-        if oAppAgents:Contains(iPID) then do:
-            assign cHttpUrl = substitute(oQueryURL:Get("Stacks"), cInstance, cAblApp, iPID).
+        /* Obtain stacks for the agent. */
+        if HasAgent(iPID) then do:
+            assign cHttpUrl = substitute(oQueryURL:Get("Stacks"), cInstance, cAblApp, iPID:Value).
             assign oJsonResp = MakeRequest(cHttpUrl).
             if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
                 if oJsonResp:GetJsonObject("result"):Has("ABLStacks") and oJsonResp:GetJsonObject("result"):GetType("ABLStacks") eq JsonDataType:Array then do:
@@ -129,21 +109,21 @@ do iLoop = 1 to oAgentList:Size:
                     define variable oABLStack  as JsonObject no-undo.
                     define variable oCallstack as JsonArray  no-undo.
 
-                    message substitute("~nCall Stack for Agent PID &1:", iPID).
+                    message substitute("~nCall Stack for Agent PID &1:", iPID:Value).
 
                     assign oABLStacks = oJsonResp:GetJsonObject("result"):GetJsonArray("ABLStacks").
-                    do iLoop = 1 to oABLStacks:Length:
-                        assign oABLStack = oABLStacks:GetJsonObject(iLoop).
+                    do iLoop2 = 1 to oABLStacks:Length:
+                        assign oABLStack = oABLStacks:GetJsonObject(iLoop2).
                         if oABLStack:Has("Callstack") and oABLStack:GetType("Callstack") eq JsonDataType:Array then do:
                             assign oCallstack = oABLStack:GetJsonArray("Callstack").
-                            do iLoop2 = 1 to oCallstack:Length:
-                                message substitute("~t&1", oCallstack:GetJsonObject(iLoop2):GetCharacter("Routine")).
+                            do iLoop3 = 1 to oCallstack:Length:
+                                message substitute("~t&1", oCallstack:GetJsonObject(iLoop3):GetCharacter("Routine")).
                             end.
                         end.
                     end.
                 end.
             end. /* stacks */
-        end. /* Agent in ABLApplication */
+        end. /* oAgentList:Contains(iPID) */
     end. /* Non-Null */
 end. /* iLoop - AgentList */
 
@@ -230,6 +210,20 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
     end finally.
 end function. /* MakeRequest */
 
+function HasAgent returns logical (input poInt as OpenEdge.Core.Integer):
+    define variable lFound as logical no-undo.
+    define variable iMax   as integer no-undo.
+    define variable iLoop  as integer no-undo.
+
+    assign iMax = oAgentList:Size.
+    do iLoop = 1 to iMax while not lFound:
+        if valid-object(oAgentList:GetValue(iLoop)) then
+            assign lFound = oAgentList:GetValue(iLoop):Equals(poInt).
+    end.
+
+    return lFound.
+end function.
+
 procedure getLockStatus:
     define variable cUserName   as character             no-undo.
     define variable cDomainName as character             no-undo.
@@ -241,39 +235,33 @@ procedure getLockStatus:
     if not connected("dictdb") then
         return. /* We cannot continue without a database. */
     else
-        message "dictdb:" pdbname("dictdb").
+        message "Current 'dictdb':" pdbname("dictdb").
 
     message "Usr#~tUser~t~tDomain~t~tTenant~t~tTable~t~tPID".
 
-    for each _Connect no-lock
-       where _Connect._Connect-Usr ne ?
-         and _Connect._Connect-ClientType eq "PASN":
+    for each dictdb._Connect no-lock
+       where dictdb._Connect._Connect-Usr ne ?
+         and dictdb._Connect._Connect-ClientType eq "PASN":
         assign
-            iUserNum    = _Connect._Connect-Usr
-            cUserName   = _Connect._Connect-Name
-            iConnectPID = new OpenEdge.Core.Integer(_Connect._Connect-Pid)
+            iUserNum    = dictdb._Connect._Connect-Usr
+            cUserName   = dictdb._Connect._Connect-Name
+            iConnectPID = new OpenEdge.Core.Integer(dictdb._Connect._Connect-Pid)
             .
 
-        for each _Lock no-lock
-           where _Lock._Lock-Usr eq _Connect._Connect-usr
-             and _Lock._Lock-RecId ne ?:
+        for each dictdb._Lock no-lock
+           where dictdb._Lock._Lock-Usr eq iUserNum:
+            for first dictdb._File no-lock
+                where dictdb._File._File-Number eq dictdb._Lock._Lock-Table:
+                assign cTableName = dictdb._File._File-Name.
+            end. /* for first _File */
 
-            for first _File no-lock
-                where _File._File-Number eq _Lock._Lock-Table:
-                assign cTableName = _File._File-Name.
-            end.
-
-            for first _sec-authentication-domain no-lock
-                where _sec-authentication-domain._Domain-Id eq _Lock._Lock-DomainId:
+            for first dictdb._sec-authentication-domain no-lock
+                where dictdb._sec-authentication-domain._Domain-Id eq dictdb._Lock._Lock-DomainId:
                 assign
-                    cDomainName = if _sec-authentication-domain._Domain-Name eq ? then "" else _sec-authentication-domain._Domain-Name
-                    cTenantName = if _sec-authentication-domain._Tenant-Name eq ? then "" else _sec-authentication-domain._Tenant-Name
+                    cDomainName = if dictdb._sec-authentication-domain._Domain-Name eq ? then "" else dictdb._sec-authentication-domain._Domain-Name
+                    cTenantName = if dictdb._sec-authentication-domain._Tenant-Name eq ? then "" else dictdb._sec-authentication-domain._Tenant-Name
                     .
-            end.
-
-            /* Provides a simple means of lookup later to relate agentID to PID. */
-            if not oAgentList:Contains(iConnectPID) then
-                oAgentList:Add(iConnectPID).
+            end. /* for first _sec-authentication-domain */
 
             message substitute("&1~t&2&3&4&5&6",
                                iUserNum,
@@ -281,7 +269,33 @@ procedure getLockStatus:
                                string(cDomainName, "x(16)"),
                                string(cTenantName, "x(16)"),
                                string(cTableName, "x(16)"),
-                               iConnectPID).
-        end.
-    end.
+                               iConnectPID:Value).
+
+            /* Track a list of PID's which relate to locked tables (by PASN users). */
+            oAgentList:Add(iConnectPID).
+        end. /* for each _Lock */
+    end. /* for each _Connect */
+end procedure.
+
+procedure getAblAppAgents:
+    /* Oobtain a list of all AVAILABLE agents for an ABL Application. */
+    assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
+    assign oJsonResp = MakeRequest(cHttpUrl).
+    if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
+        define variable oAgents as JsonArray  no-undo.
+        define variable oAgent  as JsonObject no-undo.
+
+        oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
+
+        if oAgents:Length gt 0 then
+        AGENTBLK:
+        do iLoop = 1 to oAgents:Length
+        on error undo, next AGENTBLK
+        on stop undo, next AGENTBLK:
+            oAgent = oAgents:GetJsonObject(iLoop).
+
+            if oAgent:GetCharacter("state") eq "available" then
+                oAppAgents:Add(new OpenEdge.Core.Integer(integer(oAgent:GetCharacter("pid")))).
+        end. /* iLoop - agent */
+    end. /* agents */
 end procedure.
