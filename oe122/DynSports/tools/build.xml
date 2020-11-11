@@ -383,7 +383,8 @@
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
-            <DBConnection dbName="sports2020" hostName="localhost" dbPort="8600" readOnly="true"/>
+            <DBConnection dbName="Sports2020" hostName="localhost" dbPort="8600" readOnly="true"/>
+        	<DBConnection dbName="WebState" hostName="localhost" dbPort="8500" readOnly="true"/>
             <Parameter name="Scheme" value="${scheme}"/>
             <Parameter name="Host" value="${host}"/>
             <Parameter name="Port" value="${port}"/>
