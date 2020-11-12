@@ -40,7 +40,11 @@ class Business.UnitTest.TableTest inherits Spark.Core.Service.DynamicResource:
 
         assign dStart = now.
         for first Customer exclusive-lock:
-            pause (busyTime / 1000) no-message.
+            message Customer.Name.
+            for first WebProfile exclusive-lock:
+                message WebProfile.Username.
+                pause (busyTime / 1000) no-message.
+            end.
         end.
 
         finally:

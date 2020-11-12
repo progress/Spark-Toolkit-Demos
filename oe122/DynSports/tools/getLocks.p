@@ -39,9 +39,13 @@ define variable oTemp       as JsonObject            no-undo.
 define variable oAppAgents  as Array                 no-undo.
 define variable oAgentList  as Array                 no-undo.
 define variable oQueryURL   as StringStringMap       no-undo.
+define variable cDB         as character             no-undo.
+define variable iSize       as integer               no-undo.
 define variable iLoop       as integer               no-undo.
 define variable iLoop2      as integer               no-undo.
 define variable iLoop3      as integer               no-undo.
+define variable iLength1    as integer               no-undo.
+define variable iLength2    as integer               no-undo.
 define variable iPID        as OpenEdge.Core.Integer no-undo.
 define variable cScheme     as character             no-undo initial "http".
 define variable cHost       as character             no-undo initial "localhost".
@@ -49,6 +53,17 @@ define variable cPort       as character             no-undo initial "8810".
 define variable cUserId     as character             no-undo initial "tomcat".
 define variable cPassword   as character             no-undo initial "tomcat".
 define variable cAblApp     as character             no-undo initial "oepas1".
+
+define temp-table ttLock no-undo
+    field UserNum      as int64
+    field UserName     as character
+    field DomainName   as character
+    field TenantName   as character
+    field DatabaseName as character
+    field TableName    as character
+    field TransID      as int64
+    field PID          as int64
+    .
 
 /* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
@@ -91,11 +106,35 @@ oQueryURL:Put("Stacks", "&1/oemanager/applications/&2/agents/&3/stacks").
 function MakeRequest returns JsonObject ( input pcHttpUrl as character ) forward.
 function HasAgent returns logical ( input poInt as OpenEdge.Core.Integer ) forward.
 
-run getLockStatus.
+message "Scanning for Table Locks from connected PASN clients...".
+do iLoop = 1 to num-dbs:
+    assign cDB = ldbname(iLoop).
+    if cDB eq ? then next.
+
+    /* Change to the next DB. */
+    run setDictDb (cDB). 
+
+    /* Scan all locks for this DB */
+    run getLockStatus.
+end.
+
+message "Usr#~tUser~t~tDomain~t~tTenant~t~tDatabase~tTable~t~tPID".
+for each ttLock no-lock:
+    message substitute("&1~t&2&3&4&5&6&7",
+                       ttLock.UserNum,
+                       string(ttLock.UserName, "x(16)"),
+                       string(ttLock.DomainName, "x(16)"),
+                       string(ttLock.TenantName, "x(16)"),
+                       string(ttLock.DatabaseName, "x(16)"),
+                       string(ttLock.TableName, "x(16)"),
+                       ttLock.PID).
+end.
+
 run getAblAppAgents.
 
 /* Iterate through the list of ABL App agents, getting stacks for those with table locks. */
-do iLoop = 1 to oAppAgents:Size:
+assign iSize = oAppAgents:Size.
+do iLoop = 1 to iSize:
     if oAppAgents:GetValue(iLoop) ne ? then do:
         assign iPID = cast(oAppAgents:GetValue(iLoop), OpenEdge.Core.Integer).
 
@@ -103,8 +142,10 @@ do iLoop = 1 to oAppAgents:Size:
         if HasAgent(iPID) then do:
             assign cHttpUrl = substitute(oQueryURL:Get("Stacks"), cInstance, cAblApp, iPID:Value).
             assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-                if oJsonResp:GetJsonObject("result"):Has("ABLStacks") and oJsonResp:GetJsonObject("result"):GetType("ABLStacks") eq JsonDataType:Array then do:
+            if valid-object(oJsonResp) and oJsonResp:Has("result") and
+               oJsonResp:GetType("result") eq JsonDataType:Object then do:
+                if oJsonResp:GetJsonObject("result"):Has("ABLStacks") and
+                   oJsonResp:GetJsonObject("result"):GetType("ABLStacks") eq JsonDataType:Array then do:
                     define variable oABLStacks as JsonArray  no-undo.
                     define variable oABLStack  as JsonObject no-undo.
                     define variable oCallstack as JsonArray  no-undo.
@@ -112,16 +153,25 @@ do iLoop = 1 to oAppAgents:Size:
                     message substitute("~nCall Stack for Agent PID &1:", iPID:Value).
 
                     assign oABLStacks = oJsonResp:GetJsonObject("result"):GetJsonArray("ABLStacks").
-                    do iLoop2 = 1 to oABLStacks:Length:
+
+                    assign iLength1 = oABLStacks:Length.
+                    do iLoop2 = 1 to iLength1:
                         assign oABLStack = oABLStacks:GetJsonObject(iLoop2).
+
+                        if oABLStack:Has("AgentSessionId") then
+                            message substitute("~tAgent Session ID: &1", oABLStack:GetInteger("AgentSessionId")).
+
                         if oABLStack:Has("Callstack") and oABLStack:GetType("Callstack") eq JsonDataType:Array then do:
                             assign oCallstack = oABLStack:GetJsonArray("Callstack").
-                            do iLoop3 = 1 to oCallstack:Length:
-                                message substitute("~t&1", oCallstack:GetJsonObject(iLoop3):GetCharacter("Routine")).
-                            end.
-                        end.
-                    end.
-                end.
+
+                            assign iLength2 = oCallstack:Length.
+                            do iLoop3 = 1 to iLength2:
+                                if oCallstack:GetJsonObject(iLoop3):Has("Routine") then
+                                    message substitute("~t~t&1", oCallstack:GetJsonObject(iLoop3):GetCharacter("Routine")).
+                            end. /* iLoop3 */
+                        end. /* Has Callstack*/
+                    end. /* iLoop2 */
+                end. /* Has ABLStacks */
             end. /* stacks */
         end. /* oAgentList:Contains(iPID) */
     end. /* Non-Null */
@@ -211,14 +261,14 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
 end function. /* MakeRequest */
 
 function HasAgent returns logical (input poInt as OpenEdge.Core.Integer):
-    define variable lFound as logical no-undo.
+    define variable lFound as logical no-undo initial false.
     define variable iMax   as integer no-undo.
-    define variable iLoop  as integer no-undo.
+    define variable iX     as integer no-undo.
 
     assign iMax = oAgentList:Size.
-    do iLoop = 1 to iMax while not lFound:
-        if valid-object(oAgentList:GetValue(iLoop)) then
-            assign lFound = oAgentList:GetValue(iLoop):Equals(poInt).
+    do iX = 1 to iMax while not lFound:
+        if valid-object(oAgentList:GetValue(iX)) then
+            assign lFound = oAgentList:GetValue(iX):Equals(poInt).
     end.
 
     return lFound.
@@ -230,15 +280,13 @@ procedure getLockStatus:
     define variable cTenantName as character             no-undo.
     define variable cTableName  as character             no-undo.
     define variable iUserNum    as int64                 no-undo.
+    define variable iTransID    as int64                 no-undo.
     define variable iConnectPID as OpenEdge.Core.Integer no-undo.
 
     if not connected("dictdb") then
         return. /* We cannot continue without a database. */
-    else
-        message "Current 'dictdb':" pdbname("dictdb").
 
-    message "Usr#~tUser~t~tDomain~t~tTenant~t~tTable~t~tPID".
-
+    /* Only look for connections from PASN client types. */
     for each dictdb._Connect no-lock
        where dictdb._Connect._Connect-Usr ne ?
          and dictdb._Connect._Connect-ClientType eq "PASN":
@@ -248,13 +296,23 @@ procedure getLockStatus:
             iConnectPID = new OpenEdge.Core.Integer(dictdb._Connect._Connect-Pid)
             .
 
+        /* Find all locks related to each connection. */
         for each dictdb._Lock no-lock
            where dictdb._Lock._Lock-Usr eq iUserNum:
-            for first dictdb._File no-lock
-                where dictdb._File._File-Number eq dictdb._Lock._Lock-Table:
-                assign cTableName = dictdb._File._File-Name.
-            end. /* for first _File */
+            /* Get a user-friendly table name. */
+            find dictdb._Trans no-lock where dictdb._Trans._Trans-Usrnum eq dictdb._Lock._Lock-Table no-error.
+            assign iTransID = if available(dictdb._Trans) then dictdb._Trans._Trans-Id else ?.
 
+            /* Get a user-friendly table name. */
+            find dictdb._File no-lock where dictdb._File._File-Number eq dictdb._Lock._Lock-Table no-error.
+            assign cTableName = if available(dictdb._File) then dictdb._File._File-Name else "N/A".
+
+            assign /* Reset values for each _Lock record. */
+                cDomainName = ""
+                cTenantName = ""
+                .
+
+            /* Get a user-friendly domain & tenant name. */
             for first dictdb._sec-authentication-domain no-lock
                 where dictdb._sec-authentication-domain._Domain-Id eq dictdb._Lock._Lock-DomainId:
                 assign
@@ -263,13 +321,18 @@ procedure getLockStatus:
                     .
             end. /* for first _sec-authentication-domain */
 
-            message substitute("&1~t&2&3&4&5&6",
-                               iUserNum,
-                               string(cUserName, "x(16)"),
-                               string(cDomainName, "x(16)"),
-                               string(cTenantName, "x(16)"),
-                               string(cTableName, "x(16)"),
-                               iConnectPID:Value).
+            create ttLock.
+            assign
+                ttLock.UserNum      = iUserNum
+                ttLock.UserName     = cUserName
+                ttLock.DomainName   = cDomainName
+                ttLock.TenantName   = cTenantName
+                ttLock.DatabaseName = pdbname("dictdb")
+                ttLock.TableName    = cTableName
+                ttLock.TransID      = iTransID
+                ttLock.PID          = iConnectPID:Value
+                .
+            release ttLock no-error.
 
             /* Track a list of PID's which relate to locked tables (by PASN users). */
             oAgentList:Add(iConnectPID).
