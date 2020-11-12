@@ -61,6 +61,7 @@ define temp-table ttLock no-undo
     field TenantName   as character
     field DatabaseName as character
     field TableName    as character
+    field LockFlags    as character
     field TransID      as int64
     field PID          as int64
     .
@@ -112,22 +113,26 @@ do iLoop = 1 to num-dbs:
     if cDB eq ? then next.
 
     /* Change to the next DB. */
-    run setDictDb (cDB). 
+    create alias dictdb for database value(cDB).
 
     /* Scan all locks for this DB */
-    run getLockStatus.
+    run getLockStats (input-output table ttLock by-reference).
 end.
 
-message "Usr#~tUser~t~tDomain~t~tTenant~t~tDatabase~tTable~t~tPID".
+message "Usr#~tUser~t~tDomain~t~tTenant~t~tDatabase~tTable~t~tFlags~t~tPID".
 for each ttLock no-lock:
-    message substitute("&1~t&2&3&4&5&6&7",
+    message substitute("&1~t&2&3&4&5&6&7&8",
                        ttLock.UserNum,
                        string(ttLock.UserName, "x(16)"),
                        string(ttLock.DomainName, "x(16)"),
                        string(ttLock.TenantName, "x(16)"),
                        string(ttLock.DatabaseName, "x(16)"),
                        string(ttLock.TableName, "x(16)"),
+                       string(ttLock.LockFlags, "x(16)"),
                        ttLock.PID).
+
+    /* Track a list of PID's which relate to locked tables (by PASN users). */
+    oAgentList:Add(new OpenEdge.Core.Integer(ttLock.PID)).
 end.
 
 run getAblAppAgents.
@@ -273,72 +278,6 @@ function HasAgent returns logical (input poInt as OpenEdge.Core.Integer):
 
     return lFound.
 end function.
-
-procedure getLockStatus:
-    define variable cUserName   as character             no-undo.
-    define variable cDomainName as character             no-undo.
-    define variable cTenantName as character             no-undo.
-    define variable cTableName  as character             no-undo.
-    define variable iUserNum    as int64                 no-undo.
-    define variable iTransID    as int64                 no-undo.
-    define variable iConnectPID as OpenEdge.Core.Integer no-undo.
-
-    if not connected("dictdb") then
-        return. /* We cannot continue without a database. */
-
-    /* Only look for connections from PASN client types. */
-    for each dictdb._Connect no-lock
-       where dictdb._Connect._Connect-Usr ne ?
-         and dictdb._Connect._Connect-ClientType eq "PASN":
-        assign
-            iUserNum    = dictdb._Connect._Connect-Usr
-            cUserName   = dictdb._Connect._Connect-Name
-            iConnectPID = new OpenEdge.Core.Integer(dictdb._Connect._Connect-Pid)
-            .
-
-        /* Find all locks related to each connection. */
-        for each dictdb._Lock no-lock
-           where dictdb._Lock._Lock-Usr eq iUserNum:
-            /* Get a user-friendly table name. */
-            find dictdb._Trans no-lock where dictdb._Trans._Trans-Usrnum eq dictdb._Lock._Lock-Table no-error.
-            assign iTransID = if available(dictdb._Trans) then dictdb._Trans._Trans-Id else ?.
-
-            /* Get a user-friendly table name. */
-            find dictdb._File no-lock where dictdb._File._File-Number eq dictdb._Lock._Lock-Table no-error.
-            assign cTableName = if available(dictdb._File) then dictdb._File._File-Name else "N/A".
-
-            assign /* Reset values for each _Lock record. */
-                cDomainName = ""
-                cTenantName = ""
-                .
-
-            /* Get a user-friendly domain & tenant name. */
-            for first dictdb._sec-authentication-domain no-lock
-                where dictdb._sec-authentication-domain._Domain-Id eq dictdb._Lock._Lock-DomainId:
-                assign
-                    cDomainName = if dictdb._sec-authentication-domain._Domain-Name eq ? then "" else dictdb._sec-authentication-domain._Domain-Name
-                    cTenantName = if dictdb._sec-authentication-domain._Tenant-Name eq ? then "" else dictdb._sec-authentication-domain._Tenant-Name
-                    .
-            end. /* for first _sec-authentication-domain */
-
-            create ttLock.
-            assign
-                ttLock.UserNum      = iUserNum
-                ttLock.UserName     = cUserName
-                ttLock.DomainName   = cDomainName
-                ttLock.TenantName   = cTenantName
-                ttLock.DatabaseName = pdbname("dictdb")
-                ttLock.TableName    = cTableName
-                ttLock.TransID      = iTransID
-                ttLock.PID          = iConnectPID:Value
-                .
-            release ttLock no-error.
-
-            /* Track a list of PID's which relate to locked tables (by PASN users). */
-            oAgentList:Add(iConnectPID).
-        end. /* for each _Lock */
-    end. /* for each _Connect */
-end procedure.
 
 procedure getAblAppAgents:
     /* Oobtain a list of all AVAILABLE agents for an ABL Application. */
