@@ -1,17 +1,10 @@
 /*------------------------------------------------------------------------
     File        : getLockStats.p
-    Purpose     : 
-
-    Syntax      :
-
-    Description : 
-
+    Purpose     : Return DB table lock statistics via temp-table
     Author(s)   : Dustin Grau
     Created     : Thu Nov 12 16:16:42 EST 2020
-    Notes       :
+    Notes       : Must set "dictdb" alias for target DB before calling!
   ----------------------------------------------------------------------*/
-
-/* ***************************  Definitions  ************************** */
 
 block-level on error undo, throw.
 
@@ -28,8 +21,6 @@ define temp-table ttLock no-undo
     .
 
 define input-output parameter table for ttLock.
-
-/* ***************************  Main Block  *************************** */
 
 define variable cUserName   as character no-undo.
 define variable cDomainName as character no-undo.
@@ -72,8 +63,8 @@ for each dictdb._Connect no-lock
         for first dictdb._sec-authentication-domain no-lock
             where dictdb._sec-authentication-domain._Domain-Id eq dictdb._Lock._Lock-DomainId:
             assign
-                cDomainName = if dictdb._sec-authentication-domain._Domain-Name eq ? then "" else dictdb._sec-authentication-domain._Domain-Name
-                cTenantName = if dictdb._sec-authentication-domain._Tenant-Name eq ? then "" else dictdb._sec-authentication-domain._Tenant-Name
+                cDomainName = if dictdb._sec-authentication-domain._Domain-Name eq ? then "N/A" else dictdb._sec-authentication-domain._Domain-Name
+                cTenantName = if dictdb._sec-authentication-domain._Tenant-Name eq ? then "N/A" else dictdb._sec-authentication-domain._Tenant-Name
                 .
         end. /* for first _sec-authentication-domain */
 

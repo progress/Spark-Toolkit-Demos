@@ -107,7 +107,7 @@ oQueryURL:Put("Stacks", "&1/oemanager/applications/&2/agents/&3/stacks").
 function MakeRequest returns JsonObject ( input pcHttpUrl as character ) forward.
 function HasAgent returns logical ( input poInt as OpenEdge.Core.Integer ) forward.
 
-message "Scanning for Table Locks from connected PASN clients...".
+message "~nScanning for Table Locks from connected PASN clients...".
 do iLoop = 1 to num-dbs:
     assign cDB = ldbname(iLoop).
     if cDB eq ? then next.
@@ -119,16 +119,16 @@ do iLoop = 1 to num-dbs:
     run getLockStats (input-output table ttLock by-reference).
 end.
 
-message "Usr#~tUser~t~tDomain~t~tTenant~t~tDatabase~tTable~t~tFlags~t~tPID".
+message "~nUsr#~tUser~t~tDomain~t~tTenant~t~tDatabase~tTable~t~tFlags~t~tPID".
 for each ttLock no-lock:
-    message substitute("&1~t&2&3&4&5&6&7&8",
-                       ttLock.UserNum,
-                       string(ttLock.UserName, "x(16)"),
-                       string(ttLock.DomainName, "x(16)"),
-                       string(ttLock.TenantName, "x(16)"),
-                       string(ttLock.DatabaseName, "x(16)"),
-                       string(ttLock.TableName, "x(16)"),
-                       string(ttLock.LockFlags, "x(16)"),
+    message substitute("&1 &2 &3 &4 &5 &6 &7 &8",
+                       string(ttLock.UserNum) + fill(" ", 11 - length(string(ttLock.UserNum))),
+                       string(ttLock.UserName, "x(15)"),
+                       string(ttLock.DomainName, "x(15)"),
+                       string(ttLock.TenantName, "x(15)"),
+                       string(ttLock.DatabaseName, "x(15)"),
+                       string(ttLock.TableName, "x(15)"),
+                       string(ttLock.LockFlags, "x(15)"),
                        ttLock.PID).
 
     /* Track a list of PID's which relate to locked tables (by PASN users). */
@@ -155,7 +155,7 @@ do iLoop = 1 to iSize:
                     define variable oABLStack  as JsonObject no-undo.
                     define variable oCallstack as JsonArray  no-undo.
 
-                    message substitute("~nCall Stack for Agent PID &1:", iPID:Value).
+                    message substitute("~nAgent PID &1:", iPID:Value).
 
                     assign oABLStacks = oJsonResp:GetJsonObject("result"):GetJsonArray("ABLStacks").
 
@@ -164,7 +164,7 @@ do iLoop = 1 to iSize:
                         assign oABLStack = oABLStacks:GetJsonObject(iLoop2).
 
                         if oABLStack:Has("AgentSessionId") then
-                            message substitute("~tAgent Session ID: &1", oABLStack:GetInteger("AgentSessionId")).
+                            message substitute("~n~tCall Stack for Session ID #&1:", oABLStack:GetInteger("AgentSessionId")).
 
                         if oABLStack:Has("Callstack") and oABLStack:GetType("Callstack") eq JsonDataType:Array then do:
                             assign oCallstack = oABLStack:GetJsonArray("Callstack").
