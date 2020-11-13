@@ -133,6 +133,21 @@ for each ttLock no-lock:
                        string(ttLock.LockFlags, "x(15)"),
                        ttLock.PID).
 
+    /****************************************************************************************************
+      Lock Flags (https://knowledgebase.progress.com/articles/Article/21639):
+        C   Create              The lock is in create mode.
+        D   Downgrade           The lock is downgraded.
+        E   Expired             The lock wait timeout has expired on this queued lock.
+        H   On hold             The "onhold" flag is set.
+        J   JTA                 The lock is part of a JTA transaction
+        K   Keep                Keep the lock across transaction end boundary
+        L   Limbo lock          The client has released the record, but the transaction has not completed.
+                                (The record lock is not released until the transaction ends.)
+        P   Purged lock entry   The lock is no longer held.
+        Q   Queued lock req.    Represents a queued request for a lock already held by another process.
+        U   Upgrade request     The user has requested a lock upgrade from SHARE to EXCLUSIVE.
+    ****************************************************************************************************/
+
     /* Track a list of PID's which relate to locked tables (by PASN users). */
     oAgentList:Add(new OpenEdge.Core.Integer(ttLock.PID)).
 end.
