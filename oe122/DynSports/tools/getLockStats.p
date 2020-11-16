@@ -29,30 +29,59 @@ define variable cTableName  as character no-undo.
 define variable iUserNum    as int64     no-undo.
 define variable iTransID    as int64     no-undo.
 define variable iConnectPID as int64     no-undo.
+define variable hConnQuery  as handle    no-undo.
+define variable hLockQuery  as handle    no-undo.
+define variable hConnBuffer as handle    no-undo.
+define variable hLockBuffer as handle    no-undo.
+define variable hTranBuffer as handle    no-undo.
+define variable hFileBuffer as handle    no-undo.
+define variable hSecBuffer  as handle    no-undo.
 
 if not connected("dictdb") then
     return. /* We cannot continue without a database. */
 
+create buffer hConnBuffer for table "dictdb._Connect".
+create buffer hLockBuffer for table "dictdb._Lock".
+create buffer hTranBuffer for table "dictdb._Trans".
+create buffer hFileBuffer for table "dictdb._File".
+create buffer hSecBuffer  for table "dictdb._sec-authentication-domain".
+
+create query hConnQuery.
+hConnQuery:set-buffers(hConnBuffer).
+
+create query hLockQuery.
+hLockQuery:set-buffers(hLockBuffer).
+
 /* Only look for connections from PASN client types. */
-for each dictdb._Connect no-lock
-   where dictdb._Connect._Connect-Usr ne ?
-     and dictdb._Connect._Connect-ClientType eq "PASN":
+hConnQuery:query-prepare(substitute("for each &1 where _Connect-Usr ne ? and _Connect-ClientType eq 'PASN'", hConnBuffer:name)).
+hConnQuery:query-open().
+
+CONNECTBLK:
+repeat:
+    hConnQuery:get-next(no-lock).
+    if hConnQuery:query-off-end then leave CONNECTBLK.
+
     assign
-        iUserNum    = dictdb._Connect._Connect-Usr
-        cUserName   = dictdb._Connect._Connect-Name
-        iConnectPID = dictdb._Connect._Connect-Pid
+        iUserNum    = hConnBuffer::_Connect-Usr
+        cUserName   = hConnBuffer::_Connect-Name
+        iConnectPID = hConnBuffer::_Connect-Pid
         .
 
-    /* Find all locks related to each connection. */
-    for each dictdb._Lock no-lock
-       where dictdb._Lock._Lock-Usr eq iUserNum:
-        /* Get a user-friendly table name. */
-        find dictdb._Trans no-lock where dictdb._Trans._Trans-Usrnum eq dictdb._Lock._Lock-Table no-error.
-        assign iTransID = if available(dictdb._Trans) then dictdb._Trans._Trans-Id else ?.
+    hLockQuery:query-prepare(substitute("for each &1 where _Lock-Usr eq &2", hLockBuffer:name, iUserNum)).
+    hLockQuery:query-open().
+    
+    LOCKBLK:
+    repeat:
+        hLockQuery:get-next(no-lock).
+        if hLockQuery:query-off-end then leave LOCKBLK.
+
+        /* Get a transaction ID. */
+        hTranBuffer:find-first(substitute("where _Trans-Usrnum eq &1", hLockBuffer::_Lock-Table), no-lock) no-error.
+        assign iTransID = if hTranBuffer:available then hTranBuffer::_Trans-Id else ?.
 
         /* Get a user-friendly table name. */
-        find dictdb._File no-lock where dictdb._File._File-Number eq dictdb._Lock._Lock-Table no-error.
-        assign cTableName = if available(dictdb._File) then dictdb._File._File-Name else "N/A".
+        hFileBuffer:find-first(substitute("where _File-Number eq &1", hLockBuffer::_Lock-Table), no-lock) no-error.
+        assign cTableName = if hFileBuffer:available then hFileBuffer::_File-Name else "N/A".
 
         assign /* Reset values for each _Lock record. */
             cDomainName = ""
@@ -60,11 +89,11 @@ for each dictdb._Connect no-lock
             .
 
         /* Get a user-friendly domain & tenant name. */
-        for first dictdb._sec-authentication-domain no-lock
-            where dictdb._sec-authentication-domain._Domain-Id eq dictdb._Lock._Lock-DomainId:
+        hSecBuffer:find-first(substitute("where _Domain-Id eq &1", hLockBuffer::_Lock-DomainId), no-lock) no-error.
+        if hSecBuffer:available then do:
             assign
-                cDomainName = if dictdb._sec-authentication-domain._Domain-Name eq ? then "N/A" else dictdb._sec-authentication-domain._Domain-Name
-                cTenantName = if dictdb._sec-authentication-domain._Tenant-Name eq ? then "N/A" else dictdb._sec-authentication-domain._Tenant-Name
+                cDomainName = if hSecBuffer::_Domain-Name eq ? then "N/A" else hSecBuffer::_Domain-Name
+                cTenantName = if hSecBuffer::_Tenant-Name eq ? then "N/A" else hSecBuffer::_Tenant-Name
                 .
         end. /* for first _sec-authentication-domain */
 
@@ -77,9 +106,11 @@ for each dictdb._Connect no-lock
             ttLock.DatabaseName = pdbname("dictdb")
             ttLock.TableName    = cTableName
             ttLock.TransID      = iTransID
-            ttLock.LockFlags    = dictdb._Lock._Lock-flags
+            ttLock.LockFlags    = hLockBuffer::_Lock-flags
             ttLock.PID          = iConnectPID
             .
         release ttLock no-error.
-    end. /* for each _Lock */
-end. /* for each _Connect */
+    end. /* repeat - LOCKBLK */
+end. /* repeat - CONNECTBLK */
+hConnQuery:query-close().
+

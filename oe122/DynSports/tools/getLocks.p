@@ -51,7 +51,6 @@ define variable cHost       as character       no-undo initial "localhost".
 define variable cPort       as character       no-undo initial "8810".
 define variable cUserId     as character       no-undo initial "tomcat".
 define variable cPassword   as character       no-undo initial "tomcat".
-define variable cAblApp     as character       no-undo initial "oepas1".
 
 define temp-table ttLock no-undo
     field UserNum      as int64
@@ -73,7 +72,6 @@ if num-entries(session:parameter) ge 6 then
         cPort     = entry(3, session:parameter)
         cUserId   = entry(4, session:parameter)
         cPassword = entry(5, session:parameter)
-        cAblApp   = entry(6, session:parameter)
         .
 else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
@@ -84,7 +82,6 @@ else
         cPort     = dynamic-function("getParameter" in source-procedure, "Port") when dynamic-function("getParameter" in source-procedure, "Port") gt ""
         cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
         cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
-        cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
         .
 
 assign oClient = ClientBuilder:Build():Client.
@@ -108,23 +105,25 @@ oQueryURL:Put("Stacks", "&1/oemanager/applications/&2/agents/&3/stacks").
 function MakeRequest returns JsonObject ( input pcHttpUrl as character ) forward.
 function HasAgent returns logical ( input poInt as integer ) forward.
 
+/* Populate temp-table with table lock status. */
 message "~nScanning for Table Locks from connected PASN clients...".
 do iLoop = 1 to num-dbs:
     assign cDB = ldbname(iLoop).
     if cDB eq ? then next.
 
-    /* Change to the next DB. */
+    /* Change to the next DB by setting the "dictdb" alias. */
     create alias dictdb for database value(cDB).
 
     /* Scan all locks for this DB */
-    message substitute("~tGetting lock stats for &1...", cDB). 
+    message substitute("~tGetting lock stats for &1...", cDB).
     run getLockStats (input-output table ttLock by-reference).
 end.
 
+/* Display table lock information to screen. */
 message "~nUsr#~tUser~t~tDomain~t~tTenant~t~tDatabase~tTable~t~tFlags~t~tPID".
 for each ttLock no-lock:
     message substitute("&1 &2 &3 &4 &5 &6 &7 &8",
-                       string(ttLock.UserNum) + fill(" ", 11 - length(string(ttLock.UserNum))),
+                       string(ttLock.UserNum) + fill(" ", 8 - length(string(ttLock.UserNum))),
                        string(ttLock.UserName, "x(15)"),
                        string(ttLock.DomainName, "x(15)"),
                        string(ttLock.TenantName, "x(15)"),
@@ -152,6 +151,7 @@ for each ttLock no-lock:
     oAgentList:Add(new OpenEdge.Core.Integer(ttLock.PID)).
 end.
 
+/* Get information on PAS instance. */
 run getAblApplications.
 run getAblAppAgents.
 
@@ -163,7 +163,7 @@ do while oIter:HasNext():
 
     /* Obtain stacks for the agent. */
     if HasAgent(iPID) then do:
-        assign cHttpUrl = substitute(oQueryURL:Get("Stacks"), cInstance, cAblApp, iPID).
+        assign cHttpUrl = substitute(oQueryURL:Get("Stacks"), cInstance, string(oAgent:value), iPID).
         assign oJsonResp = MakeRequest(cHttpUrl).
         if valid-object(oJsonResp) and oJsonResp:Has("result") and
            oJsonResp:GetType("result") eq JsonDataType:Object then do:
@@ -200,6 +200,8 @@ do while oIter:HasNext():
 end. /* do while */
 
 finally:
+    delete alias dictdb.
+
     /* Return value expected by PCT Ant task. */
     return string(0).
 end finally.
