@@ -392,6 +392,8 @@ procedure GetAgents:
     define variable iTotSess  as integer    no-undo.
     define variable iBusySess as integer    no-undo.
     define variable iTotalMem as int64      no-undo.
+    define variable dStart    as datetime   no-undo.
+    define variable dCurrent  as datetime   no-undo.
     define variable oAgents   as JsonArray  no-undo.
     define variable oAgent    as JsonObject no-undo.
     define variable oSessions as JsonArray  no-undo.
@@ -441,6 +443,8 @@ procedure GetAgents:
 
     for each ttAgent no-lock:
         assign iTotalMem = 0. /* Reset consumed memory for each agent. */
+
+        assign dCurrent = datetime(today, mtime). /* Assumes calling program is the same TZ as server! */
 
         /* Gather additional information for each agent after displaying a basic header. */
         put unformatted substitute("~nAgent PID &1: &2", ttAgent.agentPID, ttAgent.agentState) skip.
@@ -527,10 +531,13 @@ procedure GetAgents:
                         ttAgentSession.sessionID    = oSessions:GetJsonObject(iLoop2):GetInteger("SessionId")
                         ttAgentSession.sessionState = oSessions:GetJsonObject(iLoop2):GetCharacter("SessionState")
                         ttAgentSession.startTime    = oSessions:GetJsonObject(iLoop2):GetDatetimeTZ("StartTime")
-                        ttAgentSession.runningTime  = interval(datetime(today, mtime), datetime(date(ttAgentSession.startTime), mtime(ttAgentSession.startTime)), "milliseconds")
                         ttAgentSession.memoryBytes  = oSessions:GetJsonObject(iLoop2):GetInt64("SessionMemory")
-                        iTotalMem = iTotalMem + ttAgentSession.memoryBytes
+                        dStart                      = datetime(date(ttAgentSession.startTime), mtime(ttAgentSession.startTime))
+                        iTotalMem                   = iTotalMem + ttAgentSession.memoryBytes
                         .
+
+                    /* Attempt to calculate the time this session has been running, though we don't have a current timestamp directly from the server. */
+                    assign ttAgentSession.runningTime = interval(dCurrent, dStart, "milliseconds") when (dCurrent ne ? and dStart ne ? and dCurrent ge dStart).
 
                     define variable iSessions as integer no-undo.
                     assign iSessions = oClSess:Length.
