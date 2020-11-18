@@ -508,7 +508,7 @@ procedure GetAgents:
             assign oJsonResp = MakeRequest(cHttpUrl).
             if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then
             do on error undo, leave:
-                put unformatted "~n~tSESSION ID~tSTATE~t~tSTARTED~t~t~t~tRUNNING~t~t~tMEMORY~tBOUND/ACTIVE SESSION" skip.
+                put unformatted "~n~tSESSION ID~tSTATE~t~tSTARTED~t~t~t~t~tMEMORY~tBOUND/ACTIVE SESSION" skip.
 
                 if oJsonResp:GetJsonObject("result"):Has("AgentSession") then
                     oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentSession").
@@ -555,11 +555,10 @@ procedure GetAgents:
                                 .
                     end. /* iLoop - iSessions */
 
-                    put unformatted substitute("~t~t&1~t&2~t&3~t&4~t&5 KB~t&6 &7",
+                    put unformatted substitute("~t~t&1~t&2~t&3 &4 KB~t&5 &6",
                                                 string(ttAgentSession.sessionID, ">>>9"),
                                                 string(ttAgentSession.sessionState, "x(10)"),
                                                 ttAgentSession.startTime,
-                                                FormatMsTime(ttAgentSession.runningTime),
                                                 FormatMemory(ttAgentSession.memoryBytes, false),
                                                 (if ttAgentSession.boundSession gt "" then ttAgentSession.boundSession else ""),
                                                 (if ttAgentSession.boundReqID gt "" then "[" + ttAgentSession.boundReqID + "]" else "")) skip.
@@ -582,7 +581,7 @@ procedure GetSessions:
     define variable oConnInfo as JsonObject no-undo.
 
     /* https://docs.progress.com/bundle/pas-for-openedge-management/page/Collect-runtime-metrics.html */
-    put unformatted "~nSession Manager Metrics ".
+    put unformatted "~n~nSession Manager Metrics ".
     case iCollect:
         when 0 then put unformatted "(Not Enabled)" skip.
         when 1 then put unformatted "(Count-Based)" skip.
