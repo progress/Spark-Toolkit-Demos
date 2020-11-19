@@ -82,7 +82,7 @@ assign
 /* Set the name of the OEJMX binary based on operating system. */
 assign cOEJMXBinary = if opsys eq "WIN32" then "oejmx.bat" else "oejmx.sh".
 
-/* Register the queries for the OEJMX binary as will be used in this utility. */
+/* Register the queries for the OEJMX command as will be used in this utility. */
 oQueryString:Put("Applications", '~{"O":"PASOE:type=OEManager,name=OeablServiceManager","A":"Applications"}').
 oQueryString:Put("SessionManagerProperties", '~{"O":"PASOE:type=OEManager,name=SessionManager","M":["getProperties","&1"]}').
 oQueryString:Put("AgentManagerProperties", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getProperties","&1"]}').
@@ -157,7 +157,7 @@ function InvokeJMX returns character ( input pcQueryPath as character ):
     if (pcQueryPath gt "") ne true then
         undo, throw new Progress.Lang.AppError("No query path provided.", 0).
 
-    assign iTime = mtime. /* Each request should be timestamped. */
+    assign iTime = mtime. /* Each request should be timestamped to avoid overlap. */
     assign cBinaryPath = substitute("&1/bin/&2", cCatalinaBase, cOEJMXBinary). /* oejmx.[bat|sh] */
     assign cOutputPath = substitute("&1.&2.json", entry(1, pcQueryPath, "."), iTime). /* Temp output file. */
 
@@ -210,7 +210,7 @@ function RunQuery returns JsonObject ( input pcQueryString as character ):
         return new JsonObject().
     end catch.
     finally:
-        os-delete value(cOutPath).
+/*        os-delete value(cOutPath).*/
         delete object oParser no-error.
     end finally.
 end function. /* RunQuery */
@@ -409,12 +409,9 @@ procedure GetAgents:
     /* https://docs.progress.com/bundle/pas-for-openedge-management/page/About-session-and-request-states.html */
     assign cQueryString = substitute(oQueryString:Get("ClientSessions"), cAblApp).
     assign oJsonResp = RunQuery(cQueryString).
-    if valid-object(oJsonResp) and oJsonResp:Has("getSessions") and oJsonResp:GetType("getSessions") eq JsonDataType:Object then do:
-        if oJsonResp:GetJsonObject("getSessions"):Has("OEABLSession") and
-           oJsonResp:GetJsonObject("getSessions"):GetType("OEABLSession") eq JsonDataType:Array then do:
-            /* This data will be related to the agent-sessions to denote which ones are bound. */
-            oClSess = oJsonResp:GetJsonObject("getSessions"):GetJsonArray("OEABLSession").
-        end. /* Has OEABLSession */
+    if valid-object(oJsonResp) and oJsonResp:Has("getSessions") and oJsonResp:GetType("getSessions") eq JsonDataType:Array then do:
+        /* This data will be related to the agent-sessions to denote which ones are bound. */
+        oClSess = oJsonResp:GetJsonArray("getSessions").
     end. /* Client Sessions */
 
     for each ttAgent no-lock:
