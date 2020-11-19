@@ -8,6 +8,7 @@ srta*
 *.xref.xml
 results.xml
 server.log
+agents_*.txt
 status_*.txt
 temp.qry
 temp.*.json

@@ -41,9 +41,10 @@ define variable cCatalinaBase as character       no-undo.
 define variable cAblApp       as character       no-undo initial "oepas1".
 
 define temp-table ttAgent no-undo
-    field agentID    as character
-    field agentPID   as character
-    field agentState as character
+    field agentID     as character
+    field agentPID    as character
+    field agentState  as character
+    field memoryBytes as int64
     .
 
 define temp-table ttAgentSession no-undo
@@ -148,7 +149,6 @@ function InvokeJMX returns character ( input pcQueryPath as character ):
      * Example:
      *   oejmx.[bat|sh] -R -Q <catalina_base>/temp/<name>.qry -O <catalina_base>/temp/<output>.json
      */
-
     define variable cBinaryPath as character no-undo.
     define variable cOutputPath as character no-undo.
     define variable cCommand    as character no-undo.
@@ -367,7 +367,6 @@ end procedure.
 procedure GetAgents:
     define variable iTotSess  as integer    no-undo.
     define variable iBusySess as integer    no-undo.
-    define variable iTotalMem as int64      no-undo.
     define variable dStart    as datetime   no-undo.
     define variable dCurrent  as datetime   no-undo.
     define variable oAgents   as JsonArray  no-undo.
@@ -414,11 +413,9 @@ procedure GetAgents:
         oClSess = oJsonResp:GetJsonArray("getSessions").
     end. /* Client Sessions */
 
-    for each ttAgent no-lock:
-        assign iTotalMem = 0. /* Reset consumed memory for each agent. */
+    assign dCurrent = datetime(today, mtime). /* Assumes calling program is the same TZ as server! */
 
-        assign dCurrent = datetime(today, mtime). /* Assumes calling program is the same TZ as server! */
-
+    for each ttAgent exclusive-lock:
         /* Gather additional information for each agent after displaying a basic header. */
         put unformatted substitute("~nAgent PID &1: &2", ttAgent.agentPID, ttAgent.agentState) skip.
 
@@ -467,8 +464,8 @@ procedure GetAgents:
                                                    FormatIntAsNumber(oTemp:GetInteger("OpenConnections"))) skip.
 
                     if oTemp:Has("OverheadMemory") and oTemp:GetType("OverheadMemory") eq JsonDataType:Number then do:
-                        assign iTotalMem = oTemp:GetInt64("OverheadMemory").
-                        put unformatted substitute("~t    Overhead Memory: &1 KB", FormatMemory(oTemp:GetInt64("OverheadMemory"), true)) skip.
+                        assign ttAgent.memoryBytes = oTemp:GetInt64("OverheadMemory").
+                        put unformatted substitute("~t    Overhead Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)) skip.
                     end.
                 end.
             end. /* response */
@@ -503,7 +500,7 @@ procedure GetAgents:
                         ttAgentSession.startTime    = oSessions:GetJsonObject(iLoop2):GetDatetimeTZ("StartTime")
                         ttAgentSession.memoryBytes  = oSessions:GetJsonObject(iLoop2):GetInt64("SessionMemory")
                         dStart                      = datetime(date(ttAgentSession.startTime), mtime(ttAgentSession.startTime))
-                        iTotalMem                   = iTotalMem + ttAgentSession.memoryBytes
+                        ttAgent.memoryBytes         = ttAgent.memoryBytes + ttAgentSession.memoryBytes
                         .
 
                     /* Attempt to calculate the time this session has been running, though we don't have a current timestamp directly from the server. */
@@ -541,7 +538,7 @@ procedure GetAgents:
 
                 put unformatted substitute("~tActive Agent-Sessions: &1 of &2 (&3% Busy)",
                                            iBusySess, iTotSess, if iTotSess gt 0 then round((iBusySess / iTotSess) * 100, 1) else 0) skip.
-                put unformatted substitute("~t Approx. Agent Memory: &1 KB", FormatMemory(iTotalMem, true)).
+                put unformatted substitute("~t Approx. Agent Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)).
             end. /* response - AgentSessions */
         end. /* agent state = available */
     end. /* for each ttAgent */

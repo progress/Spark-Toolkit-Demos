@@ -267,6 +267,22 @@
         </PCTRun>
     </target>
 
+    <target name="autoTrim">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="autoTrim">
+            <propath>
+                <pathelement path="${basedir}"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="CatalinaBase" value="${pas.path}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+        </PCTRun>
+    </target>
+
     <target name="stacks">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
