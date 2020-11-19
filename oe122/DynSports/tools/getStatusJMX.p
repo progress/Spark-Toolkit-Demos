@@ -210,7 +210,7 @@ function RunQuery returns JsonObject ( input pcQueryString as character ):
         return new JsonObject().
     end catch.
     finally:
-/*        os-delete value(cOutPath).*/
+        os-delete value(cOutPath).
         delete object oParser no-error.
     end finally.
 end function. /* RunQuery */
