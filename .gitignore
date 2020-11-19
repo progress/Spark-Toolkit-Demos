@@ -14,3 +14,6 @@ srta*
 /oe122/DynSports/tests/*.log
 /oe122/Sports/results.xml
 /oe122/Sports/server.log
+/oe122/DynSports/tools/status_*.txt
+/oe122/DynSports/tools/temp.qry
+/oe122/DynSports/tools/temp.*.json
