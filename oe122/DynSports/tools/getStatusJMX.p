@@ -199,7 +199,7 @@ function RunQuery returns JsonObject ( input pcQueryString as character ):
         if file-info:full-pathname ne ? then do:
             if file-info:file-size eq 0 then
                 undo, throw new Progress.Lang.AppError(substitute("Encountered Empty File: &1", cOutPath), 0).
-message pcQueryString ":" cOutPath.
+
             return cast(oParser:ParseFile(cOutPath), JsonObject).
         end. /* File Exists */
     end.
@@ -431,29 +431,26 @@ procedure GetAgents:
             /* Get the dynamic value for the available sessions of this agent (available only in 12.2.0 and later). */
             assign cQueryString = substitute(oQueryString:Get("DynamicSessionLimit"), cAblApp, ttAgent.agentPID).
             assign oJsonResp = RunQuery(cQueryString).
-            if valid-object(oJsonResp) and oJsonResp:Has("getDynamicABLSessionLimit") and oJsonResp:GetType("getDynamicABLSessionLimit") eq JsonDataType:Object then do:
-                oResult = oJsonResp:GetJsonObject("getDynamicABLSessionLimit").
-                if oResult:Has("AgentSessionInfo") and oResult:GetType("AgentSessionInfo") eq JsonDataType:Array then do:
-                    oSessions = oResult:GetJsonArray("AgentSessionInfo").
-                    if oSessions:Length eq 1 and oSessions:GetJsonObject(1):Has("ABLOutput") and
-                       oSessions:GetJsonObject(1):GetType("ABLOutput") eq JsonDataType:Object then do:
-                        oSessInfo = oSessions:GetJsonObject(1):GetJsonObject("ABLOutput").
+            if valid-object(oJsonResp) and oJsonResp:Has("getDynamicABLSessionLimit") and oJsonResp:GetType("getDynamicABLSessionLimit") eq JsonDataType:Array then do:
+                oSessions = oJsonResp:GetJsonArray("getDynamicABLSessionLimit").
+                if oSessions:Length eq 1 and oSessions:GetJsonObject(1):Has("ABLOutput") and
+                   oSessions:GetJsonObject(1):GetType("ABLOutput") eq JsonDataType:Object then do:
+                    oSessInfo = oSessions:GetJsonObject(1):GetJsonObject("ABLOutput").
 
-                        /* Should be the current calculated maximum # of ABL Sessions which can be started/utilized. */
-                        if oSessInfo:Has("dynmaxablsessions") and oSessInfo:GetType("dynmaxablsessions") eq JsonDataType:Number then
-                            put unformatted substitute("~tDynMax ABL Sessions:~t&1",
-                                                       FormatIntAsNumber(oSessInfo:GetInteger("dynmaxablsessions"))) skip.
+                    /* Should be the current calculated maximum # of ABL Sessions which can be started/utilized. */
+                    if oSessInfo:Has("dynmaxablsessions") and oSessInfo:GetType("dynmaxablsessions") eq JsonDataType:Number then
+                        put unformatted substitute("~tDynMax ABL Sessions:~t&1",
+                                                   FormatIntAsNumber(oSessInfo:GetInteger("dynmaxablsessions"))) skip.
 
-                        /* This should represent the total number of ABL Sessions started, not to exceed the Dynamic Max. */
-                        if oSessInfo:Has("numABLSessions") and oSessInfo:GetType("numABLSessions") eq JsonDataType:Number then
-                            put unformatted substitute("~t Total ABL Sessions:~t&1",
-                                                       FormatIntAsNumber(oSessInfo:GetInteger("numABLSessions"))) skip.
+                    /* This should represent the total number of ABL Sessions started, not to exceed the Dynamic Max. */
+                    if oSessInfo:Has("numABLSessions") and oSessInfo:GetType("numABLSessions") eq JsonDataType:Number then
+                        put unformatted substitute("~t Total ABL Sessions:~t&1",
+                                                   FormatIntAsNumber(oSessInfo:GetInteger("numABLSessions"))) skip.
 
-                        /* This should be the number of ABL Sessions available to execute ABL code for this agent. */
-                        if oSessInfo:Has("numAvailableSessions") and oSessInfo:GetType("numAvailableSessions") eq JsonDataType:Number then
-                            put unformatted substitute("~t Avail ABL Sessions:~t&1",
-                                                       FormatIntAsNumber(oSessInfo:GetInteger("numAvailableSessions"))) skip.
-                    end.
+                    /* This should be the number of ABL Sessions available to execute ABL code for this agent. */
+                    if oSessInfo:Has("numAvailableSessions") and oSessInfo:GetType("numAvailableSessions") eq JsonDataType:Number then
+                        put unformatted substitute("~t Avail ABL Sessions:~t&1",
+                                                   FormatIntAsNumber(oSessInfo:GetInteger("numAvailableSessions"))) skip.
                 end.
             end. /* agent manager properties */
         &ENDIF
@@ -516,7 +513,10 @@ procedure GetAgents:
                     assign ttAgentSession.runningTime = interval(dCurrent, dStart, "milliseconds") when (dCurrent ne ? and dStart ne ? and dCurrent ge dStart).
 
                     define variable iSessions as integer no-undo.
-                    assign iSessions = oClSess:Length.
+
+                    if valid-object(oClSess) then
+                        assign iSessions = oClSess:Length.
+
                     if iSessions gt 0 then
                     do iLoop = 1 to iSessions
                     on error undo, leave:
@@ -571,64 +571,64 @@ procedure GetSessions:
     if valid-object(oJsonResp) and oJsonResp:Has("getMetrics") and oJsonResp:GetType("getMetrics") eq JsonDataType:Object then
     do on error undo, leave:
         oTemp = oJsonResp:GetJsonObject("getMetrics").
-
+message string(oTemp:GetJsonText()).
         /* Total number of requests to the session. */
-        if oTemp:Has("requests") and oTemp:GetType("requests") eq JsonDataType:Number then
+        if oTemp:Has("requests") and oTemp:GetType("requests") eq JsonDataType:String then
             put unformatted substitute("~t       # Requests to Session:  &1",
-                                        FormatLongNumber(string(oTemp:GetInteger("requests")), false)) skip.
+                                        FormatLongNumber(oTemp:GetCharacter("requests"), false)) skip.
 
         /* Number of times a response was read by the session from the agent. */
         /* Number of errors that occurred while reading a response from the agent. */
-        if oTemp:Has("reads") and oTemp:GetType("reads") eq JsonDataType:Number and
-           oTemp:Has("readErrors") and oTemp:GetType("readErrors") eq JsonDataType:Number then
+        if oTemp:Has("reads") and oTemp:GetType("reads") eq JsonDataType:String and
+           oTemp:Has("readErrors") and oTemp:GetType("readErrors") eq JsonDataType:String then
             put unformatted substitute("~t      # Agent Responses Read:  &1 (&2 Errors)",
-                                        FormatLongNumber(string(oTemp:GetInteger("reads")), false),
-                                        trim(string(oTemp:GetInteger("readErrors"), ">>>,>>>,>>9"))) skip.
+                                        FormatLongNumber(oTemp:GetCharacter("reads"), false),
+                                        trim(oTemp:GetCharacter("readErrors"), ">>>,>>>,>>9")) skip.
 
         /* Minimum, maximum, average times to read a response from the agent. */
-        if oTemp:Has("minAgentReadTime") and oTemp:GetType("minAgentReadTime") eq JsonDataType:Number and
-           oTemp:Has("maxAgentReadTime") and oTemp:GetType("maxAgentReadTime") eq JsonDataType:Number and
-           oTemp:Has("avgAgentReadTime") and oTemp:GetType("avgAgentReadTime") eq JsonDataType:Number then
+        if oTemp:Has("minAgentReadTime") and oTemp:GetType("minAgentReadTime") eq JsonDataType:String and
+           oTemp:Has("maxAgentReadTime") and oTemp:GetType("maxAgentReadTime") eq JsonDataType:String and
+           oTemp:Has("avgAgentReadTime") and oTemp:GetType("avgAgentReadTime") eq JsonDataType:String then
             put unformatted substitute("~tAgent Read Time (Mn, Mx, Av): &1 / &2 / &3",
-                                        FormatMsTime(oTemp:GetInteger("minAgentReadTime")),
-                                        FormatMsTime(oTemp:GetInteger("maxAgentReadTime")),
-                                        FormatMsTime(oTemp:GetInteger("avgAgentReadTime"))) skip.
+                                        FormatMsTime(integer(oTemp:GetCharacter("minAgentReadTime"))),
+                                        FormatMsTime(integer(oTemp:GetCharacter("maxAgentReadTime"))),
+                                        FormatMsTime(integer(oTemp:GetCharacter("avgAgentReadTime")))) skip.
 
         /* Number of times requests were written by the session on the agent. */
         /* Number of errors that occurred during writing a request to the agent. */
-        if oTemp:Has("writes") and oTemp:GetType("writes") eq JsonDataType:Number and
-           oTemp:Has("writeErrors") and oTemp:GetType("writeErrors") eq JsonDataType:Number  then
+        if oTemp:Has("writes") and oTemp:GetType("writes") eq JsonDataType:String and
+           oTemp:Has("writeErrors") and oTemp:GetType("writeErrors") eq JsonDataType:String  then
             put unformatted substitute("~t    # Agent Requests Written:  &1 (&2 Errors)",
-                                        FormatLongNumber(string(oTemp:GetInteger("writes")), false),
-                                        trim(string(oTemp:GetInteger("writeErrors"), ">>>,>>>,>>9"))) skip.
+                                        FormatLongNumber(oTemp:GetCharacter("writes"), false),
+                                        trim(oTemp:GetCharacter("writeErrors"), ">>>,>>>,>>9")) skip.
 
         /* Number of clients connected at a particular time. */
         /* Maximum number of concurrent clients. */
-        if oTemp:Has("concurrentConnectedClients") and oTemp:GetType("concurrentConnectedClients") eq JsonDataType:Number and
-           oTemp:Has("maxConcurrentClients") and oTemp:GetType("maxConcurrentClients") eq JsonDataType:Number then
+        if oTemp:Has("concurrentConnectedClients") and oTemp:GetType("concurrentConnectedClients") eq JsonDataType:String and
+           oTemp:Has("maxConcurrentClients") and oTemp:GetType("maxConcurrentClients") eq JsonDataType:String then
             put unformatted substitute("~tConcurrent Connected Clients:  &1 (Max: &2)",
-                                        FormatLongNumber(string(oTemp:GetInteger("concurrentConnectedClients")), false),
-                                        trim(string(oTemp:GetInteger("maxConcurrentClients"), ">>>,>>>,>>9"))) skip.
+                                        FormatLongNumber(oTemp:GetCharacter("concurrentConnectedClients"), false),
+                                        trim(oTemp:GetCharacter("maxConcurrentClients"), ">>>,>>>,>>9")) skip.
 
         /* Total time that reserved ABL sessions had to wait before executing. */
-        if oTemp:Has("totReserveABLSessionWaitTime") and oTemp:GetType("totReserveABLSessionWaitTime") eq JsonDataType:Number then
-            put unformatted substitute("~tTot. Reserve ABLSession Wait: &1", FormatMsTime(oTemp:GetInteger("totReserveABLSessionWaitTime"))) skip.
+        if oTemp:Has("totReserveABLSessionWaitTime") and oTemp:GetType("totReserveABLSessionWaitTime") eq JsonDataType:String then
+            put unformatted substitute("~tTot. Reserve ABLSession Wait: &1", FormatMsTime(integer(oTemp:GetCharacter("totReserveABLSessionWaitTime")))) skip.
 
         /* Number of waits that occurred while reserving a local ABL session. */
-        if oTemp:Has("numReserveABLSessionWaits") and oTemp:GetType("numReserveABLSessionWaits") eq JsonDataType:Number then
-            put unformatted substitute("~t  # Reserve ABLSession Waits:  &1", FormatLongNumber(string(oTemp:GetInteger("numReserveABLSessionWaits")), false)) skip.
+        if oTemp:Has("numReserveABLSessionWaits") and oTemp:GetType("numReserveABLSessionWaits") eq JsonDataType:String then
+            put unformatted substitute("~t  # Reserve ABLSession Waits:  &1", FormatLongNumber(oTemp:GetCharacter("numReserveABLSessionWaits"), false)) skip.
 
         /* Average time that a reserved ABL session had to wait before executing. */
-        if oTemp:Has("avgReserveABLSessionWaitTime") and oTemp:GetType("avgReserveABLSessionWaitTime") eq JsonDataType:Number then
-            put unformatted substitute("~tAvg. Reserve ABLSession Wait: &1", FormatMsTime(oTemp:GetInteger("avgReserveABLSessionWaitTime"))) skip.
+        if oTemp:Has("avgReserveABLSessionWaitTime") and oTemp:GetType("avgReserveABLSessionWaitTime") eq JsonDataType:String then
+            put unformatted substitute("~tAvg. Reserve ABLSession Wait: &1", FormatMsTime(integer(oTemp:GetCharacter("avgReserveABLSessionWaitTime")))) skip.
 
         /* Maximum time that a reserved ABL session had to wait before executing. */
-        if oTemp:Has("maxReserveABLSessionWaitTime") and oTemp:GetType("maxReserveABLSessionWaitTime") eq JsonDataType:Number then
-            put unformatted substitute("~tMax. Reserve ABLSession Wait: &1", FormatMsTime(oTemp:GetInteger("maxReserveABLSessionWaitTime"))) skip.
+        if oTemp:Has("maxReserveABLSessionWaitTime") and oTemp:GetType("maxReserveABLSessionWaitTime") eq JsonDataType:String then
+            put unformatted substitute("~tMax. Reserve ABLSession Wait: &1", FormatMsTime(integer(oTemp:GetCharacter("maxReserveABLSessionWaitTime")))) skip.
 
         /* Number of timeouts that occurred while reserving a local ABL session. */
-        if oTemp:Has("numReserveABLSessionTimeouts") and oTemp:GetType("numReserveABLSessionTimeouts") eq JsonDataType:Number then
-            put unformatted substitute("~t# Reserve ABLSession Timeout:  &1", FormatLongNumber(string(oTemp:GetInteger("numReserveABLSessionTimeouts")), false)) skip.
+        if oTemp:Has("numReserveABLSessionTimeouts") and oTemp:GetType("numReserveABLSessionTimeouts") eq JsonDataType:String then
+            put unformatted substitute("~t# Reserve ABLSession Timeout:  &1", FormatLongNumber(oTemp:GetCharacter("numReserveABLSessionTimeouts"), false)) skip.
     end. /* response - SessionMetrics */
 
     /* Parse through and display statistics from the Client Sessions API as obtained previously. */

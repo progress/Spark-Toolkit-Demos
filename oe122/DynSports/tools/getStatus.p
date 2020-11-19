@@ -540,7 +540,10 @@ procedure GetAgents:
                     assign ttAgentSession.runningTime = interval(dCurrent, dStart, "milliseconds") when (dCurrent ne ? and dStart ne ? and dCurrent ge dStart).
 
                     define variable iSessions as integer no-undo.
-                    assign iSessions = oClSess:Length.
+
+                    if valid-object(oClSess) then
+                        assign iSessions = oClSess:Length.
+
                     if iSessions gt 0 then
                     do iLoop = 1 to iSessions
                     on error undo, leave:
