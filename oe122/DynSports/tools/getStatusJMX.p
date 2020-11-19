@@ -89,7 +89,7 @@ oQueryString:Put("AgentManagerProperties", '~{"O":"PASOE:type=OEManager,name=Age
 oQueryString:Put("Agents", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgents","&1"]}').
 oQueryString:Put("DynamicSessionLimit", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getDynamicABLSessionLimit","&1","&2"]}').
 oQueryString:Put("AgentMetrics", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgentMetrics","&1"]}').
-oQueryString:Put("AgentSessions", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getSessionMetrics","<id>"]}').
+oQueryString:Put("AgentSessions", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getSessionMetrics","&1"]}').
 oQueryString:Put("SessionMetrics", '~{"O":"PASOE:type=OEManager,name=SessionManager","M":["getMetrics","&1"]}').
 oQueryString:Put("ClientSessions", '~{"O":"PASOE:type=OEManager,name=SessionManager","M":["getSessions","&1"]}').
 
@@ -189,7 +189,6 @@ function RunQuery returns JsonObject ( input pcQueryString as character ):
 
         /* Output the modified string to the temporary query file. */
         assign oQuery = cast(oParser:Parse(pcQueryString), JsonObject).
-message pcQueryString.
         oQuery:WriteFile(cQueryPath). /* Send JSON data to disk. */
 
         /* Create the query for obtaining agents, and invoke the JMX command. */
@@ -200,8 +199,7 @@ message pcQueryString.
         if file-info:full-pathname ne ? then do:
             if file-info:file-size eq 0 then
                 undo, throw new Progress.Lang.AppError(substitute("Encountered Empty File: &1", cOutPath), 0).
-message cOutPath.
-
+message pcQueryString ":" cOutPath.
             return cast(oParser:ParseFile(cOutPath), JsonObject).
         end. /* File Exists */
     end.
@@ -433,8 +431,8 @@ procedure GetAgents:
             /* Get the dynamic value for the available sessions of this agent (available only in 12.2.0 and later). */
             assign cQueryString = substitute(oQueryString:Get("DynamicSessionLimit"), cAblApp, ttAgent.agentPID).
             assign oJsonResp = RunQuery(cQueryString).
-            if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-                oResult = oJsonResp:GetJsonObject("result").
+            if valid-object(oJsonResp) and oJsonResp:Has("getDynamicABLSessionLimit") and oJsonResp:GetType("getDynamicABLSessionLimit") eq JsonDataType:Object then do:
+                oResult = oJsonResp:GetJsonObject("getDynamicABLSessionLimit").
                 if oResult:Has("AgentSessionInfo") and oResult:GetType("AgentSessionInfo") eq JsonDataType:Array then do:
                     oSessions = oResult:GetJsonArray("AgentSessionInfo").
                     if oSessions:Length eq 1 and oSessions:GetJsonObject(1):Has("ABLOutput") and
@@ -461,14 +459,14 @@ procedure GetAgents:
         &ENDIF
 
             /* Get metrics about this particular agent. */
-            assign cQueryString = substitute(oQueryString:Get("AgentMetrics"), cAblApp, ttAgent.agentPID).
+            assign cQueryString = substitute(oQueryString:Get("AgentMetrics"), ttAgent.agentPID).
             assign oJsonResp = RunQuery(cQueryString).
-            if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then
+            if valid-object(oJsonResp) and oJsonResp:Has("getAgentMetrics") and oJsonResp:GetType("getAgentMetrics") eq JsonDataType:Object then
             do on error undo, leave:
-                if oJsonResp:GetJsonObject("result"):Has("AgentStatHist") and
-                   oJsonResp:GetJsonObject("result"):GetType("AgentStatHist") eq JsonDataType:Array and
-                   oJsonResp:GetJsonObject("result"):GetJsonArray("AgentStatHist"):Length ge 1 then do:
-                    oTemp = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentStatHist"):GetJsonObject(1).
+                if oJsonResp:GetJsonObject("getAgentMetrics"):Has("AgentStatHist") and
+                   oJsonResp:GetJsonObject("getAgentMetrics"):GetType("AgentStatHist") eq JsonDataType:Array and
+                   oJsonResp:GetJsonObject("getAgentMetrics"):GetJsonArray("AgentStatHist"):Length ge 1 then do:
+                    oTemp = oJsonResp:GetJsonObject("getAgentMetrics"):GetJsonArray("AgentStatHist"):GetJsonObject(1).
 
                     if oTemp:Has("OpenConnections") and oTemp:GetType("OpenConnections") eq JsonDataType:Number then
                         put unformatted substitute("~t   Open Connections:~t&1",
@@ -482,14 +480,14 @@ procedure GetAgents:
             end. /* response */
 
             /* Get sessions and count non-idle states. */
-            assign cQueryString = substitute(oQueryString:Get("AgentSessions"), cAblApp, ttAgent.agentPID).
+            assign cQueryString = substitute(oQueryString:Get("AgentSessions"), ttAgent.agentPID).
             assign oJsonResp = RunQuery(cQueryString).
-            if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then
+            if valid-object(oJsonResp) and oJsonResp:Has("getSessionMetrics") and oJsonResp:GetType("getSessionMetrics") eq JsonDataType:Object then
             do on error undo, leave:
                 put unformatted "~n~tSESSION ID~tSTATE~t~tSTARTED~t~t~t~t~tMEMORY~tBOUND/ACTIVE SESSION" skip.
 
-                if oJsonResp:GetJsonObject("result"):Has("AgentSession") then
-                    oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentSession").
+                if oJsonResp:GetJsonObject("getSessionMetrics"):Has("AgentSession") then
+                    oSessions = oJsonResp:GetJsonObject("getSessionMetrics"):GetJsonArray("AgentSession").
                 else
                     oSessions = new JsonArray().
 
