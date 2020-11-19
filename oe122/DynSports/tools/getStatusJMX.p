@@ -571,7 +571,7 @@ procedure GetSessions:
     if valid-object(oJsonResp) and oJsonResp:Has("getMetrics") and oJsonResp:GetType("getMetrics") eq JsonDataType:Object then
     do on error undo, leave:
         oTemp = oJsonResp:GetJsonObject("getMetrics").
-message string(oTemp:GetJsonText()).
+
         /* Total number of requests to the session. */
         if oTemp:Has("requests") and oTemp:GetType("requests") eq JsonDataType:String then
             put unformatted substitute("~t       # Requests to Session:  &1",
