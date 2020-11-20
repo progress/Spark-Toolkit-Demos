@@ -127,14 +127,17 @@ for each ttAgentSession exclusive-lock
       by ttAgentSession.agentPID
       by ttAgentSession.sessionID:
     /* If session is IDLE and total runtime has exceeded limits, stop the session. */
-    if ttAgentSession.sessionState eq "IDLE" and (ttAgentSession.runningTime / 1000) ge 1 then do:
-        put unformatted substitute("Session &1 is IDLE and beyond runtime limits, terminating...", ttAgentSession.sessionID) skip.
+    if ttAgentSession.sessionState eq "IDLE" and
+       ((ttAgentSession.runningTime / 1000) ge iMaxSessTime or (ttAgentSession.memoryBytes / 1024) ge iMaxSessMem) then do:
+        put unformatted substitute("Session &1 is IDLE and beyond set limits, terminating...", ttAgentSession.sessionID).
 
         assign cQueryString = substitute(oQueryString:Get("StopSession"), ttAgentSession.agentPID, ttAgentSession.sessionID).
         assign oJsonResp = RunQuery(cQueryString).
         if valid-object(oJsonResp) and oJsonResp:Has("terminateABLSession") and oJsonResp:GetType("terminateABLSession") eq JsonDataType:Boolean then do:
-            if oJsonResp:GetLogical("terminateABLSession") eq true then
+            if oJsonResp:GetLogical("terminateABLSession") eq true then do:
                 delete ttAgentSession no-error.
+                put unformatted "Done." skip.
+            end.
             else
                 put unformatted "Session termination failed." skip.
         end.
@@ -147,13 +150,15 @@ for each ttAgent exclusive-lock
    where not can-find(first ttAgentSession where ttAgentSession.agentPID eq ttAgent.agentPID no-lock):
     /* If there are no sessions for this agent and we are meant to stop empty agents, terminate now. */
     if lStopAgent then do:
-        put unformatted substitute("Agent &1 has no running sessions, terminating...", ttAgent.agentPID) skip.
+        put unformatted substitute("Agent &1 has no running sessions, terminating...", ttAgent.agentPID).
 
         assign cQueryString = substitute(oQueryString:Get("StopAgent"), ttAgent.agentPID).
         assign oJsonResp = RunQuery(cQueryString).
-        if valid-object(oJsonResp) and oJsonResp:Has("terminateAgent") and oJsonResp:GetType("terminateAgent") eq JsonDataType:Boolean then do:
-            if oJsonResp:GetLogical("terminateAgent") eq true then
+        if valid-object(oJsonResp) and oJsonResp:Has("stopAgent") and oJsonResp:GetType("stopAgent") eq JsonDataType:Boolean then do:
+            if oJsonResp:GetLogical("stopAgent") eq true then do:
                 delete ttAgent no-error.
+                put unformatted "Done." skip.
+            end.
             else
                 put unformatted "Agent termination failed." skip.
         end.
@@ -254,7 +259,7 @@ function RunQuery returns JsonObject ( input pcQueryString as character ):
         return new JsonObject().
     end catch.
     finally:
-/*        os-delete value(cOutPath).*/
+        os-delete value(cOutPath).
         delete object oParser no-error.
     end finally.
 end function. /* RunQuery */
