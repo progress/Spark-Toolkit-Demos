@@ -4,6 +4,8 @@
  *  Parameter Default/Allowed
  *   CatalinaBase [C:\OpenEdge\WRK\oepas1]
  *   ABL App  [oepas1]
+ *
+ * https://progresssoftware.atlassian.net/browse/OCTA-31101
  */
 
 using OpenEdge.Core.JsonDataTypeEnum.
@@ -24,24 +26,25 @@ define variable cOutFile      as character       no-undo.
 define variable cOutDate      as character       no-undo.
 define variable cQueryString  as character       no-undo.
 define variable oJsonResp     as JsonObject      no-undo.
-define variable oResult       as JsonObject      no-undo.
 define variable oTemp         as JsonObject      no-undo.
-define variable oClSess       as JsonArray       no-undo.
 define variable oQueryString  as StringStringMap no-undo.
-define variable oAgentMap     as StringStringMap no-undo.
 define variable iLoop         as integer         no-undo.
 define variable iLoop2        as integer         no-undo.
-define variable iLoop3        as integer         no-undo.
-define variable iCollect      as integer         no-undo.
-define variable cBound        as character       no-undo.
 define variable cOEJMXBinary  as character       no-undo.
 define variable cCatalinaBase as character       no-undo.
 define variable cAblApp       as character       no-undo initial "oepas1".
+define variable iMaxAgentTime as int64           no-undo.
+define variable iMaxSessTime  as int64           no-undo.
+define variable iMaxAgentMem  as int64           no-undo.
+define variable iMaxSessMem   as int64           no-undo.
+define variable lStopAgent    as logical         no-undo.
 
 define temp-table ttAgent no-undo
     field agentID     as character
     field agentPID    as character
     field agentState  as character
+    field startTime   as datetime-tz
+    field runningTime as int64
     field memoryBytes as int64
     .
 
@@ -65,18 +68,25 @@ if num-entries(session:parameter) ge 6 then
     assign
         cCatalinaBase = entry(1, session:parameter)
         cAblApp       = entry(2, session:parameter)
+        iMaxAgentTime = int64(entry(3, session:parameter))
+        iMaxSessTime  = int64(entry(4, session:parameter))
+        iMaxAgentMem  = int64(entry(5, session:parameter))
+        iMaxSessMem   = int64(entry(6, session:parameter))
+        lStopAgent    = logical(entry(7, session:parameter))
         .
 else
     assign
         cCatalinaBase = dynamic-function("getParameter" in source-procedure, "CatalinaBase") when dynamic-function("getParameter" in source-procedure, "CatalinaBase") gt ""
         cAblApp       = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
+        iMaxAgentTime = int64(dynamic-function("getParameter" in source-procedure, "MaxAgentRuntime")) when dynamic-function("getParameter" in source-procedure, "MaxAgentRuntime") gt ""
+        iMaxSessTime  = int64(dynamic-function("getParameter" in source-procedure, "MaxSessionRuntime")) when dynamic-function("getParameter" in source-procedure, "MaxSessionRuntime") gt ""
+        iMaxAgentMem  = int64(dynamic-function("getParameter" in source-procedure, "MaxAgentMemKB")) when dynamic-function("getParameter" in source-procedure, "MaxAgentMemKB") gt ""
+        iMaxSessMem   = int64(dynamic-function("getParameter" in source-procedure, "MaxSessionMemKB")) when dynamic-function("getParameter" in source-procedure, "MaxSessionMemKB") gt ""
+        lStopAgent    = can-do("true,yes,1", dynamic-function("getParameter" in source-procedure, "StopEmptyAgent")) when dynamic-function("getParameter" in source-procedure, "StopEmptyAgent") gt ""
         .
 
 assign cOutDate = replace(iso-date(now), ":", "_").
-assign
-    oQueryString = new StringStringMap()
-    oAgentMap = new StringStringMap()
-    .
+assign oQueryString = new StringStringMap().
 
 /* Set the name of the OEJMX binary based on operating system. */
 assign cOEJMXBinary = if opsys eq "WIN32" then "oejmx.bat" else "oejmx.sh".
@@ -85,6 +95,8 @@ assign cOEJMXBinary = if opsys eq "WIN32" then "oejmx.bat" else "oejmx.sh".
 oQueryString:Put("Agents", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgents","&1"]}').
 oQueryString:Put("AgentMetrics", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgentMetrics","&1"]}').
 oQueryString:Put("AgentSessions", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getSessionMetrics","&1"]}').
+oQueryString:Put("StopAgent", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["stopAgent","&1",10,20]}').
+oQueryString:Put("StopSession", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["terminateABLSession","&1",&2,1]}').
 
 function InvokeJMX returns character ( input pcQueryPath as character ) forward.
 function RunQuery returns JsonObject ( input pcHttpUrl as character ) forward.
@@ -100,12 +112,55 @@ message substitute("Starting output to file: &1 ...", cOutFile).
 output to value(cOutFile).
 
 /* Start with some basic header information for this report. */
-put unformatted substitute("OpenEdge Release: &1", proversion(1)) skip.
-put unformatted substitute("Utility Executed: &1", iso-date(now)) skip.
-put unformatted substitute("  PASOE Instance: &1", cCatalinaBase) skip.
+put unformatted substitute(" OpenEdge Release: &1", proversion(1)) skip.
+put unformatted substitute(" Utility Executed: &1", iso-date(now)) skip.
+put unformatted substitute("   PASOE Instance: &1", cCatalinaBase) skip.
+put unformatted substitute("Max Agent Runtime: &1", FormatMsTime(iMaxAgentTime * 1000)) skip.
+put unformatted substitute("Max Sess. Runtime: &1", FormatMsTime(iMaxSessTime * 1000)) skip.
+put unformatted substitute(" Max Agent Memory: &1 KB", FormatMemory(iMaxAgentMem * 1024, false)) skip.
+put unformatted substitute(" Max Sess. Memory: &1 KB", FormatMemory(iMaxSessMem * 1024, false)) skip.
 
 /* Gather the necessary metrics. */
 run GetAgents.
+
+for each ttAgentSession exclusive-lock
+      by ttAgentSession.agentPID
+      by ttAgentSession.sessionID:
+    /* If session is IDLE and total runtime has exceeded limits, stop the session. */
+    if ttAgentSession.sessionState eq "IDLE" and (ttAgentSession.runningTime / 1000) ge 1 then do:
+        put unformatted substitute("Session &1 is IDLE and beyond runtime limits, terminating...", ttAgentSession.sessionID) skip.
+
+        assign cQueryString = substitute(oQueryString:Get("StopSession"), ttAgentSession.agentPID, ttAgentSession.sessionID).
+        assign oJsonResp = RunQuery(cQueryString).
+        if valid-object(oJsonResp) and oJsonResp:Has("terminateABLSession") and oJsonResp:GetType("terminateABLSession") eq JsonDataType:Boolean then do:
+            if oJsonResp:GetLogical("terminateABLSession") eq true then
+                delete ttAgentSession no-error.
+            else
+                put unformatted "Session termination failed." skip.
+        end.
+        else
+            put unformatted "Error during session termination." skip.
+    end. /* IDLE and Exceeds Runtime */
+end. /* for each ttAgentSession */
+
+for each ttAgent exclusive-lock
+   where not can-find(first ttAgentSession where ttAgentSession.agentPID eq ttAgent.agentPID no-lock):
+    /* If there are no sessions for this agent and we are meant to stop empty agents, terminate now. */
+    if lStopAgent then do:
+        put unformatted substitute("Agent &1 has no running sessions, terminating...", ttAgent.agentPID) skip.
+
+        assign cQueryString = substitute(oQueryString:Get("StopAgent"), ttAgent.agentPID).
+        assign oJsonResp = RunQuery(cQueryString).
+        if valid-object(oJsonResp) and oJsonResp:Has("terminateAgent") and oJsonResp:GetType("terminateAgent") eq JsonDataType:Boolean then do:
+            if oJsonResp:GetLogical("terminateAgent") eq true then
+                delete ttAgent no-error.
+            else
+                put unformatted "Agent termination failed." skip.
+        end.
+        else
+            put unformatted "Error during agent termination." skip.
+    end. /* lStopAgent */  
+end. /* for each ttAgent */
 
 finally:
     output close.
@@ -199,7 +254,7 @@ function RunQuery returns JsonObject ( input pcQueryString as character ):
         return new JsonObject().
     end catch.
     finally:
-        os-delete value(cOutPath).
+/*        os-delete value(cOutPath).*/
         delete object oParser no-error.
     end finally.
 end function. /* RunQuery */
@@ -246,9 +301,9 @@ end function. /* FormatIntAsNumber */
 
 /* Initial URL to obtain a list of all agents for an ABL Application. */
 procedure GetAgents:
+    define variable iTotAgent as integer    no-undo.
     define variable iTotSess  as integer    no-undo.
     define variable iBusySess as integer    no-undo.
-    define variable dStart    as datetime   no-undo.
     define variable dCurrent  as datetime   no-undo.
     define variable oAgents   as JsonArray  no-undo.
     define variable oAgent    as JsonObject no-undo.
@@ -262,13 +317,18 @@ procedure GetAgents:
     assign cQueryString = substitute(oQueryString:Get("Agents"), cAblApp).
     assign oJsonResp = RunQuery(cQueryString).
     if valid-object(oJsonResp) and oJsonResp:Has("getAgents") and oJsonResp:GetType("getAgents") eq JsonDataType:Object then do:
-        oAgents = oJsonResp:GetJsonObject("getAgents"):GetJsonArray("agents").
+        if oJsonResp:GetJsonObject("getAgents"):Has("agents") and oJsonResp:GetJsonObject("getAgents"):GetType("agents") eq JsonDataType:Array then
+            oAgents = oJsonResp:GetJsonObject("getAgents"):GetJsonArray("agents").
+        else
+            oAgents = new JsonArray().
+
+        assign iTotAgent = oAgents:Length.
 
         if oAgents:Length eq 0 then
             put unformatted "~nNo agents running" skip.
         else
         AGENTBLK:
-        do iLoop = 1 to oAgents:Length
+        do iLoop = 1 to iTotAgent
         on error undo, next AGENTBLK:
             oAgent = oAgents:GetJsonObject(iLoop).
 
@@ -277,10 +337,8 @@ procedure GetAgents:
                 ttAgent.agentID    = oAgent:GetCharacter("agentId")
                 ttAgent.agentPID   = oAgent:GetCharacter("pid")
                 ttAgent.agentState = oAgent:GetCharacter("state")
+                ttAgent.startTime  = now /* Placeholder */
                 .
-
-            /* Provides a simple means of lookup later to relate agentID to PID. */
-            oAgentMap:Put(ttAgent.agentID, ttAgent.agentPID).
 
             release ttAgent no-error.
         end. /* iLoop - Agents */
@@ -320,7 +378,7 @@ procedure GetAgents:
             assign oJsonResp = RunQuery(cQueryString).
             if valid-object(oJsonResp) and oJsonResp:Has("getSessionMetrics") and oJsonResp:GetType("getSessionMetrics") eq JsonDataType:Object then
             do on error undo, leave:
-                put unformatted "~n~tSESSION ID~tSTATE~t~tSTARTED~t~t~t~t~tMEMORY~tBOUND/ACTIVE SESSION" skip.
+                put unformatted "~n~tSESSION ID~tSTATE~t~tSTARTED~t~t~t~tELAPSED~t~tMEMORY" skip.
 
                 if oJsonResp:GetJsonObject("getSessionMetrics"):Has("AgentSession") then
                     oSessions = oJsonResp:GetJsonObject("getSessionMetrics"):GetJsonArray("AgentSession").
@@ -344,46 +402,33 @@ procedure GetAgents:
                         ttAgentSession.sessionState = oSessions:GetJsonObject(iLoop2):GetCharacter("SessionState")
                         ttAgentSession.startTime    = oSessions:GetJsonObject(iLoop2):GetDatetimeTZ("StartTime")
                         ttAgentSession.memoryBytes  = oSessions:GetJsonObject(iLoop2):GetInt64("SessionMemory")
-                        dStart                      = datetime(date(ttAgentSession.startTime), mtime(ttAgentSession.startTime))
                         ttAgent.memoryBytes         = ttAgent.memoryBytes + ttAgentSession.memoryBytes
                         .
 
-                    /* Attempt to calculate the time this session has been running, though we don't have a current timestamp directly from the server. */
-                    assign ttAgentSession.runningTime = interval(dCurrent, dStart, "milliseconds") when (dCurrent ne ? and dStart ne ? and dCurrent ge dStart).
+                    /* Take the earliest time of any ABL Session as the "start" of the agent itself. */
+                    if ttAgentSession.startTime le ttAgent.startTime then
+                        assign ttAgent.startTime = ttAgentSession.startTime.
 
-                    define variable iSessions as integer no-undo.
+                    /* Attempt to calculate the time this agent has been running, using the current time from the server. */
+                    assign ttAgent.runningTime = interval(dCurrent, datetime(date(ttAgent.startTime), mtime(ttAgent.startTime)), "milliseconds").
 
-                    if valid-object(oClSess) then
-                        assign iSessions = oClSess:Length.
+                    /* Attempt to calculate the time this session has been running, using the current time from the server. */
+                    assign ttAgentSession.runningTime = interval(dCurrent, datetime(date(ttAgentSession.startTime), mtime(ttAgentSession.startTime)), "milliseconds").
 
-                    if iSessions gt 0 then
-                    do iLoop = 1 to iSessions
-                    on error undo, leave:
-                        assign oTemp = oClSess:GetJsonObject(iLoop).
-
-                        if oTemp:Has("bound") and oTemp:GetLogical("bound") and
-                           oTemp:GetCharacter("agentID") eq ttAgent.agentID and
-                           integer(oTemp:GetCharacter("ablSessionID")) eq oSessions:GetJsonObject(iLoop2):GetInteger("SessionId") then
-                            assign
-                                ttAgentSession.boundSession = oTemp:GetCharacter("sessionID")
-                                ttAgentSession.boundReqID   = oTemp:GetCharacter("requestID")
-                                .
-                    end. /* iLoop - iSessions */
-
-                    put unformatted substitute("~t~t&1~t&2~t&3 &4 KB~t&5 &6",
+                    put unformatted substitute("~t~t&1~t&2~t&3~t&4 &5 KB",
                                                 string(ttAgentSession.sessionID, ">>>9"),
                                                 string(ttAgentSession.sessionState, "x(10)"),
                                                 ttAgentSession.startTime,
-                                                FormatMemory(ttAgentSession.memoryBytes, false),
-                                                (if ttAgentSession.boundSession gt "" then ttAgentSession.boundSession else ""),
-                                                (if ttAgentSession.boundReqID gt "" then "[" + ttAgentSession.boundReqID + "]" else "")) skip.
+                                                FormatMsTime(ttAgentSession.runningTime),
+                                                FormatMemory(ttAgentSession.memoryBytes, false)) skip.
 
                     release ttAgentSession no-error.
                 end. /* iLoop2 - oSessions */
 
                 put unformatted substitute("~tActive Agent-Sessions: &1 of &2 (&3% Busy)",
                                            iBusySess, iTotSess, if iTotSess gt 0 then round((iBusySess / iTotSess) * 100, 1) else 0) skip.
-                put unformatted substitute("~t Approx. Agent Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)).
+                put unformatted substitute("~tApprox. Agent Runtime: &1", FormatMsTime(ttAgent.runningTime)) skip.
+                put unformatted substitute("~t Approx. Agent Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)) skip.
             end. /* response - AgentSessions */
         end. /* agent state = available */
     end. /* for each ttAgent */

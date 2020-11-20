@@ -280,6 +280,14 @@
             </propath>
             <Parameter name="CatalinaBase" value="${pas.path}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+        	<!-- Maximum Runtime in Seconds -->
+        	<Parameter name="MaxAgentRuntime" value="14400"/>
+        	<Parameter name="MaxSessionRuntime" value="7200"/>
+        	<!-- Maximum Memory in Kilobytes -->
+        	<Parameter name="MaxAgentMemKB" value="524288"/>
+        	<Parameter name="MaxSessionMemKB" value="51200"/>
+        	<!-- Agent Control -->
+        	<Parameter name="StopEmptyAgent" value="true"/>
         </PCTRun>
     </target>
 
