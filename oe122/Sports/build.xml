@@ -184,7 +184,19 @@
             </fail>
         </sequential>
     </macrodef>
+    
+    <target name="gencatalog">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
+        <CatalogGeneration srcdir="${basedir}" dlc="${dlcHome}" verbose="true" resources="${basedir}\AppServer\tst.cls" 
+            serviceName="dorest" destdir="${dest.dir}">
+      
+            <!-- Configure Database Info -->
+            <dbinfo name="sports2000" host="localhost" port="4546" />
+            
+        </CatalogGeneration>
+    </target>
+    	
     <target name="annotate">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
