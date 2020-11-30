@@ -590,10 +590,10 @@ procedure GetSessions:
     /* https://docs.progress.com/bundle/pas-for-openedge-management/page/Collect-runtime-metrics.html */
     put unformatted "~nSession Manager Metrics ".
     case iCollect:
-        when 0 then put unformatted "(not Enabled)" skip.
+        when 0 then put unformatted "(Not Enabled)" skip.
         when 1 then put unformatted "(Count-Based)" skip.
         when 2 then put unformatted "(Time-Based)" skip.
-        when 3 then put unformatted "(Count+time)" skip.
+        when 3 then put unformatted "(Count+Time)" skip.
     end case.
 
     /* Get metrics about the session manager which comes from the collectMetrics flag. */
@@ -605,7 +605,7 @@ procedure GetSessions:
 
         /* Total number of requests to the session. */
         if oTemp:Has("requests") and oTemp:GetType("requests") eq JsonDataType:Number then
-            put unformatted substitute("~t       # Requests to session:  &1",
+            put unformatted substitute("~t       # Requests to Session:  &1",
                                         FormatLongNumber(string(oTemp:GetInteger("requests")), false)) skip.
 
         /* Number of times a response was read by the session from the agent. */
@@ -668,7 +668,7 @@ procedure GetSessions:
         put unformatted substitute("~nClient HTTP Sessions: &1", iSessions) skip.
 
         if iSessions gt 0 then do:
-            put unformatted "~tSTATE     SESS STATE  BOUND~tLAST ACCESS / STARTED~t~tELAPSED time  session MODEL    ADAPTER   session ID~t~t~t~t~t~t~tREQUEST ID" skip.
+            put unformatted "~tSTATE     SESS STATE  BOUND~tLAST ACCESS / STARTED~t~tELAPSED TIME  SESSION MODEL    ADAPTER   SESSION ID~t~t~t~t~t~t~tREQUEST ID" skip.
 
             SESSIONBLK:
             do iLoop = 1 to iSessions
