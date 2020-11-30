@@ -217,9 +217,13 @@
     	    <format property="now" pattern="yyyyMMddh_hmmss"/>
     	</tstamp>
 
-		<dirset id="dir.contents" dir="${pas.path}" includes="**/*"/> 
+    	<echo file="${basedir}/file_listing.txt">${pas.path}${line.separator}</echo>
+    	<fileset id="dir.contents" dir="${pas.path}" includes="**/*"/> 
 		<property name="prop.dir.contents" refid="dir.contents"/>
-		<echo file="${basedir}/file_listing.txt">${prop.dir.contents}</echo>
+    	<echo file="${basedir}/file_listing.txt" append="true">${prop.dir.contents}</echo>
+    	<replaceregexp file="${basedir}/file_listing.txt" flags="g" match="\;" byline="true">
+    	   <substitution expression="${line.separator}"/>
+    	</replaceregexp>
 
         <!-- Create a zip file with critical files useful for support tickets. -->
         <zip destfile="${basedir}/support_${instance}_${now}.zip">
@@ -231,6 +235,8 @@
         	<zipfileset dir="${pas.path}/logs" includes="**/*" prefix="logs"/>
         	<zipfileset dir="${basedir}" includes="file_listing.txt"/>
         </zip>
+
+    	<delete file="${basedir}/file_listing.txt" verbose="false"/>
     </target>
 	
     <!-- Management Tools -->
