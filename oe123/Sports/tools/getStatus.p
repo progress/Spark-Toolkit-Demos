@@ -53,9 +53,10 @@ define variable cPassword as character       no-undo initial "tomcat".
 define variable cAblApp   as character       no-undo initial "oepas1".
 
 define temp-table ttAgent no-undo
-    field agentID    as character
-    field agentPID   as character
-    field agentState as character
+    field agentID     as character
+    field agentPID    as character
+    field agentState  as character
+    field memoryBytes as int64
     .
 
 define temp-table ttAgentSession no-undo
@@ -64,6 +65,7 @@ define temp-table ttAgentSession no-undo
     field sessionID    as integer
     field sessionState as character
     field startTime    as datetime-tz
+    field runningTime  as int64
     field memoryBytes  as int64
     field boundSession as character
     field boundReqID   as character
@@ -118,7 +120,7 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ) forward
 function FormatDecimal returns character ( input pcValue as character ) forward.
 function FormatLongNumber returns character ( input pcValue as character, input plTrim as logical ) forward.
 function FormatMemory returns character ( input piValue as int64, input plTrim as logical ) forward.
-function FormatMsTime returns character ( input piValue as integer ) forward.
+function FormatMsTime returns character ( input piValue as int64 ) forward.
 function FormatCharAsNumber returns character ( input pcValue as character ) forward.
 function FormatIntAsNumber returns character ( input piValue as integer ) forward.
 
@@ -243,7 +245,7 @@ function FormatMemory returns character ( input piValue as int64, input plTrim a
     return FormatLongNumber(string(round(piValue / 1024, 0)), plTrim).
 end function. /* FormatMemory */
 
-function FormatMsTime returns character ( input piValue as integer):
+function FormatMsTime returns character ( input piValue as int64):
     define variable iMS  as integer no-undo.
     define variable iSec as integer no-undo.
     define variable iMin as integer no-undo.
@@ -340,17 +342,17 @@ procedure GetProperties:
         if oResult:Has("idleConnectionTimeout") and oResult:GetType("idleConnectionTimeout") eq JsonDataType:String then
             put unformatted substitute("~t    Idle Conn. Timeout: &1 ms (&2)",
                                        FormatLongNumber(oResult:GetCharacter("idleConnectionTimeout"), false),
-                                       FormatMsTime(intege(oResult:GetCharacter("idleConnectionTimeout")))) skip.
+                                       FormatMsTime(integer(oResult:GetCharacter("idleConnectionTimeout")))) skip.
 
         if oResult:Has("idleSessionTimeout") and oResult:GetType("idleSessionTimeout") eq JsonDataType:String then
             put unformatted substitute("~t  Idle Session Timeout: &1 ms (&2)",
                                        FormatLongNumber(oResult:GetCharacter("idleSessionTimeout"), false),
-                                       FormatMsTime(intege(oResult:GetCharacter("idleSessionTimeout")))) skip.
+                                       FormatMsTime(integer(oResult:GetCharacter("idleSessionTimeout")))) skip.
 
         if oResult:Has("idleAgentTimeout") and oResult:GetType("idleAgentTimeout") eq JsonDataType:String then
             put unformatted substitute("~t    Idle Agent Timeout: &1 ms (&2)",
                                        FormatLongNumber(oResult:GetCharacter("idleAgentTimeout"), false),
-                                       FormatMsTime(intege(oResult:GetCharacter("idleAgentTimeout")))) skip.
+                                       FormatMsTime(integer(oResult:GetCharacter("idleAgentTimeout")))) skip.
 
         if oResult:Has("idleResourceTimeout") and oResult:GetType("idleResourceTimeout") eq JsonDataType:String then
             put unformatted substitute("~t Idle Resource Timeout: &1 ms (&2)",
@@ -388,8 +390,11 @@ end procedure.
 
 /* Initial URL to obtain a list of all agents for an ABL Application. */
 procedure GetAgents:
+    define variable iTotAgent as integer    no-undo.
     define variable iTotSess  as integer    no-undo.
     define variable iBusySess as integer    no-undo.
+    define variable dStart    as datetime   no-undo.
+    define variable dCurrent  as datetime   no-undo.
     define variable oAgents   as JsonArray  no-undo.
     define variable oAgent    as JsonObject no-undo.
     define variable oSessions as JsonArray  no-undo.
@@ -402,13 +407,18 @@ procedure GetAgents:
     assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
     assign oJsonResp = MakeRequest(cHttpUrl).
     if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-        oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
+        if oJsonResp:GetJsonObject("result"):Has("agents") and oJsonResp:GetJsonObject("result"):GetType("agents") eq JsonDataType:Array then
+            oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
+        else
+            oAgents = new JsonArray().
+
+        assign iTotAgent = oAgents:Length.
 
         if oAgents:Length eq 0 then
             put unformatted "~nNo agents running" skip.
         else
         AGENTBLK:
-        do iLoop = 1 to oAgents:Length
+        do iLoop = 1 to iTotAgent
         on error undo, next AGENTBLK:
             oAgent = oAgents:GetJsonObject(iLoop).
 
@@ -437,7 +447,9 @@ procedure GetAgents:
         end. /* Has OEABLSession */
     end. /* Client Sessions */
 
-    for each ttAgent no-lock:
+    assign dCurrent = datetime(today, mtime). /* Assumes calling program is the same TZ as server! */
+
+    for each ttAgent exclusive-lock:
         /* Gather additional information for each agent after displaying a basic header. */
         put unformatted substitute("~nAgent PID &1: &2", ttAgent.agentPID, ttAgent.agentState) skip.
 
@@ -488,8 +500,10 @@ procedure GetAgents:
                         put unformatted substitute("~t   Open Connections:~t&1",
                                                    FormatIntAsNumber(oTemp:GetInteger("OpenConnections"))) skip.
 
-                    if oTemp:Has("OverheadMemory") and oTemp:GetType("OverheadMemory") eq JsonDataType:Number then
-                        put unformatted substitute("~t    Overhead Memory: &1 KB", FormatMemory(oTemp:GetInt64("OverheadMemory"), true)) skip.
+                    if oTemp:Has("OverheadMemory") and oTemp:GetType("OverheadMemory") eq JsonDataType:Number then do:
+                        assign ttAgent.memoryBytes = oTemp:GetInt64("OverheadMemory").
+                        put unformatted substitute("~t    Overhead Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)) skip.
+                    end.
                 end.
             end. /* response */
 
@@ -522,10 +536,19 @@ procedure GetAgents:
                         ttAgentSession.sessionState = oSessions:GetJsonObject(iLoop2):GetCharacter("SessionState")
                         ttAgentSession.startTime    = oSessions:GetJsonObject(iLoop2):GetDatetimeTZ("StartTime")
                         ttAgentSession.memoryBytes  = oSessions:GetJsonObject(iLoop2):GetInt64("SessionMemory")
+                        dStart                      = datetime(date(ttAgentSession.startTime), mtime(ttAgentSession.startTime))
+                        ttAgent.memoryBytes         = ttAgent.memoryBytes + ttAgentSession.memoryBytes
                         .
 
+                    /* Attempt to calculate the time this session has been running, though we don't have a current timestamp directly from the server. */
+                    assign ttAgentSession.runningTime = interval(dCurrent, dStart, "milliseconds") when (dCurrent ne ? and dStart ne ? and dCurrent ge dStart).
+
                     define variable iSessions as integer no-undo.
-                    assign iSessions = oClSess:Length.
+
+                    assign iSessions = 0.
+                    if valid-object(oClSess) then
+                        assign iSessions = oClSess:Length.
+
                     if iSessions gt 0 then
                     do iLoop = 1 to iSessions
                     on error undo, leave:
@@ -540,7 +563,7 @@ procedure GetAgents:
                                 .
                     end. /* iLoop - iSessions */
 
-                    put unformatted substitute("~t~t&1~t&2~t&3~t&4 KB~t&5 &6",
+                    put unformatted substitute("~t~t&1~t&2~t&3 &4 KB~t&5 &6",
                                                 string(ttAgentSession.sessionID, ">>>9"),
                                                 string(ttAgentSession.sessionState, "x(10)"),
                                                 ttAgentSession.startTime,
@@ -553,6 +576,7 @@ procedure GetAgents:
 
                 put unformatted substitute("~tActive Agent-Sessions: &1 of &2 (&3% Busy)",
 										   iBusySess, iTotSess, if iTotSess gt 0 then round((iBusySess / iTotSess) * 100, 1) else 0) skip.
+				put unformatted substitute("~t Approx. Agent Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)) skip.
             end. /* response - AgentSessions */
         end. /* agent state = available */
     end. /* for each ttAgent */

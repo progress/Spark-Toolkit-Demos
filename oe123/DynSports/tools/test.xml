@@ -10,9 +10,10 @@
         <echo message="Run from a PROENV session or with DLC and DLC/bin in your PATH."/>
         <echo message="${line.separator}Usage Instructions:"/>
         <echo message="${line.separator} proant testAPSV - Run concurrent tests against the APSV transport"/>
-        <echo message="  -Dbad=[true|false] - Run without cleaning up persistent procedure handles (Default: false)"/>
+        <echo message="  -Dbad=[true|false] - Run without cleaning up persistent procedure handles (Default: ${bad})"/>
+		<echo message="  -Dtype=(String) - Type of test to be run on the PAS instance (Default: ${type})"/>
         <echo message="${line.separator}"/>
-        <echo message="${line.separator}Available parameters with their defaults:"/>
+        <echo message="${line.separator}Server parameters with their defaults:"/>
         <echo message="  -Dscheme=${scheme}"/>
         <echo message="    -Dhost=${host}"/>
         <echo message="    -Dport=${port}"/>
@@ -67,6 +68,9 @@
             <property name="host" value="localhost"/>
             <property name="port" value="8810"/>
             <property name="webapp" value="ROOT"/>
+			<property name="bad" value="false"/> <!-- Run with inefficient code cleanup practices. -->
+			<property name="verbose" value="true"/> <!-- Default to true, set false to suppress messages. -->
+			<property name="type" value="hello"/> <!-- Allows easy switching of test pre-configured cases. -->
         </sequential>
     </macrodef>
 
@@ -205,9 +209,6 @@
         <property name="pause.time" value="5"/> <!-- How long to wait between iterations of internal tests. -->
         <property name="test.time" value="60"/> <!-- Overall testing time (main loop execution). -->
         <property name="wait.time" value="2"/> <!-- How long to wait after main loop completes. -->
-        <property name="bad" value="false"/> <!-- Run with inefficient code cleanup practices. -->
-        <property name="verbose" value="true"/> <!-- Default to true, set false to suppress messages. -->
-        <property name="type" value="hello"/> <!-- Allows easy switching of test pre-configured cases. -->
         <property name="log.level" value="2"/>
         <property name="log.types" value="DB.Connects"/>
         <property name="log.dir" value="${basedir}/logs"/>

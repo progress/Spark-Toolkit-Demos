@@ -1,15 +1,9 @@
 /**
  * Obtains status about all running agents from PASOE instance and ABLApp.
- * Usage: getStatus.p <params>
+ * Usage: getStatusJMX.p <params>
  *  Parameter Default/Allowed
- *   Scheme   [http|https]
- *   Hostname [localhost]
- *   PAS Port [8810]
- *   UserId   [tomcat]
- *   Password [tomcat]
+ *   CatalinaBase [C:\OpenEdge\WRK\oepas1]
  *   ABL App  [oepas1]
- *
- * Reference: https://knowledgebase.progress.com/articles/Article/P89737
  */
 
 &GLOBAL-DEFINE MIN_VERSION_12_2 (integer(entry(1, proversion(1), ".")) eq 12 and integer(entry(2, proversion(1), ".")) ge 2)
@@ -28,29 +22,23 @@ using Progress.Json.ObjectModel.JsonObject.
 using Progress.Json.ObjectModel.JsonArray.
 using Progress.Json.ObjectModel.JsonDataType.
 
-define variable cOutFile  as character       no-undo.
-define variable cOutDate  as character       no-undo.
-define variable oClient   as IHttpClient     no-undo.
-define variable oCreds    as Credentials     no-undo.
-define variable cHttpUrl  as character       no-undo.
-define variable cInstance as character       no-undo.
-define variable oJsonResp as JsonObject      no-undo.
-define variable oResult   as JsonObject      no-undo.
-define variable oTemp     as JsonObject      no-undo.
-define variable oClSess   as JsonArray       no-undo.
-define variable oQueryURL as StringStringMap no-undo.
-define variable oAgentMap as StringStringMap no-undo.
-define variable iLoop     as integer         no-undo.
-define variable iLoop2    as integer         no-undo.
-define variable iLoop3    as integer         no-undo.
-define variable iCollect  as integer         no-undo.
-define variable cBound    as character       no-undo. 
-define variable cScheme   as character       no-undo initial "http".
-define variable cHost     as character       no-undo initial "localhost".
-define variable cPort     as character       no-undo initial "8810".
-define variable cUserId   as character       no-undo initial "tomcat".
-define variable cPassword as character       no-undo initial "tomcat".
-define variable cAblApp   as character       no-undo initial "oepas1".
+define variable cOutFile      as character       no-undo.
+define variable cOutDate      as character       no-undo.
+define variable cQueryString  as character       no-undo.
+define variable oJsonResp     as JsonObject      no-undo.
+define variable oResult       as JsonObject      no-undo.
+define variable oTemp         as JsonObject      no-undo.
+define variable oClSess       as JsonArray       no-undo.
+define variable oQueryString  as StringStringMap no-undo.
+define variable oAgentMap     as StringStringMap no-undo.
+define variable iLoop         as integer         no-undo.
+define variable iLoop2        as integer         no-undo.
+define variable iLoop3        as integer         no-undo.
+define variable iCollect      as integer         no-undo.
+define variable cBound        as character       no-undo.
+define variable cOEJMXBinary  as character       no-undo.
+define variable cCatalinaBase as character       no-undo.
+define variable cAblApp       as character       no-undo initial "oepas1".
 
 define temp-table ttAgent no-undo
     field agentID     as character
@@ -77,46 +65,37 @@ define dataset dsAgentSession for ttAgent, ttAgentSession
 /* Check for passed-in arguments/parameters. */
 if num-entries(session:parameter) ge 6 then
     assign
-        cScheme   = entry(1, session:parameter)
-        cHost     = entry(2, session:parameter)
-        cPort     = entry(3, session:parameter)
-        cUserId   = entry(4, session:parameter)
-        cPassword = entry(5, session:parameter)
-        cAblApp   = entry(6, session:parameter)
+        cCatalinaBase = entry(1, session:parameter)
+        cAblApp       = entry(2, session:parameter)
         .
-else if session:parameter ne "" then /* original method */
-    assign cPort = session:parameter.
 else
     assign
-        cScheme   = dynamic-function("getParameter" in source-procedure, "Scheme") when dynamic-function("getParameter" in source-procedure, "Scheme") gt ""
-        cHost     = dynamic-function("getParameter" in source-procedure, "Host") when dynamic-function("getParameter" in source-procedure, "Host") gt ""
-        cPort     = dynamic-function("getParameter" in source-procedure, "Port") when dynamic-function("getParameter" in source-procedure, "Port") gt ""
-        cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
-        cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
-        cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
+        cCatalinaBase = dynamic-function("getParameter" in source-procedure, "CatalinaBase") when dynamic-function("getParameter" in source-procedure, "CatalinaBase") gt ""
+        cAblApp       = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
         .
 
-assign oClient = ClientBuilder:Build():Client.
-assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).
-assign cInstance = substitute("&1://&2:&3", cScheme, cHost, cPort).
 assign cOutDate = replace(iso-date(now), ":", "_").
 assign
-    oQueryURL = new StringStringMap()
+    oQueryString = new StringStringMap()
     oAgentMap = new StringStringMap()
     .
 
-/* Register the URL's to the OEM-API endpoints as will be used in this utility. */
-oQueryURL:Put("Applications", "&1/oemanager/applications").
-oQueryURL:Put("SessionManagerProperties", "&1/oemanager/applications/&2/properties").
-oQueryURL:Put("AgentManagerProperties", "&1/oemanager/applications/&2/agents/properties").
-oQueryURL:Put("Agents", "&1/oemanager/applications/&2/agents").
-oQueryURL:Put("DynamicSessionLimit", "&1/oemanager/applications/&2/agents/&3/dynamicSessionLimit").
-oQueryURL:Put("AgentMetrics", "&1/oemanager/applications/&2/agents/&3/metrics").
-oQueryURL:Put("AgentSessions", "&1/oemanager/applications/&2/agents/&3/sessions").
-oQueryURL:Put("SessionMetrics", "&1/oemanager/applications/&2/metrics").
-oQueryURL:Put("ClientSessions", "&1/oemanager/applications/&2/sessions").
+/* Set the name of the OEJMX binary based on operating system. */
+assign cOEJMXBinary = if opsys eq "WIN32" then "oejmx.bat" else "oejmx.sh".
 
-function MakeRequest returns JsonObject ( input pcHttpUrl as character ) forward.
+/* Register the queries for the OEJMX command as will be used in this utility. */
+oQueryString:Put("Applications", '~{"O":"PASOE:type=OEManager,name=OeablServiceManager","A":"Applications"}').
+oQueryString:Put("SessionManagerProperties", '~{"O":"PASOE:type=OEManager,name=SessionManager","M":["getProperties","&1"]}').
+oQueryString:Put("AgentManagerProperties", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getProperties","&1"]}').
+oQueryString:Put("Agents", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgents","&1"]}').
+oQueryString:Put("DynamicSessionLimit", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getDynamicABLSessionLimit","&1","&2"]}').
+oQueryString:Put("AgentMetrics", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgentMetrics","&1"]}').
+oQueryString:Put("AgentSessions", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getSessionMetrics","&1"]}').
+oQueryString:Put("SessionMetrics", '~{"O":"PASOE:type=OEManager,name=SessionManager","M":["getMetrics","&1"]}').
+oQueryString:Put("ClientSessions", '~{"O":"PASOE:type=OEManager,name=SessionManager","M":["getSessions","&1"]}').
+
+function InvokeJMX returns character ( input pcQueryPath as character ) forward.
+function RunQuery returns JsonObject ( input pcHttpUrl as character ) forward.
 function FormatDecimal returns character ( input pcValue as character ) forward.
 function FormatLongNumber returns character ( input pcValue as character, input plTrim as logical ) forward.
 function FormatMemory returns character ( input piValue as int64, input plTrim as logical ) forward.
@@ -131,7 +110,7 @@ output to value(cOutFile).
 /* Start with some basic header information for this report. */
 put unformatted substitute("OpenEdge Release: &1", proversion(1)) skip.
 put unformatted substitute(" Report Executed: &1", iso-date(now)) skip.
-put unformatted substitute("  PASOE Instance: &1", cInstance) skip.
+put unformatted substitute("  PASOE Instance: &1", cCatalinaBase) skip.
 
 /* Gather the necessary metrics. */
 run GetApplications.
@@ -160,81 +139,81 @@ end finally.
 
 /* PROCEDURES / FUNCTIONS */
 
-function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
-    define variable oReq  as IHttpRequest  no-undo.
-    define variable oResp as IHttpResponse no-undo.
+function InvokeJMX returns character ( input pcQueryPath as character ):
+    /**
+     * Make a query again the running Java process via JMX to obtain any
+     * information or set flags to control monitoring/debugging options.
+     *   The -R flag removes the header, leaving only the JSON body.
+     *   The -Q flag specifies the name of the query to be executed.
+     *   The -O flag sets a specific location for the query output.
+     * Example:
+     *   oejmx.[bat|sh] -R -Q <catalina_base>/temp/<name>.qry -O <catalina_base>/temp/<output>.json
+     */
+    define variable cBinaryPath as character no-undo.
+    define variable cOutputPath as character no-undo.
+    define variable cCommand    as character no-undo.
+    define variable iTime       as integer   no-undo.
 
-    if not valid-object(oClient) then
-        undo, throw new Progress.Lang.AppError("No HTTP client available", 0).
+    if (pcQueryPath gt "") ne true then
+        undo, throw new Progress.Lang.AppError("No query path provided.", 0).
 
-    if not valid-object(oCreds) then
-        undo, throw new Progress.Lang.AppError("No HTTP credentials provided", 0).
+    assign iTime = mtime. /* Each request should be timestamped to avoid overlap. */
+    assign cBinaryPath = substitute("&1/bin/&2", cCatalinaBase, cOEJMXBinary). /* oejmx.[bat|sh] */
+    assign cOutputPath = substitute("&1.&2.json", entry(1, pcQueryPath, "."), iTime). /* Temp output file. */
+
+    /* Construct the final command string to be executed. */
+    assign cCommand = substitute("&1 -R -Q &2 -O &3", cBinaryPath, pcQueryPath, cOutputPath).
+
+    /* Run command and report information to log file. */
+    os-command no-console value(cCommand). /* Cannot use silent or no-wait here. */
+
+    return cOutputPath. /* Return the expected location of the query output. */
+
+    finally:
+        os-delete value(pcQueryPath).
+    end finally.
+end function. /* InvokeJMX */
+
+function RunQuery returns JsonObject ( input pcQueryString as character ):
+    define variable cQueryPath as character         no-undo initial "temp.qry".
+    define variable cOutPath   as character         no-undo.
+    define variable oParser    as ObjectModelParser no-undo.
+    define variable oQuery     as JsonObject        no-undo.
 
     do on error undo, throw
        on stop undo, retry:
         if retry then
             undo, throw new Progress.Lang.AppError("Encountered stop condition", 0).
 
-        oReq = RequestBuilder
-                :Get(pcHttpUrl)
-                :AcceptContentType("application/vnd.progress+json")
-                :UsingBasicAuthentication(oCreds)
-                :Request.
+        assign oParser = new ObjectModelParser().
 
-        if valid-object(oReq) then
-            oResp = oClient:Execute(oReq).
-        else
-            undo, throw new Progress.Lang.AppError("Unable to create request object", 0).
+        /* Output the modified string to the temporary query file. */
+        assign oQuery = cast(oParser:Parse(pcQueryString), JsonObject).
+        oQuery:WriteFile(cQueryPath). /* Send JSON data to disk. */
+
+        /* Create the query for obtaining agents, and invoke the JMX command. */
+        assign cOutPath = InvokeJMX(cQueryPath).
+
+        /* Confirm output file exists, and parse the JSON payload. */
+        file-info:file-name = cOutPath.
+        if file-info:full-pathname ne ? then do:
+            if file-info:file-size eq 0 then
+                undo, throw new Progress.Lang.AppError(substitute("Encountered Empty File: &1", cOutPath), 0).
+
+            return cast(oParser:ParseFile(cOutPath), JsonObject).
+        end. /* File Exists */
     end.
-
-    if valid-object(oResp) and oResp:StatusCode eq 200 then do:
-        /* If we have an HTTP-200 status and a JSON object as the response payload, return that. */
-        if valid-object(oResp:Entity) and type-of(oResp:Entity, JsonObject) then
-            return cast(oResp:Entity, JsonObject).
-        else if valid-object(oResp:Entity) then
-            /* Anything other than a JSON payload should be treated as an error condition. */
-            undo, throw new Progress.Lang.AppError(substitute("Successful but non-JSON response object returned: &1",
-                                                              oResp:Entity:GetClass():TypeName), 0).
-        else
-            /* Anything other than a JSON payload should be treated as an error condition. */
-            undo, throw new Progress.Lang.AppError("Successful but non-JSON response object returned", 0).
-    end. /* Valid Entity */
-    else do:
-        /* Check the resulting response and response entity if valid. */
-        if valid-object(oResp) and valid-object(oResp:Entity) then
-            case true:
-                when type-of(oResp:Entity, OpenEdge.Core.Memptr) then
-                    undo, throw new Progress.Lang.AppError(substitute("Response is a memptr of size &1",
-                                                                      string(cast(oResp:Entity, OpenEdge.Core.Memptr):Size)), 0).
-
-                when type-of(oResp:Entity, OpenEdge.Core.String) then
-                    undo, throw new Progress.Lang.AppError(string(cast(oResp:Entity, OpenEdge.Core.String):Value), 0).
-
-                when type-of(oResp:Entity, JsonObject) then
-                    undo, throw new Progress.Lang.AppError(string(cast(oResp:Entity, JsonObject):GetJsonText()), 0).
-
-                otherwise
-                    undo, throw new Progress.Lang.AppError(substitute("Unknown type of response object: &1 [HTTP-&2]",
-                                                                      oResp:Entity:GetClass():TypeName, oResp:StatusCode), 0).
-            end case.
-        else if valid-object(oResp) then
-            /* Response is available, but entity is not. Just report the HTTP status code. */
-            undo, throw new Progress.Lang.AppError(substitute("Unsuccessful status from server: HTTP-&1", oResp:StatusCode), 0).
-        else
-            /* Response is not even available (valid) so report that as an explicit case. */
-            undo, throw new Progress.Lang.AppError("Invalid response from server, ", 0).
-    end. /* failure */
 
     catch err as Progress.Lang.Error:
         /* Always report any errors during the API requests, and return an empty JSON object allowing remaining logic to continue. */
-        put unformatted substitute("~nError executing OEM-API request: &1 [URL: &2]", err:GetMessage(1) , pcHttpUrl) skip.
+        put unformatted substitute("~nError executing OEM-API request: &1 [URL: &2]", err:GetMessage(1) , pcQueryString) skip.
         return new JsonObject().
     end catch.
     finally:
-        delete object oReq no-error.
-        delete object oResp no-error.
+        os-delete value(cOutPath).
+        delete object oParser no-error.
     end finally.
-end function. /* MakeRequest */
+end function. /* RunQuery */
 
 function FormatDecimal returns character ( input pcValue as character ):
     return trim(string(int64(pcValue) / 60000, ">>9.9")).
@@ -281,46 +260,42 @@ procedure GetApplications:
     define variable oWebApps  as JsonArray no-undo.
     define variable oWebTrans as JsonArray no-undo.
 
-    assign cHttpUrl = substitute(oQueryURL:Get("Applications"), cInstance).
-    assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-        oResult = oJsonResp:GetJsonObject("result").
+    assign cQueryString = oQueryString:Get("Applications").
+    assign oResult = RunQuery(cQueryString).
+    if valid-object(oResult) and oResult:Has("Applications") and oResult:GetType("Applications") eq JsonDataType:Array then
+    do iLoop = 1 to oResult:GetJsonArray("Applications"):Length:
+        oTemp = oResult:GetJsonArray("Applications"):GetJsonObject(iLoop).
+        if oTemp:Has("name") and oTemp:GetCharacter("name") eq cAblApp then do:
+            /* This should be the proper and case-sensitive name of the ABLApp, so let's make sure we use that going forward. */
+            assign cAblApp = oTemp:GetCharacter("name").
+            put unformatted substitute("~nABL Application Information [&1 - &2]", cAblApp, oTemp:GetCharacter("version")) skip.
 
-        if oResult:Has("Application") and oResult:GetType("Application") eq JsonDataType:Array then
-        do iLoop = 1 to oResult:GetJsonArray("Application"):Length:
-            oTemp = oResult:GetJsonArray("Application"):GetJsonObject(iLoop).
-            if oTemp:Has("name") and oTemp:GetCharacter("name") eq cAblApp then do:
-                /* This should be the proper and case-sensitive name of the ABLApp, so let's make sure we use that going forward. */
-                assign cAblApp = oTemp:GetCharacter("name").
-                put unformatted substitute("~nABL Application Information [&1 - &2]", cAblApp, oTemp:GetCharacter("version")) skip.
+            if oTemp:Has("webapps") and oTemp:GetType("webapps") eq JsonDataType:Array then do:
+                assign oWebApps = oTemp:GetJsonArray("webapps").
+                do iLoop2 = 1 to oWebApps:Length:
+                    if oWebApps:GetJsonObject(iLoop2):Has("name") then
+                        put unformatted substitute("~tWebApp: &1",  oWebApps:GetJsonObject(iLoop2):GetCharacter("name")) skip.
 
-                if oTemp:Has("webapps") and oTemp:GetType("webapps") eq JsonDataType:Array then do:
-                    assign oWebApps = oTemp:GetJsonArray("webapps").
-                    do iLoop2 = 1 to oWebApps:Length:
-                        if oWebApps:GetJsonObject(iLoop2):Has("name") then
-                            put unformatted substitute("~tWebApp: &1",  oWebApps:GetJsonObject(iLoop2):GetCharacter("name")) skip.
-
-                        assign oWebTrans = oWebApps:GetJsonObject(iLoop2):GetJsonArray("transports").
-                        do iLoop3 = 1 to oWebTrans:Length:
-                            put unformatted substitute("~t&1&2: &3",
-                                                       fill(" ", 6 - length(oWebTrans:GetJsonObject(iLoop3):GetCharacter("name"), "raw")),
-                                                       oWebTrans:GetJsonObject(iLoop3):GetCharacter("name"),
-                                                       oWebTrans:GetJsonObject(iLoop3):GetCharacter("state")) skip.
-                        end. /* transport */
-                    end. /* webapp */
-                end. /* has webapps */
-            end. /* matching ABLApp */
-        end. /* Application */
-    end. /* response - Applications */
+                    assign oWebTrans = oWebApps:GetJsonObject(iLoop2):GetJsonArray("transports").
+                    do iLoop3 = 1 to oWebTrans:Length:
+                        put unformatted substitute("~t&1&2: &3",
+                                                   fill(" ", 6 - length(oWebTrans:GetJsonObject(iLoop3):GetCharacter("name"), "raw")),
+                                                   oWebTrans:GetJsonObject(iLoop3):GetCharacter("name"),
+                                                   oWebTrans:GetJsonObject(iLoop3):GetCharacter("state")) skip.
+                    end. /* transport */
+                end. /* webapp */
+            end. /* has webapps */
+        end. /* matching ABLApp */
+    end. /* Applications */
 end procedure.
 
 /* Get the configured max for ABLSessions/Connections per agent, along with min/max/initial agents. */
 procedure GetProperties:
-    assign cHttpUrl = substitute(oQueryURL:Get("SessionManagerProperties"), cInstance, cAblApp).
-    assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then
+    assign cQueryString = substitute(oQueryString:Get("SessionManagerProperties"), cAblApp).
+    assign oJsonResp = RunQuery(cQueryString).
+    if valid-object(oJsonResp) and oJsonResp:Has("getProperties") and oJsonResp:GetType("getProperties") eq JsonDataType:Object then
     do on error undo, leave:
-        oResult = oJsonResp:GetJsonObject("result").
+        oResult = oJsonResp:GetJsonObject("getProperties").
 
         put unformatted "~nManager Properties" skip.
 
@@ -374,11 +349,11 @@ procedure GetProperties:
     end. /* response - SessionManagerProperties */
 
     /* Get the configured initial number of sessions along with the min available sessions. */
-    assign cHttpUrl = substitute(oQueryURL:Get("AgentManagerProperties"), cInstance, cAblApp).
-    assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then
+    assign cQueryString = substitute(oQueryString:Get("AgentManagerProperties"), cAblApp).
+    assign oJsonResp = RunQuery(cQueryString).
+    if valid-object(oJsonResp) and oJsonResp:Has("getProperties") and oJsonResp:GetType("getProperties") eq JsonDataType:Object then
     do on error undo, leave:
-        oResult = oJsonResp:GetJsonObject("result").
+        oResult = oJsonResp:GetJsonObject("getProperties").
 
         if oResult:Has("numInitialSessions") and oResult:GetType("numInitialSessions") eq JsonDataType:String then
             put unformatted substitute("~tInitial Sessions/Agent:~t~t&1", FormatCharAsNumber(oResult:GetCharacter("numInitialSessions"))) skip.
@@ -404,11 +379,11 @@ procedure GetAgents:
     empty temp-table ttAgentSession.
 
     /* Capture all available agent info to a temp-table before we proceed. */
-    assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
-    assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-        if oJsonResp:GetJsonObject("result"):Has("agents") and oJsonResp:GetJsonObject("result"):GetType("agents") eq JsonDataType:Array then
-            oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
+    assign cQueryString = substitute(oQueryString:Get("Agents"), cAblApp).
+    assign oJsonResp = RunQuery(cQueryString).
+    if valid-object(oJsonResp) and oJsonResp:Has("getAgents") and oJsonResp:GetType("getAgents") eq JsonDataType:Object then do:
+        if oJsonResp:GetJsonObject("getAgents"):Has("agents") and oJsonResp:GetJsonObject("getAgents"):GetType("agents") eq JsonDataType:Array then
+            oAgents = oJsonResp:GetJsonObject("getAgents"):GetJsonArray("agents").
         else
             oAgents = new JsonArray().
 
@@ -437,14 +412,11 @@ procedure GetAgents:
     end. /* response - Agents */
 
     /* https://docs.progress.com/bundle/pas-for-openedge-management/page/About-session-and-request-states.html */
-    assign cHttpUrl = substitute(oQueryURL:Get("ClientSessions"), cInstance, cAblApp).
-    assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-        if oJsonResp:GetJsonObject("result"):Has("OEABLSession") and
-           oJsonResp:GetJsonObject("result"):GetType("OEABLSession") eq JsonDataType:Array then do:
-            /* This data will be related to the agent-sessions to denote which ones are bound. */
-            oClSess = oJsonResp:GetJsonObject("result"):GetJsonArray("OEABLSession").
-        end. /* Has OEABLSession */
+    assign cQueryString = substitute(oQueryString:Get("ClientSessions"), cAblApp).
+    assign oJsonResp = RunQuery(cQueryString).
+    if valid-object(oJsonResp) and oJsonResp:Has("getSessions") and oJsonResp:GetType("getSessions") eq JsonDataType:Array then do:
+        /* This data will be related to the agent-sessions to denote which ones are bound. */
+        oClSess = oJsonResp:GetJsonArray("getSessions").
     end. /* Client Sessions */
 
     assign dCurrent = datetime(today, mtime). /* Assumes calling program is the same TZ as server! */
@@ -457,44 +429,41 @@ procedure GetAgents:
         if ttAgent.agentState eq "available" then do:
         &IF {&MIN_VERSION_12_2} &THEN
             /* Get the dynamic value for the available sessions of this agent (available only in 12.2.0 and later). */
-            assign cHttpUrl = substitute(oQueryURL:Get("DynamicSessionLimit"), cInstance, cAblApp, ttAgent.agentPID).
-            assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-                oResult = oJsonResp:GetJsonObject("result").
-                if oResult:Has("AgentSessionInfo") and oResult:GetType("AgentSessionInfo") eq JsonDataType:Array then do:
-                    oSessions = oResult:GetJsonArray("AgentSessionInfo").
-                    if oSessions:Length eq 1 and oSessions:GetJsonObject(1):Has("ABLOutput") and
-                       oSessions:GetJsonObject(1):GetType("ABLOutput") eq JsonDataType:Object then do:
-                        oSessInfo = oSessions:GetJsonObject(1):GetJsonObject("ABLOutput").
+            assign cQueryString = substitute(oQueryString:Get("DynamicSessionLimit"), cAblApp, ttAgent.agentPID).
+            assign oJsonResp = RunQuery(cQueryString).
+            if valid-object(oJsonResp) and oJsonResp:Has("getDynamicABLSessionLimit") and oJsonResp:GetType("getDynamicABLSessionLimit") eq JsonDataType:Array then do:
+                oSessions = oJsonResp:GetJsonArray("getDynamicABLSessionLimit").
+                if oSessions:Length eq 1 and oSessions:GetJsonObject(1):Has("ABLOutput") and
+                   oSessions:GetJsonObject(1):GetType("ABLOutput") eq JsonDataType:Object then do:
+                    oSessInfo = oSessions:GetJsonObject(1):GetJsonObject("ABLOutput").
 
-                        /* Should be the current calculated maximum # of ABL Sessions which can be started/utilized. */
-                        if oSessInfo:Has("dynmaxablsessions") and oSessInfo:GetType("dynmaxablsessions") eq JsonDataType:Number then
-                            put unformatted substitute("~tDynMax ABL Sessions:~t&1",
-                                                       FormatIntAsNumber(oSessInfo:GetInteger("dynmaxablsessions"))) skip.
+                    /* Should be the current calculated maximum # of ABL Sessions which can be started/utilized. */
+                    if oSessInfo:Has("dynmaxablsessions") and oSessInfo:GetType("dynmaxablsessions") eq JsonDataType:Number then
+                        put unformatted substitute("~tDynMax ABL Sessions:~t&1",
+                                                   FormatIntAsNumber(oSessInfo:GetInteger("dynmaxablsessions"))) skip.
 
-                        /* This should represent the total number of ABL Sessions started, not to exceed the Dynamic Max. */
-                        if oSessInfo:Has("numABLSessions") and oSessInfo:GetType("numABLSessions") eq JsonDataType:Number then
-                            put unformatted substitute("~t Total ABL Sessions:~t&1",
-                                                       FormatIntAsNumber(oSessInfo:GetInteger("numABLSessions"))) skip.
+                    /* This should represent the total number of ABL Sessions started, not to exceed the Dynamic Max. */
+                    if oSessInfo:Has("numABLSessions") and oSessInfo:GetType("numABLSessions") eq JsonDataType:Number then
+                        put unformatted substitute("~t Total ABL Sessions:~t&1",
+                                                   FormatIntAsNumber(oSessInfo:GetInteger("numABLSessions"))) skip.
 
-                        /* This should be the number of ABL Sessions available to execute ABL code for this agent. */
-                        if oSessInfo:Has("numAvailableSessions") and oSessInfo:GetType("numAvailableSessions") eq JsonDataType:Number then
-                            put unformatted substitute("~t Avail ABL Sessions:~t&1",
-                                                       FormatIntAsNumber(oSessInfo:GetInteger("numAvailableSessions"))) skip.
-                    end.
+                    /* This should be the number of ABL Sessions available to execute ABL code for this agent. */
+                    if oSessInfo:Has("numAvailableSessions") and oSessInfo:GetType("numAvailableSessions") eq JsonDataType:Number then
+                        put unformatted substitute("~t Avail ABL Sessions:~t&1",
+                                                   FormatIntAsNumber(oSessInfo:GetInteger("numAvailableSessions"))) skip.
                 end.
             end. /* agent manager properties */
         &ENDIF
 
             /* Get metrics about this particular agent. */
-            assign cHttpUrl = substitute(oQueryURL:Get("AgentMetrics"), cInstance, cAblApp, ttAgent.agentPID).
-            assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then
+            assign cQueryString = substitute(oQueryString:Get("AgentMetrics"), ttAgent.agentPID).
+            assign oJsonResp = RunQuery(cQueryString).
+            if valid-object(oJsonResp) and oJsonResp:Has("getAgentMetrics") and oJsonResp:GetType("getAgentMetrics") eq JsonDataType:Object then
             do on error undo, leave:
-                if oJsonResp:GetJsonObject("result"):Has("AgentStatHist") and
-                   oJsonResp:GetJsonObject("result"):GetType("AgentStatHist") eq JsonDataType:Array and
-                   oJsonResp:GetJsonObject("result"):GetJsonArray("AgentStatHist"):Length ge 1 then do:
-                    oTemp = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentStatHist"):GetJsonObject(1).
+                if oJsonResp:GetJsonObject("getAgentMetrics"):Has("AgentStatHist") and
+                   oJsonResp:GetJsonObject("getAgentMetrics"):GetType("AgentStatHist") eq JsonDataType:Array and
+                   oJsonResp:GetJsonObject("getAgentMetrics"):GetJsonArray("AgentStatHist"):Length ge 1 then do:
+                    oTemp = oJsonResp:GetJsonObject("getAgentMetrics"):GetJsonArray("AgentStatHist"):GetJsonObject(1).
 
                     if oTemp:Has("OpenConnections") and oTemp:GetType("OpenConnections") eq JsonDataType:Number then
                         put unformatted substitute("~t   Open Connections:~t&1",
@@ -508,14 +477,14 @@ procedure GetAgents:
             end. /* response */
 
             /* Get sessions and count non-idle states. */
-            assign cHttpUrl = substitute(oQueryURL:Get("AgentSessions"), cInstance, cAblApp, ttAgent.agentPID).
-            assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then
+            assign cQueryString = substitute(oQueryString:Get("AgentSessions"), ttAgent.agentPID).
+            assign oJsonResp = RunQuery(cQueryString).
+            if valid-object(oJsonResp) and oJsonResp:Has("getSessionMetrics") and oJsonResp:GetType("getSessionMetrics") eq JsonDataType:Object then
             do on error undo, leave:
                 put unformatted "~n~tSESSION ID~tSTATE~t~tSTARTED~t~t~t~t~tMEMORY~tBOUND/ACTIVE SESSION" skip.
 
-                if oJsonResp:GetJsonObject("result"):Has("AgentSession") then
-                    oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentSession").
+                if oJsonResp:GetJsonObject("getSessionMetrics"):Has("AgentSession") then
+                    oSessions = oJsonResp:GetJsonObject("getSessionMetrics"):GetJsonArray("AgentSession").
                 else
                     oSessions = new JsonArray().
 
@@ -545,7 +514,6 @@ procedure GetAgents:
 
                     define variable iSessions as integer no-undo.
 
-                    assign iSessions = 0.
                     if valid-object(oClSess) then
                         assign iSessions = oClSess:Length.
 
@@ -575,8 +543,8 @@ procedure GetAgents:
                 end. /* iLoop2 - oSessions */
 
                 put unformatted substitute("~tActive Agent-Sessions: &1 of &2 (&3% Busy)",
-										   iBusySess, iTotSess, if iTotSess gt 0 then round((iBusySess / iTotSess) * 100, 1) else 0) skip.
-				put unformatted substitute("~t Approx. Agent Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)) skip.
+                                           iBusySess, iTotSess, if iTotSess gt 0 then round((iBusySess / iTotSess) * 100, 1) else 0) skip.
+                put unformatted substitute("~t Approx. Agent Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)) skip.
             end. /* response - AgentSessions */
         end. /* agent state = available */
     end. /* for each ttAgent */
@@ -598,69 +566,69 @@ procedure GetSessions:
     end case.
 
     /* Get metrics about the session manager which comes from the collectMetrics flag. */
-    assign cHttpUrl = substitute(oQueryURL:Get("SessionMetrics"), cInstance, cAblApp).
-    assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then
+    assign cQueryString = substitute(oQueryString:Get("SessionMetrics"), cAblApp).
+    assign oJsonResp = RunQuery(cQueryString).
+    if valid-object(oJsonResp) and oJsonResp:Has("getMetrics") and oJsonResp:GetType("getMetrics") eq JsonDataType:Object then
     do on error undo, leave:
-        oTemp = oJsonResp:GetJsonObject("result").
+        oTemp = oJsonResp:GetJsonObject("getMetrics").
 
         /* Total number of requests to the session. */
-        if oTemp:Has("requests") and oTemp:GetType("requests") eq JsonDataType:Number then
+        if oTemp:Has("requests") and oTemp:GetType("requests") eq JsonDataType:String then
             put unformatted substitute("~t       # Requests to Session:  &1",
-                                        FormatLongNumber(string(oTemp:GetInteger("requests")), false)) skip.
+                                        FormatLongNumber(oTemp:GetCharacter("requests"), false)) skip.
 
         /* Number of times a response was read by the session from the agent. */
         /* Number of errors that occurred while reading a response from the agent. */
-        if oTemp:Has("reads") and oTemp:GetType("reads") eq JsonDataType:Number and
-           oTemp:Has("readErrors") and oTemp:GetType("readErrors") eq JsonDataType:Number then
+        if oTemp:Has("reads") and oTemp:GetType("reads") eq JsonDataType:String and
+           oTemp:Has("readErrors") and oTemp:GetType("readErrors") eq JsonDataType:String then
             put unformatted substitute("~t      # Agent Responses Read:  &1 (&2 Errors)",
-                                        FormatLongNumber(string(oTemp:GetInteger("reads")), false),
-                                        trim(string(oTemp:GetInteger("readErrors"), ">>>,>>>,>>9"))) skip.
+                                        FormatLongNumber(oTemp:GetCharacter("reads"), false),
+                                        trim(oTemp:GetCharacter("readErrors"), ">>>,>>>,>>9")) skip.
 
         /* Minimum, maximum, average times to read a response from the agent. */
-        if oTemp:Has("minAgentReadTime") and oTemp:GetType("minAgentReadTime") eq JsonDataType:Number and
-           oTemp:Has("maxAgentReadTime") and oTemp:GetType("maxAgentReadTime") eq JsonDataType:Number and
-           oTemp:Has("avgAgentReadTime") and oTemp:GetType("avgAgentReadTime") eq JsonDataType:Number then
+        if oTemp:Has("minAgentReadTime") and oTemp:GetType("minAgentReadTime") eq JsonDataType:String and
+           oTemp:Has("maxAgentReadTime") and oTemp:GetType("maxAgentReadTime") eq JsonDataType:String and
+           oTemp:Has("avgAgentReadTime") and oTemp:GetType("avgAgentReadTime") eq JsonDataType:String then
             put unformatted substitute("~tAgent Read Time (Mn, Mx, Av): &1 / &2 / &3",
-                                        FormatMsTime(oTemp:GetInteger("minAgentReadTime")),
-                                        FormatMsTime(oTemp:GetInteger("maxAgentReadTime")),
-                                        FormatMsTime(oTemp:GetInteger("avgAgentReadTime"))) skip.
+                                        FormatMsTime(integer(oTemp:GetCharacter("minAgentReadTime"))),
+                                        FormatMsTime(integer(oTemp:GetCharacter("maxAgentReadTime"))),
+                                        FormatMsTime(integer(oTemp:GetCharacter("avgAgentReadTime")))) skip.
 
         /* Number of times requests were written by the session on the agent. */
         /* Number of errors that occurred during writing a request to the agent. */
-        if oTemp:Has("writes") and oTemp:GetType("writes") eq JsonDataType:Number and
-           oTemp:Has("writeErrors") and oTemp:GetType("writeErrors") eq JsonDataType:Number  then
+        if oTemp:Has("writes") and oTemp:GetType("writes") eq JsonDataType:String and
+           oTemp:Has("writeErrors") and oTemp:GetType("writeErrors") eq JsonDataType:String  then
             put unformatted substitute("~t    # Agent Requests Written:  &1 (&2 Errors)",
-                                        FormatLongNumber(string(oTemp:GetInteger("writes")), false),
-                                        trim(string(oTemp:GetInteger("writeErrors"), ">>>,>>>,>>9"))) skip.
+                                        FormatLongNumber(oTemp:GetCharacter("writes"), false),
+                                        trim(oTemp:GetCharacter("writeErrors"), ">>>,>>>,>>9")) skip.
 
         /* Number of clients connected at a particular time. */
         /* Maximum number of concurrent clients. */
-        if oTemp:Has("concurrentConnectedClients") and oTemp:GetType("concurrentConnectedClients") eq JsonDataType:Number and
-           oTemp:Has("maxConcurrentClients") and oTemp:GetType("maxConcurrentClients") eq JsonDataType:Number then
+        if oTemp:Has("concurrentConnectedClients") and oTemp:GetType("concurrentConnectedClients") eq JsonDataType:String and
+           oTemp:Has("maxConcurrentClients") and oTemp:GetType("maxConcurrentClients") eq JsonDataType:String then
             put unformatted substitute("~tConcurrent Connected Clients:  &1 (Max: &2)",
-                                        FormatLongNumber(string(oTemp:GetInteger("concurrentConnectedClients")), false),
-                                        trim(string(oTemp:GetInteger("maxConcurrentClients"), ">>>,>>>,>>9"))) skip.
+                                        FormatLongNumber(oTemp:GetCharacter("concurrentConnectedClients"), false),
+                                        trim(oTemp:GetCharacter("maxConcurrentClients"), ">>>,>>>,>>9")) skip.
 
         /* Total time that reserved ABL sessions had to wait before executing. */
-        if oTemp:Has("totReserveABLSessionWaitTime") and oTemp:GetType("totReserveABLSessionWaitTime") eq JsonDataType:Number then
-            put unformatted substitute("~tTot. Reserve ABLSession Wait: &1", FormatMsTime(oTemp:GetInteger("totReserveABLSessionWaitTime"))) skip.
+        if oTemp:Has("totReserveABLSessionWaitTime") and oTemp:GetType("totReserveABLSessionWaitTime") eq JsonDataType:String then
+            put unformatted substitute("~tTot. Reserve ABLSession Wait: &1", FormatMsTime(integer(oTemp:GetCharacter("totReserveABLSessionWaitTime")))) skip.
 
         /* Number of waits that occurred while reserving a local ABL session. */
-        if oTemp:Has("numReserveABLSessionWaits") and oTemp:GetType("numReserveABLSessionWaits") eq JsonDataType:Number then
-            put unformatted substitute("~t  # Reserve ABLSession Waits:  &1", FormatLongNumber(string(oTemp:GetInteger("numReserveABLSessionWaits")), false)) skip.
+        if oTemp:Has("numReserveABLSessionWaits") and oTemp:GetType("numReserveABLSessionWaits") eq JsonDataType:String then
+            put unformatted substitute("~t  # Reserve ABLSession Waits:  &1", FormatLongNumber(oTemp:GetCharacter("numReserveABLSessionWaits"), false)) skip.
 
         /* Average time that a reserved ABL session had to wait before executing. */
-        if oTemp:Has("avgReserveABLSessionWaitTime") and oTemp:GetType("avgReserveABLSessionWaitTime") eq JsonDataType:Number then
-            put unformatted substitute("~tAvg. Reserve ABLSession Wait: &1", FormatMsTime(oTemp:GetInteger("avgReserveABLSessionWaitTime"))) skip.
+        if oTemp:Has("avgReserveABLSessionWaitTime") and oTemp:GetType("avgReserveABLSessionWaitTime") eq JsonDataType:String then
+            put unformatted substitute("~tAvg. Reserve ABLSession Wait: &1", FormatMsTime(integer(oTemp:GetCharacter("avgReserveABLSessionWaitTime")))) skip.
 
         /* Maximum time that a reserved ABL session had to wait before executing. */
-        if oTemp:Has("maxReserveABLSessionWaitTime") and oTemp:GetType("maxReserveABLSessionWaitTime") eq JsonDataType:Number then
-            put unformatted substitute("~tMax. Reserve ABLSession Wait: &1", FormatMsTime(oTemp:GetInteger("maxReserveABLSessionWaitTime"))) skip.
+        if oTemp:Has("maxReserveABLSessionWaitTime") and oTemp:GetType("maxReserveABLSessionWaitTime") eq JsonDataType:String then
+            put unformatted substitute("~tMax. Reserve ABLSession Wait: &1", FormatMsTime(integer(oTemp:GetCharacter("maxReserveABLSessionWaitTime")))) skip.
 
         /* Number of timeouts that occurred while reserving a local ABL session. */
-        if oTemp:Has("numReserveABLSessionTimeouts") and oTemp:GetType("numReserveABLSessionTimeouts") eq JsonDataType:Number then
-            put unformatted substitute("~t# Reserve ABLSession Timeout:  &1", FormatLongNumber(string(oTemp:GetInteger("numReserveABLSessionTimeouts")), false)) skip.
+        if oTemp:Has("numReserveABLSessionTimeouts") and oTemp:GetType("numReserveABLSessionTimeouts") eq JsonDataType:String then
+            put unformatted substitute("~t# Reserve ABLSession Timeout:  &1", FormatLongNumber(oTemp:GetCharacter("numReserveABLSessionTimeouts"), false)) skip.
     end. /* response - SessionMetrics */
 
     /* Parse through and display statistics from the Client Sessions API as obtained previously. */

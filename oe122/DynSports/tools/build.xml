@@ -13,9 +13,9 @@
         <echo message="${line.separator} proant startup - Use TCMAN to start the instance"/>
         <echo message="${line.separator} proant query - Use TCMAN to query the instance"/>
         <echo message="${line.separator} proant shutdown - Use TCMAN to stop the instance"/>
-    	<echo message="${line.separator} proant support - Bundle useful PAS instance files for support tickets"/>
-    	<echo message="                   -Dwrk=PAS Parent Directory (Default: ${wrk})"/>
-    	<echo message="                   -Dinstance=Instance Name (Default: ${instance})"/>
+        <echo message="${line.separator} proant support - Bundle useful PAS instance files for support tickets"/>
+        <echo message="                   -Dpas.root=PAS Parent Directory (Default: ${pas.root})"/>
+        <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
         <echo message="${line.separator}"/>
         <echo message="${line.separator} proant status - Obtain agent/connection status information for an ABL App"/>
         <echo message="${line.separator} proant stacks - Obtain stack information for all agents for an ABL App"/>
@@ -213,32 +213,32 @@
 
         <requireDir folder="${pas.path}"/>
 
-    	<tstamp>
-    	    <format property="now" pattern="yyyyMMddh_hmmss"/>
-    	</tstamp>
+        <tstamp>
+            <format property="now" pattern="yyyyMMddh_hmmss"/>
+        </tstamp>
 
-    	<echo file="${basedir}/file_listing.txt">${pas.path}${line.separator}</echo>
-    	<fileset id="dir.contents" dir="${pas.path}" includes="**/*"/> 
-		<property name="prop.dir.contents" refid="dir.contents"/>
-    	<echo file="${basedir}/file_listing.txt" append="true">${prop.dir.contents}</echo>
-    	<replaceregexp file="${basedir}/file_listing.txt" flags="g" match="\;" byline="true">
-    	   <substitution expression="${line.separator}"/>
-    	</replaceregexp>
+        <echo file="${basedir}/file_listing.txt">${pas.path}${line.separator}</echo>
+        <fileset id="dir.contents" dir="${pas.path}" includes="**/*"/>
+        <property name="prop.dir.contents" refid="dir.contents"/>
+        <echo file="${basedir}/file_listing.txt" append="true">${prop.dir.contents}</echo>
+        <replaceregexp file="${basedir}/file_listing.txt" flags="g" match="\;" byline="true">
+           <substitution expression="${line.separator}"/>
+        </replaceregexp>
 
         <!-- Create a zip file with critical files useful for support tickets. -->
         <zip destfile="${basedir}/support_${instance}_${now}.zip">
-        	<zipfileset dir="${pas.path}" includes="**/*.properties" prefix="properties"/>
-        	<zipfileset dir="${pas.path}" includes="**/protrace.*" prefix="protrace"/>
-        	<zipfileset dir="${pas.path}" includes="**/*.handlers" prefix="services"/>
-        	<zipfileset dir="${pas.path}" includes="**/*.paar" prefix="services"/>
-        	<zipfileset dir="${pas.path}" includes="**/*.wsdl" prefix="services"/>
-        	<zipfileset dir="${pas.path}/logs" includes="**/*" prefix="logs"/>
-        	<zipfileset dir="${basedir}" includes="file_listing.txt"/>
+            <zipfileset dir="${pas.path}" includes="**/*.properties" prefix="properties"/>
+            <zipfileset dir="${pas.path}" includes="**/protrace.*" prefix="protrace"/>
+            <zipfileset dir="${pas.path}" includes="**/*.handlers" prefix="services"/>
+            <zipfileset dir="${pas.path}" includes="**/*.paar" prefix="services"/>
+            <zipfileset dir="${pas.path}" includes="**/*.wsdl" prefix="services"/>
+            <zipfileset dir="${pas.path}/logs" includes="**/*" prefix="logs"/>
+            <zipfileset dir="${basedir}" includes="file_listing.txt"/>
         </zip>
 
-    	<delete file="${basedir}/file_listing.txt" verbose="false"/>
+        <delete file="${basedir}/file_listing.txt" verbose="false"/>
     </target>
-	
+
     <!-- Management Tools -->
 
     <target name="clean">
@@ -316,14 +316,14 @@
             </propath>
             <Parameter name="CatalinaBase" value="${pas.path}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-        	<!-- Maximum Runtime in Seconds -->
-        	<Parameter name="MaxAgentRuntime" value="7200"/>
-        	<Parameter name="MaxSessionRuntime" value="3600"/>
-        	<!-- Maximum Memory in Kilobytes -->
-        	<Parameter name="MaxAgentMemKB" value="204800"/>
-        	<Parameter name="MaxSessionMemKB" value="40960"/>
-        	<!-- Agent Control -->
-        	<Parameter name="StopEmptyAgent" value="true"/>
+            <!-- Maximum Runtime in Seconds -->
+            <Parameter name="MaxAgentRuntime" value="7200"/>
+            <Parameter name="MaxSessionRuntime" value="3600"/>
+            <!-- Maximum Memory in Kilobytes -->
+            <Parameter name="MaxAgentMemKB" value="204800"/>
+            <Parameter name="MaxSessionMemKB" value="40960"/>
+            <!-- Agent Control -->
+            <Parameter name="StopEmptyAgent" value="true"/>
         </PCTRun>
     </target>
 

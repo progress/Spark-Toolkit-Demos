@@ -545,6 +545,7 @@ procedure GetAgents:
 
                     define variable iSessions as integer no-undo.
 
+                    assign iSessions = 0.
                     if valid-object(oClSess) then
                         assign iSessions = oClSess:Length.
 

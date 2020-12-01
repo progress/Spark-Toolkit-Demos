@@ -13,6 +13,9 @@
         <echo message="${line.separator} proant startup - Use TCMAN to start the instance"/>
         <echo message="${line.separator} proant query - Use TCMAN to query the instance"/>
         <echo message="${line.separator} proant shutdown - Use TCMAN to stop the instance"/>
+        <echo message="${line.separator} proant support - Bundle useful PAS instance files for support tickets"/>
+        <echo message="                   -Dpas.root=PAS Parent Directory (Default: ${pas.root})"/>
+        <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
         <echo message="${line.separator}"/>
         <echo message="${line.separator} proant status - Obtain agent/connection status information for an ABL App"/>
         <echo message="${line.separator} proant stacks - Obtain stack information for all agents for an ABL App"/>
@@ -23,6 +26,7 @@
         <echo message="${line.separator} proant stop - Gracefully stops all MSAS agents (+stacks output) for an ABL App"/>
         <echo message="${line.separator} proant clean - Perform a 'soft restart' of an ABL App (flush, close, stop)"/>
         <echo message="                [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 3)"/>
+        <echo message="${line.separator} proant locks - Display table locks related to an ABL App"/>
         <echo message="${line.separator}"/>
         <echo message="${line.separator}Available parameters with their defaults:"/>
         <echo message="  -Dscheme=${scheme}"/>
@@ -202,6 +206,39 @@
         </exec>
     </target>
 
+    <!-- Support Tools -->
+
+    <target name="support">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <requireDir folder="${pas.path}"/>
+
+        <tstamp>
+            <format property="now" pattern="yyyyMMddh_hmmss"/>
+        </tstamp>
+
+        <echo file="${basedir}/file_listing.txt">${pas.path}${line.separator}</echo>
+        <fileset id="dir.contents" dir="${pas.path}" includes="**/*"/>
+        <property name="prop.dir.contents" refid="dir.contents"/>
+        <echo file="${basedir}/file_listing.txt" append="true">${prop.dir.contents}</echo>
+        <replaceregexp file="${basedir}/file_listing.txt" flags="g" match="\;" byline="true">
+           <substitution expression="${line.separator}"/>
+        </replaceregexp>
+
+        <!-- Create a zip file with critical files useful for support tickets. -->
+        <zip destfile="${basedir}/support_${instance}_${now}.zip">
+            <zipfileset dir="${pas.path}" includes="**/*.properties" prefix="properties"/>
+            <zipfileset dir="${pas.path}" includes="**/protrace.*" prefix="protrace"/>
+            <zipfileset dir="${pas.path}" includes="**/*.handlers" prefix="services"/>
+            <zipfileset dir="${pas.path}" includes="**/*.paar" prefix="services"/>
+            <zipfileset dir="${pas.path}" includes="**/*.wsdl" prefix="services"/>
+            <zipfileset dir="${pas.path}/logs" includes="**/*" prefix="logs"/>
+            <zipfileset dir="${basedir}" includes="file_listing.txt"/>
+        </zip>
+
+        <delete file="${basedir}/file_listing.txt" verbose="false"/>
+    </target>
+
     <!-- Management Tools -->
 
     <target name="clean">
@@ -368,6 +405,29 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+        </PCTRun>
+    </target>
+
+    <target name="locks">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="getLocks">
+            <propath>
+                <pathelement path="${basedir}"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <!-- Define Connected Databases: https://github.com/Riverside-Software/pct/wiki/PCTConnection -->
+            <DBConnection dbName="Sports2020" hostName="localhost" dbPort="8600" readOnly="true"/>
+            <DBConnection dbName="WebState" hostName="localhost" dbPort="8500" readOnly="true"/>
+            <!-- End Database Connections -->
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
         </PCTRun>
     </target>
 
