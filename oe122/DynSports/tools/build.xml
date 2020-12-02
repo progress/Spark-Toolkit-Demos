@@ -91,6 +91,8 @@
             <property name="instance" value="oepas1"/>
             <property name="ablapp" value="oepas1"/>
             <property name="webapp" value="ROOT"/>
+        	<property name="type" value="pulse"/>
+        	<property name="state" value="on"/>
         </sequential>
     </macrodef>
 
@@ -284,6 +286,24 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+        </PCTRun>
+    </target>
+
+    <target name="metrics">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="metrics">
+            <propath>
+                <pathelement path="${basedir}"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="CatalinaBase" value="${pas.path}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+        	<Parameter name="Type" value="${type}"/>
+        	<Parameter name="State" value="${state}"/>
         </PCTRun>
     </target>
 

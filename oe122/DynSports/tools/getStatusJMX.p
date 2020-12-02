@@ -63,7 +63,7 @@ define dataset dsAgentSession for ttAgent, ttAgentSession
     data-relation AgentID for ttAgent, ttAgentSession relation-fields(agentID,agentID) nested.
 
 /* Check for passed-in arguments/parameters. */
-if num-entries(session:parameter) ge 6 then
+if num-entries(session:parameter) ge 2 then
     assign
         cCatalinaBase = entry(1, session:parameter)
         cAblApp       = entry(2, session:parameter)
