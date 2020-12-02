@@ -117,10 +117,10 @@ for each ttAgent no-lock
     end case. /* cMetricsType */
 
     if (cQueryString gt "") eq true then do:
-        message cQueryString.
+        message substitute("Query: &1", cQueryString).
         assign oJsonResp = RunQuery(cQueryString).
         if valid-object(oJsonResp) then
-            message string(oJsonResp:GetJsonText()).
+            message substitute("Result: &1", string(oJsonResp:GetJsonText())).
     end.
 end. /* for each ttAgent */
 
