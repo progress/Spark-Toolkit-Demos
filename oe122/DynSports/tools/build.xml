@@ -16,7 +16,18 @@
         <echo message="${line.separator} proant support - Bundle useful PAS instance files for support tickets"/>
         <echo message="                   -Dpas.root=PAS Parent Directory (Default: ${pas.root})"/>
         <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
-        <echo message="${line.separator}"/>
+    	<if>
+		    <equals arg1="${oeMajor}" arg2="12"/>
+            <then>
+                <!-- OpenEdge 12.x -->
+                <echo message="${line.separator} proant metrics - Enable certain metrics for the instance"/>
+                <echo message="                   -Dpas.root=PAS Parent Directory (Default: ${pas.root})"/>
+                <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
+                <echo message="                   -Dtype=profile|pulse (Default: ${type})"/>
+                <echo message="                   -Dstate=on|off (Default: ${state})"/>
+        	</then>
+        </if>
+    	<echo message="${line.separator}"/>
         <echo message="${line.separator} proant status - Obtain agent/connection status information for an ABL App"/>
         <echo message="${line.separator} proant stacks - Obtain stack information for all agents for an ABL App"/>
         <echo message="${line.separator} proant flush - Flush the available deferred log buffer to Agent log file"/>
@@ -27,7 +38,7 @@
         <echo message="${line.separator} proant clean - Perform a 'soft restart' of an ABL App (flush, close, stop)"/>
         <echo message="                [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 3)"/>
         <echo message="${line.separator} proant locks - Display table locks related to an ABL App"/>
-        <echo message="${line.separator}"/>
+    	<echo message="${line.separator}"/>
         <echo message="${line.separator}Available parameters with their defaults:"/>
         <echo message="  -Dscheme=${scheme}"/>
         <echo message="    -Dhost=${host}"/>
@@ -91,7 +102,7 @@
             <property name="instance" value="oepas1"/>
             <property name="ablapp" value="oepas1"/>
             <property name="webapp" value="ROOT"/>
-        	<property name="type" value="pulse"/>
+        	<property name="type" value="profiler"/>
         	<property name="state" value="on"/>
         </sequential>
     </macrodef>

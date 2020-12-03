@@ -101,13 +101,13 @@ for each ttAgent no-lock
     assign cQueryString = "".
     case cMetricsType:
         when "pulse" then do:
-            if can-do("true,yes,on,1", cMetricsState) then
+            if can-do("enable,true,yes,on,1", cMetricsState) then
                 assign cQueryString = substitute(oQueryString:Get("PulseOn"), ttAgent.agentPID, cMetricsURL, iPulseTime, cMetricsOpts, cDescriptor).
             else
                 assign cQueryString = substitute(oQueryString:Get("PulseOff"), ttAgent.agentPID).
         end.
         when "profiler" then do:
-            if can-do("true,yes,on,1", cMetricsState) then
+            if can-do("enable,true,yes,on,1", cMetricsState) then
                 assign cQueryString = substitute(oQueryString:Get("ProfilerOn"), ttAgent.agentPID, cProfileURL, replace(oOptions:GetJsonText(), '"', '\"')).
             else
                 assign cQueryString = substitute(oQueryString:Get("ProfilerOff"), ttAgent.agentPID).
