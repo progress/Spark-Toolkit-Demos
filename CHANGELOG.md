@@ -1,6 +1,6 @@
 # Changelog
 
-## OpenEdge 11.7.6 and 12.2
+## OpenEdge 11.7.6+ and 12.2+
 
 ### v6.0.0
 
