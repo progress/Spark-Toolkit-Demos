@@ -17,14 +17,14 @@ class tests.UtilityTests inherits tests.SparkUnit:
 
     define private variable hCPO as handle no-undo.
 
-	/*------------------------------------------------------------------------------
-	 Purpose: Start up the Spark stack similar to a session of the MSAS agent.
-	 Notes:
-	------------------------------------------------------------------------------*/
-	@Before.
-	method public void before ( ):
+    /*------------------------------------------------------------------------------
+     Purpose: Start up the Spark stack similar to a session of the MSAS agent.
+     Notes:
+    ------------------------------------------------------------------------------*/
+    @Before.
+    method public void before ( ):
         this-object:StartSpark("utility").
-	end method.
+    end method.
 
     /*------------------------------------------------------------------------------
      Purpose: Shut down the Spark stack similar to a session of the MSAS agent.
@@ -86,7 +86,7 @@ class tests.UtilityTests inherits tests.SparkUnit:
     @Test.
     method public void testIntegerHexadecimalConversion ( ):
         define variable cTest as character no-undo extent 2048.
-        define variable iX    as integer   no-undo.
+        define variable iX    as int64     no-undo.
 
         /* Test for zero. */
         OpenEdge.Core.Assert:Equals("0", Spark.Core.Util.Convert:IntToHex(0)).
@@ -109,7 +109,7 @@ class tests.UtilityTests inherits tests.SparkUnit:
     @Test.
     method public void testBinaryHexadecimalConversion ( ):
         define variable cTest as character no-undo extent 2048.
-        define variable iX    as integer   no-undo.
+        define variable iX    as int64     no-undo.
 
         /* Test for zero. */
         OpenEdge.Core.Assert:Equals("0", Spark.Core.Util.Convert:BinToHex("0")).

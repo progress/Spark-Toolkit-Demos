@@ -6,7 +6,7 @@
 "/apsv/**","POST","permitAll()"
 
 ############## Intercept-url definitions for the REST transport URIs ###############
-"/rest/_oeping","*","permitAll()"
+"/rest/_oeping","GET","permitAll()"
 "/rest/**","*","hasAnyRole('ROLE_PSCUser')"
 
 ############## Intercept-url definitions for the SOAP transport URIs ###############
@@ -16,13 +16,15 @@
 ############## Intercept-url definitions for the WEB transport URIs ###############
 "/web/catalog","GET","permitAll()"
 "/web/catalog/openapi","GET","permitAll()"
-"/web/pdo","GET","permitAll()"
-"/web/pdo/*","GET","permitAll()"
-"/web/pdo/common/tfa/*","PUT","permitAll()"
-"/web/pdo/common/user/*","*","permitAll()"
-"/web/pdo/system/access/*","*","hasAnyRole('ROLE_WebAdmin')"
-"/web/pdo/tests/leakycode/*","PUT","permitAll()"
-"/web/pdo/tests/runcode/*","PUT","permitAll()"
+"/web/api","GET","permitAll()"
+"/web/api/*","GET","permitAll()"
+"/web/api/common/tfa/*","PUT","permitAll()"
+"/web/api/common/user/*","*","permitAll()"
+"/web/api/system/access/*","*","hasAnyRole('ROLE_WebAdmin')"
+"/web/api/tests/**","*","permitAll()"
+"/web/status/all","GET","hasAnyRole('ROLE_PSCUser','ROLE_ANONYMOUS')"
+"/web/status/server","GET","hasAnyRole('ROLE_PSCUser','ROLE_ANONYMOUS')"
+"/web/status/login","GET","hasAnyRole('ROLE_PSCUser')"
 "/web/_oeping","GET","permitAll()"
 "/web/*.html","*","permitAll()"
 "/web/**","*","hasAnyRole('ROLE_PSCUser')"
@@ -30,6 +32,7 @@
 ############## Intercept-url definitions for the default URI space #################
 "/static/home.html","GET","hasAnyRole('ROLE_PSCUser')"
 "/static/auth/*","*","permitAll()"
+"/static/status.*","GET","permitAll()"
 "/static/**","GET","permitAll()"
 "/*","GET","permitAll()"
 

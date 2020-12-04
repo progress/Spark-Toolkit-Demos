@@ -21,14 +21,14 @@ class tests.ParameterTests inherits tests.SparkUnit:
 
     define private variable hCPO as handle no-undo.
 
-	/*------------------------------------------------------------------------------
-	 Purpose: Start up the Spark stack similar to a session of the MSAS agent.
-	 Notes:
-	------------------------------------------------------------------------------*/
-	@Before.
-	method public void before ( ):
+    /*------------------------------------------------------------------------------
+     Purpose: Start up the Spark stack similar to a session of the MSAS agent.
+     Notes:
+    ------------------------------------------------------------------------------*/
+    @Before.
+    method public void before ( ):
         this-object:StartSpark("parameter").
-	end method.
+    end method.
 
     /*------------------------------------------------------------------------------
      Purpose: Shut down the Spark stack similar to a session of the MSAS agent.
@@ -100,7 +100,11 @@ class tests.ParameterTests inherits tests.SparkUnit:
         hCPO:set-property("ATTR_EXPIRED", "false").
         hCPO:seal("{&domain_passkey}").
 
-        OpenEdge.Core.Assert:IsTrue(hCPO:validate-seal(security-policy:encode-domain-access-code("{&domain_passkey}"))).
+        &IF proversion begins "11" &THEN
+            OpenEdge.Core.Assert:IsTrue(hCPO:validate-seal(substitute("oech1::&1", audit-policy:encrypt-audit-mac-key("{&domain_passkey}")))).
+        &ELSE
+            OpenEdge.Core.Assert:IsTrue(hCPO:validate-seal(security-policy:encode-domain-access-code("{&domain_passkey}"))).
+        &ENDIF
     end method.
 
     /*------------------------------------------------------------------------------

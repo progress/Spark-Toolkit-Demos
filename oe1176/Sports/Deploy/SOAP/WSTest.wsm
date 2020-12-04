@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AppContainer xmlns="urn:schemas-progress-com:WSAD:0011" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FriendlyName xsi:nil="true"/>
+  <ApplicationRuntimeProperties xsi:nil="true"/>
+  <WSAD>
+    <AppObject>
+      <PGVersion>
+        <PXGVersion>03</PXGVersion>
+      </PGVersion>
+      <PGGenInfo isSessionFree="true">
+        <Author></Author>
+        <VersionString></VersionString>
+        <VersionNumber>1</VersionNumber>
+        <Package></Package>
+        <Service>WSTest</Service>
+        <WorkDir>D:\OpenSource\Spark-Toolkit-Demos\oe1176\Sports\Deploy\SOAP\</WorkDir>
+        <VerboseLogging>true</VerboseLogging>
+        <LeaveProxyFiles>true</LeaveProxyFiles>
+        <SaveBeforeGen>true</SaveBeforeGen>
+        <DotNetClient>false</DotNetClient>
+        <JavaClient>false</JavaClient>
+        <WebServicesClient>true</WebServicesClient>
+        <ESBClient>false</ESBClient>
+        <ESBClient2>false</ESBClient2>
+        <SilverlightClient>false</SilverlightClient>
+        <RESTClient>false</RESTClient>
+        <UserDefinedAppService>false</UserDefinedAppService>
+        <JavaCompilerType>3</JavaCompilerType>
+        <JavaCompiler>C:\PROGRA~1\ADOPTO~1\JDK-11~1.10-\\bin\javac.exe</JavaCompiler>
+        <JavaSwitches></JavaSwitches>
+        <JavaClasspathSwitch>-classpath</JavaClasspathSwitch>
+        <JavaClasspath>&lt;Proxy Dir&gt;;&lt;Install Dir&gt;\java\o4glrt.jar;&lt;Install Dir&gt;\java\messages.jar;&lt;Default classes.zip&gt;;&lt;Install Dir&gt;\java\ext\ecore.sdo.jar;&lt;Install Dir&gt;\java\ext\ecore.change.jar;&lt;Install Dir&gt;\java\ext\commonj.sdo.jar;&lt;Install Dir&gt;\java\ext\ecore.jar;&lt;Install Dir&gt;\java\ext\ecore.resources.jar;&lt;Install Dir&gt;\java\ext\common.jar;&lt;Install Dir&gt;\java\ext\ecore.xmi.jar</JavaClasspath>
+        <DotNetCompilerType>4</DotNetCompilerType>
+        <DotNetCompiler>csc</DotNetCompiler>
+        <DotNetSwitches></DotNetSwitches>
+        <DotNetXSDGenerator>xsd</DotNetXSDGenerator>
+        <DotNetNamespace></DotNetNamespace>
+        <DotNetTitle></DotNetTitle>
+        <DotNetVersion></DotNetVersion>
+        <DotNetDesc></DotNetDesc>
+        <DotNetCompany></DotNetCompany>
+        <DotNetProduct></DotNetProduct>
+        <DotNetPublicKey></DotNetPublicKey>
+        <DotNetDelaySign>false</DotNetDelaySign>
+        <DotNetRuntime>digitally signed</DotNetRuntime>
+        <DotNetDataSetNamespace>StrongTypesNS</DotNetDataSetNamespace>
+        <DNUseDefaultDSNamespace>true</DNUseDefaultDSNamespace>
+        <DNUseNamespaceAsDirs>true</DNUseNamespaceAsDirs>
+        <DotNetUseNullableTypes>true</DotNetUseNullableTypes>
+        <SilverlightDomainServiceNamespace>Web.Services</SilverlightDomainServiceNamespace>
+        <SilverlightUseDefaultDomainServiceNamespace>true</SilverlightUseDefaultDomainServiceNamespace>
+        <SilverlightEntityNamespace>Web</SilverlightEntityNamespace>
+        <SilverlightUseDefaultEntityNamespace>true</SilverlightUseDefaultEntityNamespace>
+      </PGGenInfo>
+      <DeploymentWizard>
+        <CurrentEncoding>3</CurrentEncoding>
+        <SoapEndpointURL>http://localhost/</SoapEndpointURL>
+        <WebServiceNamespace userDefined="true">urn:MyTest</WebServiceNamespace>
+        <SoapAction appendToSoapAction="false"/>
+        <ConnectReturnString userDefined="false"/>
+        <TestWSDL RPCEncoded="false" RPCLiteral="false" DocLiteral="true"/>
+        <ESBEncoding>3</ESBEncoding>
+        <EntryEndpoint useDefault="true"/>
+        <FaultEndpoint useDefault="true"/>
+        <RejectedEndpoint useDefault="true"/>
+        <Container></Container>
+        <AppserverURL>AppServerDC://localhost:3091</AppserverURL>
+        <FileName overWrite="false">WSTest</FileName>
+        <ResourceDirectory>/Resources/OpenEdgeServices</ResourceDirectory>
+        <SonicAppService useFileSystem="false" deployToDS="false" createXAR="false">
+          <ResourceDirectory overWrite="false"></ResourceDirectory>
+          <XARName></XARName>
+        </SonicAppService>
+      </DeploymentWizard>
+      <Name>WSTest</Name>
+      <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\Sports\PASOEContent\WEB-INF\openedge\</ProPath>
+      <HelpString></HelpString>
+      <ObjectType>false</ObjectType>
+      <AllowUnknown>false</AllowUnknown>
+      <IsTTResultSet>false</IsTTResultSet>
+      <WriteDatasetBeforeImage>false</WriteDatasetBeforeImage>
+      <Procedure isPersistent="false" useFullName="false">
+        <Name>TestSuite</Name>
+        <ProcPath></ProcPath>
+        <ProPath>D:\OpenSource\Spark-Toolkit-Demos\oe1176\Sports\PASOEContent\WEB-INF\openedge\</ProPath>
+        <ProcExt>p</ProcExt>
+        <ProcDetail isCustomized="false" usesUnknownDefault="true" useRetVal="false" usesTTMappingDefault="true" IsTTResultSet="true" usesBeforeImageDefault="true" IsMappedToSubmit="false">
+          <Name>TestSuite</Name>
+          <ReturnValue allowUnknown="false" ordinal="0" writeXmlBeforeImage="false">
+            <Name>result</Name>
+            <OrigName>result</OrigName>
+            <Type>1</Type>
+            <Mode>0</Mode>
+          </ReturnValue>
+          <Parameter allowUnknown="false" ordinal="1" writeXmlBeforeImage="false">
+            <Name>iWaitTime</Name>
+            <OrigName>iWaitTime</OrigName>
+            <Type>4</Type>
+            <Mode>1</Mode>
+          </Parameter>
+        </ProcDetail>
+      </Procedure>
+    </AppObject>
+  </WSAD>
+</AppContainer>

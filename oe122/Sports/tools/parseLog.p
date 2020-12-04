@@ -75,7 +75,7 @@ define variable lParseTrace  as logical   no-undo initial false.
 
 function collapseWhitespace returns character ( input pcString as character ):
     define variable ix as integer no-undo.
-    
+
     do ix = 1 to 5:
         assign pcString = replace(pcString, "  ", " ").
     end.
@@ -106,7 +106,7 @@ repeat:
 /*    if r-index(cTime, ":") lt 24 then assign cTime = replace(cTime, "0400", "04:00").*/
 
     create ttLogEntries.
-    assign       
+    assign
         ttLogEntries.LineNum   = iLine
         ttLogEntries.Timestamp = OpenEdge.Core.TimeStamp:ToABLDateTimeFromISO(cTime)
         ttLogEntries.ProcessID = entry(2, cLine, " ")

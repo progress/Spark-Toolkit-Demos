@@ -1,12 +1,12 @@
 /*------------------------------------------------------------------------
     File        : clearContext.p
-    Purpose     : 
+    Purpose     :
 
     Syntax      :
 
-    Description : 
+    Description :
 
-    Author(s)   : 
+    Author(s)   :
     Created     : Thu Aug 04 11:48:25 EDT 2016
     Notes       :
   ----------------------------------------------------------------------*/

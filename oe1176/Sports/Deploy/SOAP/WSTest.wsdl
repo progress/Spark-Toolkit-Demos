@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="WSTest" targetNamespace="urn:MyTest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="urn:MyTest" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:prodata="urn:schemas-progress-com:xml-prodata:0001" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:S1="urn:soap-fault:details" xmlns:S2="urn:MyTest:WSTest">
+<wsdl:documentation>EncodingType=DOC_LITERAL, Proxygen_Product=Progress Version 11.7</wsdl:documentation>
+  <wsdl:types>
+<schema elementFormDefault="unqualified" targetNamespace="urn:soap-fault:details" xmlns="http://www.w3.org/2001/XMLSchema"><element name="FaultDetail"><complexType><sequence><element name="errorMessage" type="xsd:string"/><element name="requestID" type="xsd:string"/></sequence></complexType></element></schema>
+<schema elementFormDefault="qualified" targetNamespace="urn:MyTest:WSTest" xmlns="http://www.w3.org/2001/XMLSchema"><element name="TestSuite"><complexType><sequence><element name="iWaitTime" nillable="true" type="xsd:int"/></sequence></complexType></element><element name="TestSuiteResponse"><complexType><sequence><element name="result" nillable="true" type="xsd:string"/></sequence></complexType></element></schema>
+  </wsdl:types>
+  <wsdl:message name="WSTest_TestSuiteResponse">
+    <wsdl:part name="parameters" element="S2:TestSuiteResponse"/>
+  </wsdl:message>
+  <wsdl:message name="FaultDetailMessage">
+    <wsdl:part name="FaultDetail" element="S1:FaultDetail"/>
+  </wsdl:message>
+  <wsdl:message name="WSTest_TestSuite">
+    <wsdl:part name="parameters" element="S2:TestSuite"/>
+  </wsdl:message>
+  <wsdl:portType name="WSTestObj">
+    <wsdl:operation name="TestSuite">
+      <wsdl:input message="tns:WSTest_TestSuite"/>
+      <wsdl:output message="tns:WSTest_TestSuiteResponse"/>
+      <wsdl:fault name="WSTestFault" message="tns:FaultDetailMessage"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="WSTestObj" type="tns:WSTestObj">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="TestSuite">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="WSTestFault">
+        <soap:fault name="WSTestFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="WSTestService">
+    <wsdl:port name="WSTestObj" binding="tns:WSTestObj">
+<wsdl:documentation></wsdl:documentation>
+      <soap:address location="http://localhost/"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

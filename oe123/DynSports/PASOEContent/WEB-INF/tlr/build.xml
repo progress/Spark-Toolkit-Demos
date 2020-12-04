@@ -1,0 +1,41 @@
+<project name="AblApplication" basedir=".">
+
+  <!-- 
+      Available variables:
+
+      catalina.home:  PASOE install location
+      catalina.base:  PASOE instance location
+      instance.name:  PASOE instance name
+      ablapp.name:    ABL application name
+  -->
+
+  <description>
+    Template build file for ABL application deployment tailoring.
+    Added to instance ablapps appname tlr directory.
+  </description>
+
+  <target name="ablapp_deploy">
+    <!-- Called when a deployment artifact is created -->
+  </target>
+
+  <target name="ablapp_deployed">
+    <!-- Called when a deployment artifact is created -->
+  </target>
+
+  <target name="ablapp_undeploy">
+    <!-- Called when a deployment artifact is removed from its container -->
+  </target>
+
+  <target name="ablapp_undeployed">
+    <!-- Called when a deployment artifact is removed from its container -->
+  </target>
+
+  <target name="ablapp_export">
+    <!-- Called when a deployment artifact is exported from its container -->
+  </target>
+
+  <target name="ablapp_exported">
+    <!-- Called when a deployment artifact is exported from its container -->
+  </target>
+
+</project>

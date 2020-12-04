@@ -14,14 +14,14 @@ block-level on error undo, throw.
 
 class tests.StartupTests inherits tests.SparkUnit:
 
-	/*------------------------------------------------------------------------------
-	 Purpose: Start up the Spark stack similar to a session of the MSAS agent.
-	 Notes:
-	------------------------------------------------------------------------------*/
-	@Before.
-	method public void before ( ):
+    /*------------------------------------------------------------------------------
+     Purpose: Start up the Spark stack similar to a session of the MSAS agent.
+     Notes:
+    ------------------------------------------------------------------------------*/
+    @Before.
+    method public void before ( ):
         this-object:StartSpark("startup").
-	end method.
+    end method.
 
     /*------------------------------------------------------------------------------
      Purpose: Shut down the Spark stack similar to a session of the MSAS agent.
@@ -106,18 +106,15 @@ class tests.StartupTests inherits tests.SparkUnit:
 
     /*------------------------------------------------------------------------------
         Purpose: Confirm the CatalogManager is present and valid.
-        Notes: TEST NOT VALID FOR THE SPORTS DEMO PROJECT
-    ------------------------------------------------------------------------------*/
-
-    /*------------------------------------------------------------------------------
-        Purpose: Confirm the ConnectionManager is present and valid.
         Notes:
     ------------------------------------------------------------------------------*/
     @Test.
-    method public void testConnectionManager ( ):
-        define variable oManager as Progress.Lang.Object no-undo.
-        assign oManager = this-object:GetManager("Spark.Core.Manager.IConnectionManager").
-        OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
+    method public void testCatalogManager ( ):
+        if this-object:HasManagerConfigured("Spark.Core.Manager.ICatalogManager") then do:
+            define variable oManager as Progress.Lang.Object no-undo.
+            assign oManager = this-object:GetManager("Spark.Core.Manager.ICatalogManager").
+            OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
+        end.
     end method.
 
     /*------------------------------------------------------------------------------
@@ -133,8 +130,16 @@ class tests.StartupTests inherits tests.SparkUnit:
 
     /*------------------------------------------------------------------------------
         Purpose: Confirm the SchemaManager is present and valid.
-        Notes: TEST NOT VALID FOR THE SPORTS DEMO PROJECT
+        Notes:
     ------------------------------------------------------------------------------*/
+    @Test.
+    method public void testSchemaManager ( ):
+        if this-object:HasManagerConfigured("Spark.Core.Manager.ISchemaManager") then do:
+            define variable oManager as Progress.Lang.Object no-undo.
+            assign oManager = this-object:GetManager("Spark.Core.Manager.ISchemaManager").
+            OpenEdge.Core.Assert:IsTrue(valid-object(oManager)).
+        end.
+    end method.
 
     /*------------------------------------------------------------------------------
         Purpose: Confirm the StateManager is present and valid.

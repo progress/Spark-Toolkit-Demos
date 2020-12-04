@@ -1,6 +1,15 @@
 # Changelog
 
-## OpenEdge 11.7.5 and 12.1
+## OpenEdge 11.7.6+ and 12.2+
+
+### v6.0.0
+
+- Adding new ability for CatalogManager to read an annotations.json config file, when present (file generation TBD).
+- Adds support for annotated classes/procedures in addition to the Dynamic\* classes provided by Spark-Toolkit natively.
+- Added new folders to correspond to OE releases and to reflect the version where a demo should be installed/run
+- Add support for new features in QueryBuilder coming in 12.4 or later to better support the CCS-BE pattern
+
+## OpenEdge 11.7.5 and 12.1 (Not Recommended, Deprecated Soon)
 
 ### v5.0.2
 
@@ -14,10 +23,9 @@
 
 ### v5.0.0
 
-- Removes all local overrides of the OpenEdge.* classes which are now provided in the minimum OE versions required: 11.7.5 and 12.1.
+- Removes all local overrides of the OpenEdge.\* classes which are now provided in the minimum OE versions required: 11.7.5 and 12.1.
 
-
-## OpenEdge 11.7.4 and 12.0
+## OpenEdge 11.7.4 and 12.0 (No Longer Supported)
 
 ### v4.6.2
 
@@ -57,7 +65,7 @@
 - Make necessary adjustments to patterns since the switch to the DataObjectHandler class as of v4.3.0.
 - Framework now officially requires OpenEdge 11.7.4 due to features inherent in that service pack.
 
-## OpenEdge 11.7.3
+## OpenEdge 11.7.3 (No Longer Supported)
 
 ### v4.3.0
 
@@ -117,7 +125,7 @@
 - Adjust configuration files for new security model in 11.7 (latest Spring Security Framework).
 
 
-## OpenEdge 11.6
+## OpenEdge 11.6 (No Longer Supported)
 
 ### v3.3.0
 
@@ -270,7 +278,7 @@
 - Various bugfixes, added after initial version creation.
 
 
-## OpenEdge 11.5
+## OpenEdge 11.5 (No Longer Supported)
 
 ### v2.3.0
 
