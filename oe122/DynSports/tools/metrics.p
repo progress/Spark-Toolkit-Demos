@@ -22,7 +22,6 @@ using Progress.Json.ObjectModel.JsonObject.
 using Progress.Json.ObjectModel.JsonArray.
 using Progress.Json.ObjectModel.JsonDataType.
 
-define variable cOutDate      as character       no-undo.
 define variable cQueryString  as character       no-undo.
 define variable cMetricsURL   as character       no-undo initial "http://localhost:8850/web/pdo/monitor/intake/liveMetrics".
 define variable cProfileURL   as character       no-undo initial "http://localhost:8850/web/pdo/monitor/intake/liveProfile".
@@ -64,20 +63,18 @@ else
         cMetricsState = dynamic-function("getParameter" in source-procedure, "State") when dynamic-function("getParameter" in source-procedure, "State") gt ""
         .
 
-assign cOutDate = replace(iso-date(now), ":", "_").
-assign oQueryString = new StringStringMap().
-
 /* Set the name of the OEJMX binary based on operating system. */
 assign cOEJMXBinary = if opsys eq "WIN32" then "oejmx.bat" else "oejmx.sh".
 
 /* Register the queries for the OEJMX command as will be used in this utility. */
-assign cDescriptor = substitute("app=&1|host=&2|name=&3", cAblApp, cHostIP, cOutDate).
+assign cDescriptor = substitute("app=&1|host=&2|name=&3", cAblApp, cHostIP, iso-date(now)).
 assign oOptions = new JsonObject().
 oOptions:Add("AdapterMask", "").
 oOptions:Add("Coverage", true).
 oOptions:Add("Statistics", true).
 oOptions:Add("ProcList", "").
 oOptions:Add("TestRunDescriptor", cDescriptor).
+assign oQueryString = new StringStringMap().
 oQueryString:Put("Agents", '~{"O":"PASOE:type=OEManager,name=AgentManager","M":["getAgents","&1"]}').
 oQueryString:Put("PulseOn", '~{"O":"PASOE:type=OEManager,name=AgentManager", "M":["debugTest", "&1", "LiveDiag", "&2", &3, "&4|&5"]}').
 oQueryString:Put("PulseOff", '~{"O":"PASOE:type=OEManager,name=AgentManager", "M":["debugTest", "&1", "LiveDiag", "", 0, ""]}').
