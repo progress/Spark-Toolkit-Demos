@@ -11,13 +11,13 @@
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
       http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
-      http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
-
+      http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"> 
+    
     <context:annotation-config/>
 
     <!-- Authentication Manager for SAML -->
     <authentication-manager id="saml">
-        <authentication-provider ref="samlAuthenticationProvider"/>
+        <authentication-provider ref="samlAuthenticationProvider"/> 
     </authentication-manager>
 
     <!-- SAML Authentication Provider responsible for validating of received SAML messages -->
@@ -58,11 +58,11 @@
         <b:constructor-arg ref="encoder"/>
         <b:constructor-arg value="${samlToken.httpBinding.allowMethods}"/>
     </b:bean>
-
+    
     <b:bean id="decoder" class="com.progress.appserv.services.security.OESamlHTTPPostDecoder"/>
 
     <b:bean id="encoder" class="org.opensaml.saml2.binding.encoding.HTTPPostEncoder">
-        <b:constructor-arg ref="velocityEngine"/>
+        <b:constructor-arg ref="velocityEngine"/> 
         <b:constructor-arg index="1" value="/templates/saml2-post-binding.vm"/>
     </b:bean>
 
@@ -83,7 +83,7 @@
                     </b:constructor-arg>
                     <b:constructor-arg>
                         <b:bean class="org.springframework.security.saml.metadata.ExtendedMetadata">
-                            <b:property name="local" value="true"/>
+                            <b:property name="local" value="true"/> 
                             <b:property name="alias" value="default"/>
                             <b:property name="securityProfile" value="metaiop"/>
                             <b:property name="requireArtifactResolveSigned" value="false"/>
@@ -107,7 +107,7 @@
                     </b:constructor-arg>
                     <b:constructor-arg>
                         <b:bean class="org.springframework.security.saml.metadata.ExtendedMetadata">
-                            <b:property name="local" value="false"/>
+                            <b:property name="local" value="false"/> 
                             <b:property name="alias" value="default"/>
                             <b:property name="securityProfile" value="metaiop"/>
                             <b:property name="requireArtifactResolveSigned" value="false"/>

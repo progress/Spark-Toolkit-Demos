@@ -10,9 +10,9 @@
     xmlns:util="http://www.springframework.org/schema/util"
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
       http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
-      http://www.springframework.org/schema/security/oauth2 http://www.springframework.org/schema/security/spring-security-oauth2.xsd
+      http://www.springframework.org/schema/security/oauth2 http://www.springframework.org/schema/security/spring-security-oauth2.xsd 
      http://www.springframework.org/schema/util
-     http://www.springframework.org/schema/util/spring-util.xsd" >
+     http://www.springframework.org/schema/util/spring-util.xsd" > 
 
     <!-- *********************************************************************
          WARNING: EDITS TO THIS FILE MAY BE OVERWRITTEN BY OPENEDGE OEABL
@@ -34,7 +34,7 @@
 
         <anonymous enabled="false"/>
         <http-basic entry-point-ref="oauth2ClientAuthenticationEntryPoint" />
-        <custom-filter ref="oauth2ClientCredentialsTokenEndpointFilter"
+        <custom-filter ref="oauth2ClientCredentialsTokenEndpointFilter" 
                        before="BASIC_AUTH_FILTER"/>
 
         <access-denied-handler ref="oauth2AccessDeniedHandler"/>
@@ -48,17 +48,17 @@
     </http>
 
     <!-- OAuth2 Authorization Server -->
-    <oauth:authorization-server
-        client-details-service-ref="oauth2AuthorizationClientDetails"
-        token-services-ref="oauth2ProviderTokenServices"
-        user-approval-handler-ref="oauth2UserApprovalHandler"
+    <oauth:authorization-server 
+        client-details-service-ref="oauth2AuthorizationClientDetails" 
+        token-services-ref="oauth2ProviderTokenServices" 
+        user-approval-handler-ref="oauth2UserApprovalHandler" 
         check-token-enabled="true" >
 
         <oauth:authorization-code disabled="false" />
         <oauth:implicit disabled="false" />
         <oauth:refresh-token disabled="false" />
         <oauth:client-credentials disabled="false" />
-        <oauth:password disabled="false"
+        <oauth:password disabled="false" 
                authentication-manager-ref="${http.all.authmanager}" />
 
     </oauth:authorization-server>
@@ -83,7 +83,7 @@
     </b:bean>
 
     <!-- Create, store, validate, etc services for access and refresh tokens -->
-    <b:bean id="oauth2ProviderTokenServices"
+    <b:bean id="oauth2ProviderTokenServices" 
         class="org.springframework.security.oauth2.provider.token.DefaultTokenServices">
         <b:property name="tokenStore" ref="jwtOAuth2TokenStore"/>
         <b:property name="clientDetailsService" ref="oauth2AuthorizationClientDetails"/>
@@ -99,7 +99,7 @@
     <!-- Shared jwtOAuth2TokenStore in authFilters.xml -->
 
     <!-- Storage for Resource owner Authorization Code Grants -->
-    <b:bean id="oauth2ApprovalStore"
+    <b:bean id="oauth2ApprovalStore" 
         class="org.springframework.security.oauth2.provider.approval.TokenApprovalStore">
         <b:property name="tokenStore" ref="jwtOAuth2TokenStore"/>
     </b:bean>
@@ -141,6 +141,6 @@
 
     <oauth:web-expression-handler id="oauthWebExpressionHandler"/>
 
-    <b:import resource="${oauth2.authSvc.clientCfg}"/>
+    <b:import resource="${oauth2.authSvc.clientCfg}"/> 
 
 </b:beans>
