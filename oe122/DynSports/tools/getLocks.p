@@ -1,4 +1,21 @@
+/*
+	Copyright 2020 Progress Software Corporation
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
 /**
+ * Author(s): Dustin Grau (dugrau@progress.com)
+ *
  * Obtains table lock info and running programs against a PASOE instance.
  * Usage: getLocks.p <params>
  *  Parameter Default/Allowed
@@ -62,6 +79,7 @@ define temp-table ttLock no-undo
     field LockFlags    as character
     field TransID      as int64
     field PID          as int64
+    field SessionID    as int64
     .
 
 /* Check for passed-in arguments/parameters. */
@@ -120,17 +138,18 @@ do iLoop = 1 to num-dbs:
 end.
 
 /* Display table lock information to screen. */
-message "~nUsr#~tUser~t~tDomain~t~tTenant~t~tDatabase~tTable~t~tFlags~t~tPID".
+message "~nUsr#~tUser~t~tDomain~t~tTenant~t~tDatabase~tTable~t~tFlags~t~t~tPID~tSessionID".
 for each ttLock no-lock:
-    message substitute("&1 &2 &3 &4 &5 &6 &7 &8",
+    message substitute("&1  &2  &3 &4 &5 &6 &7 &8~t&9",
                        string(ttLock.UserNum) + fill(" ", 8 - length(string(ttLock.UserNum))),
-                       string(ttLock.UserName, "x(15)"),
+                       string(ttLock.UserName, "x(16)"),
                        string(ttLock.DomainName, "x(15)"),
                        string(ttLock.TenantName, "x(15)"),
                        string(ttLock.DatabaseName, "x(15)"),
                        string(ttLock.TableName, "x(15)"),
                        string(ttLock.LockFlags, "x(15)"),
-                       ttLock.PID).
+                       string(ttLock.PID, ">>>>>>>>>>>>>>9"),
+                       (if ttLock.SessionID eq ? then "" else string(ttLock.SessionID))).
 
     /****************************************************************************************************
       Lock Flags (https://knowledgebase.progress.com/articles/Article/21639):

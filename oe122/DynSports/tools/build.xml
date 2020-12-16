@@ -38,7 +38,7 @@
         <echo message="${line.separator} proant clean - Perform a 'soft restart' of an ABL App (flush, close, stop)"/>
         <echo message="                [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 3)"/>
         <echo message="${line.separator} proant locks - Display table locks related to an ABL App"/>
-    	<echo message="${line.separator}"/>
+        <echo message="${line.separator}"/>
         <echo message="${line.separator}Available parameters with their defaults:"/>
         <echo message="  -Dscheme=${scheme}"/>
         <echo message="    -Dhost=${host}"/>
@@ -102,8 +102,8 @@
             <property name="instance" value="oepas1"/>
             <property name="ablapp" value="oepas1"/>
             <property name="webapp" value="ROOT"/>
-        	<property name="type" value="profiler"/>
-        	<property name="state" value="on"/>
+            <property name="db.name" value="Sports2020"/>
+            <property name="db.port" value="8600"/>
         </sequential>
     </macrodef>
 
@@ -491,8 +491,7 @@
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <!-- Define Connected Databases: https://github.com/Riverside-Software/pct/wiki/PCTConnection -->
-            <DBConnection dbName="Sports2020" hostName="localhost" dbPort="8600" readOnly="true"/>
-            <DBConnection dbName="WebState" hostName="localhost" dbPort="8500" readOnly="true"/>
+            <DBConnection dbName="${db.name}" hostName="localhost" dbPort="${db.port}" readOnly="true"/>
             <!-- End Database Connections -->
             <Parameter name="Scheme" value="${scheme}"/>
             <Parameter name="Host" value="${host}"/>

@@ -1,4 +1,21 @@
+/*
+	Copyright 2020 Progress Software Corporation
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
 /**
+ * Author(s): Dustin Grau (dugrau@progress.com)
+ *
  * Trim idle ABL sessions for all agents of an ABLApp.
  * Usage: trimAgentSessions.p <params>
  *  Parameter Default/Allowed
@@ -192,8 +209,10 @@ if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("re
                         /* Only IDLE sessions will be terminated, so continue if that's not the case. */
                         if oTemp:GetCharacter("SessionState") ne "IDLE" then next SESSIONBLK.
 
-                        if oTemp:has("SessionId") and oTemp:GetType("SessionId") eq JsonDataType:string then
+                        if oTemp:has("SessionId") and oTemp:GetType("SessionId") eq JsonDataType:number then
                             assign iSession = oTemp:GetInteger("SessionId").
+
+                        if iSession eq 0 then next SESSIONBLK.
 
                         message substitute("Terminating Idle Agent-Session: &1", iSession).
 
