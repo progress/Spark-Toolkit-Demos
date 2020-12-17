@@ -36,9 +36,15 @@
         <echo message="${line.separator} proant refresh - Terminates all ABLSessions for each MSAS agent for an ABL App"/>
         <echo message="${line.separator} proant stop - Gracefully stops all MSAS agents (+stacks output) for an ABL App"/>
         <echo message="${line.separator} proant clean - Perform a 'soft restart' of an ABL App (flush, close, stop)"/>
-        <echo message="                [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 3)"/>
-        <echo message="${line.separator} proant locks - Display table locks related to an ABL App"/>
-        <echo message="${line.separator}"/>
+        <echo message="                  [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 3)"/>
+        <echo message="${line.separator} proant locks - Display database users and their table locks related to an Agent-Session"/>
+		<echo message="                This utilizes a single DBConnection; edit build.xml to add more as needed"/>
+		<echo message="                Note: will only provide session data if using self-service DB connections"/>
+        <echo message="                  [OPTIONAL] -Ddb.name=Database name to check (Default: ${db.name})"/>
+		<echo message="                  [OPTIONAL] -Ddb.host=Database host to check (Default: ${db.host})"/>
+		<echo message="                  [OPTIONAL] -Ddb.port=Database port to check (Default: ${db.port})"/>
+        <echo message="${line.separator} proant users - Alias for 'locks' target"/>
+		<echo message="${line.separator}"/>
         <echo message="${line.separator}Available parameters with their defaults:"/>
         <echo message="  -Dscheme=${scheme}"/>
         <echo message="    -Dhost=${host}"/>
@@ -103,6 +109,7 @@
             <property name="ablapp" value="oepas1"/>
             <property name="webapp" value="ROOT"/>
             <property name="db.name" value="Sports2020"/>
+			<property name="db.host" value="localhost"/>
             <property name="db.port" value="8600"/>
         </sequential>
     </macrodef>
@@ -479,6 +486,10 @@
         </PCTRun>
     </target>
 
+	<target name="users">
+		<antcall target="locks"/>
+	</target>
+
     <target name="locks">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
@@ -491,7 +502,7 @@
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <!-- Define Connected Databases: https://github.com/Riverside-Software/pct/wiki/PCTConnection -->
-            <DBConnection dbName="${db.name}" hostName="localhost" dbPort="${db.port}" readOnly="true"/>
+            <DBConnection dbName="${db.name}" hostName="${db.host}" dbPort="${db.port}" readOnly="true"/>
             <!-- End Database Connections -->
             <Parameter name="Scheme" value="${scheme}"/>
             <Parameter name="Host" value="${host}"/>
