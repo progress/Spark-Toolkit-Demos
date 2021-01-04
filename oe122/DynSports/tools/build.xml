@@ -503,6 +503,7 @@
             </propath>
             <!-- Define Connected Databases: https://github.com/Riverside-Software/pct/wiki/PCTConnection -->
             <DBConnection dbName="${db.name}" hostName="${db.host}" dbPort="${db.port}" readOnly="true"/>
+        	<DBConnection dbName="${db2.name}" hostName="${db2.host}" dbPort="${db2.port}" readOnly="true"/>
             <!-- End Database Connections -->
             <Parameter name="Scheme" value="${scheme}"/>
             <Parameter name="Host" value="${host}"/>
