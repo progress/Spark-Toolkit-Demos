@@ -15,16 +15,14 @@
         <echo message="${line.separator} proant shutdown - Use TCMAN to stop a PAS instance"/>
         <echo message="${line.separator} proant inventory - Bundle useful PAS instance files for support tickets"/>
         <echo message="${line.separator}"/>
-        <echo message="${line.separator} proant compile - Compile all utility procedures to r-code"/>
-        <echo message="${line.separator}"/>
         <echo message="${line.separator} proant status - Obtain MSAgent/connection status information for an ABL App"/>
         <echo message="${line.separator} proant stacks - Obtain stack information for all MSAgents for an ABL App"/>
         <echo message="${line.separator} proant flush - Flush the available deferred log buffer to agent log file"/>
         <echo message="${line.separator} proant trimhttp - Trim all Session Manager and Tomcat HTTP sessions for an ABL/Web App"/>
-		<echo message="                [OPTIONAL] -Dterminateopt=${terminateopt} (0 for graceful termination and 1 for forced termination)"/>
-		<echo message="${line.separator} proant trimidle - Trim all IDLE ABL Sessions for each MSAgent for an ABL App"/>
+        <echo message="                [OPTIONAL] -Dterminateopt=${terminateopt} (0 for graceful termination and 1 for forced termination)"/>
+        <echo message="${line.separator} proant trimidle - Trim all IDLE ABL Sessions for each MSAgent for an ABL App"/>
         <echo message="${line.separator} proant trimall - Trim all ABL Sessions for each MSAgent for an ABL App"/>
-    	<if>
+        <if>
             <equals arg1="${oeMajor}" arg2="12"/>
             <then>
                 <!-- OpenEdge 12.x -->
@@ -34,24 +32,19 @@
                 <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
                 <echo message="                   -Dtype=profile|pulse (Default: ${type})"/>
                 <echo message="                   -Dstate=on|off (Default: ${state})"/>
-        	</then>
+            </then>
         </if>
-    	<echo message="${line.separator}"/>
-        <echo message="${line.separator} proant status - Obtain agent/connection status information for an ABL App"/>
-        <echo message="${line.separator} proant stacks - Obtain stack information for all agents for an ABL App"/>
-        <echo message="${line.separator} proant flush - Flush the available deferred log buffer to Agent log file"/>
-        <echo message="${line.separator} proant close - Terminate all available client sessions for an ABL/Web App"/>
-        <echo message="${line.separator} proant trim - Trim all IDLE ABLSessions for each MSAS agent for an ABL App"/>
-        <echo message="${line.separator} proant refresh - Terminates all ABLSessions for each MSAS agent for an ABL App"/>
-        <echo message="${line.separator} proant stop - Gracefully stops all MSAS agents (+stacks output) for an ABL App"/>
-        <echo message="${line.separator} proant clean - Perform a 'soft restart' of an ABL App (flush, close, stop)"/>
-        <echo message="                  [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 3)"/>
-        <echo message="${line.separator} proant locks - Display database users and their table locks related to an Agent-Session"/>
-		<echo message="                This utilizes a single DBConnection; edit build.xml to add more as needed"/>
-		<echo message="                Note: will only provide session data if using self-service DB connections"/>
-        <echo message="                  [OPTIONAL] -Ddb.name=Database name to check (Default: ${db.name})"/>
-		<echo message="                  [OPTIONAL] -Ddb.host=Database host to check (Default: ${db.host})"/>
-		<echo message="                  [OPTIONAL] -Ddb.port=Database port to check (Default: ${db.port})"/>
+        <echo message="${line.separator} proant clean - Perform a 'soft restart' (status, flush, trimhttp, stop) of an ABL App"/>
+        <echo message="                [OPTIONAL] -Dsleep=${sleep} (Sleep time in minutes)"/>
+        <echo message="${line.separator} proant stop - Gracefully stops all MSAgents (+stacks output) for an ABL App"/>
+        <echo message="                [OPTIONAL] -Dwaitfinish=${waitfinish} (How long to wait in milliseconds if the MSAgent is busy serving a request)"/>
+        <echo message="                [OPTIONAL] -Dwaitafter=${waitafter} (Additional time to wait in milliseconds before killing [hard stop] the MSAgent)"/>
+        <echo message="${line.separator} proant locks - Display database users and their table locks related to an MSAgent-Session"/>
+        <echo message="                This utilizes a single DBConnection; edit build.xml to add more as needed"/>
+        <echo message="                Note: will only provide session data if using self-service DB connections"/>
+        <echo message="                [OPTIONAL] -Ddb.name=${db.name} (Database name to check)"/>
+        <echo message="                [OPTIONAL] -Ddb.host=${db.host} (Database host to check)"/>
+        <echo message="                [OPTIONAL] -Ddb.port=${db.port} (Database port to check)"/>
         <echo message="${line.separator} proant users - Alias for 'locks' target"/>
         <echo message="${line.separator}"/>
         <echo message="${line.separator}Available parameters with their defaults:"/>
@@ -60,13 +53,13 @@
         <echo message="    -Dport=${port}"/>
         <echo message="  -Duserid=${userid}"/>
         <echo message="  -Dpasswd=${passwd}"/>
-    	<echo message="  -Dpas.root=${pas.root} (PAS parent directory)"/>
-    	<echo message="  -Dinstance=${instance} (Physical instance name)"/>
-    	<echo message="  -Dablapp=${ablapp}"/>
+        <echo message="  -Dpas.root=${pas.root} (PAS parent directory)"/>
+        <echo message="  -Dinstance=${instance} (Physical instance name)"/>
+        <echo message="  -Dablapp=${ablapp}"/>
         <echo message="  -Dwebapp=${webapp} (Used by trimhttp/clean)"/>
-		<echo message="  -Ddebug=${debug} (When enabled, outputs OEManager REST API URL's and enables ABL (HTTP) Client logging)"/>
+        <echo message="  -Ddebug=${debug} (When enabled, outputs OEManager REST API URL's and enables ABL (HTTP) Client logging)"/>
         <echo message="${line.separator}NOTE: The name of the ABLApp is case-sensitive!"/>
-    	<echo message="${line.separator}"/>
+        <echo message="${line.separator}"/>
         <echo message="CATALINA_HOME: ${dlcHome}${delim}servers${delim}pasoe"/>
         <echo message="CATALINA_BASE: ${pas.path}"/>
     </target>
@@ -307,7 +300,7 @@
         <antcall target="flush"/>
         <antcall target="trimhttp"/>
         <antcall target="trimidle"/>
-		<antcall target="trimall"/>
+        <antcall target="trimall"/>
         <antcall target="refresh"/>
         <antcall target="stop"/>
     </target>
@@ -329,7 +322,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-			<Parameter name="Debug" value="${debug}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -346,8 +339,8 @@
             </propath>
             <Parameter name="CatalinaBase" value="${pas.path}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-        	<Parameter name="Type" value="${type}"/>
-        	<Parameter name="State" value="${state}"/>
+            <Parameter name="Type" value="${type}"/>
+            <Parameter name="State" value="${state}"/>
         </PCTRun>
     </target>
 
@@ -408,7 +401,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-			<Parameter name="Debug" value="${debug}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -429,7 +422,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-			<Parameter name="Debug" value="${debug}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -451,8 +444,8 @@
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
             <Parameter name="WebApp" value="${webapp}"/>
-			<Parameter name="TerminateOpt" value="${terminateopt}"/>
-			<Parameter name="Debug" value="${debug}"/>
+            <Parameter name="TerminateOpt" value="${terminateopt}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -473,9 +466,9 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-			<Parameter name="Idle" value="true"/>
-			<Parameter name="TerminateOpt" value="${terminateopt}"/>
-			<Parameter name="Debug" value="${debug}"/>
+            <Parameter name="Idle" value="true"/>
+            <Parameter name="TerminateOpt" value="${terminateopt}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -496,9 +489,9 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-			<Parameter name="Idle" value="false"/>
-			<Parameter name="TerminateOpt" value="${terminateopt}"/>
-			<Parameter name="Debug" value="${debug}"/>
+            <Parameter name="Idle" value="false"/>
+            <Parameter name="TerminateOpt" value="${terminateopt}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -519,7 +512,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-			<Parameter name="Debug" value="${debug}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -540,9 +533,9 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
-			<Parameter name="WaitFinish" value="${waitfinish}"/>
-			<Parameter name="WaitAfter" value="${waitafter}"/>
-			<Parameter name="Debug" value="${debug}"/>
+            <Parameter name="WaitFinish" value="${waitfinish}"/>
+            <Parameter name="WaitAfter" value="${waitafter}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -571,7 +564,7 @@
             <Parameter name="Port" value="${port}"/>
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
-			<Parameter name="Debug" value="${debug}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
