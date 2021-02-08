@@ -10,16 +10,25 @@
         <echo message="Utilities for easy operation and maintenance of a PASOE instance."/>
         <echo message="Run from a PROENV session or with DLC and DLC/bin in your PATH."/>
         <echo message="${line.separator}Usage Instructions:"/>
-        <echo message="${line.separator} proant startup - Use TCMAN to start the instance"/>
-        <echo message="${line.separator} proant query - Use TCMAN to query the instance"/>
-        <echo message="${line.separator} proant shutdown - Use TCMAN to stop the instance"/>
-        <echo message="${line.separator} proant support - Bundle useful PAS instance files for support tickets"/>
-        <echo message="                   -Dpas.root=PAS Parent Directory (Default: ${pas.root})"/>
-        <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
+        <echo message="${line.separator} proant startup - Use TCMAN to start a PAS instance"/>
+        <echo message="${line.separator} proant query - Use TCMAN to query a PAS instance"/>
+        <echo message="${line.separator} proant shutdown - Use TCMAN to stop a PAS instance"/>
+        <echo message="${line.separator} proant inventory - Bundle useful PAS instance files for support tickets"/>
+        <echo message="${line.separator}"/>
+        <echo message="${line.separator} proant compile - Compile all utility procedures to r-code"/>
+        <echo message="${line.separator}"/>
+        <echo message="${line.separator} proant status - Obtain MSAgent/connection status information for an ABL App"/>
+        <echo message="${line.separator} proant stacks - Obtain stack information for all MSAgents for an ABL App"/>
+        <echo message="${line.separator} proant flush - Flush the available deferred log buffer to agent log file"/>
+        <echo message="${line.separator} proant trimhttp - Trim all Session Manager and Tomcat HTTP sessions for an ABL/Web App"/>
+		<echo message="                [OPTIONAL] -Dterminateopt=${terminateopt} (0 for graceful termination and 1 for forced termination)"/>
+		<echo message="${line.separator} proant trimidle - Trim all IDLE ABL Sessions for each MSAgent for an ABL App"/>
+        <echo message="${line.separator} proant trimall - Trim all ABL Sessions for each MSAgent for an ABL App"/>
     	<if>
-		    <equals arg1="${oeMajor}" arg2="12"/>
+            <equals arg1="${oeMajor}" arg2="12"/>
             <then>
                 <!-- OpenEdge 12.x -->
+                <echo message="${line.separator} proant refresh - Refresh ABL Sessions for each MSAgent for an ABL App"/>
                 <echo message="${line.separator} proant metrics - Enable certain metrics for the instance"/>
                 <echo message="                   -Dpas.root=PAS Parent Directory (Default: ${pas.root})"/>
                 <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
@@ -44,16 +53,22 @@
 		<echo message="                  [OPTIONAL] -Ddb.host=Database host to check (Default: ${db.host})"/>
 		<echo message="                  [OPTIONAL] -Ddb.port=Database port to check (Default: ${db.port})"/>
         <echo message="${line.separator} proant users - Alias for 'locks' target"/>
-		<echo message="${line.separator}"/>
+        <echo message="${line.separator}"/>
         <echo message="${line.separator}Available parameters with their defaults:"/>
         <echo message="  -Dscheme=${scheme}"/>
         <echo message="    -Dhost=${host}"/>
         <echo message="    -Dport=${port}"/>
         <echo message="  -Duserid=${userid}"/>
         <echo message="  -Dpasswd=${passwd}"/>
-        <echo message="  -Dablapp=${ablapp}"/>
-        <echo message="  -Dwebapp=${webapp} (Used by close/clean)"/>
+    	<echo message="  -Dpas.root=${pas.root} (PAS parent directory)"/>
+    	<echo message="  -Dinstance=${instance} (Physical instance name)"/>
+    	<echo message="  -Dablapp=${ablapp}"/>
+        <echo message="  -Dwebapp=${webapp} (Used by trimhttp/clean)"/>
+		<echo message="  -Ddebug=${debug} (When enabled, outputs OEManager REST API URL's and enables ABL (HTTP) Client logging)"/>
         <echo message="${line.separator}NOTE: The name of the ABLApp is case-sensitive!"/>
+    	<echo message="${line.separator}"/>
+        <echo message="CATALINA_HOME: ${dlcHome}${delim}servers${delim}pasoe"/>
+        <echo message="CATALINA_BASE: ${pas.path}"/>
     </target>
 
     <macrodef name="init_env">
@@ -109,8 +124,14 @@
             <property name="ablapp" value="oepas1"/>
             <property name="webapp" value="ROOT"/>
             <property name="db.name" value="Sports2020"/>
-			<property name="db.host" value="localhost"/>
+            <property name="db.host" value="localhost"/>
             <property name="db.port" value="8600"/>
+            <property name="db.dir" value=""/>
+            <property name="proc.ext" value=""/>
+            <property name="debug" value="false"/>
+            <property name="terminateopt" value="0"/>
+            <property name="waitfinish" value="120000"/>
+            <property name="waitafter" value="60000"/>
         </sequential>
     </macrodef>
 
@@ -228,7 +249,7 @@
 
     <!-- Support Tools -->
 
-    <target name="support">
+    <target name="inventory">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <requireDir folder="${pas.path}"/>
@@ -246,7 +267,7 @@
         </replaceregexp>
 
         <!-- Create a zip file with critical files useful for support tickets. -->
-        <zip destfile="${basedir}/support_${instance}_${now}.zip">
+        <zip destfile="${basedir}/inventory_${instance}_${now}.zip">
             <zipfileset dir="${pas.path}" includes="**/*.properties" prefix="properties"/>
             <zipfileset dir="${pas.path}" includes="**/protrace.*" prefix="protrace"/>
             <zipfileset dir="${pas.path}" includes="**/*.handlers" prefix="services"/>
@@ -262,14 +283,17 @@
     <!-- Management Tools -->
 
     <target name="clean">
-        <property name="sleep" value="3"/>
+        <property name="sleep" value="1"/>
 
         <!-- Perform a 'soft restart' of an ABL Application -->
         <antcall target="status"/>
         <antcall target="flush"/>
-        <antcall target="close"/>
+        <antcall target="trimhttp">
+            <!-- Override any given terminateopt with the forceful option. -->
+            <param name="terminateopt" value="1"/>
+        </antcall>
         <antcall target="stop"/>
-        <echo message="${line.separator}Sleeping for ${sleep} minutes to allow time for agent shutdown."/>
+        <echo message="${line.separator}Sleeping for ${sleep} minutes to allow time for MSAgent shutdown."/>
         <echo message="Next step is to run 'status'; use Ctrl+C to exit if desired."/>
         <echo message="..."/>
         <sleep minutes="${sleep}"/>
@@ -281,8 +305,9 @@
         <antcall target="status"/>
         <antcall target="stacks"/>
         <antcall target="flush"/>
-        <antcall target="close"/>
-        <antcall target="trim"/>
+        <antcall target="trimhttp"/>
+        <antcall target="trimidle"/>
+		<antcall target="trimall"/>
         <antcall target="refresh"/>
         <antcall target="stop"/>
     </target>
@@ -293,7 +318,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="getStatus">
+               procedure="getStatus${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -304,6 +329,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+			<Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -313,7 +339,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="metrics">
+               procedure="metrics${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -331,7 +357,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="getStatusJMX">
+               procedure="getStatusJMX${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -347,7 +373,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="autoTrim">
+               procedure="autoTrim${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -371,7 +397,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="getStacks">
+               procedure="getStacks${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -382,6 +408,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+			<Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -391,7 +418,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="flushLogs">
+               procedure="flushLogs${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -402,16 +429,17 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+			<Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
-    <target name="close">
+    <target name="trimhttp">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimSessions">
+               procedure="trimSessMgrSessions${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -423,16 +451,18 @@
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
             <Parameter name="WebApp" value="${webapp}"/>
+			<Parameter name="TerminateOpt" value="${terminateopt}"/>
+			<Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
-    <target name="trim">
+    <target name="trimidle">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimAgentSessions">
+               procedure="trimABLSessions${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -443,6 +473,32 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+			<Parameter name="Idle" value="true"/>
+			<Parameter name="TerminateOpt" value="${terminateopt}"/>
+			<Parameter name="Debug" value="${debug}"/>
+        </PCTRun>
+    </target>
+
+    <target name="trimall">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="trimABLSessions${proc.ext}">
+            <propath>
+                <pathelement path="${basedir}"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+			<Parameter name="Idle" value="false"/>
+			<Parameter name="TerminateOpt" value="${terminateopt}"/>
+			<Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -452,7 +508,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="refreshAgents">
+               procedure="refreshAgents${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -463,6 +519,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+			<Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -472,7 +529,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimAgents">
+               procedure="stopAgents${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -483,12 +540,15 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+			<Parameter name="WaitFinish" value="${waitfinish}"/>
+			<Parameter name="WaitAfter" value="${waitafter}"/>
+			<Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
-	<target name="users">
-		<antcall target="locks"/>
-	</target>
+    <target name="users">
+        <antcall target="locks"/>
+    </target>
 
     <target name="locks">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
@@ -496,7 +556,8 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="getLocks">
+               procedure="getLocks${proc.ext}"
+               stackSize="4096">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -510,6 +571,7 @@
             <Parameter name="Port" value="${port}"/>
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
+			<Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 

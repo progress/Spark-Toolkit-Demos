@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 Progress Software Corporation
+	Copyright 2020-2021 Progress Software Corporation
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ define variable cHost       as character       no-undo initial "localhost".
 define variable cPort       as character       no-undo initial "8810".
 define variable cUserId     as character       no-undo initial "tomcat".
 define variable cPassword   as character       no-undo initial "tomcat".
+define variable cDebug      as character       no-undo initial "false".
 
 define temp-table ttLock no-undo
     field UserNum      as int64
@@ -90,6 +91,7 @@ if num-entries(session:parameter) ge 6 then
         cPort     = entry(3, session:parameter)
         cUserId   = entry(4, session:parameter)
         cPassword = entry(5, session:parameter)
+        cDebug    = entry(6, session:parameter)
         .
 else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
@@ -100,7 +102,14 @@ else
         cPort     = dynamic-function("getParameter" in source-procedure, "Port") when dynamic-function("getParameter" in source-procedure, "Port") gt ""
         cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
         cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
+        cDebug    = dynamic-function("getParameter" in source-procedure, "Debug") when dynamic-function("getParameter" in source-procedure, "Debug") gt ""
         .
+
+if can-do("true,yes,1", cDebug) then do:
+    log-manager:logfile-name    = "getLocks.log".
+    log-manager:log-entry-types = "4GLTrace".
+    log-manager:logging-level   = 5.
+end.
 
 assign oClient = ClientBuilder:Build():Client.
 assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).
@@ -134,7 +143,7 @@ do iLoop = 1 to num-dbs:
 
     /* Scan all locks for this DB */
     message substitute("~tGetting lock stats for &1...", cDB).
-    run getLockStats (input-output table ttLock by-reference).
+    run getLockStats.p (input-output table ttLock by-reference).
 end.
 
 /* Display table lock information to screen. */
@@ -174,7 +183,7 @@ end.
 run getAblApplications.
 run getAblAppAgents.
 
-/* Iterate through the list of ABL App agents, getting stacks for those with table locks. */
+/* Iterate through the list of ABL App MSAgents, getting stacks for those with table locks. */
 assign oIter = oAppAgents:EntrySet:Iterator().
 do while oIter:HasNext():
     assign oAgent = cast(oIter:Next(), IMapEntry).
@@ -192,7 +201,7 @@ do while oIter:HasNext():
                 define variable oABLStack  as JsonObject no-undo.
                 define variable oCallstack as JsonArray  no-undo.
 
-                message substitute("~n&1 Agent PID &2:", string(oAgent:value), iPID).
+                message substitute("~n&1 MSAgent PID &2:", string(oAgent:value), iPID).
 
                 assign oABLStacks = oJsonResp:GetJsonObject("result"):GetJsonArray("ABLStacks").
 
@@ -241,6 +250,9 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
        on stop undo, retry:
         if retry then
             undo, throw new Progress.Lang.AppError("Encountered stop condition", 0).
+
+        if can-do("true,yes,1", cDebug) then
+            message substitute("Calling URL: &1", cHttpUrl).
 
         oReq = RequestBuilder
                 :Get(pcHttpUrl)
@@ -343,7 +355,7 @@ end procedure.
 procedure getAblAppAgents:
     define variable iSize as integer no-undo.
 
-    /* Iterate through the list of ABL Applications, getting all Agent PID's. */
+    /* Iterate through the list of ABL Applications, getting all MSAgent PID's. */
     assign iSize = oAblApps:Size.
     do iLoop = 1 to iSize:
         if valid-object(oAblApps:GetValue(iLoop)) then do:

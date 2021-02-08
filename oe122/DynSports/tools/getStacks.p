@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 Progress Software Corporation
+	Copyright 2020-2021 Progress Software Corporation
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 /**
  * Author(s): Dustin Grau (dugrau@progress.com)
  *
- * Gets agent stacks for an ABLApp.
+ * Gets MSAgent stacks for an ABLApp.
  * Usage: getStacks.p <params>
  *  Parameter Default/Allowed
  *   Scheme   [http|https]
@@ -25,6 +25,7 @@
  *   UserId   [tomcat]
  *   Password [tomcat]
  *   ABL App  [oepas1]
+ *   Debug    [false|true]
  */
 
 using OpenEdge.Core.JsonDataTypeEnum.
@@ -58,9 +59,10 @@ define variable cPort     as character       no-undo initial "8810".
 define variable cUserId   as character       no-undo initial "tomcat".
 define variable cPassword as character       no-undo initial "tomcat".
 define variable cAblApp   as character       no-undo initial "oepas1".
+define variable cDebug    as character       no-undo initial "false".
 
 /* Check for passed-in arguments/parameters. */
-if num-entries(session:parameter) ge 6 then
+if num-entries(session:parameter) ge 7 then
     assign
         cScheme   = entry(1, session:parameter)
         cHost     = entry(2, session:parameter)
@@ -68,6 +70,7 @@ if num-entries(session:parameter) ge 6 then
         cUserId   = entry(4, session:parameter)
         cPassword = entry(5, session:parameter)
         cAblApp   = entry(6, session:parameter)
+        cDebug    = entry(7, session:parameter)
         .
 else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
@@ -79,7 +82,14 @@ else
         cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
         cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
         cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
+        cDebug    = dynamic-function("getParameter" in source-procedure, "Debug") when dynamic-function("getParameter" in source-procedure, "Debug") gt ""
         .
+
+if can-do("true,yes,1", cDebug) then do:
+    log-manager:logfile-name    = "getStacks.log".
+    log-manager:log-entry-types = "4GLTrace".
+    log-manager:logging-level   = 5.
+end.
 
 assign oClient = ClientBuilder:Build():Client.
 assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).
@@ -104,6 +114,9 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
        on stop undo, retry:
         if retry then
             undo, throw new Progress.Lang.AppError("Encountered stop condition", 0).
+
+        if can-do("true,yes,1", cDebug) then
+            message substitute("Calling URL: &1", cHttpUrl).
 
         oReq = RequestBuilder
                 :Get(pcHttpUrl)
@@ -166,14 +179,14 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
     end finally.
 end function. /* MakeRequest */
 
-/* Initial URL to obtain a list of all agents for an ABL Application. */
+/* Initial URL to obtain a list of all MSAgents for an ABL Application. */
 assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
-message substitute("Looking for Agents of &1...", cAblApp).
+message substitute("Looking for MSAgents of &1...", cAblApp).
 assign oJsonResp = MakeRequest(cHttpUrl).
 if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
     oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
     if oAgents:Length eq 0 then
-        message "No agents running".
+        message "No MSAgents running".
     else
     AGENTBLK:
     do iLoop = 1 to oAgents:Length
@@ -181,12 +194,12 @@ if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("re
     on stop undo, next AGENTBLK:
         oAgent = oAgents:GetJsonObject(iLoop).
 
-        /* Write session stack information from any available agents. */
+        /* Write session stack information from any available MSAgents. */
         if oAgent:GetCharacter("state") eq "available" then do:
             assign cHttpUrl = substitute(oQueryURL:Get("Stacks"), cInstance, cAblApp, oAgent:GetCharacter("pid")).
             assign oJsonResp = MakeRequest(cHttpUrl).
             if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
-                message substitute("Saving stack information for Agent PID &1...", oAgent:GetCharacter("pid")).
+                message substitute("Saving stack information for MSAgent PID &1...", oAgent:GetCharacter("pid")).
 
                 if oJsonResp:GetJsonObject("result"):Has("ABLStacks") and oJsonResp:GetJsonObject("result"):GetType("ABLStacks") eq JsonDataType:Array then do:
                     assign cOutFile = substitute("agentStacks_&1_&2.json", oAgent:GetCharacter("pid"), replace(iso-date(now), ":", "_")).
