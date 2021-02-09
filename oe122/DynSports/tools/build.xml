@@ -14,6 +14,8 @@
         <echo message="${line.separator} proant query - Use TCMAN to query a PAS instance"/>
         <echo message="${line.separator} proant shutdown - Use TCMAN to stop a PAS instance"/>
         <echo message="${line.separator} proant inventory - Bundle useful PAS instance files for support tickets"/>
+        <echo message="                   -Dpas.root=PAS Parent Directory (Default: ${pas.root})"/>
+        <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
         <echo message="${line.separator}"/>
         <echo message="${line.separator} proant status - Obtain MSAgent/connection status information for an ABL App"/>
         <echo message="${line.separator} proant stacks - Obtain stack information for all MSAgents for an ABL App"/>

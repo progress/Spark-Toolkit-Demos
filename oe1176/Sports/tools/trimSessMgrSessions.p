@@ -1,14 +1,33 @@
+/*
+    Copyright 2020-2021 Progress Software Corporation
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 /**
- * Trim idle client HTTP sessions for an ABLApp.
- * Usage: trimSessions.p <params>
+ * Author(s): Dustin Grau (dugrau@progress.com)
+ *
+ * Trim all Session Manager and Tomcat HTTP sessions for an ABL/Web App.
+ * Usage: trimSessMgrSessions.p <params>
  *  Parameter Default/Allowed
- *   Scheme   [http|https]
- *   Hostname [localhost]
- *   PAS Port [8810]
- *   UserId   [tomcat]
- *   Password [tomcat]
- *   ABL App  [oepas1]
- *   Web App  [ROOT]
+ *   Scheme       [http|https]
+ *   Hostname     [localhost]
+ *   PAS Port     [8810]
+ *   UserId       [tomcat]
+ *   Password     [tomcat]
+ *   ABL App      [oepas1]
+ *   Web App      [ROOT]
+ *   TerminateOpt [0|1]
+ *   Debug        [false|true]
  */
 
 using OpenEdge.Core.JsonDataTypeEnum.
@@ -46,29 +65,42 @@ define variable cAblApp    as character       no-undo initial "oepas1".
 define variable cWebApp    as character       no-undo initial "ROOT".
 define variable cWebAppUrl as character       no-undo.
 define variable cSession   as character       no-undo.
+define variable cTerminate as character       no-undo initial "0".
+define variable cDebug     as character       no-undo initial "false".
 
 /* Check for passed-in arguments/parameters. */
-if num-entries(session:parameter) ge 6 then
+if num-entries(session:parameter) ge 9 then
     assign
-        cScheme   = entry(1, session:parameter)
-        cHost     = entry(2, session:parameter)
-        cPort     = entry(3, session:parameter)
-        cUserId   = entry(4, session:parameter)
-        cPassword = entry(5, session:parameter)
-        cAblApp   = entry(6, session:parameter)
+        cScheme    = entry(1, session:parameter)
+        cHost      = entry(2, session:parameter)
+        cPort      = entry(3, session:parameter)
+        cUserId    = entry(4, session:parameter)
+        cPassword  = entry(5, session:parameter)
+        cAblApp    = entry(6, session:parameter)
+        cWebApp    = entry(7, session:parameter)
+        cTerminate = entry(8, session:parameter)
+        cDebug     = entry(9, session:parameter)
         .
 else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
 else
     assign
-        cScheme   = dynamic-function("getParameter" in source-procedure, "Scheme") when dynamic-function("getParameter" in source-procedure, "Scheme") gt ""
-        cHost     = dynamic-function("getParameter" in source-procedure, "Host") when dynamic-function("getParameter" in source-procedure, "Host") gt ""
-        cPort     = dynamic-function("getParameter" in source-procedure, "Port") when dynamic-function("getParameter" in source-procedure, "Port") gt ""
-        cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
-        cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
-        cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
-        cWebApp   = dynamic-function("getParameter" in source-procedure, "WebApp") when dynamic-function("getParameter" in source-procedure, "WebApp") gt ""
+        cScheme    = dynamic-function("getParameter" in source-procedure, "Scheme") when dynamic-function("getParameter" in source-procedure, "Scheme") gt ""
+        cHost      = dynamic-function("getParameter" in source-procedure, "Host") when dynamic-function("getParameter" in source-procedure, "Host") gt ""
+        cPort      = dynamic-function("getParameter" in source-procedure, "Port") when dynamic-function("getParameter" in source-procedure, "Port") gt ""
+        cUserId    = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
+        cPassword  = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
+        cAblApp    = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
+        cWebApp    = dynamic-function("getParameter" in source-procedure, "WebApp") when dynamic-function("getParameter" in source-procedure, "WebApp") gt ""
+        cTerminate = dynamic-function("getParameter" in source-procedure, "TerminateOpt") when dynamic-function("getParameter" in source-procedure, "TerminateOpt") gt ""
+        cDebug     = dynamic-function("getParameter" in source-procedure, "Debug") when dynamic-function("getParameter" in source-procedure, "Debug") gt ""
         .
+
+if can-do("true,yes,1", cDebug) then do:
+    log-manager:logfile-name    = "trimSessMgrSessions.log".
+    log-manager:log-entry-types = "4GLTrace".
+    log-manager:logging-level   = 5.
+end.
 
 assign oClient = ClientBuilder:Build():Client.
 assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).
@@ -93,6 +125,9 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
        on stop undo, retry:
         if retry then
             undo, throw new Progress.Lang.AppError("Encountered stop condition", 0).
+
+        if can-do("true,yes,1", cDebug) then
+            message substitute("Calling URL: &1", cHttpUrl).
 
         oReq = RequestBuilder
                 :Get(pcHttpUrl)
@@ -165,14 +200,15 @@ end function. /* MakeRequest */
 
 /* Get client HTTP sessions from the Session Manager. */
 assign cHttpUrl = substitute(oQueryURL:Get("ClientSessions"), cInstance, cAblApp).
-message substitute("Looking for Client HTTP Sessions of &1...", cAblApp).
+message substitute("Looking for SessionManager Sessions of &1...", cAblApp).
+message substitute("[Using &1 Termination]", if cTerminate eq "0" then "Graceful" else "Forced").
 assign oJsonResp = MakeRequest(cHttpUrl).
 if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
     oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("OEABLSession").
 
     assign iSessions = oSessions:Length.
     assign iLimit = 1000 * 60 * 60 * 24.
-    message substitute("~nClient HTTP Sessions: &1", iSessions).
+    message substitute("~nSession Manager Sessions: &1", iSessions).
 
     if iSessions gt 0 then
     SESSIONBLK:
@@ -186,7 +222,7 @@ if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("re
 
         if oSession:Has("sessionID") then do
         on error undo, next:
-            message substitute("Found Client HTTP Session: &1 [Elapsed &2 sec.]", cSession,
+            message substitute("Found Session Manager Session: &1 [Elapsed &2 sec.]", cSession,
                                trim(string(oSession:GetInt64("elapsedTimeMs") / 1000, ">>>,>>>,>>9"))).
 
             do stop-after 10
@@ -195,8 +231,11 @@ if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("re
                 if retry then
                     undo, throw new Progress.Lang.AppError("Encountered stop condition", 0).
 
-                assign cHttpUrl = substitute(oQueryURL:Get("ClientSessions"), cInstance, cAblApp) + "?terminateOpt=1&sessionID".
+                assign cHttpUrl = substitute(oQueryURL:Get("ClientSessions"), cInstance, cAblApp) + "?terminateOpt=" + cTerminate + "&sessionID".
                 assign cHttpUrl = substitute("&1=&2", cHttpUrl, cSession). /* Specify the SessionID */
+
+                if can-do("true,yes,1", cDebug) then
+                    message substitute("Calling URL: &1", cHttpUrl).
 
                 oDelResp = oClient:Execute(RequestBuilder
                                            :Delete(cHttpUrl)
@@ -208,7 +247,11 @@ if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("re
                 if valid-object(oDelResp) and valid-object(oDelResp:Entity) and type-of(oDelResp:Entity, JsonObject) then do:
                     assign oJsonResp = cast(oDelResp:Entity, JsonObject).
                     if oJsonResp:Has("operation") and oJsonResp:Has("outcome") then
-                        message substitute("~t&1: &2 [&3]", oJsonResp:GetCharacter("operation"), oJsonResp:GetCharacter("outcome"), cSession).
+                        message substitute("~t&1 (&2): &3 [&4]",
+                                           oJsonResp:GetCharacter("operation"),
+                                           if cTerminate eq "0" then "Graceful" else "Forced",
+                                           oJsonResp:GetCharacter("outcome"),
+                                           cSession).
                 end.
 
                 catch err as Progress.Lang.Error:

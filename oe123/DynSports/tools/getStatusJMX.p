@@ -1,9 +1,29 @@
+/*
+    Copyright 2020-2021 Progress Software Corporation
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 /**
- * Obtains status about all running agents from PASOE instance and ABLApp.
+ * Author(s): Dustin Grau (dugrau@progress.com)
+ *
+ * Obtains status about all running MSAgents from PASOE instance and ABLApp.
  * Usage: getStatusJMX.p <params>
  *  Parameter Default/Allowed
  *   CatalinaBase [C:\OpenEdge\WRK\oepas1]
  *   ABL App  [oepas1]
+ *   Debug    [false|true]
+ *
+ * Reference: https://knowledgebase.progress.com/articles/Article/P89737
  */
 
 &GLOBAL-DEFINE MIN_VERSION_12_2 (integer(entry(1, proversion(1), ".")) eq 12 and integer(entry(2, proversion(1), ".")) ge 2)
@@ -39,6 +59,7 @@ define variable cBound        as character       no-undo.
 define variable cOEJMXBinary  as character       no-undo.
 define variable cCatalinaBase as character       no-undo.
 define variable cAblApp       as character       no-undo initial "oepas1".
+define variable cDebug        as character       no-undo initial "false".
 
 define temp-table ttAgent no-undo
     field agentID     as character
@@ -63,16 +84,24 @@ define dataset dsAgentSession for ttAgent, ttAgentSession
     data-relation AgentID for ttAgent, ttAgentSession relation-fields(agentID,agentID) nested.
 
 /* Check for passed-in arguments/parameters. */
-if num-entries(session:parameter) ge 6 then
+if num-entries(session:parameter) ge 3 then
     assign
         cCatalinaBase = entry(1, session:parameter)
         cAblApp       = entry(2, session:parameter)
+        cDebug        = entry(3, session:parameter)
         .
 else
     assign
         cCatalinaBase = dynamic-function("getParameter" in source-procedure, "CatalinaBase") when dynamic-function("getParameter" in source-procedure, "CatalinaBase") gt ""
         cAblApp       = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
+        cDebug        = dynamic-function("getParameter" in source-procedure, "Debug") when dynamic-function("getParameter" in source-procedure, "Debug") gt ""
         .
+
+if can-do("true,yes,1", cDebug) then do:
+    log-manager:logfile-name    = "getStatusJMX.log".
+    log-manager:log-entry-types = "4GLTrace".
+    log-manager:logging-level   = 5.
+end.
 
 assign cOutDate = replace(iso-date(now), ":", "_").
 assign
@@ -163,6 +192,9 @@ function InvokeJMX returns character ( input pcQueryPath as character ):
 
     /* Construct the final command string to be executed. */
     assign cCommand = substitute("&1 -R -Q &2 -O &3", cBinaryPath, pcQueryPath, cOutputPath).
+
+    if can-do("true,yes,1", cDebug) then
+        message substitute("Running Command: &1", cCommand).
 
     /* Run command and report information to log file. */
     os-command no-console value(cCommand). /* Cannot use silent or no-wait here. */
@@ -390,7 +422,7 @@ procedure GetAgents:
         assign iTotAgent = oAgents:Length.
 
         if oAgents:Length eq 0 then
-            put unformatted "~nNo agents running" skip.
+            put unformatted "~nNo MSAgents running" skip.
         else
         AGENTBLK:
         do iLoop = 1 to iTotAgent
@@ -514,6 +546,7 @@ procedure GetAgents:
 
                     define variable iSessions as integer no-undo.
 
+                    assign iSessions = 0.
                     if valid-object(oClSess) then
                         assign iSessions = oClSess:Length.
 

@@ -1,5 +1,22 @@
+/*
+    Copyright 2020-2021 Progress Software Corporation
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 /**
- * Obtains status about all running agents from PASOE instance and ABLApp.
+ * Author(s): Dustin Grau (dugrau@progress.com)
+ *
+ * Obtains status about all running MSAgents from PASOE instance and ABLApp.
  * Usage: getStatus.p <params>
  *  Parameter Default/Allowed
  *   Scheme   [http|https]
@@ -8,6 +25,7 @@
  *   UserId   [tomcat]
  *   Password [tomcat]
  *   ABL App  [oepas1]
+ *   Debug    [false|true]
  *
  * Reference: https://knowledgebase.progress.com/articles/Article/P89737
  */
@@ -44,13 +62,14 @@ define variable iLoop     as integer         no-undo.
 define variable iLoop2    as integer         no-undo.
 define variable iLoop3    as integer         no-undo.
 define variable iCollect  as integer         no-undo.
-define variable cBound    as character       no-undo. 
+define variable cBound    as character       no-undo.
 define variable cScheme   as character       no-undo initial "http".
 define variable cHost     as character       no-undo initial "localhost".
 define variable cPort     as character       no-undo initial "8810".
 define variable cUserId   as character       no-undo initial "tomcat".
 define variable cPassword as character       no-undo initial "tomcat".
 define variable cAblApp   as character       no-undo initial "oepas1".
+define variable cDebug    as character       no-undo initial "false".
 
 define temp-table ttAgent no-undo
     field agentID     as character
@@ -75,7 +94,7 @@ define dataset dsAgentSession for ttAgent, ttAgentSession
     data-relation AgentID for ttAgent, ttAgentSession relation-fields(agentID,agentID) nested.
 
 /* Check for passed-in arguments/parameters. */
-if num-entries(session:parameter) ge 6 then
+if num-entries(session:parameter) ge 7 then
     assign
         cScheme   = entry(1, session:parameter)
         cHost     = entry(2, session:parameter)
@@ -83,6 +102,7 @@ if num-entries(session:parameter) ge 6 then
         cUserId   = entry(4, session:parameter)
         cPassword = entry(5, session:parameter)
         cAblApp   = entry(6, session:parameter)
+        cDebug    = entry(7, session:parameter)
         .
 else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
@@ -94,7 +114,14 @@ else
         cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
         cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
         cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
+        cDebug    = dynamic-function("getParameter" in source-procedure, "Debug") when dynamic-function("getParameter" in source-procedure, "Debug") gt ""
         .
+
+if can-do("true,yes,1", cDebug) then do:
+    log-manager:logfile-name    = "getStatus.log".
+    log-manager:log-entry-types = "4GLTrace".
+    log-manager:logging-level   = 5.
+end.
 
 assign oClient = ClientBuilder:Build():Client.
 assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).
@@ -174,6 +201,9 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
        on stop undo, retry:
         if retry then
             undo, throw new Progress.Lang.AppError("Encountered stop condition", 0).
+
+        if can-do("true,yes,1", cDebug) then
+            message substitute("Calling URL: &1", cHttpUrl).
 
         oReq = RequestBuilder
                 :Get(pcHttpUrl)
@@ -314,7 +344,7 @@ procedure GetApplications:
     end. /* response - Applications */
 end procedure.
 
-/* Get the configured max for ABLSessions/Connections per agent, along with min/max/initial agents. */
+/* Get the configured max for ABLSessions/Connections per MSAgent, along with min/max/initial MSAgents. */
 procedure GetProperties:
     assign cHttpUrl = substitute(oQueryURL:Get("SessionManagerProperties"), cInstance, cAblApp).
     assign oJsonResp = MakeRequest(cHttpUrl).
@@ -415,7 +445,7 @@ procedure GetAgents:
         assign iTotAgent = oAgents:Length.
 
         if oAgents:Length eq 0 then
-            put unformatted "~nNo agents running" skip.
+            put unformatted "~nNo MSAgents running" skip.
         else
         AGENTBLK:
         do iLoop = 1 to iTotAgent
@@ -442,7 +472,7 @@ procedure GetAgents:
     if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
         if oJsonResp:GetJsonObject("result"):Has("OEABLSession") and
            oJsonResp:GetJsonObject("result"):GetType("OEABLSession") eq JsonDataType:Array then do:
-            /* This data will be related to the agent-sessions to denote which ones are bound. */
+            /* This data will be related to the MSAgent-sessions to denote which ones are bound. */
             oClSess = oJsonResp:GetJsonObject("result"):GetJsonArray("OEABLSession").
         end. /* Has OEABLSession */
     end. /* Client Sessions */
@@ -450,13 +480,13 @@ procedure GetAgents:
     assign dCurrent = datetime(today, mtime). /* Assumes calling program is the same TZ as server! */
 
     for each ttAgent exclusive-lock:
-        /* Gather additional information for each agent after displaying a basic header. */
+        /* Gather additional information for each MSAgent after displaying a basic header. */
         put unformatted substitute("~nAgent PID &1: &2", ttAgent.agentPID, ttAgent.agentState) skip.
 
-        /* We should only obtain additional status and metrics if the agent is available. */
+        /* We should only obtain additional status and metrics if the MSAgent is available. */
         if ttAgent.agentState eq "available" then do:
         &IF {&MIN_VERSION_12_2} &THEN
-            /* Get the dynamic value for the available sessions of this agent (available only in 12.2.0 and later). */
+            /* Get the dynamic value for the available sessions of this MSAgent (available only in 12.2.0 and later). */
             assign cHttpUrl = substitute(oQueryURL:Get("DynamicSessionLimit"), cInstance, cAblApp, ttAgent.agentPID).
             assign oJsonResp = MakeRequest(cHttpUrl).
             if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
@@ -477,7 +507,7 @@ procedure GetAgents:
                             put unformatted substitute("~t Total ABL Sessions:~t&1",
                                                        FormatIntAsNumber(oSessInfo:GetInteger("numABLSessions"))) skip.
 
-                        /* This should be the number of ABL Sessions available to execute ABL code for this agent. */
+                        /* This should be the number of ABL Sessions available to execute ABL code for this MSAgent. */
                         if oSessInfo:Has("numAvailableSessions") and oSessInfo:GetType("numAvailableSessions") eq JsonDataType:Number then
                             put unformatted substitute("~t Avail ABL Sessions:~t&1",
                                                        FormatIntAsNumber(oSessInfo:GetInteger("numAvailableSessions"))) skip.
@@ -486,7 +516,7 @@ procedure GetAgents:
             end. /* agent manager properties */
         &ENDIF
 
-            /* Get metrics about this particular agent. */
+            /* Get metrics about this particular MSAgent. */
             assign cHttpUrl = substitute(oQueryURL:Get("AgentMetrics"), cInstance, cAblApp, ttAgent.agentPID).
             assign oJsonResp = MakeRequest(cHttpUrl).
             if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then
@@ -575,8 +605,8 @@ procedure GetAgents:
                 end. /* iLoop2 - oSessions */
 
                 put unformatted substitute("~tActive Agent-Sessions: &1 of &2 (&3% Busy)",
-										   iBusySess, iTotSess, if iTotSess gt 0 then round((iBusySess / iTotSess) * 100, 1) else 0) skip.
-				put unformatted substitute("~t Approx. Agent Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)) skip.
+                                           iBusySess, iTotSess, if iTotSess gt 0 then round((iBusySess / iTotSess) * 100, 1) else 0) skip.
+                put unformatted substitute("~t Approx. Agent Memory: &1 KB", FormatMemory(ttAgent.memoryBytes, true)) skip.
             end. /* response - AgentSessions */
         end. /* agent state = available */
     end. /* for each ttAgent */
@@ -609,15 +639,15 @@ procedure GetSessions:
             put unformatted substitute("~t       # Requests to Session:  &1",
                                         FormatLongNumber(string(oTemp:GetInteger("requests")), false)) skip.
 
-        /* Number of times a response was read by the session from the agent. */
-        /* Number of errors that occurred while reading a response from the agent. */
+        /* Number of times a response was read by the session from the MSAgent. */
+        /* Number of errors that occurred while reading a response from the MSAgent. */
         if oTemp:Has("reads") and oTemp:GetType("reads") eq JsonDataType:Number and
            oTemp:Has("readErrors") and oTemp:GetType("readErrors") eq JsonDataType:Number then
             put unformatted substitute("~t      # Agent Responses Read:  &1 (&2 Errors)",
                                         FormatLongNumber(string(oTemp:GetInteger("reads")), false),
                                         trim(string(oTemp:GetInteger("readErrors"), ">>>,>>>,>>9"))) skip.
 
-        /* Minimum, maximum, average times to read a response from the agent. */
+        /* Minimum, maximum, average times to read a response from the MSAgent. */
         if oTemp:Has("minAgentReadTime") and oTemp:GetType("minAgentReadTime") eq JsonDataType:Number and
            oTemp:Has("maxAgentReadTime") and oTemp:GetType("maxAgentReadTime") eq JsonDataType:Number and
            oTemp:Has("avgAgentReadTime") and oTemp:GetType("avgAgentReadTime") eq JsonDataType:Number then
@@ -626,8 +656,8 @@ procedure GetSessions:
                                         FormatMsTime(oTemp:GetInteger("maxAgentReadTime")),
                                         FormatMsTime(oTemp:GetInteger("avgAgentReadTime"))) skip.
 
-        /* Number of times requests were written by the session on the agent. */
-        /* Number of errors that occurred during writing a request to the agent. */
+        /* Number of times requests were written by the session on the MSAgent. */
+        /* Number of errors that occurred during writing a request to the MSAgent. */
         if oTemp:Has("writes") and oTemp:GetType("writes") eq JsonDataType:Number and
            oTemp:Has("writeErrors") and oTemp:GetType("writeErrors") eq JsonDataType:Number  then
             put unformatted substitute("~t    # Agent Requests Written:  &1 (&2 Errors)",
