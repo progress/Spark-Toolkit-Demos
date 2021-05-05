@@ -141,7 +141,7 @@
             <property name="db.host" value="localhost"/>
             <property name="db.port" value="8600"/>
             <property name="db.dir" value=""/>
-            <property name="proc.ext" value=""/>
+            <property name="proc.ext" value=".p"/>
             <property name="debug" value="false"/>
             <property name="terminateopt" value="0"/>
             <property name="waitfinish" value="120000"/>
