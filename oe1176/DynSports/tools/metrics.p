@@ -30,7 +30,7 @@ define variable cMetricsState as character       no-undo.
 define variable cMetricsOpts  as character       no-undo initial "sessions,requests,calltrees,ablobjs". /* logmsgs,sessions,requests,calltrees,callstacks,ablobjs */
 define variable cDescriptor   as character       no-undo.
 define variable cHostIP       as character       no-undo initial "127.0.0.1".
-define variable iPulseTime    as integer         no-undo initial 10.
+define variable iPulseTime    as integer         no-undo initial 20.
 define variable oJsonResp     as JsonObject      no-undo.
 define variable oOptions      as JsonObject      no-undo.
 define variable oQueryString  as StringStringMap no-undo.
