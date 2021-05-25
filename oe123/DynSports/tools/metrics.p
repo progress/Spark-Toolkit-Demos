@@ -8,29 +8,32 @@
 
 &GLOBAL-DEFINE MIN_VERSION_12_2 (integer(entry(1, proversion(1), ".")) eq 12 and integer(entry(2, proversion(1), ".")) ge 2)
 
-using OpenEdge.Core.JsonDataTypeEnum.
-using OpenEdge.Core.Collections.StringStringMap.
-using OpenEdge.Net.HTTP.ClientBuilder.
-using OpenEdge.Net.HTTP.Credentials.
-using OpenEdge.Net.HTTP.IHttpClient.
-using OpenEdge.Net.HTTP.IHttpRequest.
-using OpenEdge.Net.HTTP.IHttpResponse.
-using OpenEdge.Net.HTTP.RequestBuilder.
-using Progress.Lang.Object.
-using Progress.Json.ObjectModel.ObjectModelParser.
-using Progress.Json.ObjectModel.JsonObject.
-using Progress.Json.ObjectModel.JsonArray.
-using Progress.Json.ObjectModel.JsonDataType.
+using OpenEdge.Core.Json.JsonPropertyHelper from propath.
+using OpenEdge.Core.JsonDataTypeEnum from propath.
+using OpenEdge.Core.Collections.StringStringMap from propath.
+using OpenEdge.Net.HTTP.ClientBuilder from propath.
+using OpenEdge.Net.HTTP.Credentials from propath.
+using OpenEdge.Net.HTTP.IHttpClient from propath.
+using OpenEdge.Net.HTTP.IHttpRequest from propath.
+using OpenEdge.Net.HTTP.IHttpResponse from propath.
+using OpenEdge.Net.HTTP.RequestBuilder from propath.
+using Progress.Lang.Object from propath.
+using Progress.Json.ObjectModel.ObjectModelParser from propath.
+using Progress.Json.ObjectModel.JsonObject from propath.
+using Progress.Json.ObjectModel.JsonArray from propath.
+using Progress.Json.ObjectModel.JsonDataType from propath.
 
 define variable cQueryString  as character       no-undo.
-define variable cMetricsURL   as character       no-undo initial "http://localhost:8850/web/pdo/monitor/intake/liveMetrics".
-define variable cProfileURL   as character       no-undo initial "http://localhost:8850/web/pdo/monitor/intake/liveProfile".
-define variable cMetricsType  as character       no-undo.
-define variable cMetricsState as character       no-undo.
+define variable cOutFileName  as character       no-undo.
+define variable cMetricsURL   as character       no-undo initial "web/pdo/monitor/intake/liveMetrics".
+define variable cHealthURL    as character       no-undo initial "web/pdo/monitor/health/collect".
+define variable cProfileURL   as character       no-undo initial "web/pdo/monitor/intake/liveProfile".
+define variable cMetricsType  as character       no-undo initial "pulse".
+define variable cMetricsState as character       no-undo initial "on".
 define variable cMetricsOpts  as character       no-undo initial "sessions,requests,calltrees,ablobjs". /* logmsgs,sessions,requests,calltrees,callstacks,ablobjs */
 define variable cDescriptor   as character       no-undo.
 define variable cHostIP       as character       no-undo initial "127.0.0.1".
-define variable iPulseTime    as integer         no-undo initial 10.
+define variable iPulseTime    as integer         no-undo initial 20.
 define variable oJsonResp     as JsonObject      no-undo.
 define variable oOptions      as JsonObject      no-undo.
 define variable oQueryString  as StringStringMap no-undo.
@@ -42,6 +45,9 @@ define variable cBound        as character       no-undo.
 define variable cOEJMXBinary  as character       no-undo.
 define variable cCatalinaBase as character       no-undo.
 define variable cAblApp       as character       no-undo initial "oepas1".
+define variable cMonScheme    as character       no-undo initial "http".
+define variable cMonHost      as character       no-undo initial "localhost".
+define variable cMonPort      as character       no-undo initial "8850".
 
 define temp-table ttAgent no-undo
     field agentID    as character
@@ -57,17 +63,28 @@ if num-entries(session:parameter) ge 6 then
         .
 else
     assign
-        cCatalinaBase = dynamic-function("getParameter" in source-procedure, "CatalinaBase") when dynamic-function("getParameter" in source-procedure, "CatalinaBase") gt ""
-        cAblApp       = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
-        cMetricsType  = dynamic-function("getParameter" in source-procedure, "Type") when dynamic-function("getParameter" in source-procedure, "Type") gt ""
-        cMetricsState = dynamic-function("getParameter" in source-procedure, "State") when dynamic-function("getParameter" in source-procedure, "State") gt ""
+        cCatalinaBase = dynamic-function("getParameter" in source-procedure, "CatalinaBase") when (dynamic-function("getParameter" in source-procedure, "CatalinaBase") gt "") eq true
+        cAblApp       = dynamic-function("getParameter" in source-procedure, "ABLApp") when (dynamic-function("getParameter" in source-procedure, "ABLApp") gt "") eq true
+        cHostIP       = dynamic-function("getParameter" in source-procedure, "Host") when (dynamic-function("getParameter" in source-procedure, "Host") gt "") eq true
+        cMetricsType  = dynamic-function("getParameter" in source-procedure, "Type") when (dynamic-function("getParameter" in source-procedure, "Type") gt "") eq true
+        cMetricsState = dynamic-function("getParameter" in source-procedure, "State") when (dynamic-function("getParameter" in source-procedure, "State") gt "") eq true
+        cMetricsOpts  = dynamic-function("getParameter" in source-procedure, "Opts") when (dynamic-function("getParameter" in source-procedure, "Opts") gt "") eq true
+        cMonScheme    = dynamic-function("getParameter" in source-procedure, "Scheme") when (dynamic-function("getParameter" in source-procedure, "Scheme") gt "") eq true
+        cMonHost      = dynamic-function("getParameter" in source-procedure, "Monitor") when (dynamic-function("getParameter" in source-procedure, "Monitor") gt "") eq true
+        cMonPort      = dynamic-function("getParameter" in source-procedure, "Port") when (dynamic-function("getParameter" in source-procedure, "Port") gt "") eq true
         .
+
+assign
+    cMetricsURL = substitute("&1://&2:&3/&4", cMonScheme, cMonHost, cMonPort, cMetricsURL)
+    cHealthURL  = substitute("&1://&2:&3/&4", cMonScheme, cMonHost, cMonPort, cHealthURL)
+    cProfileURL = substitute("&1://&2:&3/&4", cMonScheme, cMonHost, cMonPort, cProfileURL)
+    .
 
 /* Set the name of the OEJMX binary based on operating system. */
 assign cOEJMXBinary = if opsys eq "WIN32" then "oejmx.bat" else "oejmx.sh".
 
 /* Register the queries for the OEJMX command as will be used in this utility. */
-assign cDescriptor = substitute("app=&1|host=&2|name=&3", cAblApp, cHostIP, iso-date(now)).
+assign cDescriptor = substitute("app=&1|host=&2|name=Metrics_&3|health=&4", cAblApp, cHostIP, iso-date(now), cHealthURL).
 assign oOptions = new JsonObject().
 oOptions:Add("AdapterMask", "").
 oOptions:Add("Coverage", true).
@@ -97,17 +114,31 @@ for each ttAgent no-lock
 
     assign cQueryString = "".
     case cMetricsType:
-        when "pulse" then do:
+        when "pulse" or
+        when "metrics" then do:
             if can-do("enable,true,yes,on,1", cMetricsState) then
-                assign cQueryString = substitute(oQueryString:Get("PulseOn"), ttAgent.agentPID, cMetricsURL, iPulseTime, cMetricsOpts, cDescriptor).
+                assign
+                    cQueryString = substitute(oQueryString:Get("PulseOn"), ttAgent.agentPID, cMetricsURL, iPulseTime, cMetricsOpts, cDescriptor)
+                    cOutFileName = substitute("pulse_on_&1", ttAgent.agentPID)
+                    .
             else
-                assign cQueryString = substitute(oQueryString:Get("PulseOff"), ttAgent.agentPID).
+                assign
+                    cQueryString = substitute(oQueryString:Get("PulseOff"), ttAgent.agentPID)
+                    cOutFileName = substitute("pulse_off_&1", ttAgent.agentPID)
+                    .
         end.
+        when "profile" or
         when "profiler" then do:
             if can-do("enable,true,yes,on,1", cMetricsState) then
-                assign cQueryString = substitute(oQueryString:Get("ProfilerOn"), ttAgent.agentPID, cProfileURL, replace(oOptions:GetJsonText(), '"', '\"')).
+                assign
+                    cQueryString = substitute(oQueryString:Get("ProfilerOn"), ttAgent.agentPID, cProfileURL, replace(oOptions:GetJsonText(), '"', '\"'))
+                    cOutFileName = substitute("profiler_on_&1", ttAgent.agentPID)
+                    .
             else
-                assign cQueryString = substitute(oQueryString:Get("ProfilerOff"), ttAgent.agentPID).
+                assign
+                    cQueryString = substitute(oQueryString:Get("ProfilerOff"), ttAgent.agentPID)
+                    cOutFileName = substitute("profiler_off_&1", ttAgent.agentPID)
+                    .
         end.
         otherwise
             message "Unknown metric type provided, task aborted.".
@@ -136,7 +167,7 @@ function InvokeJMX returns character ( input pcQueryPath as character ):
      *   The -Q flag specifies the name of the query to be executed.
      *   The -O flag sets a specific location for the query output.
      * Example:
-     *   oejmx.[bat|sh] -R -Q <catalina_base>/temp/<name>.qry -O <catalina_base>/temp/<output>.json
+     *   oejmx.[bat|sh] -R -Q <catalina_base>/temp/<name>.qry -O <catalina_base>/temp/<output>.out
      */
     define variable cBinaryPath as character no-undo.
     define variable cOutputPath as character no-undo.
@@ -148,7 +179,7 @@ function InvokeJMX returns character ( input pcQueryPath as character ):
 
     assign iTime = mtime. /* Each request should be timestamped to avoid overlap. */
     assign cBinaryPath = substitute("&1/bin/&2", cCatalinaBase, cOEJMXBinary). /* oejmx.[bat|sh] */
-    assign cOutputPath = substitute("&1.&2.json", entry(1, pcQueryPath, "."), iTime). /* Temp output file. */
+    assign cOutputPath = substitute("&1/bin/&2.out", cCatalinaBase, cOutFileName). /* Output File. */
 
     /* Construct the final command string to be executed. */
     assign cCommand = substitute("&1 -R -Q &2 -O &3", cBinaryPath, pcQueryPath, cOutputPath).
@@ -199,7 +230,6 @@ function RunQuery returns JsonObject ( input pcQueryString as character ):
         return new JsonObject().
     end catch.
     finally:
-        os-delete value(cOutPath).
         delete object oParser no-error.
     end finally.
 end function. /* RunQuery */
@@ -221,8 +251,8 @@ procedure GetAgents:
     /* Capture all available agent info to a temp-table before we proceed. */
     assign cQueryString = substitute(oQueryString:Get("Agents"), cAblApp).
     assign oJsonResp = RunQuery(cQueryString).
-    if valid-object(oJsonResp) and oJsonResp:Has("getAgents") and oJsonResp:GetType("getAgents") eq JsonDataType:Object then do:
-        if oJsonResp:GetJsonObject("getAgents"):Has("agents") and oJsonResp:GetJsonObject("getAgents"):GetType("agents") eq JsonDataType:Array then
+    if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "getAgents", JsonDataType:Object) then do:
+        if JsonPropertyHelper:HasTypedProperty(oJsonResp:GetJsonObject("getAgents"), "agents", JsonDataType:Array) then
             oAgents = oJsonResp:GetJsonObject("getAgents"):GetJsonArray("agents").
         else
             oAgents = new JsonArray().

@@ -114,14 +114,14 @@ else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
 else
     assign
-        cScheme   = dynamic-function("getParameter" in source-procedure, "Scheme") when dynamic-function("getParameter" in source-procedure, "Scheme") gt ""
-        cHost     = dynamic-function("getParameter" in source-procedure, "Host") when dynamic-function("getParameter" in source-procedure, "Host") gt ""
-        cPort     = dynamic-function("getParameter" in source-procedure, "Port") when dynamic-function("getParameter" in source-procedure, "Port") gt ""
-        cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
-        cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
-        cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
-		iBaseMem  = int64(dynamic-function("getParameter" in source-procedure, "BaseMem")) when dynamic-function("getParameter" in source-procedure, "BaseMem") gt ""
-        cDebug    = dynamic-function("getParameter" in source-procedure, "Debug") when dynamic-function("getParameter" in source-procedure, "Debug") gt ""
+        cScheme   = dynamic-function("getParameter" in source-procedure, "Scheme") when (dynamic-function("getParameter" in source-procedure, "Scheme") gt "") eq true
+        cHost     = dynamic-function("getParameter" in source-procedure, "Host") when (dynamic-function("getParameter" in source-procedure, "Host") gt "") eq true
+        cPort     = dynamic-function("getParameter" in source-procedure, "Port") when (dynamic-function("getParameter" in source-procedure, "Port") gt "") eq true
+        cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when (dynamic-function("getParameter" in source-procedure, "UserID") gt "") eq true
+        cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when (dynamic-function("getParameter" in source-procedure, "PassWD") gt "") eq true
+        cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when (dynamic-function("getParameter" in source-procedure, "ABLApp") gt "") eq true
+        iBaseMem  = int64(dynamic-function("getParameter" in source-procedure, "BaseMem")) when (dynamic-function("getParameter" in source-procedure, "BaseMem") gt "") eq true
+        cDebug    = dynamic-function("getParameter" in source-procedure, "Debug") when (dynamic-function("getParameter" in source-procedure, "Debug") gt "") eq true
         .
 
 if can-do("true,yes,1", cDebug) then do:
@@ -439,7 +439,7 @@ procedure GetAgents:
     define variable oAgent    as JsonObject no-undo.
     define variable oSessions as JsonArray  no-undo.
     define variable oSessInfo as JsonObject no-undo.
-	define variable iMinMem   as int64      no-undo.
+    define variable iMinMem   as int64      no-undo.
 
     empty temp-table ttAgent.
     empty temp-table ttAgentSession.

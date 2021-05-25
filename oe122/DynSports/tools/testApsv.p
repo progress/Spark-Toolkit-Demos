@@ -57,18 +57,18 @@ define temp-table ttOrder no-undo
 
 startTime = now.
 assign
-    cScheme   = dynamic-function("getParameter" in source-procedure, "scheme") when dynamic-function("getParameter" in source-procedure, "scheme") gt ""
-    cHost     = dynamic-function("getParameter" in source-procedure, "host") when dynamic-function("getParameter" in source-procedure, "host") gt ""
-    cPort     = dynamic-function("getParameter" in source-procedure, "port") when dynamic-function("getParameter" in source-procedure, "port") gt ""
-    cWebApp   = dynamic-function("getParameter" in source-procedure, "webapp") when dynamic-function("getParameter" in source-procedure, "webapp") gt ""
-    iNumTests = integer(dynamic-function("getParameter" in source-procedure, "tests"))
-    fTestNum  = decimal(dynamic-function("getParameter" in source-procedure, "test"))
-    pauseTime = decimal(dynamic-function("getParameter" in source-procedure, "pause"))
-    timeLimit = integer(dynamic-function("getParameter" in source-procedure, "duration"))
-    waitAfter = integer(dynamic-function("getParameter" in source-procedure, "waitAfter"))
-    lBadCode  = lookup(dynamic-function("getParameter" in source-procedure, "badCode"), "true,yes,1") gt 0
-    lVerbose  = lookup(dynamic-function("getParameter" in source-procedure, "verbose"), "true,yes,1") gt 0
-    cTestType = dynamic-function("getParameter" in source-procedure, "type") when dynamic-function("getParameter" in source-procedure, "type") gt ""
+    cScheme   = dynamic-function("getParameter" in source-procedure, "scheme") when (dynamic-function("getParameter" in source-procedure, "scheme") gt "") eq true
+    cHost     = dynamic-function("getParameter" in source-procedure, "host") when (dynamic-function("getParameter" in source-procedure, "host") gt "") eq true
+    cPort     = dynamic-function("getParameter" in source-procedure, "port") when (dynamic-function("getParameter" in source-procedure, "port") gt "") eq true
+    cWebApp   = dynamic-function("getParameter" in source-procedure, "webapp") when (dynamic-function("getParameter" in source-procedure, "webapp") gt "") eq true
+    iNumTests = integer(dynamic-function("getParameter" in source-procedure, "tests")) when (dynamic-function("getParameter" in source-procedure, "tests") gt "") eq true
+    fTestNum  = decimal(dynamic-function("getParameter" in source-procedure, "test")) when (dynamic-function("getParameter" in source-procedure, "test") gt "") eq true
+    pauseTime = decimal(dynamic-function("getParameter" in source-procedure, "pause")) when (dynamic-function("getParameter" in source-procedure, "tests") gt "") eq true
+    timeLimit = integer(dynamic-function("getParameter" in source-procedure, "duration")) when (dynamic-function("getParameter" in source-procedure, "duration") gt "") eq true
+    waitAfter = integer(dynamic-function("getParameter" in source-procedure, "waitAfter")) when (dynamic-function("getParameter" in source-procedure, "waitAfter") gt "") eq true
+    lBadCode  = (lookup(dynamic-function("getParameter" in source-procedure, "badCode"), "true,yes,1") gt 0) /* Will be FALSE if not set. */
+    lVerbose  = (lookup(dynamic-function("getParameter" in source-procedure, "verbose"), "true,yes,1") gt 0) /* Will be FALSE if not set. */
+    cTestType = dynamic-function("getParameter" in source-procedure, "type") when (dynamic-function("getParameter" in source-procedure, "type") gt "") eq true
     .
 
 /* Can't run if we don't know how many total tests or which iteration. */
