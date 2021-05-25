@@ -184,7 +184,7 @@ end function. /* MakeRequest */
 assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
 message substitute("Looking for MSAgents of &1...", cAblApp).
 assign oJsonResp = MakeRequest(cHttpUrl).
-if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
+if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
     oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
     if oAgents:Length eq 0 then
         message "No MSAgents running".

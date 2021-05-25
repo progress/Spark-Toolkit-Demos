@@ -204,7 +204,7 @@ assign cHttpUrl = substitute(oQueryURL:Get("ClientSessions"), cInstance, cAblApp
 message substitute("Looking for SessionManager Sessions of &1...", cAblApp).
 message substitute("[Using &1 Termination]", if cTerminate eq "0" then "Graceful" else "Forced").
 assign oJsonResp = MakeRequest(cHttpUrl).
-if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
+if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
     oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("OEABLSession").
 
     assign iSessions = oSessions:Length.

@@ -320,7 +320,7 @@ procedure GetApplications:
 
     assign cHttpUrl = substitute(oQueryURL:Get("Applications"), cInstance).
     assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
+    if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
         oResult = oJsonResp:GetJsonObject("result").
 
         if JsonPropertyHelper:HasTypedProperty(oResult, "Application", JsonDataType:Array) then
@@ -357,7 +357,7 @@ end procedure.
 procedure GetProperties:
     assign cHttpUrl = substitute(oQueryURL:Get("SessionManagerProperties"), cInstance, cAblApp).
     assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
+    if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
     do on error undo, leave:
         oResult = oJsonResp:GetJsonObject("result").
 
@@ -415,7 +415,7 @@ procedure GetProperties:
     /* Get the configured initial number of sessions along with the min available sessions. */
     assign cHttpUrl = substitute(oQueryURL:Get("AgentManagerProperties"), cInstance, cAblApp).
     assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
+    if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
     do on error undo, leave:
         oResult = oJsonResp:GetJsonObject("result").
 
@@ -447,7 +447,7 @@ procedure GetAgents:
     /* Capture all available agent info to a temp-table before we proceed. */
     assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
     assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
+    if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
         if JsonPropertyHelper:HasTypedProperty(oJsonResp:GetJsonObject("result"), "agents", JsonDataType:Array) then
             oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
         else
@@ -480,7 +480,7 @@ procedure GetAgents:
     /* https://docs.progress.com/bundle/pas-for-openedge-management/page/About-session-and-request-states.html */
     assign cHttpUrl = substitute(oQueryURL:Get("ClientSessions"), cInstance, cAblApp).
     assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
+    if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
         if JsonPropertyHelper:HasTypedProperty(oJsonResp:GetJsonObject("result"), "OEABLSession", JsonDataType:Array) then do:
             /* This data will be related to the MSAgent-sessions to denote which ones are bound. */
             oClSess = oJsonResp:GetJsonObject("result"):GetJsonArray("OEABLSession").
@@ -504,7 +504,7 @@ procedure GetAgents:
             /* Get the dynamic value for the available sessions of this MSAgent (available only in 12.2.0 and later). */
             assign cHttpUrl = substitute(oQueryURL:Get("DynamicSessionLimit"), cInstance, cAblApp, ttAgent.agentPID).
             assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
+            if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
                 oResult = oJsonResp:GetJsonObject("result").
                 if JsonPropertyHelper:HasTypedProperty(oResult, "AgentSessionInfo", JsonDataType:Array) then do:
                     oSessions = oResult:GetJsonArray("AgentSessionInfo").
@@ -530,7 +530,7 @@ procedure GetAgents:
             /* Get metrics about this particular MSAgent. */
             assign cHttpUrl = substitute(oQueryURL:Get("AgentMetrics"), cInstance, cAblApp, ttAgent.agentPID).
             assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
+            if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
             do on error undo, leave:
                 if JsonPropertyHelper:HasTypedProperty(oJsonResp:GetJsonObject("result"), "AgentStatHist", JsonDataType:Array) and
                    oJsonResp:GetJsonObject("result"):GetJsonArray("AgentStatHist"):Length ge 1 then do:
@@ -547,7 +547,7 @@ procedure GetAgents:
             /* Get sessions and count non-idle states. */
             assign cHttpUrl = substitute(oQueryURL:Get("AgentSessions"), cInstance, cAblApp, ttAgent.agentPID).
             assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
+            if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
             do on error undo, leave:
                 if JsonPropertyHelper:HasTypedProperty(oJsonResp:GetJsonObject("result"), "AgentSession", JsonDataType:Array) then
                     oSessions = oJsonResp:GetJsonObject("result"):GetJsonArray("AgentSession").
@@ -684,7 +684,7 @@ procedure GetSessions:
     /* Get metrics about the session manager which comes from the collectMetrics flag. */
     assign cHttpUrl = substitute(oQueryURL:Get("SessionMetrics"), cInstance, cAblApp).
     assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
+    if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then
     do on error undo, leave:
         oTemp = oJsonResp:GetJsonObject("result").
 
@@ -809,7 +809,7 @@ procedure GetSessions:
                     assign oConnInfo = oTemp:GetJsonObject("agentConnInfo").
 
                     /* We can't really continue unless there is an AgentID (string) value to display. */
-                    if valid-object(oConnInfo) and JsonPropertyHelper:HasTypedProperty(oConnInfo, "agentID", JsonDataType:string) then
+                    if JsonPropertyHelper:HasTypedProperty(oConnInfo, "agentID", JsonDataType:string) then
                         put unformatted substitute("~t|-- AgentConn: &1  &2  Agent: &3  Local: &4",
                                                    if oAgentMap:ContainsKey(oConnInfo:GetCharacter("agentID"))
                                                    then "PID " + oAgentMap:Get(oConnInfo:GetCharacter("agentID"))

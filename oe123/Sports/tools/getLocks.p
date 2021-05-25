@@ -194,7 +194,7 @@ do while oIter:HasNext():
     if HasAgent(iPID) then do:
         assign cHttpUrl = substitute(oQueryURL:Get("Stacks"), cInstance, string(oAgent:value), iPID).
         assign oJsonResp = MakeRequest(cHttpUrl).
-        if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
+        if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
             if JsonPropertyHelper:HasTypedProperty(oJsonResp:GetJsonObject("result"), "ABLStacks", JsonDataType:Array) then do:
                 define variable oABLStacks as JsonArray  no-undo.
                 define variable oABLStack  as JsonObject no-undo.
@@ -332,7 +332,7 @@ procedure getAblApplications:
     /* Oobtain a list of all ABL Applications for a PAS instance. */
     assign cHttpUrl = substitute(oQueryURL:Get("Apps"), cInstance).
     assign oJsonResp = MakeRequest(cHttpUrl).
-    if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
+    if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
         define variable oApps as JsonArray  no-undo.
         define variable oApp  as JsonObject no-undo.
 
@@ -361,7 +361,7 @@ procedure getAblAppAgents:
             /* Obtain a list of all AVAILABLE agents for an ABL Application. */
             assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cast(oAblApps:GetValue(iLoop), OpenEdge.Core.String):Value).
             assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
+            if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
                 define variable oAgents as JsonArray  no-undo.
                 define variable oAgent  as JsonObject no-undo.
         

@@ -183,7 +183,7 @@ end function. /* MakeRequest */
 assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
 message substitute("Flushing deferred log buffer for MSAgents of &1...", cAblApp).
 assign oJsonResp = MakeRequest(cHttpUrl).
-if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
+if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
     oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
     if oAgents:Length eq 0 then
         message "No MSAgents running".
@@ -201,7 +201,7 @@ if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "r
             /* A single command will flush all deferred log entries for all MSAgents. */
             assign cHttpUrl = substitute(oQueryURL:Get("FlushLogs"), cInstance, cAblApp, oAgent:GetCharacter("pid")).
             assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
+            if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
                 if oJsonResp:Has("operation") and oJsonResp:Has("outcome") then
                     message substitute("~t&1: &2", oJsonResp:GetCharacter("operation"), oJsonResp:GetCharacter("outcome")).
             end. /* flush */

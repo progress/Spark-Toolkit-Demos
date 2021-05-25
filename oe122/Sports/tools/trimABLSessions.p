@@ -197,7 +197,7 @@ assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
 message substitute("Looking for MSAgents of &1...", cAblApp).
 message substitute("[Using &1 Termination]", if cTerminate eq "0" then "Graceful" else "Forced").
 assign oJsonResp = MakeRequest(cHttpUrl).
-if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
+if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
     oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
     if oAgents:Length eq 0 then
         message "No MSAgents running".
@@ -215,7 +215,7 @@ if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "r
         if oAgent:GetCharacter("state") eq "available" then do:
             assign cHttpUrl = substitute(oQueryURL:Get("AgentSessions"), cInstance, cAblApp, cPID).
             assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
+            if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
                 if oJsonResp:Has("result") then do:
                     message substitute("Found MSAgent PID &1", cPID).
 
