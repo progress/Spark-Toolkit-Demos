@@ -1,4 +1,6 @@
 /**
+ * Copyright (c) 2020-2021 by Progress Software Corporation. All rights reserved.
+ *
  * Create an immediately-invoked function expression that returns a static object.
  * This is to be available globally via the variable "app" (aka "window.app").
  */
@@ -100,6 +102,7 @@ var app = (function(){
     var agentCount = 0;
     var agentsReturned = 0;
     var clientSessions = [];
+    var serverAccessTime = null;
 
     var _notificationArea = null;
     function setNotificationArea(selector, options){
@@ -431,6 +434,9 @@ var app = (function(){
             success: function(data, textStatus, jqXHR){
                 $("#instanceInfo").empty();
                 var header = $("<h3></h3>").text("MSAS Agents (" + sessMgrProps.agentExecFile + ")");
+                var addAgent = $("<a></a>").css("padding-left", "5px").attr("href", 'javascript:app.startAgent("' + ablApp + '")');
+                addAgent.html('<i class="fa fa-plus-square" title="Start new Agent for ' + ablApp + '"></i>');
+                header.append(addAgent);
                 $("#instanceInfo").append(header);
 
                 var agents = (data.result || {}).agents || [];
@@ -454,6 +460,7 @@ var app = (function(){
                         // Get related information on sessions for this AVAILABLE agent.
                         if (agent.state == "AVAILABLE") {
                             getDynSessions(ablApp, agent.pid);
+                            getAgentThreads(ablApp, agent.pid);
                             getAgentMetrics(ablApp, agent.pid);
                         }
                     });
@@ -493,29 +500,31 @@ var app = (function(){
             dataType: "json",
             url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentPID + "/dynamicSessionLimit",
             success: function(data, textStatus, jqXHR){
-                var sessionInfo = (((data.result || {}).AgentSessionInfo || [])[0] || {}).ABLOutput || {};
-                if (sessionInfo && $("#props_" + agentPID)) {
-                    var table = $("<table></table>").attr({cellSpacing: 0, cellPadding: 2});
-                    var row = $("<tr></tr>");
-                    var cell = $("<td></td>").attr({width: 120}).css("text-align", "right");
-                    var tmpRow = null;
+                if (data.result && $("#props_" + agentPID)) {
+                    var sessionInfo = (((data.result || {}).AgentSessionInfo || [])[0] || {}).ABLOutput || {};
+                    if (sessionInfo) {
+                        var table = $("<table></table>").attr({cellSpacing: 0, cellPadding: 2});
+                        var row = $("<tr></tr>");
+                        var cell = $("<td></td>").attr({width: 120}).css("text-align", "right");
+                        var tmpRow = null;
 
-                    tmpRow = row.clone();
-                    tmpRow.append(cell.clone().attr({width: 200}).text("Dynamic Max ABL Sessions:"));
-                    tmpRow.append(cell.clone().text(numberWithCommas(sessionInfo.dynmaxablsessions || 0)));
-                    table.append(tmpRow);
+                        tmpRow = row.clone();
+                        tmpRow.append(cell.clone().attr({width: 200}).text("Dynamic Max ABL Sessions:"));
+                        tmpRow.append(cell.clone().text(numberWithCommas(sessionInfo.dynmaxablsessions || 0)));
+                        table.append(tmpRow);
 
-                    tmpRow = row.clone();
-                    tmpRow.append(cell.clone().attr({width: 200}).text("Total ABL Sessions:"));
-                    tmpRow.append(cell.clone().text(numberWithCommas(sessionInfo.numABLSessions || 0)));
-                    table.append(tmpRow);
+                        tmpRow = row.clone();
+                        tmpRow.append(cell.clone().attr({width: 200}).text("Total ABL Sessions:"));
+                        tmpRow.append(cell.clone().text(numberWithCommas(sessionInfo.numABLSessions || 0)));
+                        table.append(tmpRow);
 
-                    tmpRow = row.clone();
-                    tmpRow.append(cell.clone().attr({width: 200}).text("Avail ABL Sessions:"));
-                    tmpRow.append(cell.clone().text(numberWithCommas(sessionInfo.numAvailableSessions || 0)));
-                    table.append(tmpRow);
+                        tmpRow = row.clone();
+                        tmpRow.append(cell.clone().attr({width: 200}).text("Avail ABL Sessions:"));
+                        tmpRow.append(cell.clone().text(numberWithCommas(sessionInfo.numAvailableSessions || 0)));
+                        table.append(tmpRow);
 
-                    $("#props_" + agentPID).append(table);
+                        $("#props_" + agentPID).append(table);
+                    }
                 }
             },
             error: function(jqXHR, textStatus, errorThrown){
@@ -523,6 +532,63 @@ var app = (function(){
                     console.log("Login Required");
                 } else {
                     // Do not show a message if this API call fails, as it may not exist for earlier versions of OpenEdge.
+                }
+            }
+        });
+    }
+
+    function getAgentThreads(ablApp, agentPID){
+        // Get threads for this agent.
+        $.ajax({
+            contentType: "application/vnd.progress+json",
+            dataType: "json",
+            url: serverUrl + "/oemanager/applications/" + ablApp + "/agents/" + agentPID + "/threads",
+            success: function(data, textStatus, jqXHR){
+                var threads = (data.result || {}).AgentThread || [];
+                if (threads.length > 0 && $("#props_" + agentPID)) {
+                    var table = $("<table></table>").attr({cellSpacing: 0, cellPadding: 2});
+                    var row = $("<tr></tr>");
+                    var cell = $("<td></td>").attr({width: 120}).css("text-align", "right");
+                    var tmpRow = null;
+                    var started = new Date();
+                    var temp = null;
+
+                    $.each(threads, function(i, obj){
+                        if (obj.StartTime) {
+                            temp = new Date(obj.StartTime.substring(0, 23)); // Only get date+time (no TZ).
+                            if (temp < started) {
+                                started = temp;
+                            }
+                        }
+                    });
+
+                    tmpRow = row.clone();
+                    tmpRow.append(cell.clone().attr({width: 200}).text("Est. Agent Lifetime:"));
+                    tmpRow.append(cell.clone().text(msToTime(serverAccessTime.getTime() - started.getTime())).attr("title", "Started: " + kendo.toString(started, "g")));
+                    table.append(tmpRow);
+
+                    $("#props_" + agentPID).prepend(table);
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown){
+                if (jqXHR.status == 401 || jqXHR.status == 403) {
+                    console.log("Login Required");
+                } else {
+                    var errors = null;
+                    var errMsg = errorThrown;
+                    try {
+                        errors = JSON.parse(jqXHR.responseText);
+                    }
+                    catch(e){}
+
+                    if (errors && errors.operation && errors.outcome && errors.errmsg) {
+                        errMsg = errors.operation + " " + errors.outcome + ": " + errors.errmsg;
+                    }
+                    if (errMsg == "") {
+                        errMsg = "Error encountered while executing remote API";
+                    }
+                    console.log(errMsg);
+                    showMessage(errMsg, "error");
                 }
             }
         });
@@ -608,6 +674,7 @@ var app = (function(){
                     var cell = $("<td></td>").css("text-align", "right");
                     var tmpRow = null;
                     var memTotal = 0;
+                    var summary = table.clone(); // For OE11 summary info.
 
                     tmpRow = row.clone();
                     tmpRow.append(head.clone().html("Session&nbsp;ID"));
@@ -620,6 +687,8 @@ var app = (function(){
                     table.append(tmpRow);
 
                     var sessions = (data.result || {}).AgentSession || [];
+                    var totalSessions = 0;
+                    var availSessions = 0;
                     if ($("#sessions_" + agentPID) && sessions.length > 0) {
                         $.each(sessions, function(i, session){
                             var control = $("<a></a>").css("padding-left", "5px").attr("href", 'javascript:app.killABLSession("' + ablApp + '", "' + agentPID + '", "' + session.SessionId + '")');
@@ -630,18 +699,22 @@ var app = (function(){
                             tmpRow.append(cell.clone().text(session.SessionState));
                             if (session.SessionState == "IDLE") {
                                 tmpRow.append(cell.clone());
+                                availSessions++;
                             } else {
                                 var stacks = $("<a></a>").css("padding-left", "5px").attr("href", 'javascript:app.getSessionStacks("' + ablApp + '", "' + agentPID + '", "' + session.SessionId + '")');
                                 stacks.html('<i class="fa fa-sticky-note-o" title="Get Session Stacks"></i>');
                                 tmpRow.append(cell.clone().append(stacks));
                             }
-                            tmpRow.append(cell.clone().text(session.StartTime).css("text-align", "left").css("padding-left", "10px"));
+                            var started = new Date(session.StartTime.substring(0, 23)); // Only get date+time (no TZ).
+                            var lifetime = "Lifetime: " + msToTime(serverAccessTime.getTime() - started.getTime());
+                            tmpRow.append(cell.clone().text(session.StartTime).css("text-align", "left").css("padding-left", "10px").attr("title", lifetime));
                             tmpRow.append(cell.clone().text(numberWithCommas(Math.round(parseInt(session.SessionMemory || 0) / 1024, 2)) + " KB"));
                             tmpRow.append(cell.clone().css("text-align", "left").css("padding-left", "10px").attr("id", "bound_sess_" + agentPID + "_" + session.SessionId));
                             tmpRow.append(cell.clone().css("text-align", "left").attr("id", "bound_req_" + agentPID + "_" + session.SessionId));
                             table.append(tmpRow);
 
                             memTotal += parseInt(session.SessionMemory || 0); // Keep tally of the total memory reported by each session.
+                            totalSessions++;
                         });
                         $("#sessions_" + agentPID).append(table);
                     }
@@ -651,6 +724,27 @@ var app = (function(){
                         var overhead = parseInt($("#metrics_" + agentPID + "_memory").attr("value"));
                         memTotal += overhead || 0; // Total of agent overhead + session memory.
                         $("#metrics_" + agentPID + "_memory").text(numberWithCommas(Math.round(parseInt(memTotal) / 1024, 2)) + " KB");
+                    }
+
+                    // Provide summary data for OpenEdge 11 instances when necessary.
+                    var version = data.versionStr || "";
+                    if ($("#props_" + agentPID) && version.startsWith("v11")) {
+                        tmpRow = row.clone();
+                        tmpRow.append(cell.clone().attr({width: 200}).text("Total ABL Sessions:"));
+                        tmpRow.append(cell.clone().attr({width: 120}).text(numberWithCommas(totalSessions || 0)));
+                        summary.append(tmpRow);
+
+                        tmpRow = row.clone();
+                        tmpRow.append(cell.clone().attr({width: 200}).text("Avail ABL Sessions:"));
+                        tmpRow.append(cell.clone().attr({width: 120}).text(numberWithCommas(availSessions || 0)));
+                        summary.append(tmpRow);
+
+                        tmpRow = row.clone();
+                        tmpRow.append(cell.clone().attr({width: 200}).text("Total Session Memory:"));
+                        tmpRow.append(cell.clone().attr({width: 120}).text(numberWithCommas(Math.round(parseInt(memTotal) / 1024, 2)) + " KB"));
+                        summary.append(tmpRow);
+
+                        $("#props_" + agentPID).append(summary);
                     }
                 }
             },
@@ -847,6 +941,10 @@ var app = (function(){
                 var row = $("<tr></tr>");
                 var cell = $("<td></td>").attr({width: 240}).css("text-align", "right").css("padding-right", "10px");
                 var tmpRow = null;
+
+                if (metrics.accessTime && metrics.accessTime != "") {
+                    serverAccessTime = new Date(metrics.accessTime.substring(0, 23)); // Only get date+time (no TZ).
+                }
 
                 tmpRow = row.clone();
                 tmpRow.append(cell.clone().text("# Requests to Session:"));
@@ -1116,6 +1214,43 @@ var app = (function(){
         }
     }
 
+    function startAgent(ablApp){
+        // Kill a particular session.
+        if (ablApp && confirm("Start a new agent for " + ablApp + "?")) {
+            $.ajax({
+                contentType: "application/vnd.progress+json",
+                dataType: "json",
+                method: "post",
+                url: serverUrl + "/oemanager/applications/" + ablApp + "/addAgent",
+                success: function(data, textStatus, jqXHR){
+                    showMessage(data.outcome + ": Starting Agent for " + ablApp + ".", "success");
+                    headerVM.refreshData();
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                    if (jqXHR.status == 401 || jqXHR.status == 403) {
+                        console.log("Login Required");
+                    } else {
+                        var errors = null;
+                        var errMsg = errorThrown;
+                        try {
+                            errors = JSON.parse(jqXHR.responseText);
+                        }
+                        catch(e){}
+
+                        if (errors && errors.operation && errors.outcome && errors.errmsg) {
+                            errMsg = errors.operation + " " + errors.outcome + ": " + errors.errmsg + " (" + ablApp + ")";
+                        }
+                        if (errMsg == "") {
+                            errMsg = "Error encountered while executing remote API";
+                        }
+                        console.log(errMsg);
+                        showMessage(errMsg, "error");
+                    }
+                }
+            });
+        }
+    }
+
     function getSessionStacks(ablApp, agentPID, sessionID){
         // Obtain stack information for a specific agent and session.
         if (ablApp && sessionID) {
@@ -1259,6 +1394,7 @@ var app = (function(){
         killABLSession: killABLSession,
         killClientSession: killClientSession,
         killAllClientSessions: killAllClientSessions,
+        startAgent: startAgent,
         getSessionStacks: getSessionStacks,
         showMessage: showMessage
     };
