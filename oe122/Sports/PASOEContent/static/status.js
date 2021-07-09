@@ -91,6 +91,20 @@ var app = (function(){
         return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
     }
 
+    function isUpperCase(str){
+        return str === str.toUpperCase();
+    }
+
+    function camelCaseToTitle(str){
+        var i = null;
+        for (i = str.length - 1; i > 0; i--) {
+            if (!isUpperCase(str[i - 1]) && isUpperCase(str[i])) {
+                str = str.slice(0, i) + ' ' + str.slice(i);
+            }
+        }
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
     /***** Application *****/
 
     var applicationName = null;
@@ -338,7 +352,7 @@ var app = (function(){
 
                 // Get data which depends on some values from the Session Manager.
                 getAgentInfo(ablApp);
-                getMetrics(ablApp);
+                getAppMetrics(ablApp);
             },
             error: function(jqXHR, textStatus, errorThrown){
                 if (jqXHR.status == 401 || jqXHR.status == 403) {
@@ -907,8 +921,8 @@ var app = (function(){
         });
     }
 
-    function getMetrics(ablApp){
-        // Get agent information for this ABL application.
+    function getAppMetrics(ablApp){
+        // Get metrics for this ABL application.
         $.ajax({
             contentType: "application/vnd.progress+json",
             dataType: "json",
@@ -1296,6 +1310,63 @@ var app = (function(){
         }
     }
 
+    function getTransportMetrics(ablApp, webApp, transport){
+        // Obtain metrics for a transport of a webapp.
+        if (ablApp && webApp && transport) {
+            transport = transport.toLowerCase();
+            $.ajax({
+                contentType: "application/vnd.progress+json",
+                dataType: "json",
+                method: "get",
+                url: serverUrl + "/oemanager/applications/" + ablApp + "/webapps/" + webApp + "/transports/" + transport + "/metrics",
+                success: function(data, textStatus, jqXHR){
+                    if (data.result) {
+                        if ($("#" + webApp + "_metrics")) {
+                            var table = $("<table></table>").attr({cellSpacing: 0, cellPadding: 2});
+                            var row = $("<tr></tr>");
+                            var cell1 = $("<td></td>").attr({width: 200}).css("text-align", "right");
+                            var cell2 = $("<td></td>").attr({width: 220}).css("text-align", "right");
+                            var tmpRow = row.clone();
+
+                            $("#" + webApp + "_metrics").empty();
+                            tmpRow.append(cell1.clone().attr("colspan", 2).css("text-align", "center").html("<h4>" + ablApp + "." + webApp + "." + transport + " Metrics</h4>"));
+                            table.append(tmpRow);
+
+                            $.each(data.result, function(name, value){
+                                tmpRow = row.clone();
+                                tmpRow.append(cell1.clone().text(camelCaseToTitle(name) + ":"));
+                                tmpRow.append(cell2.clone().text(isNaN(value) ? value : numberWithCommas(value)));
+                                table.append(tmpRow);
+                            });
+                            $("#" + webApp + "_metrics").append(table);
+                        }
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                    if (jqXHR.status == 401 || jqXHR.status == 403) {
+                        console.log("Login Required");
+                    } else {
+                        var errors = null;
+                        var errMsg = errorThrown;
+                        try {
+                            errors = JSON.parse(jqXHR.responseText);
+                        }
+                        catch(e){}
+
+                        if (errors && errors.operation && errors.outcome && errors.errmsg) {
+                            errMsg = errors.operation + " " + errors.outcome + ": " + errors.errmsg + " (" + agentPID + " #" + sessionID + ")";
+                        }
+                        if (errMsg == "") {
+                            errMsg = "Error encountered while executing remote API";
+                        }
+                        console.log(errMsg);
+                        showMessage(errMsg, "error");
+                    }
+                }
+            });
+        }
+    }
+
     function saveAsFile(textToWrite, filename) {
         var textFileAsBlob = new Blob([textToWrite], {type: "text/plain"});
         var downloadLink = document.createElement("a");
@@ -1317,6 +1388,39 @@ var app = (function(){
         downloadLink.click();
     }
 
+    function refreshWebApps() {
+        $.each(applicationList, function(i, ablApp){
+            // Make sure certain areas are emptied.
+            $("#webappInfo").empty();
+
+            if (ablApp.name == applicationName) {
+                // Output information about the current ABL application.
+                var transportInfo = "";
+                var webApps = ablApp.webapps || [];
+
+                $.each(webApps, function(i, webApp){
+                    // Display the name of this ABL app and any available transports.
+                    $("#webappInfo").append("<h3>" + webApp.applicationName + "." + webApp.name + "</h3>");
+                    $.each(webApp.transports, function(j, transport){
+                        if (transport.state === "ENABLED") {
+                            // Show a green box for enabled transports, and allow clicking the item to show metrics.
+                            transportInfo = $("<a></a>").css("padding-left", "5px").attr("href", 'javascript:app.getTransportMetrics("' + ablApp.name + '", "' + webApp.name + '", "' + transport.name + '")');
+                            transportInfo.html('<span class="btn btn-success" title="' + transport.description + '">' + transport.name + ' ' + transport.version + '</span>');
+                        } else {
+                            // Show a red box for disabled transports, and clicking the item does nothing.
+                            transportInfo = $("<a></a>").css("padding-left", "5px").attr("href", 'javascript:void(0)');
+                            transportInfo.html('<span class="btn btn-danger" title="' + transport.description + '">' + transport.name + ' ' + transport.version + '</span>');
+                        }
+                        $("#webappInfo").append(transportInfo);
+                    });
+                    var metrics = $("<div></div>").css("margin", "5px").css("padding-left", "5px").attr("id", webApp.name + "_metrics");
+                    $("#webappInfo").append(metrics);
+                    $("#webappInfo").append("<br/><br/>");
+                });
+            }
+        });
+    }
+
     /***** Initialization *****/
 
     // Create a VM to be used by the header.
@@ -1326,7 +1430,6 @@ var app = (function(){
             $.each(applicationList, function(i, ablApp){
                 // Make sure certain areas are emptied.
                 $("#sessionInfo").empty();
-                $("#webappInfo").empty();
                 $("#sessionConfig").empty();
                 $("#agentConfig").empty();
 
@@ -1341,25 +1444,8 @@ var app = (function(){
                 agentsReturned = 0;
                 clientSessions = [];
 
-                if (ablApp.name == applicationName) {
-                    // Output information about the current ABL application.
-                    var transport = "";
-                    var webApps = ablApp.webapps || [];
-
-                    $.each(webApps, function(i, webApp){
-                        // Display the name of this ABL app and any available transports.
-                        $("#webappInfo").append("<h3>" + webApp.applicationName + "." + webApp.name + "</h3>");
-                        $.each(webApp.transports, function(j, transport){
-                            if (transport.state === "ENABLED") {
-                                transport = '&nbsp;<a href="' + transport.uri + '" title="' + transport.description + '" class="btn btn-success" target="_blank">' + transport.name + '</a>';
-                            } else {
-                                transport = '&nbsp;<a href="javascript:void(0);" title="' + transport.description + '" class="btn btn-danger">' + transport.name + '</a>';
-                            }
-                            $("#webappInfo").append(transport);
-                        });
-                        $("#webappInfo").append("<br/><br/>");
-                    });
-                }
+                // Display webapp transports with metrics.
+                refreshWebApps();
             });
 
             // Get properties of the current ABL app.
@@ -1396,6 +1482,7 @@ var app = (function(){
         killAllClientSessions: killAllClientSessions,
         startAgent: startAgent,
         getSessionStacks: getSessionStacks,
+        getTransportMetrics: getTransportMetrics,
         showMessage: showMessage
     };
 
