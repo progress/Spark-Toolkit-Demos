@@ -1313,12 +1313,11 @@ var app = (function(){
     function getTransportMetrics(ablApp, webApp, transport){
         // Obtain metrics for a transport of a webapp.
         if (ablApp && webApp && transport) {
-            transport = transport.toLowerCase();
             $.ajax({
                 contentType: "application/vnd.progress+json",
                 dataType: "json",
                 method: "get",
-                url: serverUrl + "/oemanager/applications/" + ablApp + "/webapps/" + webApp + "/transports/" + transport + "/metrics",
+                url: serverUrl + "/oemanager/applications/" + ablApp + "/webapps/" + webApp + "/transports/" + transport.toLowerCase() + "/metrics",
                 success: function(data, textStatus, jqXHR){
                     if (data.result) {
                         if ($("#" + webApp + "_metrics")) {
