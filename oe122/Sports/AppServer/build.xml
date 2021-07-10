@@ -72,8 +72,6 @@
             </condition>
 
             <!-- Set general properties for this build file. -->
-            <property name="instance" value="oepas1"/>
-            <property name="webapp" value="sports"/>
             <property name="deploy.dir" value="${basedir}/../Deploy"/>
         </sequential>
     </macrodef>
@@ -125,8 +123,9 @@
             <property name="shut" value="8813"/>
             <property name="instance" value="oepas1"/>
             <property name="alias" value="${instance}"/>
-            <property name="ablapp" value="${alias}"/>
-            <property name="deploy" value="${basedir}/../Deploy/Conf"/>
+            <property name="ablapp" value="${instance}"/>
+            <property name="webapp" value="sports"/>
+            <property name="deploy.conf" value="${deploy.dir}/Conf"/>
             <property name="pas.root" value="${path}"/>
             <property name="pas.path" value="${pas.root}${delim}${instance}"/>
             <property name="pas.bin" value="${pas.path}${delim}bin"/>
@@ -188,9 +187,9 @@
 
         <!-- Copy files for use with OERealm security. -->
         <mkdir dir="${pas.path}/conf/spark"/>
-        <copy file="${deploy}/Realm/SparkRealm.cp" toDir="${pas.path}/common/lib"/>
-        <copy file="${deploy}/Realm/SparkRealm.json" toDir="${pas.path}/conf/spark"/>
-        <copy file="${deploy}/Realm/ABLDomainRegistry.keystore" toDir="${pas.path}/conf"/>
+        <copy file="${deploy.conf}/Realm/SparkRealm.cp" toDir="${pas.path}/common/lib"/>
+        <copy file="${deploy.conf}/Realm/SparkRealm.json" toDir="${pas.path}/conf/spark"/>
+        <copy file="${deploy.conf}/Realm/ABLDomainRegistry.keystore" toDir="${pas.path}/conf"/>
     </target>
 
     <target name="_create_instance">
@@ -220,7 +219,7 @@
 
     <target name="_tailor_instance">
         <!-- Check if deployment directory exists. -->
-        <requireDir folder="${basedir}/../Deploy"/>
+        <requireDir folder="${deploy.dir}"/>
 
         <!-- Copy the PL/PF files to the new PAS instance. -->
         <copy toDir="${pas.path}/openedge" verbose="true">
@@ -243,7 +242,7 @@
         <mkdir dir="${pas.path}/conf/${pas.conf.spark}"/>
         <mkdir dir="${pas.path}/conf/${pas.conf.spark}/signatures"/>
         <copy toDir="${pas.path}/conf/${pas.conf.spark}" verbose="true">
-            <fileset dir="${deploy}">
+            <fileset dir="${deploy.conf}">
                 <include name="*.cp"/>
                 <include name="*.json"/>
             </fileset>

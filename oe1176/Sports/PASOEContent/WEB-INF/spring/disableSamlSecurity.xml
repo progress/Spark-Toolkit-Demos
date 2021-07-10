@@ -10,7 +10,7 @@
 
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
       http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
-      http://www.springframework.org/schema/security/oauth2 http://www.springframework.org/schema/security/spring-security-oauth2.xsd" >
+      http://www.springframework.org/schema/security/oauth2 http://www.springframework.org/schema/security/spring-security-oauth2.xsd" > 
 
     <!-- *********************************************************************
          WARNING: EDITS TO THIS FILE MAY BE OVERWRITTEN BY OPENEDGE OEABL

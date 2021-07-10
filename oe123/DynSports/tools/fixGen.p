@@ -14,6 +14,7 @@
 
 block-level on error undo, throw.
 
+using OpenEdge.Core.Json.JsonPropertyHelper from propath.
 using Progress.Json.ObjectModel.* from propath.
 using OpenEdge.Core.Collections.* from propath.
 using Spark.Util.* from propath.
@@ -95,8 +96,7 @@ function fixCatalog returns logical ( input pcServiceName as character ):
              * but just in case we should make it dynamic.
              */
             oService = oServices:GetJsonObject(ix).
-            if oService:Has("useRequest") and
-               oService:GetType("useRequest") eq JsonDataType:boolean and
+            if JsonPropertyHelper:HasTypedProperty(oService, "useRequest", JsonDataType:boolean) and
                oService:GetLogical("useRequest") ne {&USE_INVOKE_ENVELOPE} then do:
                 oService:Set("useRequest", {&USE_INVOKE_ENVELOPE}).
                 message substitute("Fixed Catalog: &1.json", pcServiceName).
@@ -172,16 +172,14 @@ function fixData returns logical ( input-output poGenData as JsonObject ):
                     if oMethod:Has("options") then do:
                         oOptions = oMethod:GetJsonObject("options").
                         if valid-object(oOptions) then do:
-                            if oOptions:Has("requestEnvelope") and
-                               oOptions:GetType("requestEnvelope") eq JsonDataType:boolean and
+                            if JsonPropertyHelper:HasTypedProperty(oOptions, "requestEnvelope", JsonDataType:boolean) and
                                oOptions:GetLogical("requestEnvelope") ne {&USE_INVOKE_ENVELOPE} then do:
                                 oOptions:Set("requestEnvelope", {&USE_INVOKE_ENVELOPE}).
                                 fixCatalog(cServices[ix]).
                                 assign lFixed = true.
                             end. /* requestEnvelope */
 
-                            if oOptions:Has("responseEnvelope") and
-                               oOptions:GetType("requestEnvelope") eq JsonDataType:boolean and
+                            if JsonPropertyHelper:HasTypedProperty(oOptions, "responseEnvelope", JsonDataType:boolean) and
                                oOptions:GetLogical("responseEnvelope") ne {&USE_INVOKE_ENVELOPE} then do:
                                 oOptions:Set("responseEnvelope", {&USE_INVOKE_ENVELOPE}).
                                 fixCatalog(cServices[ix]).
