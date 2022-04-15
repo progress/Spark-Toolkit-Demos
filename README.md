@@ -8,7 +8,7 @@ This repository contains sample projects ready for import into PDSOE and PASOE, 
 
 ## Requirements
 
-**OpenEdge 11.7.8** or **OpenEdge 12.2.4** at minimum, **OpenEdge 11.7.13+** or **OpenEdge 12.2.8+** preferred, with the **Spark.pl** library compiled on your appropriate version (11 or 12).
+While **OpenEdge 11.7.8** or **OpenEdge 12.2.4** are a minimum requirement, **OpenEdge 11.7.13+** or **OpenEdge 12.2.8+** are preferred, with the **Spark.pl** library compiled on your appropriate version (11 or 12).
 
 - Apache Ant 1.9.x+ (included as of OE 11.7+ at DLC/ant and run as DLC/bin/proant)
 - Progress Compile Tools, or "PCT" (included as of OE 11.7.3 at DLC/pct/PCT.jar)
