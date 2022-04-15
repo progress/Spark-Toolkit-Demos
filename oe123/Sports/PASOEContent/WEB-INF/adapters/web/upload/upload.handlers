@@ -1,9 +1,0 @@
-{
-    "version": "2.0",
-    "serviceName": "upload",
-    "handlers": [{
-            "uri": "/",
-            "class": "Sports.Handler.FileUpload",
-            "enabled": true
-    }]
-}

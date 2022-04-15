@@ -1,5 +1,21 @@
 <project name="ManagementTools" basedir="." default="usage">
 
+    <!--
+        Copyright 2020-2022 Progress Software Corporation
+
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        See the License for the specific language governing permissions and
+        limitations under the License.
+    -->
+
     <!-- Utilize a local file for properties. Allows build.xml to provide defaults only. -->
     <property file="${basedir}/../build.properties"/>
 
@@ -8,35 +24,71 @@
 
         <echo message="${line.separator}"/>
         <echo message="Utilities for easy operation and maintenance of a PASOE instance."/>
-        <echo message="Run from a PROENV session or with DLC and DLC/bin in your PATH."/>
+        <echo message="Run from a PROENV session or with DLC and DLC/bin in your OS PATH."/>
+        <echo message="Tasks denoted with [RO] are read-only and do not impact operation."/>
         <echo message="${line.separator}Usage Instructions:"/>
-        <echo message="${line.separator} proant startup - Use TCMAN to start the instance"/>
-        <echo message="${line.separator} proant query - Use TCMAN to query the instance"/>
-        <echo message="${line.separator} proant shutdown - Use TCMAN to stop the instance"/>
-        <echo message="${line.separator} proant support - Bundle useful PAS instance files for support tickets"/>
-        <echo message="                   -Dpas.root=PAS Parent Directory (Default: ${pas.root})"/>
-        <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
+        <echo message="${line.separator} TCMAN Shortcuts:"/>
+        <echo message="${line.separator} proant startup - Use TCMAN to start the ${instance} PAS instance"/>
+        <echo message="${line.separator} proant query - Use TCMAN to query the ${instance} PAS instance"/>
+        <echo message="${line.separator} proant shutdown - Use TCMAN to stop the ${instance} PAS instance"/>
         <echo message="${line.separator}"/>
-        <echo message="${line.separator} proant status - Obtain agent/connection status information for an ABL App"/>
-        <echo message="${line.separator} proant stacks - Obtain stack information for all agents for an ABL App"/>
-        <echo message="${line.separator} proant flush - Flush the available deferred log buffer to Agent log file"/>
-        <echo message="${line.separator} proant close - Terminate all available client sessions for an ABL/Web App"/>
-        <echo message="${line.separator} proant trim - Trim all IDLE ABLSessions for each MSAS agent for an ABL App"/>
-        <echo message="${line.separator} proant refresh - Terminates all ABLSessions for each MSAS agent for an ABL App"/>
-        <echo message="${line.separator} proant stop - Gracefully stops all MSAS agents (+stacks output) for an ABL App"/>
-        <echo message="${line.separator} proant clean - Perform a 'soft restart' of an ABL App (flush, close, stop)"/>
-        <echo message="                [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 3)"/>
-        <echo message="${line.separator} proant locks - Display table locks related to an ABL App"/>
+        <echo message="${line.separator} Internal Tools:"/>
+        <echo message="${line.separator} proant inventory - Bundle useful PAS instance files (as .zip) for support tickets"/>
+        <echo message="${line.separator} proant compile - Compile all utility procedures to r-code (for production use)"/>
         <echo message="${line.separator}"/>
-        <echo message="${line.separator}Available parameters with their defaults:"/>
+        <echo message="${line.separator} Status/Management:"/>
+        <echo message="${line.separator} proant status - [RO] Obtain MSAgent/connection status information for an ABL App"/>
+        <echo message="                      [OPTIONAL] -Dbasemem=${basemem} (Minimum memory threshold, in bytes, of unused agent sessions)"/>
+        <echo message="${line.separator} proant stacks - [RO] Obtain stack information for all MSAgents for an ABL App"/>
+        <echo message="${line.separator} proant flush - [RO] Flush the available deferred log buffer to agent log file"/>
+        <echo message="${line.separator} proant trimhttp - Trim all Session Manager and Tomcat HTTP sessions for an ABL/Web App"/>
+        <echo message="                   [OPTIONAL] -Dterminateopt=${terminateopt} (0 for graceful termination and 1 for forced termination)"/>
+        <echo message="${line.separator} proant trimidle - Trim all IDLE ABL Sessions for each MSAgent for an ABL App"/>
+        <echo message="${line.separator} proant trimall - Trim all ABL Sessions for each MSAgent for an ABL App"/>
+        <echo message="${line.separator} proant reset - Reset an aspect of each MSAgent for an ABL App"/>
+        <echo message="                [REQUIRED] -Dresettype=${resettype} [stats|logs]"/>
+        <if>
+            <equals arg1="${oeMajor}" arg2="12"/>
+            <then>
+                <echo message="${line.separator} proant refresh - Refresh ABL Sessions for each MSAgent for an ABL App (OE 12 Only)"/>
+                <echo message="${line.separator} proant metrics - Enable certain metrics for the instance (OE 12 Only)"/>
+                <echo message="                   -Dpas.root=PAS Parent Directory (Default: ${pas.root})"/>
+                <echo message="                   -Dinstance=PAS Instance Name (Default: ${instance})"/>
+                <echo message="                   -Dtype=profile|pulse (Default: ${type})"/>
+                <echo message="                   -Dstate=on|off (Default: ${state})"/>
+            </then>
+        </if>
+        <echo message="${line.separator} proant close - Perform a 'soft restart' (status, flush, trimhttp, stop) of an ABL App"/>
+        <echo message="${line.separator} proant clean - Deprecated alias for 'close' target"/>
+        <echo message="                [OPTIONAL] -Dsleep={sleep time in minutes} (Default: 1)"/>
+        <echo message="${line.separator} proant stop - Gracefully stops all MSAgents (+stacks output) for an ABL App"/>
+        <echo message="               [OPTIONAL] -Dwaitfinish=${waitfinish} (How long to wait in milliseconds if the MSAgent is busy serving a request)"/>
+        <echo message="               [OPTIONAL] -Dwaitafter=${waitafter} (Additional time to wait in milliseconds before killing [hard stop] the MSAgent)"/>
+        <echo message="${line.separator} proant locks - [RO] Display database users and their table locks related to an MSAgent-Session"/>
+        <echo message="                This utilizes a single DBConnection; edit build.xml to add more as needed"/>
+        <echo message="                Note: will only provide session data if using self-service DB connections"/>
+        <echo message="                [OPTIONAL]  -Dcodepage=${codepage} (Codepage)"/>
+        <echo message="                [OPTIONAL] -Dcollation=${collation} (Collation)"/>
+        <echo message="                [OPTIONAL]  -Ddb.name=${db.name} (Database name to check)"/>
+        <echo message="                [OPTIONAL]  -Ddb.host=${db.host} (Database host to check)"/>
+        <echo message="                [OPTIONAL]  -Ddb.port=${db.port} (Database port to check)"/>
+        <echo message="${line.separator} proant users - [RO] Alias for 'locks' target"/>
+        <echo message="${line.separator}"/>
+        <echo message="${line.separator}Available parameters with their defaults, override as necessary:"/>
         <echo message="  -Dscheme=${scheme}"/>
         <echo message="    -Dhost=${host}"/>
         <echo message="    -Dport=${port}"/>
         <echo message="  -Duserid=${userid}"/>
         <echo message="  -Dpasswd=${passwd}"/>
+        <echo message="  -Dpas.root=${pas.root} (PAS parent directory)"/>
+        <echo message="  -Dinstance=${instance} (Physical instance name)"/>
         <echo message="  -Dablapp=${ablapp}"/>
-        <echo message="  -Dwebapp=${webapp} (Used by close/clean)"/>
+        <echo message="  -Dwebapp=${webapp} (Used by trimhttp/close to access the Tomcat manager webapp)"/>
+        <echo message="  -Ddebug=${debug} (When enabled, outputs OEManager REST API URL's and enables [ABL] HttpClient logging)"/>
         <echo message="${line.separator}NOTE: The name of the ABLApp is case-sensitive!"/>
+        <echo message="${line.separator}"/>
+        <echo message="CATALINA_HOME: ${dlcHome}${delim}servers${delim}pasoe"/>
+        <echo message="CATALINA_BASE: ${pas.path}"/>
     </target>
 
     <macrodef name="init_env">
@@ -45,7 +97,7 @@
             <property environment="env"/>
 
             <!-- Set a property if environment is Windows. -->
-            <condition property="isWin32">
+            <condition property="isWin">
                 <os family="windows"/>
             </condition>
 
@@ -91,6 +143,25 @@
             <property name="instance" value="oepas1"/>
             <property name="ablapp" value="oepas1"/>
             <property name="webapp" value="ROOT"/>
+            <property name="codepage" value="UTF-8"/>
+            <property name="collation" value="BASIC"/>
+            <property name="monitor" value="127.0.0.1"/>
+            <property name="monport" value="8850"/>
+            <property name="healthPort" value="8899"/>
+            <property name="type" value="pulse"/>
+            <property name="state" value="on"/>
+            <property name="opts" value="sessions,requests,calltrees,ablobjs"/>
+            <property name="db.name" value="Sports2020"/>
+            <property name="db.host" value="localhost"/>
+            <property name="db.port" value="8600"/>
+            <property name="db.dir" value=""/>
+            <property name="proc.ext" value=".p"/>
+            <property name="debug" value="false"/>
+            <property name="terminateopt" value="0"/>
+            <property name="waitfinish" value="120000"/>
+            <property name="waitafter" value="60000"/>
+            <property name="basemem" value="819200"/>
+            <property name="resettype" value="stats"/>
         </sequential>
     </macrodef>
 
@@ -134,6 +205,35 @@
 
             <!-- Add the ANT-Contrib library to this environment (present in 11.7.4+ and 12.0+). -->
             <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
+
+            <!-- Obtain the local IP address. -->
+            <if>
+                <equals arg1="${isWin}" arg2="true"/>
+                <then>
+                    <!-- Get the hostname via command prompt. -->
+                    <exec executable="cmd" outputproperty="myHostName">
+                        <arg value="/c" />
+                        <arg value="hostname"/>
+                    </exec>
+
+                    <!-- Ping the host and scrape output to temporary file. -->
+                    <exec executable="cmd" outputproperty="infraServerIPTemp" >
+                        <arg value="/c"/>
+                        <arg value="FOR /f &quot;tokens=1 delims=:&quot; %d IN ('ping ${myHostName} -4 -n 1 ^| find /i &quot;reply&quot;') DO FOR /F &quot;tokens=3 delims= &quot; %g IN (&quot;%d&quot;) DO echo localIP=%g > myIP.properties"/>
+                    </exec>
+
+                    <!-- Load property file with localIP value, then delete file. -->
+                    <property file="myIP.properties"/>
+                    <delete file="myIP.properties" quiet="true"/>
+                </then>
+                <else>
+                    <!-- Simply execute `hostname -i` to obtain IP address for Unix. -->
+                    <exec executable="hostname" outputproperty="infraServer">
+                        <arg line="-i"/>
+                    </exec>
+                    <property name="localIP" value="${infraServer}"/>
+                </else>
+            </if>
 
             <!-- Set OpenEdge properties for this build file. -->
             <property name="pas.root" value="${wrk}"/>
@@ -208,7 +308,7 @@
 
     <!-- Support Tools -->
 
-    <target name="support">
+    <target name="inventory">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <requireDir folder="${pas.path}"/>
@@ -226,7 +326,7 @@
         </replaceregexp>
 
         <!-- Create a zip file with critical files useful for support tickets. -->
-        <zip destfile="${basedir}/support_${instance}_${now}.zip">
+        <zip destfile="${basedir}/inventory_${instance}_${now}.zip">
             <zipfileset dir="${pas.path}" includes="**/*.properties" prefix="properties"/>
             <zipfileset dir="${pas.path}" includes="**/protrace.*" prefix="protrace"/>
             <zipfileset dir="${pas.path}" includes="**/*.handlers" prefix="services"/>
@@ -242,14 +342,21 @@
     <!-- Management Tools -->
 
     <target name="clean">
-        <property name="sleep" value="3"/>
+        <antcall target="close"/>
+    </target>
+
+    <target name="close">
+        <property name="sleep" value="1"/>
 
         <!-- Perform a 'soft restart' of an ABL Application -->
         <antcall target="status"/>
         <antcall target="flush"/>
-        <antcall target="close"/>
+        <antcall target="trimhttp">
+            <!-- Override any given terminateopt with the forceful option. -->
+            <param name="terminateopt" value="1"/>
+        </antcall>
         <antcall target="stop"/>
-        <echo message="${line.separator}Sleeping for ${sleep} minutes to allow time for agent shutdown."/>
+        <echo message="${line.separator}Sleeping for ${sleep} minutes to allow time for MSAgent shutdown."/>
         <echo message="Next step is to run 'status'; use Ctrl+C to exit if desired."/>
         <echo message="..."/>
         <sleep minutes="${sleep}"/>
@@ -261,8 +368,9 @@
         <antcall target="status"/>
         <antcall target="stacks"/>
         <antcall target="flush"/>
-        <antcall target="close"/>
-        <antcall target="trim"/>
+        <antcall target="trimhttp"/>
+        <antcall target="trimidle"/>
+        <antcall target="trimall"/>
         <antcall target="refresh"/>
         <antcall target="stop"/>
     </target>
@@ -273,7 +381,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="getStatus">
+               procedure="getStatus${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -284,6 +392,31 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="Debug" value="${debug}"/>
+            <Parameter name="BaseMem" value="${basemem}"/>
+        </PCTRun>
+    </target>
+
+    <target name="metrics">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="metrics${proc.ext}">
+            <propath>
+                <pathelement path="${basedir}"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="CatalinaBase" value="${pas.path}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="Type" value="${type}"/>
+            <Parameter name="Host" value="${localIP}"/>
+            <Parameter name="State" value="${state}"/>
+            <Parameter name="Opts" value="${opts}"/>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Monitor" value="${monitor}"/>
+            <Parameter name="Port" value="${monport}"/>
         </PCTRun>
     </target>
 
@@ -293,7 +426,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="getStacks">
+               procedure="getStacks${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -304,6 +437,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -313,7 +447,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="flushLogs">
+               procedure="flushLogs${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -324,16 +458,17 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
-    <target name="close">
+    <target name="trimhttp">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimSessions">
+               procedure="trimSessMgrSessions${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -345,16 +480,18 @@
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
             <Parameter name="WebApp" value="${webapp}"/>
+            <Parameter name="TerminateOpt" value="${terminateopt}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
-    <target name="trim">
+    <target name="trimidle">
         <init_oe/> <!-- Initialize all OpenEdge properties. -->
 
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimAgentSessions">
+               procedure="trimABLSessions${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -365,6 +502,54 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="Idle" value="true"/>
+            <Parameter name="TerminateOpt" value="${terminateopt}"/>
+            <Parameter name="Debug" value="${debug}"/>
+        </PCTRun>
+    </target>
+
+    <target name="trimall">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="trimABLSessions${proc.ext}">
+            <propath>
+                <pathelement path="${basedir}"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="Idle" value="false"/>
+            <Parameter name="TerminateOpt" value="${terminateopt}"/>
+            <Parameter name="Debug" value="${debug}"/>
+        </PCTRun>
+    </target>
+
+    <target name="reset">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <PCTRun
+               dlcHome="${dlcHome}"
+               graphicalMode="false"
+               procedure="reset${proc.ext}">
+            <propath>
+                <pathelement path="${basedir}"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+            </propath>
+            <Parameter name="Scheme" value="${scheme}"/>
+            <Parameter name="Host" value="${host}"/>
+            <Parameter name="Port" value="${port}"/>
+            <Parameter name="UserID" value="${userid}"/>
+            <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="Type" value="${resettype}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -374,7 +559,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="refreshAgents">
+               procedure="refreshAgents${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -385,6 +570,7 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 
@@ -394,7 +580,7 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="trimAgents">
+               procedure="stopAgents${proc.ext}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
@@ -405,7 +591,14 @@
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
             <Parameter name="ABLApp" value="${ablapp}"/>
+            <Parameter name="WaitFinish" value="${waitfinish}"/>
+            <Parameter name="WaitAfter" value="${waitafter}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
+    </target>
+
+    <target name="users">
+        <antcall target="locks"/>
     </target>
 
     <target name="locks">
@@ -414,20 +607,26 @@
         <PCTRun
                dlcHome="${dlcHome}"
                graphicalMode="false"
-               procedure="getLocks">
+               procedure="getLocks${proc.ext}"
+               stackSize="4096"
+               cpStream="${codepage}"
+               cpInternal="${codepage}"
+               cpColl="${collation}"
+               cpCase="${collation}">
             <propath>
                 <pathelement path="${basedir}"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <!-- Define Connected Databases: https://github.com/Riverside-Software/pct/wiki/PCTConnection -->
-            <DBConnection dbName="Sports2020" hostName="localhost" dbPort="8600" readOnly="true"/>
-            <DBConnection dbName="WebState" hostName="localhost" dbPort="8500" readOnly="true"/>
+            <DBConnection dbName="${db.name}" hostName="${db.host}" dbPort="${db.port}" readOnly="true"/>
+            <DBConnection dbName="${db2.name}" hostName="${db2.host}" dbPort="${db2.port}" readOnly="true"/>
             <!-- End Database Connections -->
             <Parameter name="Scheme" value="${scheme}"/>
             <Parameter name="Host" value="${host}"/>
             <Parameter name="Port" value="${port}"/>
             <Parameter name="UserID" value="${userid}"/>
             <Parameter name="PassWD" value="${passwd}"/>
+            <Parameter name="Debug" value="${debug}"/>
         </PCTRun>
     </target>
 

@@ -1,10 +1,21 @@
 # Changelog
 
-## OpenEdge 11.7.6+ and 12.2+
+## OpenEdge 11.7.6+ and 12.2.6+
+
+### v6.0.2
+
+- Removed samples for OpenEdge 12.3 to focus on only LTS releases
+- Recompiled for latest OE versions
+
+### v6.0.1
+
+- Changes to project meta files due to various service pack updates (OE 11/12)
+- Synchronized management/support tools with what we have published in the Iceberg repository
+- Performed some cleanup of tools which were more "R&D" than usable features
 
 ### v6.0.0
 
-- Adding new ability for CatalogManager to read an annotations.json config file, when present (file generation TBD).
+- Adding new ability for CatalogManager to read an annotations.json config file, when present (file generation TBD)
 - Adds support for annotated classes/procedures in addition to the Dynamic\* classes provided by Spark-Toolkit natively.
 - Added new folders to correspond to OE releases and to reflect the version where a demo should be installed/run
 - Add support for new features in QueryBuilder coming in 12.4 or later to better support the CCS-BE pattern

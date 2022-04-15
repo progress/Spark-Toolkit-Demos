@@ -1,5 +1,22 @@
+/*
+    Copyright 2020-2021 Progress Software Corporation
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 /**
- * Flush the available deferred log buffer to the Agent log file.
+ * Author(s): Dustin Grau (dugrau@progress.com)
+ *
+ * Flush the available deferred log buffer to the agent log file.
  * Usage: flushLogs.p <params>
  *  Parameter Default/Allowed
  *   Scheme   [http|https]
@@ -8,8 +25,10 @@
  *   UserId   [tomcat]
  *   Password [tomcat]
  *   ABL App  [oepas1]
+ *   Debug    [false|true]
  */
 
+using OpenEdge.Core.Json.JsonPropertyHelper.
 using OpenEdge.Core.JsonDataTypeEnum.
 using OpenEdge.Core.Collections.StringStringMap.
 using OpenEdge.Net.HTTP.ClientBuilder.
@@ -18,8 +37,6 @@ using OpenEdge.Net.HTTP.IHttpClient.
 using OpenEdge.Net.HTTP.IHttpRequest.
 using OpenEdge.Net.HTTP.IHttpResponse.
 using OpenEdge.Net.HTTP.RequestBuilder.
-using Progress.Lang.Object.
-using Progress.Json.ObjectModel.ObjectModelParser.
 using Progress.Json.ObjectModel.JsonObject.
 using Progress.Json.ObjectModel.JsonArray.
 using Progress.Json.ObjectModel.JsonDataType.
@@ -40,9 +57,10 @@ define variable cPort     as character       no-undo initial "8810".
 define variable cUserId   as character       no-undo initial "tomcat".
 define variable cPassword as character       no-undo initial "tomcat".
 define variable cAblApp   as character       no-undo initial "oepas1".
+define variable cDebug    as character       no-undo initial "false".
 
 /* Check for passed-in arguments/parameters. */
-if num-entries(session:parameter) ge 6 then
+if num-entries(session:parameter) ge 7 then
     assign
         cScheme   = entry(1, session:parameter)
         cHost     = entry(2, session:parameter)
@@ -50,18 +68,26 @@ if num-entries(session:parameter) ge 6 then
         cUserId   = entry(4, session:parameter)
         cPassword = entry(5, session:parameter)
         cAblApp   = entry(6, session:parameter)
+        cDebug    = entry(7, session:parameter)
         .
 else if session:parameter ne "" then /* original method */
     assign cPort = session:parameter.
 else
     assign
-        cScheme   = dynamic-function("getParameter" in source-procedure, "Scheme") when dynamic-function("getParameter" in source-procedure, "Scheme") gt ""
-        cHost     = dynamic-function("getParameter" in source-procedure, "Host") when dynamic-function("getParameter" in source-procedure, "Host") gt ""
-        cPort     = dynamic-function("getParameter" in source-procedure, "Port") when dynamic-function("getParameter" in source-procedure, "Port") gt ""
-        cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when dynamic-function("getParameter" in source-procedure, "UserID") gt ""
-        cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when dynamic-function("getParameter" in source-procedure, "PassWD") gt ""
-        cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when dynamic-function("getParameter" in source-procedure, "ABLApp") gt ""
+        cScheme   = dynamic-function("getParameter" in source-procedure, "Scheme") when (dynamic-function("getParameter" in source-procedure, "Scheme") gt "") eq true
+        cHost     = dynamic-function("getParameter" in source-procedure, "Host") when (dynamic-function("getParameter" in source-procedure, "Host") gt "") eq true
+        cPort     = dynamic-function("getParameter" in source-procedure, "Port") when (dynamic-function("getParameter" in source-procedure, "Port") gt "") eq true
+        cUserId   = dynamic-function("getParameter" in source-procedure, "UserID") when (dynamic-function("getParameter" in source-procedure, "UserID") gt "") eq true
+        cPassword = dynamic-function("getParameter" in source-procedure, "PassWD") when (dynamic-function("getParameter" in source-procedure, "PassWD") gt "") eq true
+        cAblApp   = dynamic-function("getParameter" in source-procedure, "ABLApp") when (dynamic-function("getParameter" in source-procedure, "ABLApp") gt "") eq true
+        cDebug    = dynamic-function("getParameter" in source-procedure, "Debug") when (dynamic-function("getParameter" in source-procedure, "Debug") gt "") eq true
         .
+
+if can-do("true,yes,1", cDebug) then do:
+    log-manager:logfile-name    = "flushLogs.log".
+    log-manager:log-entry-types = "4GLTrace".
+    log-manager:logging-level   = 5.
+end.
 
 assign oClient = ClientBuilder:Build():Client.
 assign oCreds = new Credentials("PASOE Manager Application", cUserId, cPassword).
@@ -86,6 +112,9 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
        on stop undo, retry:
         if retry then
             undo, throw new Progress.Lang.AppError("Encountered stop condition", 0).
+
+        if can-do("true,yes,1", cDebug) then
+            message substitute("Calling URL: &1", cHttpUrl).
 
         oReq = RequestBuilder
                 :Get(pcHttpUrl)
@@ -148,14 +177,14 @@ function MakeRequest returns JsonObject ( input pcHttpUrl as character ):
     end finally.
 end function. /* MakeRequest */
 
-/* Initial URL to obtain a list of all agents for an ABL Application. */
+/* Initial URL to obtain a list of all MSAgents for an ABL Application. */
 assign cHttpUrl = substitute(oQueryURL:Get("Agents"), cInstance, cAblApp).
-message substitute("Flushing deferred log buffer for Agents of &1...", cAblApp).
+message substitute("Flushing deferred log buffer for MSAgents of &1...", cAblApp).
 assign oJsonResp = MakeRequest(cHttpUrl).
-if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
+if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:object) then do:
     oAgents = oJsonResp:GetJsonObject("result"):GetJsonArray("agents").
     if oAgents:Length eq 0 then
-        message "No agents running".
+        message "No MSAgents running".
     else
     AGENTBLK:
     do iLoop = 1 to oAgents:Length
@@ -163,14 +192,14 @@ if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("re
     on stop undo, next AGENTBLK:
         oAgent = oAgents:GetJsonObject(iLoop).
 
-        /* Write session stack information from any available agents. */
+        /* Write session stack information from any available MSAgents. */
         if oAgent:GetCharacter("state") eq "available" then do:
-            message substitute("Flushing buffer for Agent PID &1...", oAgent:GetCharacter("pid")).
+            message substitute("Flushing buffer for MSAgent PID &1...", oAgent:GetCharacter("pid")).
 
-            /* A single command will flush all deferred log entries for all agents. */
+            /* A single command will flush all deferred log entries for all MSAgents. */
             assign cHttpUrl = substitute(oQueryURL:Get("FlushLogs"), cInstance, cAblApp, oAgent:GetCharacter("pid")).
             assign oJsonResp = MakeRequest(cHttpUrl).
-            if valid-object(oJsonResp) and oJsonResp:Has("result") and oJsonResp:GetType("result") eq JsonDataType:Object then do:
+            if JsonPropertyHelper:HasTypedProperty(oJsonResp, "result", JsonDataType:Object) then do:
                 if oJsonResp:Has("operation") and oJsonResp:Has("outcome") then
                     message substitute("~t&1: &2", oJsonResp:GetCharacter("operation"), oJsonResp:GetCharacter("outcome")).
             end. /* flush */
