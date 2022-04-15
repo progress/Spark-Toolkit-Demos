@@ -5,6 +5,9 @@
 ### v6.0.1
 
 - Removed samples for OpenEdge 12.3 to focus on only LTS releases
+- Changes to project meta files due to various service pack updates (OE 11/12)
+- Synchronized management/support tools with what we have published in the Iceberg repository
+- Performed some cleanup of tools which were more "R&D" than usable features
 
 ### v6.0.0
 
