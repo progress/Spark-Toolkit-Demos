@@ -2,13 +2,13 @@
 
 ### Welcome!
 
-This repository contains sample projects ready for import into PDSOE and PASOE, meant to illustrate usage of the **Progress Spark Toolkit**. Please note that all demos are for illustrating server-side micro-services only; there are no UI components bundled as of the August 2021 release (v6.0.1).
+This repository contains sample projects ready for import into PDSOE and PASOE, meant to illustrate usage of the **Progress Spark Toolkit**. Please note that all demos are for illustrating server-side micro-services only; there are no UI components bundled as of the April 2022 release (v6.0.2).
 
-**Note:** This release utilizes toolkit release [v6.0.1](https://github.com/progress/Spark-Toolkit/releases/tag/v6.0.1).
+**Note:** This release utilizes toolkit release [v6.0.2](https://github.com/progress/Spark-Toolkit/releases/tag/v6.0.2).
 
 ## Requirements
 
-**OpenEdge 11.7.8** or **OpenEdge 12.2.4** at minimum, **OpenEdge 11.7.10+** or **OpenEdge 12.2.6+** preferred, with the **Spark.pl** library compiled on your appropriate version (11 or 12).
+**OpenEdge 11.7.8** or **OpenEdge 12.2.4** at minimum, **OpenEdge 11.7.13+** or **OpenEdge 12.2.8+** preferred, with the **Spark.pl** library compiled on your appropriate version (11 or 12).
 
 - Apache Ant 1.9.x+ (included as of OE 11.7+ at DLC/ant and run as DLC/bin/proant)
 - Progress Compile Tools, or "PCT" (included as of OE 11.7.3 at DLC/pct/PCT.jar)
