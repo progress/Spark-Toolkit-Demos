@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<module-content version="12.5">
+    <module id="9504ec14-9886-4034-a59f-a33e6a23c5e1" name="Sports">
+        <resource path="AppServer" publish="true"/>
+    </module>
+</module-content>

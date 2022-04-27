@@ -3,6 +3,7 @@
     <propathentry env="all" kind="src" path="@{ROOT}\PASOEContent\WEB-INF\openedge" platform="All"/>
     <propathentry env="all" kind="src" path="@{ROOT}\AppServer" platform="All"/>
     <propathentry env="all" kind="lib" path="@{ROOT}\AppServer\Spark.pl" platform="All"/>
+    <propathentry env="all" kind="src" path="@{ROOT}\tests" platform="All"/>
     <propathentry env="all" kind="dir" path="@{ROOT}\tools" platform="All"/>
     <propathentry env="all" excluding="@{ROOT}/PASOEContent/static¦@{ROOT}/Deploy¦@{ROOT}/PASOEContent/WEB-INF/home/" kind="src" path="@{ROOT}" platform="All"/>
     <propathentry env="all" kind="dir" path="..\..\support\schema\Sports2020\sports2020trgs" platform="Windows"/>

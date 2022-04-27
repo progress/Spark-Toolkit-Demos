@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<module-content version="12.5">
+    <module id="925edd4b-a125-4766-8e61-34d1e530311b" name="DynSports">
+        <resource path="AppServer" publish="true"/>
+    </module>
+</module-content>

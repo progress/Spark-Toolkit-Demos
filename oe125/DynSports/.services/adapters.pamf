@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lm:eCafModel xmlns:lm="http://www.progress.com/tools/caf/core/internal/logicalStructure/schema/v1.0" version="1.0">
+  <lm:serviceCollection adapterType="REST" usage="EXPOSE">
+    <lm:services displayName="DynSportsService1" id="DynSportsService1" product="Progress Developer Studio for OpenEdge" serviceFolder="Expose/rest/DynSportsService1" serviceName="DynSportsService1">
+      <lm:details>
+        <lm:adapterDetails>
+          <lm:properties>
+            <lm:properties name="applicationRelativePath">/DynSportsService1</lm:properties>
+          </lm:properties>
+        </lm:adapterDetails>
+        <lm:productDetails name="ABL_DATA_OBJECT">
+          <lm:properties>
+            <lm:properties name="ABL_DATA_OBJECT_SERVICE">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?>&lt;abl_data_object>&lt;service>&lt;name>DynSportsService1&lt;/name>&lt;resources/>&lt;/service>&lt;/abl_data_object></lm:properties>
+          </lm:properties>
+        </lm:productDetails>
+      </lm:details>
+      <lm:nodes id="/DynSportsService1_groupingNode" name="DynSportsService1"/>
+      <lm:propertyDetails/>
+    </lm:services>
+  </lm:serviceCollection>
+  <lm:propertyDetails>
+    <lm:propertyFileLocation>DynSports.properties</lm:propertyFileLocation>
+  </lm:propertyDetails>
+</lm:eCafModel>
