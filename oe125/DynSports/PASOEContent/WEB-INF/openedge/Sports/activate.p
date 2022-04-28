@@ -44,9 +44,6 @@ do on error undo, leave:
     end finally.
 end. /* APSV */
 
-/* Optional: Activate the metrics from the diagnostic tools. */
-run Spark/Diagnostic/metrics_activate.
-
 catch err as Progress.Lang.Error:
     /* Catch and Release */
     message substitute("Activate Error: &1", err:GetMessage(1)).
