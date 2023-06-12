@@ -249,8 +249,8 @@
                graphicalMode="false"
                procedure="refreshAgents">
             <propath>
-                <pathelement path="${basedir}/tools"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+				<pathelement path="${dlcHome}/tty/OpenEdge.ServerAdmin.pl"/>
             </propath>
             <Parameter name="Scheme" value="${scheme}"/>
             <Parameter name="Host" value="${host}"/>
