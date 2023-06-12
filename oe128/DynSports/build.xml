@@ -197,6 +197,7 @@
                 <pathelement path="${basedir}/tools"/>
                 <pathelement path="${basedir}/PASOEContent/WEB-INF/openedge"/>
                 <pathelement path="${basedir}/AppServer/Spark.pl"/>
+                <pathelement path="${dlcHome}/tty/OpenEdge.Core.pl"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <DBConnection dbName="webstate" hostName="localhost" dbPort="8500" readOnly="true"/>
@@ -249,8 +250,9 @@
                graphicalMode="false"
                procedure="refreshAgents">
             <propath>
-                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
+                <pathelement path="${dlcHome}/tty/OpenEdge.Core.pl"/>
 				<pathelement path="${dlcHome}/tty/OpenEdge.ServerAdmin.pl"/>
+                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <Parameter name="Scheme" value="${scheme}"/>
             <Parameter name="Host" value="${host}"/>
