@@ -1,0 +1,16 @@
+{
+  "Config": {
+    "SessionParam": [
+      {
+        "ResetClientPrincipal": "SparkReset.cp"
+      }
+    ],
+    "Domains": [
+      {
+        "domain": "spark",
+        "accessCode": "odeb0::7IfiMSmC\/H4ywoxjm0XLmTb1OH6oIsYVwRajlIUNZ6ydw3MnoUe1SZrDZgmwklqq",
+        "description": "External Realm Domain"
+      }
+    ]
+  }
+}

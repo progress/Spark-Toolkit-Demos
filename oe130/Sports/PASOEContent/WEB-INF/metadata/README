@@ -1,0 +1,13 @@
+This directory is for SAML Service provider & Identity Provider Metadata files.
+No other things should/can be deployed in this directory.
+
+SAML metadata is an XML document which contains information necessary for interaction with SAML -enabled identity or service providers.  
+The document contains e.g. URLs of endpoints, information about supported bindings, identifiers and public keys. 
+Typically one metadata document will be generated for your own service provider and sent to all identity providers you want to enable single sign-on with. 
+Similarly, each identity provider will make its own metadata available for you to import into your service provider application.
+
+*Service Provider metadata file can be create by direct modification or you can make your application to generate service provider metadata file for you. 
+(As PAS is not direct login to IDP, so that you could use same SP metadata file that you have created for the PAS client, which configured with
+ SAML to handle redirect & direct login with IDP)
+
+*Identity Provider metadata file can be downloaded from configured IdP and put inside your service provider to validate incoming SAML asseration.

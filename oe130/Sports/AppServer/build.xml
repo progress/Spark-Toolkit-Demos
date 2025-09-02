@@ -1,0 +1,276 @@
+<project name="ServerCreation" basedir="." default="usage">
+
+    <!-- Utilize a local file for properties. Allows build.xml to provide defaults only. -->
+    <property file="build.properties"/>
+
+    <target name="usage" description="Usage Instructions">
+        <init_oe/> <!-- Set standard environment variables. -->
+
+        <echo message="${line.separator}Usage Instructions:"/>
+        <echo message="${line.separator}ant create - Build a new PAS instance with Spark"/>
+        <echo message="    -Dhttp=[HTTP_PORT] = port for HTTP connections (Default: ${http})"/>
+        <echo message="    -Dhttps=[HTTPS_PORT] = port for HTTPS connections (Default: ${https})"/>
+        <echo message="    -Dajp=[AJP13_PORT] = port for AJP13 connections (Default: ${ajp})"/>
+        <echo message="    -Dshut=[SHUTDOWN_PORT] = Tomcat shutdown port (Default: ${shut})"/>
+        <echo message="    -Dinstance=[INSTANCE_NAME] = new instance name (Default: ${instance})"/>
+        <echo message="    -Dalias=[INSTANCE_ALIAS] = new instance alias (Default: ${alias})"/>
+        <echo message="    -Dpath=[INSTANCE_PATH] = new instance path (Default: ${path})"/>
+        <echo message="    -Dablapp=[INSTANCE_NAME] = default ABL App name (Default: ${ablapp})"/>
+        <echo message="${line.separator}ant upgrade - Upgrade a PAS instance with Spark"/>
+        <echo message="    -Dinstance=[INSTANCE_NAME] = existing instance name (Default: ${instance})"/>
+        <echo message="    -Dalias=[INSTANCE_ALIAS] = existing instance alias (Default: ${alias})"/>
+        <echo message="    -Dpath=[INSTANCE_PATH] = existing instance path (Default: ${path})"/>
+        <echo message="${line.separator}ant enable_oerealm - Enable use of OERealm by copying config files"/>
+        <echo message="    -Dinstance=[INSTANCE_NAME] = existing instance name (Default: ${instance})"/>
+        <echo message="    -Dalias=[INSTANCE_ALIAS] = existing instance alias (Default: ${alias})"/>
+        <echo message="${line.separator}Location Assumptions:"/>
+        <echo message="    DLC Environment: ${dlcHome}"/>
+        <echo message="    CATALINA_BASE: ${pas.path}"/>
+    </target>
+
+    <macrodef name="init_env">
+        <sequential>
+            <!-- Access environmental variables via "env.*". -->
+            <property environment="env"/>
+
+            <!-- Set a property if environment is Windows. -->
+            <condition property="isWin32">
+                <os family="windows"/>
+            </condition>
+
+            <!-- Set a property if environment is Unix. -->
+            <condition property="isUnix">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set a property if environment is 32bit. -->
+            <condition property="is32bit">
+                <or>
+                    <os arch="x86"/>
+                    <os arch="i386"/>
+                </or>
+            </condition>
+
+            <!-- Set a property if environment is 64bit. -->
+            <condition property="is64bit">
+                <not>
+                    <or>
+                        <os arch="x86"/>
+                        <os arch="i386"/>
+                    </or>
+                </not>
+            </condition>
+
+            <!-- Set the script suffix for the OS. -->
+            <condition property="scriptSuffix" value=".sh" else=".bat">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set path delimiter for the OS. -->
+            <condition property="delim" value="/" else="\">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set general properties for this build file. -->
+            <property name="deploy.dir" value="${basedir}/../Deploy"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="init_oe">
+        <sequential>
+            <init_env/> <!-- Initialize environmental and general properties. -->
+
+            <!-- Fail immediately if not a 64-bit OS. -->
+            <fail message="Environment is not 64-bit">
+                <condition>
+                    <not>
+                        <isset property="is64bit"/>
+                    </not>
+                </condition>
+            </fail>
+
+            <!-- Check if DLC is set as an environment variable. -->
+            <fail message="DLC Home path is not set">
+                <condition>
+                    <and>
+                        <not><isset property="dlcHome"/></not>
+                        <not><isset property="env.DLC"/></not>
+                    </and>
+                </condition>
+            </fail>
+            <property name="dlcHome" value="${env.DLC}"/>
+            <echo message="DLC Home: ${dlcHome}"/>
+
+            <!-- Assume the DLC WRK directory unless overridden. -->
+            <condition property="wrk" value="/usr/wrk" else="C:\OpenEdge\WRK">
+                <os family="unix"/>
+            </condition>
+
+            <condition property="pas.exec" value="pasman" else="pasman.bat">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Assume the PAS root directory unless overridden. -->
+            <condition property="path" value="/usr/pas" else="C:\PASOE">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Define standard variables for this environment. -->
+            <property name="dlc.bin" value="${dlcHome}/bin"/>
+            <property name="http" value="8810"/>
+            <property name="https" value="8811"/>
+            <property name="ajp" value="8812"/>
+            <property name="shut" value="8813"/>
+            <property name="instance" value="oepas1"/>
+            <property name="alias" value="${instance}"/>
+            <property name="ablapp" value="${instance}"/>
+            <property name="webapp" value="sports"/>
+            <property name="deploy.conf" value="${deploy.dir}/Conf"/>
+            <property name="pas.root" value="${path}"/>
+            <property name="pas.path" value="${pas.root}${delim}${instance}"/>
+            <property name="pas.bin" value="${pas.path}${delim}bin"/>
+            <property name="pas.conf.spark" value="spark"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="require">
+        <!-- Usage <require file="_path_to_file_"/> -->
+        <attribute name="file"/>
+        <attribute name="message" default="File @{file} not set or missing"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{file}" type="file"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="requireDir">
+        <!-- Usage <requireDir folder="_path_to_folder_"/> -->
+        <attribute name="folder"/>
+        <attribute name="message" default="Directory @{folder} not set or missing"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{folder}" type="dir"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <target name="create">
+        <init_oe/> <!-- Set standard environment variables. -->
+
+        <!-- Begin by creating an instance. -->
+        <antcall target="_create_instance"/>
+    </target>
+
+    <target name="upgrade">
+        <init_oe/> <!-- Set standard environment variables. -->
+
+        <!-- Tailor the instance using the deployment directory. -->
+        <antcall target="_tailor_instance"/>
+
+        <!-- Merge any available properties to the instance. -->
+        <antcall target="_merge_properties"/>
+    </target>
+
+    <target name="enable_oerealm">
+        <init_oe/> <!-- Set standard environment variables. -->
+
+        <!-- Copy files for use with OERealm security. -->
+        <mkdir dir="${pas.path}/conf/spark"/>
+        <copy file="${deploy.conf}/Realm/SparkRealm.cp" toDir="${pas.path}/common/lib"/>
+        <copy file="${deploy.conf}/Realm/SparkRealm.json" toDir="${pas.path}/conf/spark"/>
+        <copy file="${deploy.conf}/Realm/ABLDomainRegistry.keystore" toDir="${pas.path}/conf"/>
+    </target>
+
+    <target name="_create_instance">
+        <!-- Create the PAS instance using the values (or defaults) provided. -->
+        <echo message="Creating PAS instance '${alias}' at ${pas.path} with ports ${http}/${https}/${ajp}/${shut}..."/>
+        <mkdir dir="${path}"/>
+        <exec dir="${dlc.bin}" executable="${pas.exec}" output="create_${alias}.txt" failonerror="true">
+            <arg value="create"/>
+            <arg value="-v"/>
+            <arg value="-f"/>
+            <arg line="-p ${http}"/>
+            <arg line="-P ${https}"/>
+            <arg line="-j ${ajp}"/>
+            <arg line="-s ${shut}"/>
+            <arg line="-N ${alias}"/>
+            <arg value="${pas.path}"/>
+            <arg value="${ablapp}"/>
+        </exec>
+        <echo message="See file create_${alias}.txt for details of PAS server creation."/>
+
+        <!-- Tailor the instance using the deployment directory. -->
+        <antcall target="_tailor_instance"/>
+
+        <!-- Merge any available properties to the instance. -->
+        <antcall target="_merge_properties"/>
+    </target>
+
+    <target name="_tailor_instance">
+        <!-- Check if deployment directory exists. -->
+        <requireDir folder="${deploy.dir}"/>
+
+        <!-- Copy the PL/PF files to the new PAS instance. -->
+        <copy toDir="${pas.path}/openedge" verbose="true">
+            <fileset dir="${basedir}">
+                <include name="*.pl"/>
+                <include name="*.pf"/>
+                <include name="*.config"/>
+            </fileset>
+        </copy>
+
+        <!-- Copy triggers to the new PAS instance. -->
+        <mkdir dir="${pas.path}/openedge/sports2020trgs"/>
+        <copy toDir="${pas.path}/openedge/sports2020trgs" verbose="true">
+            <fileset dir="${basedir}/../../../support/schema/Sports2020/sports2020trgs">
+                <include name="*.p"/>
+            </fileset>
+        </copy>
+
+        <!-- Copy initial configuration files to the PAS instance. -->
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}"/>
+        <mkdir dir="${pas.path}/conf/${pas.conf.spark}/signatures"/>
+        <copy toDir="${pas.path}/conf/${pas.conf.spark}" verbose="true">
+            <fileset dir="${deploy.conf}">
+                <include name="*.cp"/>
+                <include name="*.json"/>
+            </fileset>
+        </copy>
+
+        <!-- Enable OERealm by providing necessary configs. -->
+        <antcall target="enable_oerealm"/>
+    </target>
+
+    <target name="_merge_properties">
+        <!-- Check if MERGE properties file exists. -->
+        <require file="${basedir}/merge.openedge.properties"/>
+
+        <!-- Check if PAS properties file exists. -->
+        <require file="${pas.path}/conf/openedge.properties"/>
+
+        <!-- Make a copy of the default merge file, named for the instance. -->
+        <copy file="${basedir}/merge.openedge.properties" tofile="${basedir}/merge.openedge.properties.${ablapp}">
+            <filterset>
+                <filter token="APPNAME" value="${ablapp}"/>
+            </filterset>
+        </copy>
+
+        <!-- Merge the intitial properties for the instance. -->
+        <echo message="Merging initial properties from 'merge.openedge.properties.${ablapp}'."/>
+        <exec executable="${pas.path}/bin/oeprop${scriptSuffix}" output="merge_${ablapp}.txt" failonerror="true">
+            <arg line="-f ${basedir}/merge.openedge.properties.${ablapp}"/>
+        </exec>
+    </target>
+
+</project>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">      
+       <import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
+       <bean id="cxfSOAP" class="com.progress.appserv.adapters.camel.soap.ExchangeSOAPProcessor"/> 
+     <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
+          <onException>
+               <exception>  com.progress.appserv.adapters.camel.soap.CamelSOAPException  </exception>
+             <handled>  <constant>true</constant>  </handled>
+             <bean ref="cxfSOAP" method="requestFailed" />
+          </onException>
+        <route>
+            <from uri="servlet:///?servletName=CamelSOAPServlet"/>
+            <bean ref="cxfSOAP" method="parseSoap"/>
+            <to uri="CamelSOAPAblComponent://CamelSOAPAblEndpoint"/>
+            <bean ref="cxfSOAP" method="getResult"/>
+        </route>
+      </camelContext>
+  </beans>

@@ -1,0 +1,49 @@
+
+############## Intercept-url definitions for the REST transport URIs ###############
+"/rest/**","*","hasAnyAuthority('scope.PSCUser')"
+
+############## Intercept-url definitions for the WEB transport  URIs ###############
+"/web/**","*","hasAnyAuthority('scope.PSCUser')"
+
+############## Intercept-url definitions for the default URI space #################
+"/static/home.html","GET","hasAuthority('scope.PSCUser')"
+
+"/static/ServerStatus.html","GET","hasAnyAuthority('scope.PSCUser','scope.PSCAdmin','scope.PSCDebug')"
+
+"/server/**","GET","hasAnyAuthority('scope.PSCAdmin','scope.PSCDebug')"
+
+"/oauth2/**","GET","permitAll()"
+
+"/*","GET","permitAll()"
+
+"/static/*","GET","permitAll()" 
+
+"/static/error/*","GET","permitAll()"
+
+"/static/images/*","GET","permitAll()" 
+
+"/static/auth/*","GET","permitAll()" 
+
+"/static/**","GET","hasAnyAuthority('scope.PSCUser')"
+
+"/**/*.htm*","GET","hasAnyAuthority('scope.PSCUser')"
+
+"/**/*.gif","GET","hasAnyAuthority('scope.PSCUser')"
+
+"/**/*.jpg","GET","hasAnyAuthority('scope.PSCUser')"
+
+"/**/*.css","GET","hasAnyAuthority('scope.PSCUser')"
+
+"/**/*.js","GET","hasAnyAuthority('scope.PSCUser')"
+
+"/**/*.json","GET","hasAnyAuthority('scope.PSCUser')"
+
+"/**/*.asp","GET","hasAnyAuthority('scope.PSCUser')"
+
+"/**/*.inc","GET","hasAnyAuthority('scope.PSCUser')"
+
+# Best practice - deny anything not explicitly granted
+"/**","*","denyAll()"
+
+
+
