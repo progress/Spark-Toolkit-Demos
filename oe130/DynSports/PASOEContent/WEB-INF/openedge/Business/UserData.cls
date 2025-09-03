@@ -158,7 +158,7 @@ class Business.UserData inherits Spark.Core.Service.DynamicResource use-widget-p
 
             assign /* Generate a new password. */
                 rSalt     = generate-random-key
-                cNewPass  = encode(string(rSalt))
+                cNewPass  = string(hex-encode(message-digest("sha-256", rSalt)))
                 oSendmail = new Sendmail()
                 .
 

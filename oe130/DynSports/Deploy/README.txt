@@ -26,7 +26,6 @@ copy the files in the project /AppServer directory to your CATALINA_BASE/openedg
 is a default, shared location among all of your webapps that will be deployed to this instance.
 Files that may be included with this folder include:
     startup.pf - A simple parameter file for database options and extra configuration options.
-    Ccs.pl - A procedure library that contains the Common Component Specification interfaces.
     Spark.pl - A procedure library that contains all default Spark classes (default framework).
 
 
