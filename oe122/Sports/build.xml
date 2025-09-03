@@ -111,8 +111,12 @@
             <property name="oe.version" value="${oeMajor}.${oeMinor}.${oeRev}"/>
             <echo message="OpenEdge Version: ${oe.version}"/>
 
-            <!-- Add the ANT-Contrib library to this environment (present in 11.7.4+ and 12.0+). -->
-            <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
+            <!-- Define the property to set if the file exists -->
+            <property name="antContrib06" value="true"/>
+
+            <!-- Add the appropriate ANT-Contrib library to this environment (v0.6 present in 11.7.4+ and 12.0+ and updated to v1.0b3 in 12.8+). -->
+            <loadtask resource="net/sf/antcontrib/antcontrib.properties" classfile="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
+            <loadtask resource="net/sf/antcontrib/antcontrib.properties" classfile="${dlcHome}/ant/lib/ant-contrib-1.0b3.jar"/>
 
             <!-- Provides libraries for building artifacts for ABLWebApps. -->
             <property name="dlcJava" value="${dlcHome}${delim}java"/>
@@ -150,6 +154,20 @@
 
             <!-- Set OpenEdge properties for this build file. -->
             <property name="pas.path" value="${pas.root}${delim}${instance}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="loadtask">
+        <!-- Usage <loadtask resource="_resource_string_" classfile="_path_to_file_"/> -->
+        <attribute name="resource"/>
+        <attribute name="classfile"/>
+
+        <sequential>
+            <condition property="file.exists">
+                <available file="@{classfile}" type="file"/>
+            </condition>
+
+            <taskdef resource="@{resource}" classpath="@{classfile}"/>
         </sequential>
     </macrodef>
 
@@ -197,6 +215,7 @@
                 <pathelement path="${basedir}/tools"/>
                 <pathelement path="${basedir}/PASOEContent/WEB-INF/openedge"/>
                 <pathelement path="${basedir}/AppServer/Spark.pl"/>
+                <pathelement path="${dlcHome}/tty/OpenEdge.Core.pl"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <DBConnection dbName="webstate" hostName="localhost" dbPort="8500" readOnly="true"/>
@@ -249,7 +268,8 @@
                graphicalMode="false"
                procedure="refreshAgents">
             <propath>
-                <pathelement path="${basedir}/tools"/>
+                <pathelement path="${dlcHome}/tty/OpenEdge.Core.pl"/>
+				<pathelement path="${dlcHome}/tty/OpenEdge.ServerAdmin.pl"/>
                 <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
             </propath>
             <Parameter name="Scheme" value="${scheme}"/>
