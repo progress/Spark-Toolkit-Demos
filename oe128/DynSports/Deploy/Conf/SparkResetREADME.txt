@@ -12,7 +12,6 @@ Generated sealed Client Principal...
     User: sparkRest@spark
     Id: R0omT2H7TN6p7Gyn1Rbq+g
     Role: NoAccess
-    Encoded Password: oech1::23222e35397562
     File: SparkReset.cp
     State: SSO from external authentication system
     Seal is valid
