@@ -34,7 +34,7 @@
             <property environment="env"/>
 
             <!-- Set a property if environment is Windows. -->
-            <condition property="isWin32">
+            <condition property="isWin">
                 <os family="windows"/>
             </condition>
 

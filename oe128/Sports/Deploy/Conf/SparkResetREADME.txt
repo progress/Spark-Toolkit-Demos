@@ -7,12 +7,11 @@ The "ResetClientPrincipal" parameter in the config points to a serialized Client
 1. To Generate a serialized Client Principal file, use the genspacp utility in $DLC/bin
 
 proenv>genspacp -password spark01 -user sparkRest -role NoAccess -domain spark -file SparkReset.cp
-genspacp 1.0
+genspacp 1.1
 Generated sealed Client Principal...
     User: sparkRest@spark
-    Id: R0omT2H7TN6p7Gyn1Rbq+g
+    Id: cltI3rp3TkW1HxWvTM+XHA
     Role: NoAccess
-    Encoded Password: oech1::23222e35397562
     File: SparkReset.cp
     State: SSO from external authentication system
     Seal is valid
