@@ -13,12 +13,6 @@
         <echo message="             -Dshut=${shut} = Tomcat shutdown port"/>
         <echo message="             -DwrkDir=${wrkDir} = Parent directory for PASOE instance"/>
         <echo message="             -Dinstance=${instance} = Name of PASOE instance"/>
-        <echo message="${line.separator}ant upgrade - Upgrade a PAS instance with Spark"/>
-        <echo message="              -DwrkDir=${wrkDir} = Parent directory for PASOE instance"/>
-        <echo message="              -Dinstance=${instance} = Name of PASOE instance"/>
-        <echo message="${line.separator}ant oerealm - Enable use of OERealm by copying config files"/>
-        <echo message="              -DwrkDir=${wrkDir} = Parent directory for PASOE instance"/>
-        <echo message="              -Dinstance=${instance} = Name of PASOE instance"/>
         <echo message="${line.separator}"/>
         <echo message="${line.separator} Operation Shortcuts:"/>
         <echo message="${line.separator} ant query    - Use TCMAN to query the PAS instance"/>
@@ -378,7 +372,7 @@
 
         <echo message="Copying all ABL application files..."/>
         <copy toDir="${catalina.base}${delim}ablapps${delim}${instance}${delim}openedge" overwrite="true" verbose="true">
-            <fileset dir="${basedir}${delim}..${delim}PASOEContent${delim}WEB-INF${delim}openedge">
+            <fileset dir="${basedir}${delim}..${delim}src">
                 <include name="**/*.i"/>
                 <include name="**/*.cls"/>
                 <include name="**/*.p"/>
@@ -400,13 +394,6 @@
         <unzip src="${api.static.zip}" overwrite="true"
             dest="${catalina.base}${delim}webapps${delim}sports${delim}static"/>
 
-        <echo message="Copying all web handlers..."/>
-        <copy toDir="${catalina.base}${delim}webapps${delim}sports${delim}WEB-INF${delim}adapters${delim}web" overwrite="true" verbose="true">
-            <fileset dir="${basedir}${delim}..${delim}PASOEContent${delim}WEB-INF${delim}adapters${delim}web">
-                <include name="**/*"/>
-            </fileset>
-        </copy>
-
         <echo message="Deploy the the 'ui' ABLWebApp..."/>
         <exec executable="${tcman.util}" failonerror="true">
             <arg line="deploy -a ui ${catalina.home}${delim}extras${delim}oeabl.war"/>
@@ -415,16 +402,6 @@
         <echo message="Extracting UI static files..."/>
         <unzip src="${ui.static.zip}" overwrite="true"
             dest="${catalina.base}${delim}webapps${delim}ui${delim}static"/>
-
-        <!-- Tailor the instance using the deployment directory. -->
-        <antcall target="_tailor_instance"/>
-
-        <!-- Merge any available properties to the instance. -->
-        <antcall target="_merge_properties"/>
-    </target>
-
-    <target name="upgrade">
-        <init_oe/> <!-- Set standard environment variables. -->
 
         <!-- Tailor the instance using the deployment directory. -->
         <antcall target="_tailor_instance"/>
