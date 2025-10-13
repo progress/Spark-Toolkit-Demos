@@ -146,21 +146,6 @@
             <condition property="pas.exec" value="pasman" else="pasman.bat">
                 <os family="unix"/>
             </condition>
-            <condition property="prostrct.exec" value="prostrct" else="prostrct.bat">
-                <os family="unix"/>
-            </condition>
-            <condition property="procopy.exec" value="procopy" else="procopy.bat">
-                <os family="unix"/>
-            </condition>
-            <condition property="proutil.exec" value="proutil" else="proutil.bat">
-                <os family="unix"/>
-            </condition>
-            <condition property="client.exec" value="pro" else="pro.bat">
-                <os family="unix"/>
-            </condition>
-            <condition property="showcfg.exec" value="showcfg" else="showcfgd.exe">
-                <os family="unix"/>
-            </condition>
             <property name="catalina.base" value="${wrkDir}${delim}${instance}"/>
             <property name="pas.bin" value="${catalina.base}${delim}bin"/>
             <property name="tcman.util" value="${pas.bin}${delim}tcman${scriptSuffix}"/>
@@ -414,13 +399,6 @@
         <echo message="Extracting API static files..."/>
         <unzip src="${api.static.zip}" overwrite="true"
             dest="${catalina.base}${delim}webapps${delim}sports${delim}static"/>
-
-        <echo message="Copying all web handlers..."/>
-        <copy toDir="${catalina.base}${delim}webapps${delim}sports${delim}WEB-INF${delim}adapters${delim}web" overwrite="true" verbose="true">
-            <fileset dir="${basedir}${delim}..${delim}PASOEContent${delim}WEB-INF${delim}adapters${delim}web">
-                <include name="**/*"/>
-            </fileset>
-        </copy>
 
         <echo message="Deploy the the 'ui' ABLWebApp..."/>
         <exec executable="${tcman.util}" failonerror="true">
