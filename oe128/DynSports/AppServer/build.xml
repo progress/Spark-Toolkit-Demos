@@ -265,7 +265,9 @@
             <property name="deploy.conf" value="${deploy.dir}/Conf"/>
             <property name="pas.bin" value="${catalina.base}${delim}bin"/>
             <property name="pas.conf.spark" value="spark"/>
-            <property name="ui.static.zip" value="${basedir}${delim}..${delim}..${delim}..${delim}support${delim}ui${delim}static.zip"/>
+            <property name="api.handlers.zip" value="${basedir}${delim}..${delim}..${delim}..${delim}support${delim}api${delim}handlers.zip"/>
+			<property name="api.static.zip" value="${basedir}${delim}..${delim}..${delim}..${delim}support${delim}api${delim}static.zip"/>
+			<property name="ui.static.zip" value="${basedir}${delim}..${delim}..${delim}..${delim}support${delim}ui${delim}static.zip"/>
         </sequential>
     </macrodef>
 
@@ -389,13 +391,9 @@
             </then>
         </if>
 
-        <echo message="Deploy the the 'sports' ABLWebApp..."/>
-        <exec executable="${tcman.util}" failonerror="true">
-            <arg line="deploy -a sports ${catalina.home}${delim}extras${delim}oeabl.war"/>
-        </exec>
-
+        <echo message="Copying all ABL application files..."/>
         <copy toDir="${catalina.base}${delim}ablapps${delim}${instance}${delim}openedge" overwrite="true" verbose="true">
-            <fileset dir="${basedir}/../PASOEContent/WEB-INF/openedge">
+            <fileset dir="${basedir}${delim}..${delim}PASOEContent${delim}WEB-INF${delim}openedge">
                 <include name="**/*.i"/>
                 <include name="**/*.cls"/>
                 <include name="**/*.p"/>
@@ -404,11 +402,32 @@
             </fileset>
         </copy>
 
+        <echo message="Deploy the the 'sports' ABLWebApp..."/>
+        <exec executable="${tcman.util}" failonerror="true">
+            <arg line="deploy -a sports ${catalina.home}${delim}extras${delim}oeabl.war"/>
+        </exec>
+
+        <echo message="Extracting API handlers files..."/>
+        <unzip src="${api.handlers.zip}" overwrite="true"
+            dest="${catalina.base}${delim}webapps${delim}sports${delim}WEB-INF${delim}adapters${delim}web"/>
+
+        <echo message="Extracting API static files..."/>
+        <unzip src="${api.static.zip}" overwrite="true"
+            dest="${catalina.base}${delim}webapps${delim}sports${delim}static"/>
+
+        <echo message="Copying all web handlers..."/>
+        <copy toDir="${catalina.base}${delim}webapps${delim}sports${delim}WEB-INF${delim}adapters${delim}web" overwrite="true" verbose="true">
+            <fileset dir="${basedir}${delim}..${delim}PASOEContent${delim}WEB-INF${delim}adapters${delim}web">
+                <include name="**/*"/>
+            </fileset>
+        </copy>
+
         <echo message="Deploy the the 'ui' ABLWebApp..."/>
         <exec executable="${tcman.util}" failonerror="true">
             <arg line="deploy -a ui ${catalina.home}${delim}extras${delim}oeabl.war"/>
         </exec>
 
+        <echo message="Extracting UI static files..."/>
         <unzip src="${ui.static.zip}" overwrite="true"
             dest="${catalina.base}${delim}webapps${delim}ui${delim}static"/>
 

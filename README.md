@@ -2,7 +2,7 @@
 
 ### Welcome!
 
-This repository contains sample projects ready for import into PDSOE and PASOE, meant to illustrate usage of the **Progress Spark Toolkit**. Please note that all demos are for illustrating server-side micro-services only; there are no UI components bundled as of the Sept. 2025 release (v7.0.0).
+This repository contains sample projects ready for import into PDSOE and PASOE, meant to illustrate usage of the **Progress Spark Toolkit**. Please note that all demos are for illustrating server-side micro-services only; there are no UI components bundled as of the October 2025 release (v7.0.0).
 
 **Note:** This release utilizes toolkit release [v7.0.0](https://github.com/progress/Spark-Toolkit/releases/tag/v7.0.0).
 
@@ -23,7 +23,7 @@ To provide sample data you may use the provided database structure, schema, and 
 
 ## PAS Deployment
 
-Each demo is an "ABL Web App" project meant to work within a PAS instance. To make the setup process quick, there is an Ant build script in each project's "AppServer" directory. Simply running `ant create` will create a suitable PAS instance at a predetermined location (C:\PASOE) and automatically include the proper PROPATH entries and files to start the instance.
+Look to the AppServer folder of the respective projects for more information.
 
 
 ## Documentation
