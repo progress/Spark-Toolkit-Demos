@@ -67,9 +67,6 @@ end. /* for each */
  */
 run Spark/shutdown.p.
 
-/* Optional: Shutdown the metrics from the diagnostic tools. */
-run Spark/Diagnostic/metrics_shutdown.
-
 catch err as Progress.Lang.Error:
     run logMessage (substitute("Error: &1", err:GetMessage(1)), "SHUTDOWN").
 end catch.

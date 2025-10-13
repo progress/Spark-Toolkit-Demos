@@ -10,7 +10,3 @@
 block-level on error undo, throw.
 
 /* ***************************  Main Block  *************************** */
-
-/* Optional: Deactivate the metrics from the diagnostic tools. */
-run Spark/Diagnostic/metrics_deactivate.
-

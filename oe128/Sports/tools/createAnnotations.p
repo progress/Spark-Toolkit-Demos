@@ -1,16 +1,16 @@
 /*------------------------------------------------------------------------
     File        : createAnnotations.p
     Purpose     : Reads XML-XREF data into a ProDataset and generates JSON
-                  files with annotation data 
+                  files with annotation data
     Author(s)   : pjudge & dugrau
     Created     : 2020-05-06
     Notes       :
   ----------------------------------------------------------------------*/
 block-level on error undo, throw.
 
+using OpenEdge.Core.Collections.* from propath.
 using OpenEdge.Core.Util.AnnotationWriter from propath.
 using Progress.Json.ObjectModel.* from propath.
-using OpenEdge.Core.Collections.* from propath.
 using Spark.Util.* from propath.
 
 define variable cStartDir    as character        no-undo.

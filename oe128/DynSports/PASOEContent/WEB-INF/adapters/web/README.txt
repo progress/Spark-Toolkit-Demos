@@ -8,27 +8,20 @@ be created and inside that we should place the webhandlers mapping file.
 The handler configuration should be a JSON Object where each handler definition is a string
 inside the JSON Object with the below format.
 
-    "uri":"<handler URI>","class":"handler class name"
-
-
-For ROOT WebApp, ROOT.handlers should be placed inside the "ROOT" folder with no service name
-in the handlers file.
-
-Here is an example of a handlers file
+Here is an example of a handlers file (version 2.0 is preferred long-term):
 
 {
-  "version": "2.0",
-  "serviceName": "PingService",
-  "handlers": [
-    {
-      "uri":"/_oeping","class":"OpenEdge.Web.PingWebHandler"
-      "uri":"/pdo/{service}","class":"OpenEdge.Web.DataObject.DataObjectHandler"
-    }
-  ]
+    "version": "2.0",
+    "serviceName": "_oeping",
+    "handlers": [{
+        "uri": "/",
+        "class": "OpenEdge.Web.PingWebHandler",
+        "enabled": true
+    }]
 }
 
 The URL to access the service should be in the format of /web/<ServiceName>/<ServiceURI>
 So, for the above example it would be - /web/PingService/_oeping
 
-
-
+Read more via the OpenEdge Information Hub:
+https://docs.progress.com/bundle/pas-for-openedge-admin/page/Deploy-web-handler-services.html

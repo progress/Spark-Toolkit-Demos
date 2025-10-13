@@ -12,10 +12,10 @@ To generate a serialized Client Principal file that will be passed from the REST
 
 genspacp -password sp4rkR3alm -user sparkRest -file SparkRealm.cp
 
-genspacp 1.0
+genspacp 1.1
 Generated sealed Client Principal...
     User: sparkRest@OESPA
-    Id: 6EeGh6ptSrWBp9Ekrp0kRw
+    Id: FCEc+NW3QIW5RIpp1TuMgQ
     Role: SPAClient
     File: SparkRealm.cp
     State: SSO from external authentication system
@@ -26,7 +26,7 @@ Reminder: Be sure to state the correct domain name (default "OESPA") as well wit
 
 Security Note: Ideally this value should be encrypted in such a way that it can be decrypted from within the OERealm service. The encrypted value would be stored in the JSON file, while the OERealm service would decrypt it before applying via VALIDATE-SEAL("<password>") against the incoming request's CP token.
 
-3. Copy the role generated above and update the role in the SparkRealm.json file.
+3. Copy the role as generated above (eg. "SPAClient") and update the role in the SparkRealm.json file.
 
 4. Copy the SparkRealm.cp to somewhere the REST application can read it from: e.g. the {$CATALINA_BASE}/common/lib directory.
 
@@ -35,7 +35,7 @@ Security Note: Ideally this value should be encrypted in such a way that it can 
 6. Specify "SparkRealm.cp" file as the "realmTokenFile" attribute value in the oeablSecurity-*-oerealm.xml file.
 Note: This is located in the OERealmUserDetails bean.
 
-7. Copy the encoded password into the ABLDomainRegistry.csv replacing any existing key for the "spark" domain.
+7. Update the password in the ABLDomainRegistry.csv replacing any existing existing value following the "spark" domain (default: "spark01").
 
 8. Run the following command to generate the binary keystore file:
 

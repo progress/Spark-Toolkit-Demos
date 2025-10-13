@@ -2,7 +2,7 @@
 
 The "web" folder will have the WebHandler definition for each Service. For example, if we are going
 to create a WebHandler for the service named "SportsSvc" then a folder named "SportsSvc" should
-be created and inside that we should place the  webhandlers mapping file.
+be created and inside that we should place the webhandlers mapping file.
 
 
 The handler configuration should be a JSON Object where each handler definition is a string

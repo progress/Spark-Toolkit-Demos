@@ -114,7 +114,7 @@
             <!-- Define the property to set if the file exists -->
             <property name="antContrib06" value="true"/>
 
-            <!-- Add the appropriate ANT-Contrib library to this environment (v0.6 present in 11.7.4+ and 12.0+ and updated to v1.0b3 in 12.8+). -->
+            <!-- Add the appropriate ANT-Contrib library to this environment (v0.6 present in 12.0+ and updated to v1.0b3 in 12.8+). -->
             <loadtask resource="net/sf/antcontrib/antcontrib.properties" classfile="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
             <loadtask resource="net/sf/antcontrib/antcontrib.properties" classfile="${dlcHome}/ant/lib/ant-contrib-1.0b3.jar"/>
 
@@ -154,6 +154,7 @@
 
             <!-- Set OpenEdge properties for this build file. -->
             <property name="pas.path" value="${pas.root}${delim}${instance}"/>
+			<property name="pas.bin" value="${pas.path}${delim}bin"/>
         </sequential>
     </macrodef>
 
@@ -262,23 +263,10 @@
             </fileset>
         </copy>
 
-        <!-- Trim the current agents to force changes to r-code to be picked up, and get metadata via new session startups. -->
-        <PCTRun
-               dlcHome="${dlcHome}"
-               graphicalMode="false"
-               procedure="refreshAgents">
-            <propath>
-                <pathelement path="${dlcHome}/tty/OpenEdge.Core.pl"/>
-				<pathelement path="${dlcHome}/tty/OpenEdge.ServerAdmin.pl"/>
-                <pathelement path="${dlcHome}/tty/netlib/OpenEdge.Net.pl"/>
-            </propath>
-            <Parameter name="Scheme" value="${scheme}"/>
-            <Parameter name="Host" value="${host}"/>
-            <Parameter name="Port" value="${port}"/>
-            <Parameter name="UserID" value="${userid}"/>
-            <Parameter name="PassWD" value="${passwd}"/>
-            <Parameter name="ABLApp" value="${ablapp}"/>
-        </PCTRun>
+        <!-- Restart the PASOE instance. -->
+        <exec executable="${pas.bin}/tcman${scriptSuffix}" failonerror="false">
+            <arg line="oeserver -restart"/>
+        </exec>
     </target>
 
 </project>
