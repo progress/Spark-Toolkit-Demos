@@ -362,6 +362,26 @@
 					<include name="*.json"/>
 				</fileset>
 			</copy>
+
+            <!-- Copy the URI intercept rules for the API webapp. -->
+            <echo message="Copying the URI intercept rules for the API webapp..."/>
+            <copy file="${basedir}${delim}oeablSecurity.csv" overwrite="true" verbose="true"
+                  tofile="${catalina.base}${delim}webapps${delim}${webapp.api}${delim}WEB-INF$"/>
+
+            <!-- Create a new domain registry file for an application domain. -->
+            <echo message="Creating the ABLDomainRegistry.keystore for a default application domain..."/>
+            <condition property="gendomreg.exec" value="gendomreg" else="gendomreg.bat">
+                <os family="unix"/>
+            </condition>
+            <echo message="${application.domain.name},${application.domain.code}" file="${basedir}${delim}ABLDomainRegistry.csv"/>
+            <exec executable="${dlcHome}${delim}bin${delim}${gendomreg.exec}" failonerror="true">
+                <arg value="${basedir}${delim}ABLDomainRegistry.csv"/>
+                <arg value="${basedir}${delim}ABLDomainRegistry.keystore"/>
+            </exec>
+            <copy file="${basedir}${delim}ABLDomainRegistry.keystore" overwrite="true" verbose="true"
+                  tofile="${catalina.base}${delim}conf${delim}ABLDomainRegistry.keystore"/>
+            <delete file="${basedir}${delim}ABLDomainRegistry.csv" verbose="true"/>
+            <delete file="${basedir}${delim}ABLDomainRegistry.keystore" verbose="true"/>
         </sequential>
     </macrodef>
 
@@ -388,21 +408,6 @@
                     <echo message="NOTICE: File '@{file}' not found. Skipping security properties merge."/>
                 </else>
             </if>
-
-            <!-- Create a new domain registry file for an application domain. -->
-            <echo message="Creating the ABLDomainRegistry.keystore for a default application domain..."/>
-            <condition property="gendomreg.exec" value="gendomreg" else="gendomreg.bat">
-                <os family="unix"/>
-            </condition>
-            <echo message="${application.domain.name},${application.domain.code}" file="${basedir}${delim}ABLDomainRegistry.csv"/>
-            <exec executable="${dlcHome}${delim}bin${delim}${gendomreg.exec}" failonerror="true">
-                <arg value="${basedir}${delim}ABLDomainRegistry.csv"/>
-                <arg value="${basedir}${delim}ABLDomainRegistry.keystore"/>
-            </exec>
-            <copy file="${basedir}${delim}ABLDomainRegistry.keystore" overwrite="true" verbose="true"
-                  tofile="${catalina.base}${delim}conf${delim}ABLDomainRegistry.keystore"/>
-            <delete file="${basedir}${delim}ABLDomainRegistry.csv" verbose="true"/>
-            <delete file="${basedir}${delim}ABLDomainRegistry.keystore" verbose="true"/>
         </sequential>
     </macrodef>
 
@@ -514,17 +519,17 @@
         <unzip src="${ui.static.zip}" overwrite="true"
             dest="${catalina.base}${delim}webapps${delim}ui${delim}static"/>
 
-        <!-- Tailor the instance with special application files. -->
-        <tailorInstance/>
-
         <!-- Merge any available properties to the instance. -->
         <mergeOpenEdgeProperties/>
 
         <!-- Merge any available properties to the instance. -->
-		<mergeSecurityProperties file="${basedir}${delim}merge.oeablSecurity.properties" target="${alias}.${ablapp}.${webapp.api}"/>	
+		<mergeSecurityProperties file="${basedir}${delim}merge.oeablSecurity.properties" target="${alias}.${ablapp}.${webapp.api}"/>
 
         <!-- Enable OERealm by providing necessary configs. -->
         <oerealm/>
+
+        <!-- Tailor the instance with special application files. -->
+        <tailorInstance/>
     </target>
 
     <!-- PAS instance management -->
