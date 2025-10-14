@@ -442,7 +442,6 @@
 			<mkdir dir="${catalina.base}${delim}conf${delim}spark"/>
 			<copy file="${deploy.conf}${delim}Realm${delim}SparkRealm.cp" toDir="${catalina.base}${delim}common${delim}lib"/>
 			<copy file="${deploy.conf}${delim}Realm${delim}SparkRealm.json" toDir="${catalina.base}${delim}conf${delim}spark"/>
-			<copy file="${deploy.conf}${delim}Realm${delim}ABLDomainRegistry.keystore" toDir="${catalina.base}${delim}conf"/>
         </sequential>
     </macrodef>
 
