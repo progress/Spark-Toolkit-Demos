@@ -388,6 +388,21 @@
                     <echo message="NOTICE: File '@{file}' not found. Skipping security properties merge."/>
                 </else>
             </if>
+
+            <!-- Create a new domain registry file for an application domain. -->
+            <echo message="Creating the ABLDomainRegistry.keystore for a default application domain..."/>
+            <condition property="gendomreg.exec" value="gendomreg" else="gendomreg.bat">
+                <os family="unix"/>
+            </condition>
+            <echo message="${application.domain.name},${application.domain.code}" file="${basedir}${delim}ABLDomainRegistry.csv"/>
+            <exec executable="${dlcHome}${delim}bin${delim}${gendomreg.exec}" failonerror="true">
+                <arg value="${basedir}${delim}ABLDomainRegistry.csv"/>
+                <arg value="${basedir}${delim}ABLDomainRegistry.keystore"/>
+            </exec>
+            <copy file="${basedir}${delim}ABLDomainRegistry.keystore" overwrite="true" verbose="true"
+                  tofile="${catalina.base}${delim}conf${delim}ABLDomainRegistry.keystore"/>
+            <delete file="${basedir}${delim}ABLDomainRegistry.csv" verbose="true"/>
+            <delete file="${basedir}${delim}ABLDomainRegistry.keystore" verbose="true"/>
         </sequential>
     </macrodef>
 
@@ -411,6 +426,18 @@
 			<exec executable="${catalina.base}${delim}bin${delim}oeprop${scriptSuffix}" output="merge_${ablapp}.txt" failonerror="true">
 				<arg line="-f ${basedir}${delim}merge.openedge.properties.${ablapp}"/>
 			</exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="oerealm">
+        <sequential>
+			<init_oe/> <!-- Set standard environment variables. -->
+
+			<!-- Copy files for use with OERealm security. -->
+			<mkdir dir="${catalina.base}${delim}conf${delim}spark"/>
+			<copy file="${deploy.conf}${delim}Realm${delim}SparkRealm.cp" toDir="${catalina.base}${delim}common${delim}lib"/>
+			<copy file="${deploy.conf}${delim}Realm${delim}SparkRealm.json" toDir="${catalina.base}${delim}conf${delim}spark"/>
+			<copy file="${deploy.conf}${delim}Realm${delim}ABLDomainRegistry.keystore" toDir="${catalina.base}${delim}conf"/>
         </sequential>
     </macrodef>
 
@@ -494,20 +521,10 @@
         <mergeOpenEdgeProperties/>
 
         <!-- Merge any available properties to the instance. -->
-		<mergeSecurityProperties file="${basedir}merge.oeablSecurity.properties" target="${alias}.${ablapp}.${webapp.api}"/>	
+		<mergeSecurityProperties file="${basedir}${delim}merge.oeablSecurity.properties" target="${alias}.${ablapp}.${webapp.api}"/>	
 
         <!-- Enable OERealm by providing necessary configs. -->
-        <antcall target="oerealm"/>
-    </target>
-
-    <target name="oerealm">
-        <init_oe/> <!-- Set standard environment variables. -->
-
-        <!-- Copy files for use with OERealm security. -->
-        <mkdir dir="${catalina.base}${delim}conf${delim}spark"/>
-        <copy file="${deploy.conf}${delim}Realm${delim}SparkRealm.cp" toDir="${catalina.base}${delim}common${delim}lib"/>
-        <copy file="${deploy.conf}${delim}Realm${delim}SparkRealm.json" toDir="${catalina.base}${delim}conf${delim}spark"/>
-        <copy file="${deploy.conf}${delim}Realm${delim}ABLDomainRegistry.keystore" toDir="${catalina.base}${delim}conf"/>
+        <oerealm/>
     </target>
 
     <!-- PAS instance management -->
