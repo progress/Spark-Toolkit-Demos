@@ -365,8 +365,8 @@
 
             <!-- Copy the URI intercept rules for the API webapp. -->
             <echo message="Copying the URI intercept rules for the API webapp..."/>
-            <copy file="${basedir}${delim}oeablSecurity.csv" overwrite="true" verbose="true"
-                  tofile="${catalina.base}${delim}webapps${delim}${webapp.api}${delim}WEB-INF$"/>
+            <copy file="${basedir}${delim}sports.oeablSecurity.csv" overwrite="true" verbose="true"
+                  tofile="${catalina.base}${delim}webapps${delim}${webapp.api}${delim}WEB-INF${delim}oeablSecurity.csv"/>
 
             <!-- Create a new domain registry file for an application domain. -->
             <echo message="Creating the ABLDomainRegistry.keystore for a default application domain..."/>
