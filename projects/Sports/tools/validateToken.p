@@ -36,7 +36,8 @@ if file-info:full-pathname ne ? then do:
         message "CP Token file is empty.".
 
     if valid-object(oPrincipal) then do:
-        message "Token Seal Valid:" oPrincipal:validate-seal("{&PassCodeValue}").
+        message "Token Seal Valid (Clear-text):" oPrincipal:validate-seal("{&PassCodeValue}").
+        message "Token Seal Valid (odeb0:: Prefix):" oPrincipal:validate-seal(security-policy:encode-domain-access-code("{&PassCodeValue}")).
     end.
 end.
 else
