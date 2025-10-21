@@ -28,6 +28,8 @@ To provide sample data you may use the provided database structure, schema, and 
 
 **Note:** For compatibility with the security mechanisms in place within the application, each database must be pre-loaded with the necessary domain data. For each database, use the Data Administration tool to import Domain security via the supplied `_sec-authentication-domain.d` file in each database folder under `/support/schema/`.
 
+**For OpenEdge 12.2 Users:** Please note that the `secprop` utility does not support the `-f` option to merge a properties file, which will result in an incomplete deployment for the OERealm security model. After using the built-in "create" command for creating the PASOE instance, merge the properties from the `AppServer/merge.oeablSecurity.properties` file to the `oeablSecurity.properties` file in the `CATALINA_BASE/webapps/sports/WEB-INF` directory.
+
 ## PAS Deployment
 
 Look to the AppServer folder of the respective projects for more information on how to create the PASOE instance for each project. Once created, only source code need be updated within the instance's `ablapps` folder.
