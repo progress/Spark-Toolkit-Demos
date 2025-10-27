@@ -1,5 +1,12 @@
 # Changelog
 
+## OpenEdge 12.2.19+
+
+### v7.0.0
+
+- Remove all support for 11.7 demos and processes
+- Address latest OE security changes in 12.2.19 and 12.8.10
+
 ## OpenEdge 11.7.6+ and 12.2.6+
 
 ### v6.0.2

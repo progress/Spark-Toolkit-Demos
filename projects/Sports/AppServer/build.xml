@@ -1,0 +1,591 @@
+<project name="ServerCreation" basedir="." default="usage">
+
+    <!-- Utilize a local file for properties. Allows build.xml to provide defaults only. -->
+    <property file="build.properties"/>
+
+    <target name="usage" description="Usage Instructions">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <echo message="${line.separator}Usage Instructions:"/>
+        <echo message="${line.separator}ant create - Build a new PAS instance with Spark"/>
+        <echo message="             -Dhttp=${http} = Port for HTTP connections"/>
+        <echo message="             -Dhttps=${https} = Port for HTTPS connections"/>
+        <echo message="             -Dshut=${shut} = Tomcat shutdown port"/>
+        <echo message="             -DwrkDir=${wrkDir} = Parent directory for PASOE instance"/>
+        <echo message="             -Dinstance=${instance} = Name of PASOE instance"/>
+        <echo message="${line.separator}"/>
+        <echo message="${line.separator} Operation Shortcuts:"/>
+        <echo message="${line.separator} ant query    - Use TCMAN to query the PAS instance"/>
+        <echo message="${line.separator} ant startup  - Use TCMAN to start the PAS instance"/>
+        <echo message="                 [OPTIONAL] timeout=${timeout} - Time (seconds) to wait for a proper startup"/>
+        <echo message="${line.separator} ant shutdown - Use TCMAN to stop the PAS instance"/>
+        <echo message="                 [OPTIONAL] timeout=${timeout} - Time (seconds) to wait for a proper shutdown"/>
+    </target>
+
+    <macrodef name="init_env">
+        <sequential>
+            <!-- Access environmental variables via "env.*". -->
+            <property environment="env"/>
+
+            <!-- Set a property if environment is Windows. -->
+            <condition property="isWin">
+                <os family="windows"/>
+            </condition>
+
+            <!-- Set a property if environment is Unix. -->
+            <condition property="isUnix">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set a property if environment is 32bit. -->
+            <condition property="is32bit">
+                <or>
+                    <os arch="x86"/>
+                    <os arch="i386"/>
+                </or>
+            </condition>
+
+            <!-- Set a property if environment is 64bit. -->
+            <condition property="is64bit">
+                <not>
+                    <or>
+                        <os arch="x86"/>
+                        <os arch="i386"/>
+                    </or>
+                </not>
+            </condition>
+
+            <!-- Set a property for the local OS architecture. -->
+            <condition property="archBuild" value="linuxx86_64" else="nt64">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set the script suffix for the OS. -->
+            <condition property="scriptSuffix" value=".sh" else=".bat">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set the executable suffix for the OS. -->
+            <condition property="execSuffix" value="" else=".exe">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set path delimiter for the OS. -->
+            <condition property="delim" value="/" else="\">
+                <os family="unix"/>
+            </condition>
+
+            <!-- Set general properties for this build file. -->
+            <property name="deploy.dir" value="${basedir}/../Deploy"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="init_oe">
+        <sequential>
+            <init_env/> <!-- Initialize environmental and general properties. -->
+
+            <!-- Fail immediately if not a 64-bit OS. -->
+            <fail message="Environment is not 64-bit">
+                <condition>
+                    <not>
+                        <isset property="is64bit"/>
+                    </not>
+                </condition>
+            </fail>
+
+            <!-- Check if DLC is set as an environment variable. -->
+            <fail message="DLC Home path is not set; please run from within a PROENV session">
+                <condition>
+                    <and>
+                        <not><isset property="dlcHome"/></not>
+                        <not><isset property="env.DLC"/></not>
+                    </and>
+                </condition>
+            </fail>
+            <property name="dlcHome" value="${env.DLC}"/>
+            <property name="catalina.home" value="${dlcHome}${delim}servers${delim}pasoe"/>
+            <echo message="DLC Home: ${dlcHome}"/>
+
+            <!-- Check if WRKDIR is set as an environment variable. -->
+            <fail message="WRKDIR path is not set; please run from within a PROENV session">
+                <condition>
+                    <and>
+                        <not><isset property="wrkDir"/></not>
+                        <not><isset property="env.WRKDIR"/></not>
+                    </and>
+                </condition>
+            </fail>
+            <property name="wrkDir" value="${env.WRKDIR}"/>
+            <echo message="WRK Path: ${wrkDir}"/>
+
+            <!-- Report the current JAVA_HOME for reference. -->
+            <echo message="JAVA_HOME: ${env.JAVA_HOME}"/>
+
+            <!-- Load the current PCT library from DLC. -->
+            <taskdef resource="PCT.properties" classpath="${dlcHome}/pct/PCT.jar"/>
+            <!-- Define this property to disable anonymous PCT statistics telemetry. -->
+            <property name="pct.skip.analytics" value=""/>
+
+            <!-- Access the OE version info, and read into a property. -->
+            <ProgressVersion dlcHome="${dlcHome}" majorVersion="oeMajor" minorVersion="oeMinor" revision="oeRev" fullVersion="full"/>
+            <property name="oe.version" value="${oeMajor}.${oeMinor}.${oeRev}"/>
+            <echo message="OpenEdge Version: ${oe.version}"/>
+
+            <!-- Add the appropriate ANT-Contrib library to this environment (v0.6 present in 12.0+ and updated to v1.0b3 in 12.8+). -->
+            <loadtask resource="net/sf/antcontrib/antcontrib.properties" classfile="${dlcHome}/ant/lib/ant-contrib-0.6.jar"/>
+            <loadtask resource="net/sf/antcontrib/antcontrib.properties" classfile="${dlcHome}/ant/lib/ant-contrib-1.0b3.jar"/>
+
+            <!-- Set OpenEdge properties for this build file. -->
+            <property name="dlc.bin" value="${dlcHome}${delim}bin"/>
+            <condition property="pas.exec" value="pasman" else="pasman.bat">
+                <os family="unix"/>
+            </condition>
+            <property name="catalina.base" value="${wrkDir}${delim}${instance}"/>
+            <property name="pas.bin" value="${catalina.base}${delim}bin"/>
+            <property name="tcman.util" value="${pas.bin}${delim}tcman${scriptSuffix}"/>
+            <property name="jsonOpts" value="-json -array"/>
+            <property name="timeout" value="300"/> <!-- Default 300sec -->
+
+            <!-- Support flags for only the 11.7 LTS release. -->
+            <if>
+                <equals arg1="${oeMajor}" arg2="11"/>
+                <then>
+                    <property name="isOE11" value="true"/>
+                    <condition property="isOE117">
+                        <and>
+                            <isset property="isOE11"/>
+                            <equals arg1="${oeMinor}" arg2="7"/>
+                        </and>
+                    </condition>
+                </then>
+            </if>
+
+            <!-- Support flags for 12.x LTS and feature releases. -->
+            <if>
+                <equals arg1="${oeMajor}" arg2="12"/>
+                <then>
+                    <property name="isOE12" value="true"/>
+                    <switch value="${oeMinor}">
+                        <case value="2">
+                            <property name="isOE122" value="true"/>
+                        </case>
+                        <case value="3">
+                            <property name="isOE122" value="true"/>
+                            <property name="isOE123" value="true"/>
+                        </case>
+                        <case value="4">
+                            <property name="isOE122" value="true"/>
+                            <property name="isOE124" value="true"/>
+                        </case>
+                        <case value="5">
+                            <property name="isOE122" value="true"/>
+                            <property name="isOE125" value="true"/>
+                        </case>
+                        <case value="6">
+                            <property name="isOE122" value="true"/>
+                            <property name="isOE126" value="true"/>
+                        </case>
+                        <case value="7">
+                            <property name="isOE122" value="true"/>
+                            <property name="isOE127" value="true"/>
+                        </case>
+                        <case value="8">
+                            <property name="isOE128" value="true"/>
+                        </case>
+                    </switch>
+                </then>
+            </if>
+
+            <!-- Support for 13.x LTS and feature releases. -->
+            <if>
+                <equals arg1="${oeMajor}" arg2="13"/>
+                <then>
+                    <property name="isOE13" value="true"/>
+                </then>
+            </if>
+
+            <!-- We cannot support installation outside of OpenEdge 12.2 or 12.8+ -->
+            <condition property="invalidVersion">
+                <or>
+                    <equals arg1="${isOE11}" arg2="true"/>
+                    <equals arg1="${isOE123}" arg2="true"/>
+                    <equals arg1="${isOE124}" arg2="true"/>
+                    <equals arg1="${isOE125}" arg2="true"/>
+                    <equals arg1="${isOE126}" arg2="true"/>
+                    <equals arg1="${isOE127}" arg2="true"/>
+                </or>
+            </condition>
+            <fail if="invalidVersion" message="OpenEdge 12.2 or 12.8+ is required."/>
+
+            <if>
+                <isset property="isOE122"/>
+                <then>
+                    <!-- Use the pasoestart command for OpenEdge 12.2 -->
+                    <property name="serverCmd" value="pasoestart"/>
+                </then>
+                <else>
+                    <!-- Use the oeserver command for OpenEdge 12.8+ -->
+                    <property name="serverCmd" value="oeserver"/>
+                </else>
+            </if>
+            <property name="startOpts" value="${serverCmd} -v -start -archive -timeout ${timeout} ${jsonOpts}"/>
+            <property name="stopOpts" value="${serverCmd} -v -stop -force -timeout ${timeout} ${jsonOpts}"/>
+
+            <!-- Define standard variables for this environment. -->
+            <property name="dlc.bin" value="${dlcHome}/bin"/>
+            <property name="http" value="8810"/>
+            <property name="https" value="8811"/>
+            <property name="ajp" value="8812"/>
+            <property name="shut" value="8813"/>
+            <property name="instance" value="oepas1"/>
+            <property name="alias" value="${instance}"/>
+            <property name="ablapp" value="${instance}"/>
+            <property name="webapp.api" value="sports"/>
+			<property name="webapp.ui" value="ui"/>
+            <property name="deploy.conf" value="${deploy.dir}/Conf"/>
+            <property name="pas.bin" value="${catalina.base}${delim}bin"/>
+            <property name="pas.conf.spark" value="spark"/>
+            <property name="api.handlers.zip" value="${basedir}${delim}..${delim}..${delim}..${delim}support${delim}api${delim}handlers.zip"/>
+			<property name="api.static.zip" value="${basedir}${delim}..${delim}..${delim}..${delim}support${delim}api${delim}static.zip"/>
+			<property name="ui.static.zip" value="${basedir}${delim}..${delim}..${delim}..${delim}support${delim}ui${delim}static.zip"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="filecontains">
+        <!-- Usage <filecontains file="_path_to_file_" substring="_text_to_find_"/> -->
+        <attribute name="file"/>
+        <attribute name="substring"/>
+        <attribute name="findresult"/>
+
+        <sequential>
+            <!-- Load file content into a temporary property -->
+            <loadfile property="temp.file.contents" srcFile="@{file}"/>
+
+            <!-- Check if the content contains the substring -->
+            <condition property="@{findresult}">
+                <contains string="${temp.file.contents}" substring="@{substring}"/>
+            </condition>
+
+            <!-- Set default value to false in case not found -->
+            <property name="@{findresult}" value="false"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="loadtask">
+        <!-- Usage <loadtask resource="_resource_string_" classfile="_path_to_file_"/> -->
+        <attribute name="resource"/>
+        <attribute name="classfile"/>
+
+        <sequential>
+            <condition property="file.exists">
+                <available file="@{classfile}" type="file"/>
+            </condition>
+
+            <taskdef resource="@{resource}" classpath="@{classfile}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="require">
+        <!-- Usage <require file="_path_to_file_"/> -->
+        <attribute name="file"/>
+        <attribute name="message" default="File @{file} not set or missing"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{file}" type="file"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="hasExistingDir">
+        <!-- Usage <requireDir folder="_path_to_folder_"/> -->
+        <attribute name="folder"/>
+        <attribute name="message" default="Directory @{folder} already exists!"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <available file="@{folder}" type="dir"/>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="requireDir">
+        <!-- Usage <requireDir folder="_path_to_folder_"/> -->
+        <attribute name="folder"/>
+        <attribute name="message" default="Directory @{folder} not set or missing"/>
+
+        <sequential>
+            <fail message="@{message}">
+                <condition>
+                    <not>
+                        <available file="@{folder}" type="dir"/>
+                    </not>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="tailorInstance">
+        <sequential>
+			<!-- Check if deployment directory exists. -->
+			<requireDir folder="${deploy.dir}"/>
+
+			<!-- Copy the PL/PF files to the new PAS instance. -->
+			<copy toDir="${catalina.base}${delim}openedge" verbose="true">
+				<fileset dir="${basedir}">
+					<include name="*.pl"/>
+					<include name="*.pf"/>
+					<include name="*.config"/>
+				</fileset>
+			</copy>
+
+			<!-- Copy triggers to the new PAS instance. -->
+			<mkdir dir="${catalina.base}${delim}openedge${delim}sports2020trgs"/>
+			<copy toDir="${catalina.base}${delim}openedge${delim}sports2020trgs" verbose="true">
+				<fileset dir="${basedir}${delim}..${delim}..${delim}..${delim}support${delim}schema${delim}Sports2020${delim}sports2020trgs">
+					<include name="*.p"/>
+				</fileset>
+			</copy>
+
+			<!-- Copy initial configuration files to the PAS instance. -->
+			<mkdir dir="${catalina.base}${delim}conf${delim}${pas.conf.spark}"/>
+			<mkdir dir="${catalina.base}${delim}conf${delim}${pas.conf.spark}${delim}signatures"/>
+			<copy toDir="${catalina.base}${delim}conf${delim}${pas.conf.spark}" verbose="true">
+				<fileset dir="${deploy.conf}">
+					<include name="*.cp"/>
+					<include name="*.json"/>
+				</fileset>
+			</copy>
+
+            <!-- Copy the URI intercept rules for the API webapp. -->
+            <echo message="Copying the URI intercept rules for the API webapp..."/>
+            <copy file="${basedir}${delim}sports.oeablSecurity.csv" overwrite="true" verbose="true"
+                  tofile="${catalina.base}${delim}webapps${delim}${webapp.api}${delim}WEB-INF${delim}oeablSecurity.csv"/>
+
+            <!-- Create a new domain registry file for an application domain. -->
+            <echo message="Creating the ABLDomainRegistry.keystore for a default application domain..."/>
+            <condition property="gendomreg.exec" value="gendomreg" else="gendomreg.bat">
+                <os family="unix"/>
+            </condition>
+            <echo message="${application.domain.name},${application.domain.code}" file="${basedir}${delim}ABLDomainRegistry.csv"/>
+            <exec executable="${dlcHome}${delim}bin${delim}${gendomreg.exec}" failonerror="true">
+                <arg value="${basedir}${delim}ABLDomainRegistry.csv"/>
+                <arg value="${basedir}${delim}ABLDomainRegistry.keystore"/>
+            </exec>
+            <copy file="${basedir}${delim}ABLDomainRegistry.keystore" overwrite="true" verbose="true"
+                  tofile="${catalina.base}${delim}conf${delim}ABLDomainRegistry.keystore"/>
+            <delete file="${basedir}${delim}ABLDomainRegistry.csv" verbose="true"/>
+            <delete file="${basedir}${delim}ABLDomainRegistry.keystore" verbose="true"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="mergeSecurityProperties">
+        <attribute name="file"/>
+        <attribute name="target"/>
+        <sequential>
+            <!-- Check if the properties file exists. -->
+            <available file="@{file}" property="merge.file.exists"/>
+
+            <!-- Run the command if the file exists. -->
+            <if>
+                <isset property="merge.file.exists"/>
+                <then>
+                    <echo message="Merging security properties '@{file}' to '@{target}'"/>
+                    <exec executable="${catalina.home}${delim}bin${delim}secprop${scriptSuffix}" failonerror="true">
+                        <arg value="-f"/>
+                        <arg value="-w"/>
+                        <arg value="@{target}"/>
+                        <arg value="@{file}"/>
+                    </exec>
+                </then>
+                <else>
+                    <echo message="NOTICE: File '@{file}' not found. Skipping security properties merge."/>
+                </else>
+            </if>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="mergeOpenEdgeProperties">
+        <sequential>
+			<!-- Check if MERGE properties file exists. -->
+			<require file="${basedir}${delim}merge.openedge.properties"/>
+
+			<!-- Check if PAS properties file exists. -->
+			<require file="${catalina.base}${delim}conf${delim}openedge.properties"/>
+
+			<!-- Make a copy of the default merge file, named for the instance. -->
+			<copy file="${basedir}${delim}merge.openedge.properties" tofile="${basedir}${delim}merge.openedge.properties.${ablapp}">
+				<filterset>
+					<filter token="APPNAME" value="${ablapp}"/>
+				</filterset>
+			</copy>
+
+			<!-- Merge the intitial properties for the instance. -->
+			<echo message="Merging initial properties from 'merge.openedge.properties.${ablapp}'."/>
+			<exec executable="${catalina.base}${delim}bin${delim}oeprop${scriptSuffix}" output="merge_${ablapp}.txt" failonerror="true">
+				<arg line="-f ${basedir}${delim}merge.openedge.properties.${ablapp}"/>
+			</exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="oerealm">
+        <sequential>
+			<init_oe/> <!-- Set standard environment variables. -->
+
+			<!-- Copy files for use with OERealm security. -->
+			<mkdir dir="${catalina.base}${delim}conf${delim}spark"/>
+			<copy file="${deploy.conf}${delim}Realm${delim}SparkRealm.cp" toDir="${catalina.base}${delim}common${delim}lib"/>
+			<copy file="${deploy.conf}${delim}Realm${delim}SparkRealm.json" toDir="${catalina.base}${delim}conf${delim}spark"/>
+        </sequential>
+    </macrodef>
+
+    <target name="create">
+        <init_oe/> <!-- Set standard environment variables. -->
+
+        <!-- Create the PAS instance using the values (or defaults) provided. -->
+        <echo message="${line.separator}Creating PAS instance '${instance}' at ${catalina.base} with ports ${http}/${https}/${ajp}/${shut}..."/>
+        <echo message="See file ${basedir}${delim}create_${instance}.txt for details of PAS server creation."/>
+        <exec dir="${dlc.bin}" executable="${pas.exec}" output="${basedir}${delim}create_${instance}.txt" failonerror="false" resultproperty="create.status">
+            <arg value="create"/>
+            <arg value="-v"/>
+            <arg value="-f"/> <!-- Deploys manager and oemanager webapp. -->
+            <arg value="-p"/>
+            <arg value="${http}"/>
+            <arg value="-P"/>
+            <arg value="${https}"/>
+            <arg value="-j"/>
+            <arg value="${ajp}"/>
+            <arg value="-s"/>
+            <arg value="${shut}"/>
+            <arg value="-N"/>
+            <arg value="${alias}"/>
+            <arg value="${catalina.base}"/>
+            <arg value="${ablapp}"/> <!-- Set the ABL Application name. -->
+        </exec>
+
+        <!-- Determine whether the command exited correctly. -->
+        <condition property="create.failed">
+            <not>
+                <equals arg1="${create.status}" arg2="0" />
+            </not>
+        </condition>
+
+        <!-- If failed, call macro to show info -->
+        <if>
+            <isset property="create.failed" />
+            <then>
+                <log_create_failure code="${create.status}" file="create_${instance}.txt"/>
+                <fail message="Stopping task because of a critical error."/>
+            </then>
+        </if>
+
+        <echo message="Copying all ABL application files..."/>
+        <copy toDir="${catalina.base}${delim}ablapps${delim}${instance}${delim}openedge" overwrite="true" verbose="true">
+            <fileset dir="${basedir}${delim}..${delim}src">
+                <include name="**/*.i"/>
+                <include name="**/*.cls"/>
+                <include name="**/*.p"/>
+                <include name="*.html"/>
+                <include name="*.map"/>
+            </fileset>
+        </copy>
+
+        <echo message="Deploy the the 'sports' ABLWebApp..."/>
+        <exec executable="${tcman.util}" failonerror="true">
+            <arg line="deploy -a ${webapp.api} ${catalina.home}${delim}extras${delim}oeabl.war"/>
+        </exec>
+
+        <echo message="Extracting API handlers files..."/>
+        <unzip src="${api.handlers.zip}" overwrite="true"
+            dest="${catalina.base}${delim}webapps${delim}${webapp.api}${delim}WEB-INF${delim}adapters${delim}web"/>
+
+        <echo message="Extracting API static files..."/>
+        <unzip src="${api.static.zip}" overwrite="true"
+            dest="${catalina.base}${delim}webapps${delim}${webapp.api}${delim}static"/>
+
+        <echo message="Deploy the the 'ui' ABLWebApp..."/>
+        <exec executable="${tcman.util}" failonerror="true">
+            <arg line="deploy -a ${webapp.ui} ${catalina.home}${delim}extras${delim}oeabl.war"/>
+        </exec>
+
+        <echo message="Extracting UI static files..."/>
+        <unzip src="${ui.static.zip}" overwrite="true"
+            dest="${catalina.base}${delim}webapps${delim}ui${delim}static"/>
+
+        <!-- Merge any available properties to the instance. -->
+        <mergeOpenEdgeProperties/>
+
+        <!-- Merge any available properties to the instance. -->
+		<mergeSecurityProperties file="${basedir}${delim}merge.oeablSecurity.properties" target="${alias}.${ablapp}.${webapp.api}"/>
+
+        <!-- Enable OERealm by providing necessary configs. -->
+        <oerealm/>
+
+        <!-- Tailor the instance with special application files. -->
+        <tailorInstance/>
+    </target>
+
+    <!-- PAS instance management -->
+
+    <target name="stop">
+        <!-- Alias for the shutdown task. -->
+        <antcall target="shutdown"/>
+    </target>
+
+    <target name="shutdown">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <requireDir folder="${catalina.base}"/>
+
+        <exec executable="${tcman.util}" failonerror="true">
+            <arg line="${stopOpts}"/>
+        </exec>
+    </target>
+
+    <target name="start">
+        <!-- Alias for the startup task. -->
+        <antcall target="startup"/>
+    </target>
+
+    <target name="startup">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <requireDir folder="${catalina.base}"/>
+
+        <exec executable="${tcman.util}" failonerror="false">
+            <arg line="${startOpts}"/>
+        </exec>
+    </target>
+
+    <target name="query">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <requireDir folder="${catalina.base}"/>
+        <require file="${dlc.bin}${delim}${proutil.exec}"/>
+
+        <property name="commandLine" value="${serverCmd} -v -query ${jsonOpts}"/>
+        <exec executable="${tcman.util}" failonerror="false">
+            <arg line="${commandLine}"/>
+        </exec>
+    </target>
+
+    <target name="status">
+        <init_oe/> <!-- Initialize all OpenEdge properties. -->
+
+        <requireDir folder="${catalina.base}"/>
+        <require file="${dlc.bin}${delim}${proutil.exec}"/>
+
+        <!-- Get info about the current agents/sessions available -->
+        <exec executable="${pas.bin}${delim}oemanager${scriptSuffix}" failonerror="true">
+            <arg value="status"/>
+            <arg value="ablapp=${ablapp}"/>
+        </exec>
+    </target>
+
+</project>
